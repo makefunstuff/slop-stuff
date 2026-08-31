@@ -99,6 +99,10 @@ Each guide is a subfolder, served under `https://makefunstuff.github.io/slop-stu
 
 - **[neovim](./neovim/)** — modes, motions, text objects, config, LSP
 
+## Link library
+
+- **[links](./links/)** — a curated, curl-verified directory of ~90 useful links across every topic in this repo.
+
 ## Shared assets
 
 All cheatsheet pages share the design system in [`assets/style.css`](./assets/style.css) and [`assets/app.js`](./assets/app.js) (theme toggle, search, copy buttons, scrollspy). To add a new guide, copy a page's structure, point at `../assets/`, and set a unique `data-guide` on `<html>`.

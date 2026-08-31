@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-guide="links">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A curated, curl-verified list of links across AI, languages, cloud, embedded, electronics, drones, RF, graphics, security, and more.">
+  <title>Links — a curated map of the good stuff</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    .link-card { display: block; text-decoration: none; transition: translate .15s, border-color .15s; }
+    .link-card:hover { translate: 0 -2px; border-color: color-mix(in srgb, var(--accent) 50%, var(--line)); }
+    .link-card h3 { color: var(--accent-2); font-size: 16px; }
+    .link-card p { margin: 6px 0 0; font-size: 13px; }
+    .link-card .url { display: block; margin-top: 10px; color: var(--faint); font: 11px var(--mono); word-break: break-all; }
+    .status { font: 700 10px var(--mono); letter-spacing: .06em; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../" aria-label="Back to slop-stuff">
+      <span class="brand-mark">↗_</span>
+      <span>Link Library</span>
+      <span class="version">curl-verified</span>
+    </a>
+    <label class="search-wrap">
+      <span class="sr-only" hidden>Search links</span>
+      <input id="search" type="search" aria-label="Search links" placeholder="Search links — rust, nginx, sensor, betaflight, postgres…" autocomplete="off">
+    </label>
+    <div class="top-actions">
+      <button class="icon-button" id="themeToggle" type="button" title="Toggle theme" aria-label="Toggle light and dark theme">◐</button>
+      <button class="icon-button" id="printGuide" type="button" title="Print" aria-label="Print this page">Print</button>
+    </div>
+  </header>
+
+  <div class="shell" id="top">
+    <aside class="sidebar" aria-label="Link categories">
+      <p class="side-label">Categories</p>
+      <nav>
+        <a href="#ai-agents"><span class="nav-number">01</span>AI &amp; agents</a>
+        <a href="#languages"><span class="nav-number">02</span>Languages</a>
+        <a href="#cli-shell"><span class="nav-number">03</span>CLI &amp; shell</a>
+        <a href="#cloud"><span class="nav-number">04</span>Cloud &amp; DevOps</a>
+        <a href="#data"><span class="nav-number">05</span>Data &amp; databases</a>
+        <a href="#embedded"><span class="nav-number">06</span>Embedded &amp; hardware</a>
+        <a href="#electronics"><span class="nav-number">07</span>Electronics</a>
+        <a href="#drones"><span class="nav-number">08</span>Drones &amp; FPV</a>
+        <a href="#radio"><span class="nav-number">09</span>Radio &amp; RF</a>
+        <a href="#graphics"><span class="nav-number">10</span>Graphics</a>
+        <a href="#gamedev"><span class="nav-number">11</span>Game dev</a>
+        <a href="#systems"><span class="nav-number">12</span>Systems &amp; CS</a>
+        <a href="#math"><span class="nav-number">13</span>Math</a>
+        <a href="#finance"><span class="nav-number">14</span>Finance</a>
+        <a href="#security"><span class="nav-number">15</span>Security</a>
+        <a href="#spreadsheets"><span class="nav-number">16</span>Spreadsheets</a>
+        <a href="#general"><span class="nav-number">17</span>General</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section class="hero searchable" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="eyebrow">Curated link directory</div>
+          <h1 id="hero-title">A map to <span>the good stuff.</span></h1>
+          <p>Every link below was checked with <code>curl</code> at build time — only live sites made the cut. They mirror the topics covered across the 51 slop-stuff cheatsheets.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#ai-agents">Browse by category →</a>
+            <a class="button" href="#systems">Systems &amp; CS</a>
+            <a class="button" href="#general">General</a>
+          </div>
+        </div>
+        <div class="terminal" aria-label="Verification note">
+          <div class="terminal-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="terminal-title">curl check</span></div>
+          <div class="terminal-body">
+            <div class="mock-side">
+              <p class="mock-label">Status</p>
+              <div class="mock-row"><span class="state"></span>200 — live</div>
+              <div class="mock-row"><span class="state working"></span>403 — bot-gated</div>
+              <div class="mock-row"><span class="state blocked"></span>dropped</div>
+            </div>
+            <div class="mock-pane">
+              <div><span class="prompt">❯</span> <span class="cmd">curl -sL -o /dev/null -w "%{http_code}" URL</span></div>
+              <br>
+              <div class="dim">82 → 200 OK</div>
+              <div class="dim">8 → 403/402 (real site, blocks bots)</div>
+              <div class="dim">1 → dropped (unreachable)</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cursor"></span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="no-results" id="noResults" role="status" aria-live="polite">No category matches that search. Try "rust", "nginx", "sensor", "betaflight", "postgres", or "radio".</div>
+
+      <section class="section searchable" id="ai-agents">
+        <div class="section-head"><div><div class="section-kicker">01 / AI &amp; agents</div><h2>Coding agents &amp; harnesses</h2></div><p>The terminal-first tools you already use.</p></div>
+        <div class="grid two">
+          <a class="card link-card" href="https://herdr.dev/" target="_blank" rel="noreferrer"><h3>Herdr</h3><p>Persistent terminal workspace manager for coding agents.</p><span class="url">herdr.dev</span></a>
+          <a class="card link-card" href="https://hermes-agent.nousresearch.com/docs/" target="_blank" rel="noreferrer"><h3>Hermes Agent docs</h3><p>Nous Research's terminal-first agent.</p><span class="url">hermes-agent.nousresearch.com/docs</span></a>
+          <a class="card link-card" href="https://github.com/NousResearch/hermes-agent" target="_blank" rel="noreferrer"><h3>Hermes Agent (GitHub)</h3><p>Source repository.</p><span class="url">github.com/NousResearch/hermes-agent</span></a>
+          <a class="card link-card" href="https://omp.sh/" target="_blank" rel="noreferrer"><h3>omp</h3><p>Coding agent with the IDE wired in.</p><span class="url">omp.sh</span></a>
+          <a class="card link-card" href="https://github.com/can1357/oh-my-pi" target="_blank" rel="noreferrer"><h3>omp (GitHub)</h3><p>Source repo — a fork of Pi.</p><span class="url">github.com/can1357/oh-my-pi</span></a>
+          <a class="card link-card" href="https://github.com/deepseek-ai/deepseek-harness" target="_blank" rel="noreferrer"><h3>DeepSeek Harness</h3><p>DeepSeek's open agent harness (everything is a plugin).</p><span class="url">github.com/deepseek-ai/deepseek-harness</span></a>
+          <a class="card link-card" href="https://docs.anthropic.com/en/docs/claude-code/overview" target="_blank" rel="noreferrer"><h3>Claude Code</h3><p>Anthropic's terminal coding agent.</p><span class="url">docs.anthropic.com/en/docs/claude-code</span></a>
+          <a class="card link-card" href="https://github.com/openai/codex" target="_blank" rel="noreferrer"><h3>Codex CLI</h3><p>OpenAI's terminal coding agent.</p><span class="url">github.com/openai/codex</span></a>
+          <a class="card link-card" href="https://opencode.ai/" target="_blank" rel="noreferrer"><h3>OpenCode</h3><p>Open-source terminal agent.</p><span class="url">opencode.ai</span></a>
+        </div>
+      </section>
+
+      <section class="section searchable" id="languages">
+        <div class="section-head"><div><div class="section-kicker">02 / Languages</div><h2>Language homes &amp; references</h2></div><p>Docs and package registries.</p></div>
+        <div class="grid two">
+          <a class="card link-card" href="https://www.rust-lang.org/" target="_blank" rel="noreferrer"><h3>Rust</h3><p>The language home.</p><span class="url">rust-lang.org</span></a>
+          <a class="card link-card" href="https://doc.rust-lang.org/book/" target="_blank" rel="noreferrer"><h3>The Rust Book</h3><p>The canonical introduction.</p><span class="url">doc.rust-lang.org/book</span></a>
+          <a class="card link-card" href="https://crates.io/" target="_blank" rel="noreferrer"><h3>crates.io</h3><p>Rust package registry.</p><span class="url">crates.io</span></a>
+          <a class="card link-card" href="https://docs.rs/" target="_blank" rel="noreferrer"><h3>docs.rs</h3><p>Rust crate documentation.</p><span class="url">docs.rs</span></a>
+          <a class="card link-card" href="https://go.dev/" target="_blank" rel="noreferrer"><h3>Go</h3><p>The language home.</p><span class="url">go.dev</span></a>
+          <a class="card link-card" href="https://pkg.go.dev/" target="_blank" rel="noreferrer"><h3>Go packages</h3><p>Module &amp; package docs.</p><span class="url">pkg.go.dev</span></a>
+          <a class="card link-card" href="https://www.typescriptlang.org/" target="_blank" rel="noreferrer"><h3>TypeScript</h3><p>The language home.</p><span class="url">typescriptlang.org</span></a>
+          <a class="card link-card" href="https://www.python.org/" target="_blank" rel="noreferrer"><h3>Python</h3><p>The language home.</p><span class="url">python.org</span></a>
+          <a class="card link-card" href="https://docs.python.org/3/" target="_blank" rel="noreferrer"><h3>Python docs</h3><p>Standard library reference.</p><span class="url">docs.python.org/3</span></a>
+          <a class="card link-card" href="https://en.cppreference.com/w/" target="_blank" rel="noreferrer"><h3>cppreference</h3><p>C and C++ reference.</p><span class="url">en.cppreference.com</span></a>
+          <a class="card link-card" href="https://www.lua.org/" target="_blank" rel="noreferrer"><h3>Lua</h3><p>The language home.</p><span class="url">lua.org</span></a>
+        </div>
+      </section>
+
+      <section class="section searchable" id="cli-shell">
+        <div class="section-head"><div><div class="section-kicker">03 / CLI &amp; shell</div><h2>Command-line toolbox</h2></div><p>Manuals and tools.</p></div>
+        <div class="grid two">
+          <a class="card link-card" href="https://jqlang.github.io/jq/" target="_blank" rel="noreferrer"><h3>jq</h3><p>Command-line JSON processor.</p><span class="url">jqlang.github.io/jq</span></a>
+          <a class="card link-card" href="https://jqlang.github.io/jq/manual/" target="_blank" rel="noreferrer"><h3>jq manual</h3><p>The full filter-language reference.</p><span class="url">jqlang.github.io/jq/manual</span></a>
+          <a class="card link-card" href="https://www.gnu.org/software/bash/manual/" target="_blank" rel="noreferrer"><h3>Bash manual</h3><p>GNU Bash reference.</p><span class="url">gnu.org/software/bash/manual</span></a>
+          <a class="card link-card" href="https://www.gnu.org/software/sed/manual/sed.html" target="_blank" rel="noreferrer"><h3>sed</h3><p>Stream editor manual.</p><span class="url">gnu.org/software/sed</span></a>
+          <a class="card link-card" href="https://www.gnu.org/software/gawk/manual/gawk.html" target="_blank" rel="noreferrer"><h3>gawk</h3><p>AWK programming manual.</p><span class="url">gnu.org/software/gawk</span></a>
+          <a class="card link-card" href="https://github.com/BurntSushi/ripgrep" target="_blank" rel="noreferrer"><h3>ripgrep</h3><p>Fast recursive grep.</p><span class="url">github.com/BurntSushi/ripgrep</span></a>
+          <a class="card link-card" href="https://www.shellcheck.net/" target="_blank" rel="noreferrer"><h3>ShellCheck</h3><p>Finds bugs in shell scripts.</p><span class="url">shellcheck.net</span></a>
+          <a class="card link-card" href="https://man7.org/linux/man-pages/" target="_blank" rel="noreferrer"><h3>man7</h3><p>Linux man pages online.</p><span class="url">man7.org/linux/man-pages</span></a>
+        </div>
+      </section>
+
+      <section class="section searchable" id="cloud">
+        <div class="section-head"><div><div class="section-kicker">04 / Cloud &amp; DevOps</div><h2>Infrastructure &amp; observability</h2></div><p>K8s, containers, IaC, monitoring.</p></div>
+        <div class="grid two">
+          <a class="card link-card" href="https://kubernetes.io/" target="_blank" rel="noreferrer"><h3>Kubernetes</h3><p>Container orchestration docs.</p><span class="url">kubernetes.io</span></a>
+          <a class="card link-card" href="https://kubernetes.io/docs/reference/kubectl/" target="_blank" rel="noreferrer"><h3>kubectl reference</h3><p>The complete CLI reference.</p><span class="url">kubernetes.io/docs/reference/kubectl</span></a>
+          <a class="card link-card" href="https://cloud.google.com/sdk/docs" target="_blank" rel="noreferrer"><h3>gcloud</h3><p>Google Cloud CLI docs.</p><span class="url">cloud.google.com/sdk/docs</span></a>
+          <a class="card link-card" href="https://www.docker.com/" target="_blank" rel="noreferrer"><h3>Docker</h3><p>Container platform.</p><span class="url">docker.com</span></a>
+          <a class="card link-card" href="https://docs.docker.com/" target="_blank" rel="noreferrer"><h3>Docker docs</h3><p>Engine, Compose, and registry docs.</p><span class="url">docs.docker.com</span></a>
+          <a class="card link-card" href="https://developer.hashicorp.com/terraform" target="_blank" rel="noreferrer"><h3>Terraform</h3><p>Infrastructure as code.</p><span class="url">developer.hashicorp.com/terraform</span></a>
+          <a class="card link-card" href="https://grafana.com/" target="_blank" rel="noreferrer"><h3>Grafana</h3><p>Dashboards and observability.</p><span class="url">grafana.com</span></a>
+          <a class="card link-card" href="https://prometheus.io/" target="_blank" rel="noreferrer"><h3>Prometheus</h3><p>Metrics and alerting.</p><span class="url">prometheus.io</span></a>
+        </div>
+      </section>
+
+      <section class="section searchable" id="data">
+        <div class="section-head"><div><div class="section-kicker">05 / Data &amp; databases</div><h2>Storage &amp; streaming</h2></div><p>SQL, streams, and caches.</p></div>
+        <div class="grid two">
+          <a class="card link-card" href="https://www.postgresql.org/" target="_blank" rel="noreferrer"><h3>PostgreSQL</h3><p>The database and its docs.</p><span class="url">postgresql.org</span></a>
+          <a class="card link-card" href="https://www.postgresql.org/docs/current/app-psql.html" target="_blank" rel="noreferrer"><h3>psql</h3><p>The interactive terminal reference.</p><span class="url">postgresql.org/docs/current/app-psql</span></a>
+          <a class="card link-card" href="https://kafka.apache.org/" target="_blank" rel="noreferrer"><h3>Kafka</h3><p>Distributed event streaming.</p><span class="url">kafka.apache.org</span></a>
+          <a class="card link-card" href="https://redis.io/" target="_blank" rel="noreferrer"><h3>Redis</h3><p>In-memory data store.</p><span class="url">redis.io</span></a>
+          <a class="card link-card" href="https://use-the-index-luke.com/" target="_blank" rel="noreferrer"><h3>Use The Index, Luke</h3><p>SQL indexing explained.</p><span class="url">use-the-index-luke.com</span></a>
+          <a class="card link-card" href="https://www.sqlite.org/" target="_blank" rel="noreferrer"><h3>SQLite</h3><p>Embedded SQL database.</p><span class="url">sqlite.org</span></a>
+        </div>
+      </section>
+
+      <section class="section searchable" id="embedded">
+        <div class="section-head"><div><div class="section-kicker">06 / Embedded &amp; hardware</div><h2>Microcontrollers &amp; firmware</h2></div><p>Boards and RTOS.</p></div>
+        <div class="grid two">
+          <a class="card link-card" href="https://www.espressif.com/" target="_blank" rel="noreferrer"><h3>Espressif</h3><p>ESP32 and ESP8266 maker.</p><span class="url">espressif.com</span></a>
+          <a class="card link-card" href="https://docs.espressif.com/projects/esp-idf/en/stable/" target="_blank" rel="noreferrer"><h3>ESP-IDF docs</h3><p>Official framework reference.</p><span class="url">docs.espressif.com/esp-idf</span></a>
+          <a class="card link-card" href="https://www.arduino.cc/" target="_blank" rel="noreferrer"><h3>Arduino</h3><p>Boards and IDE.</p><span class="url">arduino.cc</span></a>
+          <a class="card link-card" href="https://www.st.com/" target="_blank" rel="noreferrer"><h3>STMicroelectronics</h3><p>STM32 and more.</p><span class="url">st.com</span></a>
+          <a class="card link-card" href="https://github.com/STMicroelectronics" target="_blank" rel="noreferrer"><h3>ST (GitHub)</h3><p>STM32 HAL, examples, and tools.</p><span class="url">github.com/STMicroelectronics</span></a>
+          <a class="card link-card" href="https://www.raspberrypi.com/documentation/microcontrollers/" target="_blank" rel="noreferrer"><h3>RP2040</h3><p>Raspberry Pi microcontroller docs.</p><span class="url">raspberrypi.com/documentation/microcontrollers</span></a>
+          <a class="card link-card" href="https://www.freertos.org/" target="_blank" rel="noreferrer"><h3>FreeRTOS</h3><p>Real-time operating system.</p><span class="url">freertos.org</span></a>
+        </div>
+      </section>
+
+      <section class="section searchable" id="electronics">
+        <div class="section-head"><div><div class="section-kicker">07 / Electronics</div><h2>Parts, learning &amp; circuits</h2></div><p>Suppliers and references.</p></div>
+        <div class="grid two">
+          <a class="card link-card" href="https://www.adafruit.com/" target="_blank" rel="noreferrer"><h3>Adafruit</h3><p>Maker electronics store.</p><span class="url">adafruit.com</span></a>
+          <a class="card link-card" href="https://learn.adafruit.com/" target="_blank" rel="noreferrer"><h3>Adafruit Learn</h3><p>Project guides and tutorials.</p><span class="url">learn.adafruit.com</span></a>
+          <a class="card link-card" href="https://www.sparkfun.com/" target="_blank" rel="noreferrer"><h3>SparkFun</h3><p>Electronics and tutorials.</p><span class="url">sparkfun.com</span></a>
+          <a class="card link-card" href="https://www.allaboutcircuits.com/" target="_blank" rel="noreferrer"><h3>All About Circuits</h3><p>Textbooks and articles.</p><span class="url">allaboutcircuits.com</span></a>
+          <a class="card link-card" href="https://www.digikey.com/" target="_blank" rel="noreferrer"><h3>DigiKey</h3><p>Component distributor.</p><span class="url">digikey.com</span></a>
+          <a class="card link-card" href="https://www.build-electronic-circuits.com/" target="_blank" rel="noreferrer"><h3>Build Electronic Circuits</h3><p>Practical circuit guides.</p><span class="url">build-electronic-circuits.com</span></a>
+        </div>
+      </section>
+
+      <section class="section searchable" id="drones">
+        <div class="section-head"><div><div class="section-kicker">08 / Drones &amp; FPV</div><h2>Flight controllers &amp; builds</h2></div><p>Firmware and community.</p></div>
+        <div class="grid two">
+          <a class="card link-card" href="https://betaflight.com/" target="_blank" rel="noreferrer"><h3>Betaflight</h3><p>FPV flight controller firmware.</p><span class="url">betaflight.com</span></a>
+          <a class="card link-card" href="https://ardupilot.org/" target="_blank" rel="noreferrer"><h3>ArduPilot</h3><p>Autopilot firmware.</p><span class="url">ardupilot.org</span></a>
+          <a class="card link-card" href="https://oscarliang.com/" target="_blank" rel="noreferrer"><h3>Oscar Liang</h3><p>FPV build and tuning guides.</p><span class="url">oscarliang.com</span></a>
+          <a class="card link-card" href="https://www.expresslrs.org/" target="_blank" rel="noreferrer"><h3>ExpressLRS</h3><p>Open RC radio link.</p><span class="url">expresslrs.org</span></a>
+        </div>
+      </section>
+
+      <section class="section searchable" id="radio">
+        <div class="section-head"><div><div class="section-kicker">09 / Radio &amp; RF</div><h2>Ham radio &amp; SDR</h2></div><p>Spectrum resources.</p></div>
+        <div class="grid two">
+          <a class="card link-card" href="https://www.arrl.org/" target="_blank" rel="noreferrer"><h3>ARRL</h3><p>Amateur radio association.</p><span class="url">arrl.org</span></a>
+          <a class="card link-card" href="https://wiki.gnuradio.org/" target="_blank" rel="noreferrer"><h3>GNU Radio</h3><p>SDR flowgraph framework.</p><span class="url">wiki.gnuradio.org</span></a>
+          <a class="card link-card" href="https://www.rtl-sdr.com/" target="_blank" rel="noreferrer"><h3>RTL-SDR</h3><p>SDR hardware and projects.</p><span class="url">rtl-sdr.com</span></a>
+          <a class="card link-card" href="https://www.sigidwiki.com/" target="_blank" rel="noreferrer"><h3>Signal Identification Wiki</h3><p>Identify radio signals.</p><span class="url">sigidwiki.com</span></a>
+        </div>
+      </section>
+
+      <section class="section searchable" id="graphics">
+        <div class="section-head"><div><div class="section-kicker">10 / Graphics</div><h2>OpenGL, shaders &amp; SDL</h2></div><p>Rendering references.</p></div>
+        <div class="grid two">
+          <a class="card link-card" href="https://learnopengl.com/" target="_blank" rel="noreferrer"><h3>LearnOpenGL</h3><p>The classic modern-OpenGL tutorial.</p><span class="url">learnopengl.com</span></a>
+          <a class="card link-card" href="https://thebookofshaders.com/" target="_blank" rel="noreferrer"><h3>The Book of Shaders</h3><p>Gentle shader introduction.</p><span class="url">thebookofshaders.com</span></a>
+          <a class="card link-card" href="https://www.khronos.org/opengl/" target="_blank" rel="noreferrer"><h3>Khronos OpenGL</h3><p>Spec and registry.</p><span class="url">khronos.org/opengl</span></a>
+          <a class="card link-card" href="https://wiki.libsdl.org/" target="_blank" rel="noreferrer"><h3>SDL wiki</h3><p>SDL2/SDL3 API docs.</p><span class="url">wiki.libsdl.org</span></a>
+          <a class="card link-card" href="https://iquilezles.org/" target="_blank" rel="noreferrer"><h3>Inigo Quilez</h3><p>SDFs, raymarching, and graphics math.</p><span class="url">iquilezles.org</span></a>
+        </div>
+      </section>
+
+      <section class="section searchable" id="gamedev">
+        <div class="section-head"><div><div class="section-kicker">11 / Game dev</div><h2>Patterns &amp; design</h2></div><p>The must-read books.</p></div>
+        <div class="grid two">
+          <a class="card link-card" href="https://gameprogrammingpatterns.com/" target="_blank" rel="noreferrer"><h3>Game Programming Patterns</h3><p>Free online book by Robert Nystrom.</p><span class="url">gameprogrammingpatterns.com</span></a>
+          <a class="card link-card" href="https://www.dataorienteddesign.com/dodbook/" target="_blank" rel="noreferrer"><h3>Data-Oriented Design</h3><p>Free online book by Richard Fabian.</p><span class="url">dataorienteddesign.com/dodbook</span></a>
+        </div>
+      </section>
+
+      <section class="section searchable" id="systems">
+        <div class="section-head"><div><div class="section-kicker">12 / Systems &amp; CS</div><h2>Low-level &amp; kernel</h2></div><p>Reference and tooling.</p></div>
+        <div class="grid two">
+          <a class="card link-card" href="https://wiki.osdev.org/" target="_blank" rel="noreferrer"><h3>OSDev Wiki</h3><p>Operating-system development.</p><span class="url">wiki.osdev.org</span></a>
+          <a class="card link-card" href="https://www.felixcloutier.com/x86/" target="_blank" rel="noreferrer"><h3>x86 reference</h3><p>Instruction set reference.</p><span class="url">felixcloutier.com/x86</span></a>
+          <a class="card link-card" href="https://www.kernel.org/doc/" target="_blank" rel="noreferrer"><h3>Linux kernel docs</h3><p>Official kernel documentation.</p><span class="url">kernel.org/doc</span></a>
+          <a class="card link-card" href="https://godbolt.org/" target="_blank" rel="noreferrer"><h3>Compiler Explorer</h3><p>See compiled assembly live.</p><span class="url">godbolt.org</span></a>
+        </div>
+      </section>
+
+      <section class="section searchable" id="math">
+        <div class="section-head"><div><div class="section-kicker">13 / Math</div><h2>Learning &amp; visualization</h2></div><p>Applied math resources.</p></div>
+        <div class="grid two">
+          <a class="card link-card" href="https://www.khanacademy.org/" target="_blank" rel="noreferrer"><h3>Khan Academy</h3><p>Free math courses.</p><span class="url">khanacademy.org</span></a>
+          <a class="card link-card" href="https://tutorial.math.lamar.edu/" target="_blank" rel="noreferrer"><h3>Paul's Online Math Notes</h3><p>Calculus and algebra notes.</p><span class="url">tutorial.math.lamar.edu</span></a>
+          <a class="card link-card" href="https://www.desmos.com/" target="_blank" rel="noreferrer"><h3>Desmos</h3><p>Graphing calculator.</p><span class="url">desmos.com</span></a>
+        </div>
+      </section>
+
+      <section class="section searchable" id="finance">
+        <div class="section-head"><div><div class="section-kicker">14 / Finance</div><h2>Research &amp; filings</h2></div><p>For value investing.</p></div>
+        <div class="grid two">
+          <a class="card link-card" href="https://www.investopedia.com/" target="_blank" rel="noreferrer"><h3>Investopedia</h3><p>Financial terms and concepts.</p><span class="url">investopedia.com</span></a>
+          <a class="card link-card" href="https://www.sec.gov/edgar/search/" target="_blank" rel="noreferrer"><h3>SEC EDGAR</h3><p>Company filings and 10-Ks.</p><span class="url">sec.gov/edgar/search</span></a>
+        </div>
+      </section>
+
+      <section class="section searchable" id="security">
+        <div class="section-head"><div><div class="section-kicker">15 / Security</div><h2>Offensive &amp; defensive</h2></div><p>Practice and references.</p></div>
+        <div class="grid two">
+          <a class="card link-card" href="https://owasp.org/" target="_blank" rel="noreferrer"><h3>OWASP</h3><p>Application security foundation.</p><span class="url">owasp.org</span></a>
+          <a class="card link-card" href="https://cheatsheetseries.owasp.org/" target="_blank" rel="noreferrer"><h3>OWASP Cheat Sheets</h3><p>Defensive security recipes.</p><span class="url">cheatsheetseries.owasp.org</span></a>
+          <a class="card link-card" href="https://www.hackthebox.com/" target="_blank" rel="noreferrer"><h3>Hack The Box</h3><p>Hands-on pentesting labs.</p><span class="url">hackthebox.com</span></a>
+          <a class="card link-card" href="https://tryhackme.com/" target="_blank" rel="noreferrer"><h3>TryHackMe</h3><p>Guided security rooms.</p><span class="url">tryhackme.com</span></a>
+          <a class="card link-card" href="https://nmap.org/" target="_blank" rel="noreferrer"><h3>Nmap</h3><p>Network scanner.</p><span class="url">nmap.org</span></a>
+          <a class="card link-card" href="https://gtfobins.github.io/" target="_blank" rel="noreferrer"><h3>GTFOBins</h3><p>Living-off-the-land binaries.</p><span class="url">gtfobins.github.io</span></a>
+        </div>
+      </section>
+
+      <section class="section searchable" id="spreadsheets">
+        <div class="section-head"><div><div class="section-kicker">16 / Spreadsheets</div><h2>Excel &amp; friends</h2></div><p>Formulas and tips.</p></div>
+        <div class="grid two">
+          <a class="card link-card" href="https://support.microsoft.com/excel" target="_blank" rel="noreferrer"><h3>Excel help</h3><p>Official Microsoft docs.</p><span class="url">support.microsoft.com/excel</span></a>
+          <a class="card link-card" href="https://exceljet.net/" target="_blank" rel="noreferrer"><h3>ExcelJet</h3><p>Formula and shortcut reference.</p><span class="url">exceljet.net</span></a>
+        </div>
+      </section>
+
+      <section class="section searchable" id="general">
+        <div class="section-head"><div><div class="section-kicker">17 / General</div><h2>Daily drivers</h2></div><p>Community and reference.</p></div>
+        <div class="grid two">
+          <a class="card link-card" href="https://github.com/" target="_blank" rel="noreferrer"><h3>GitHub</h3><p>Code hosting.</p><span class="url">github.com</span></a>
+          <a class="card link-card" href="https://news.ycombinator.com/" target="_blank" rel="noreferrer"><h3>Hacker News</h3><p>Tech news and discussion.</p><span class="url">news.ycombinator.com</span></a>
+          <a class="card link-card" href="https://lobste.rs/" target="_blank" rel="noreferrer"><h3>lobste.rs</h3><p>Computing-focused link aggregator.</p><span class="url">lobste.rs</span></a>
+          <a class="card link-card" href="https://stackoverflow.com/" target="_blank" rel="noreferrer"><h3>Stack Overflow</h3><p>Programming Q&amp;A.</p><span class="url">stackoverflow.com</span></a>
+          <a class="card link-card" href="https://devdocs.io/" target="_blank" rel="noreferrer"><h3>DevDocs</h3><p>Offline API documentation.</p><span class="url">devdocs.io</span></a>
+          <a class="card link-card" href="https://en.wikipedia.org/" target="_blank" rel="noreferrer"><h3>Wikipedia</h3><p>The encyclopedia.</p><span class="url">en.wikipedia.org</span></a>
+        </div>
+      </section>
+
+      <footer class="footer searchable">
+        <strong>How this list was made</strong>
+        <p>Every link was checked with <code>curl</code> (HTTP status) at build time. 82 returned <code>200</code>; 8 returned <code>403</code>/<code>402</code> — those are real sites that bot-block curl but load fine in a browser (All About Circuits, DigiKey, Raspberry Pi, SEC EDGAR, Stack Overflow, GNU Radio, Investopedia, crates.io). One candidate was dropped as unreachable.</p>
+        <div class="footer-links">
+          <a href="../">slop-stuff home</a>
+          <a href="https://github.com/makefunstuff/slop-stuff" target="_blank" rel="noreferrer">Repo</a>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-guide="kicad">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="KiCad workflow: schematic, layout, footprints, design rules, and fabrication output.">
+  <title>KiCad — Visual Cheatsheet</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../" aria-label="Back to slop-stuff">
+      <span class="brand-mark">pcb_</span>
+      <span>KiCad Guide</span>
+      <span class="version">PCB design</span>
+    </a>
+    <label class="search-wrap">
+      <span class="sr-only" hidden>Search guide</span>
+      <input id="search" type="search" aria-label="Search guide" placeholder="Search schematic, footprint, netlist, DRC, copper pour, gerber…" autocomplete="off">
+    </label>
+    <div class="top-actions">
+      <button class="icon-button" id="themeToggle" type="button" title="Toggle theme" aria-label="Toggle light and dark theme">◐</button>
+      <button class="icon-button" id="printGuide" type="button" title="Print guide" aria-label="Print this guide">Print</button>
+    </div>
+  </header>
+
+  <div class="shell" id="top">
+    <aside class="sidebar" aria-label="Guide sections">
+      <p class="side-label">On this page</p>
+      <nav>
+        <a href="#start"><span class="nav-number">01</span>Start here</a>
+        <a href="#schematic"><span class="nav-number">02</span>Schematic</a>
+        <a href="#layout"><span class="nav-number">03</span>PCB layout</a>
+        <a href="#footprints"><span class="nav-number">04</span>Footprints</a>
+        <a href="#design"><span class="nav-number">05</span>Design rules</a>
+        <a href="#output"><span class="nav-number">06</span>Fabrication output</a>
+        <a href="#shortcuts"><span class="nav-number">07</span>Shortcuts</a>
+        <a href="#gotchas"><span class="nav-number">08</span>Gotchas</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section class="hero searchable" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="eyebrow">Visual cheatsheet + usage guide</div>
+          <h1 id="hero-title">Design boards <span>from schematic to gerber.</span></h1>
+          <p>KiCad is a free, open-source EDA suite: capture the schematic in Eeschema, route the board in Pcbnew, run ERC and DRC, then export Gerbers for fabrication. One flow, start to finish.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#start">Start with the workflow →</a>
+            <a class="button" href="#layout">Route a board</a>
+            <a class="button" href="#design">Design rules</a>
+          </div>
+        </div>
+        <div class="terminal" aria-label="Stylized KiCad session">
+          <div class="terminal-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="terminal-title">KiCad</span></div>
+          <div class="terminal-body">
+            <div class="mock-side">
+              <p class="mock-label">Flow</p>
+              <div class="mock-row active">Schematic</div>
+              <div class="mock-row">Netlist</div>
+              <div class="mock-row">PCB layout</div>
+              <div class="mock-row">DRC</div>
+              <div class="mock-row">Gerber</div>
+            </div>
+            <div class="mock-pane">
+              <div><span class="prompt">❯</span> <span class="cmd">kicad-cli sch export netlist board.kicad_sch</span></div>
+              <div class="dim">board.net</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cmd">kicad-cli pcb export gerbers --output gerbers/ board.kicad_pcb</span></div>
+              <div class="dim">board-F_Cu.gbr … board-B_Mask.gbr</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cmd">kicad-cli pcb drc board.kicad_pcb</span></div>
+              <div class="dim">0 errors, 0 warnings</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cursor"></span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “schematic”, “footprint”, “netlist”, “DRC”, “copper pour”, or “gerber”.</div>
+
+      <section class="section searchable" id="start">
+        <div class="section-head">
+          <div><div class="section-kicker">01 / Start here</div><h2>Schematic to gerber, one pipeline</h2></div>
+          <p>The whole job is a pipeline: draw the schematic, generate a netlist, lay out and route the PCB, run DRC, then export Gerbers for the fab.</p>
+        </div>
+        <div class="flow">
+          <div class="flow-step"><div><strong>Schematic</strong><p>Eeschema: place symbols (<code>A</code>), connect wires (<code>W</code>), label nets (<code>L</code>), add power symbols (<code>P</code>).</p></div></div>
+          <div class="flow-step"><div><strong>Netlist</strong><p>Assign footprints, run ERC, then generate the netlist — it links every schematic pin to a board pad.</p></div></div>
+          <div class="flow-step"><div><strong>PCB layout</strong><p>Pcbnew: place footprints, route tracks, pour a GND plane on the back layer.</p></div></div>
+          <div class="flow-step"><div><strong>DRC</strong><p>Run the Design Rules Checker; fix clearances, widths, and unconnected nets.</p></div></div>
+          <div class="flow-step"><div><strong>Gerber</strong><p>Plot copper, mask, and silkscreen layers plus the drill file into one zip.</p></div></div>
+          <div class="flow-step"><div><strong>Fabrication</strong><p>Upload the zip to JLCPCB, check the preview, and order boards.</p></div></div>
+        </div>
+        <div class="tags" style="margin-top:16px">
+          <span class="tag">Eeschema</span>
+          <span class="tag">Pcbnew</span>
+          <span class="tag">GerbView</span>
+          <span class="tag">kicad-cli</span>
+          <span class="tag">JLCPCB</span>
+        </div>
+        <div class="grid four" style="margin-top:16px">
+          <article class="card"><div class="card-number">1</div><h3>Install</h3><pre><code>brew install --cask kicad   # macOS
+sudo apt install kicad      # Debian/Ubuntu
+winget install KiCad.KiCad  # Windows</code></pre></article>
+          <article class="card"><div class="card-number">2</div><h3>New project</h3><pre><code>File → New Project → "board"
+# creates board.kicad_pro
+#          board.kicad_sch
+#          board.kicad_pcb</code></pre></article>
+          <article class="card"><div class="card-number">3</div><h3>Draw schematic</h3><pre><code>A  add symbol
+W  draw wire
+P  add power (GND/VCC)
+L  add net label</code></pre></article>
+          <article class="card"><div class="card-number">4</div><h3>Hand off to PCB</h3><pre><code>Tools → Update PCB
+      from Schematic
+# or:
+kicad-cli sch export netlist</code></pre></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">NET</div><p><strong>Every symbol needs a footprint.</strong> Assign footprints (Tools → Assign Footprints) before Update PCB, or the board shows missing-footprint placeholders and the layout is incomplete.</p></div>
+      </section>
+
+      <section class="section searchable" id="schematic">
+        <div class="section-head">
+          <div><div class="section-kicker">02 / Schematic</div><h2>Symbols, wires, labels, power</h2></div>
+          <p>Place symbols, connect pins with wires, name nets with labels, add GND/VCC power symbols, run ERC, then generate the netlist.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Element</th><th>Hotkey</th><th>What it does</th></tr></thead><tbody>
+          <tr><td>Symbol</td><td><code>A</code></td><td>Place a component from a library.</td></tr>
+          <tr><td>Wire</td><td><code>W</code></td><td>Connect two pins electrically.</td></tr>
+          <tr><td>Net label</td><td><code>L</code></td><td>Name a net — two labels with the same name are the same net.</td></tr>
+          <tr><td>Power symbol</td><td><code>P</code></td><td><code>GND</code>, <code>VCC</code>, <code>+3V3</code>, <code>+5V</code>…</td></tr>
+          <tr><td>No-connect flag</td><td>—</td><td>Mark a pin intentionally unconnected so ERC stays quiet.</td></tr>
+          <tr><td>Junction</td><td><code>U</code></td><td>Join two crossing wires into one connection.</td></tr>
+        </tbody></table></div>
+        <div class="tags" style="margin-top:16px">
+          <span class="tag">GND</span>
+          <span class="tag">VCC</span>
+          <span class="tag">+3V3</span>
+          <span class="tag">+5V</span>
+          <span class="tag">PWR_FLAG</span>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Run ERC before you leave</h3><p>The Electrical Rules Checker catches unconnected pins, duplicate references, and power-net mistakes.</p><pre><code>Inspect → Electrical Rules Checker
+# or on the command line:
+kicad-cli sch erc board.kicad_sch</code></pre></article>
+          <article class="card"><h3>Generate the netlist</h3><p>The netlist is the list of connections that Pcbnew turns into copper. KiCad 7+ also syncs it directly via “Update PCB from Schematic”.</p><pre><code>kicad-cli sch export netlist \
+  board.kicad_sch</code></pre></article>
+        </div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">!</div><p><strong>Power nets need a PWR_FLAG.</strong> A net driven only by power symbols (like <code>GND</code> or <code>VCC</code>) triggers “power output pin connected to power output pin”. Place a <code>PWR_FLAG</code> symbol on each such net to tell ERC it's powered.</p></div>
+      </section>
+
+      <section class="section searchable" id="layout">
+        <div class="section-head">
+          <div><div class="section-kicker">03 / PCB layout</div><h2>Placement, routing, copper pours</h2></div>
+          <p>Place footprints, route tracks between pads, pour a GND plane on the back layer, and manage layers and vias.</p>
+        </div>
+        <div class="flow">
+          <div class="flow-step"><div><strong>Place</strong><p>Connectors on the board edge, ICs grouped by function, decoupling caps right next to power pins.</p></div></div>
+          <div class="flow-step"><div><strong>Route</strong><p><code>W</code> routes a track, <code>V</code> drops a via to switch layers. Keep power and ground tracks short and fat.</p></div></div>
+          <div class="flow-step"><div><strong>Pour</strong><p>Draw a filled zone on <code>B.Cu</code> (and <code>F.Cu</code>) assigned to <code>GND</code>; press <code>B</code> to refill it.</p></div></div>
+          <div class="flow-step"><div><strong>Verify</strong><p>Run DRC and fix unconnected nets, clearance violations, and unrouted tracks.</p></div></div>
+        </div>
+        <div class="model" style="margin-top:16px">
+          <div class="model-node"><strong>F.Cu</strong><small>top copper · signals</small></div><div class="arrow">→</div>
+          <div class="model-node agent"><strong>In1.Cu</strong><small>inner 1 · GND plane</small></div><div class="arrow">→</div>
+          <div class="model-node"><strong>In2.Cu</strong><small>inner 2 · VCC plane</small></div><div class="arrow">→</div>
+          <div class="model-node"><strong>B.Cu</strong><small>bottom copper · signals</small></div>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Copper pour (GND plane)</h3><p>A filled zone on <code>B.Cu</code> gives every ground pin a low-impedance return path.</p><pre><code>Select B.Cu
+Draw a filled zone around the board
+Zone → net: GND
+Press B to refill</code></pre></article>
+          <article class="card"><h3>Vias</h3><p>A via connects a track to another layer. The default is a 0.6 mm pad with a 0.3 mm hole — size up for high current.</p><pre><code>during routing: V (drop a via)
+via size: 0.6 mm pad / 0.3 mm drill
+high current: 0.8 mm pad / 0.4 mm drill</code></pre></article>
+        </div>
+      </section>
+
+      <section class="section searchable" id="footprints">
+        <div class="section-head">
+          <div><div class="section-kicker">04 / Footprints</div><h2>Footprints, pads, packages</h2></div>
+          <p>The footprint editor defines pads and silkscreen; DRC clearances and standard packages do the rest.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Package</th><th>Dimensions</th><th>Pad pitch</th><th>Typical use</th></tr></thead><tbody>
+          <tr><td><code>0805</code></td><td>2.0 × 1.25 mm</td><td>—</td><td>Resistors / caps; the comfortable default for hand-soldering.</td></tr>
+          <tr><td><code>0603</code></td><td>1.6 × 0.8 mm</td><td>—</td><td>Tighter passives where space matters.</td></tr>
+          <tr><td><code>SOIC-8</code></td><td>~5 × 6 mm</td><td>1.27 mm</td><td>Op-amps and small ICs; easy to hand-solder.</td></tr>
+          <tr><td><code>TSSOP-16</code></td><td>~5 × 4.4 mm</td><td>0.65 mm</td><td>Fine-pitch ICs; needs care or a stencil.</td></tr>
+          <tr><td><code>QFN-32</code></td><td>5 × 5 mm</td><td>0.5 mm</td><td>MCUs; exposed center pad = ground + heatsink.</td></tr>
+        </tbody></table></div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Footprint editor</h3><p>Pads carry the electrical connection; pad numbers must match the symbol's pin numbers exactly, or the netlist won't line up.</p><pre><code>SMD pad:  F.Cu + F.Mask + F.Paste
+TH pad:   through all Cu layers
+# pad number = symbol pin number</code></pre></article>
+          <article class="card"><h3>Courtyard &amp; silkscreen</h3><p>The courtyard layer stops footprints from touching; silkscreen marks the reference designator and pin 1.</p><pre><code>F.Courtyard: keep-out outline
+F.Silkscreen: refdes + pin-1 dot
+# keep refdes off pads &amp; holes</code></pre></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">1</div><p><strong>Match pin 1.</strong> The dot or notch must agree between the symbol, the footprint, and the real part — otherwise the component gets soldered in rotated 180°.</p></div>
+      </section>
+
+      <section class="section searchable" id="design">
+        <div class="section-head">
+          <div><div class="section-kicker">05 / Design rules</div><h2>Clearances, widths, vias</h2></div>
+          <p>Set trace width, clearance, and via sizes up front; place decoupling caps and pour solid ground planes with thermal reliefs.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Typical (2-layer)</th><th>Notes</th></tr></thead><tbody>
+          <tr><td>Track width</td><td><code>0.2 mm</code> (8 mil)</td><td>Power tracks wider: 0.5–1 mm for 1 A+.</td></tr>
+          <tr><td>Clearance</td><td><code>0.2 mm</code> (8 mil)</td><td><code>0.127 mm</code> (5 mil) is JLCPCB's floor.</td></tr>
+          <tr><td>Via</td><td><code>0.6 / 0.3 mm</code></td><td>Pad / drill; bigger for high current.</td></tr>
+          <tr><td>Edge to copper</td><td><code>≥ 0.3 mm</code></td><td>Keep copper away from Edge.Cuts.</td></tr>
+        </tbody></table></div>
+        <div class="prefix-demo" style="margin-top:16px">
+          <kbd>10 mil</kbd> ≈ <kbd>1 A</kbd>
+          <kbd>20 mil</kbd> ≈ <kbd>1.5 A</kbd>
+          <kbd>40 mil</kbd> ≈ <kbd>2.5 A</kbd>
+          <kbd>1 oz Cu</kbd> = <kbd>35 µm</kbd>
+        </div>
+        <div class="state-grid" style="margin-top:16px">
+          <div class="state-card done"><strong>Clean</strong><p>Zero violations — ready to export.</p></div>
+          <div class="state-card working"><strong>Warning</strong><p>Unfilled zone or unrouted track — usually safe, review it.</p></div>
+          <div class="state-card blocked"><strong>Error</strong><p>Clearance or connectivity violation — fix before export.</p></div>
+          <div class="state-card unknown"><strong>Excluded</strong><p>A waived violation — approved and ignored.</p></div>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Decoupling capacitors</h3><p>One <code>100 nF</code> ceramic per power pin, as close to the pin as possible, plus a <code>10 µF</code> bulk cap per rail. Trace width matters less than loop area.</p></article>
+          <article class="card"><h3>Ground planes &amp; thermal reliefs</h3><p>Pour <code>GND</code> on <code>B.Cu</code>. Thermal relief spokes keep pads solderable; use a solid connection where high current must flow straight to the plane.</p></article>
+        </div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">A</div><p><strong>Check current before you trust a width.</strong> The numbers above assume 1 oz copper and a 10 °C rise. Use Tools → Calculator Tools → Track Width for exact values.</p></div>
+      </section>
+
+      <section class="section searchable" id="output">
+        <div class="section-head">
+          <div><div class="section-kicker">06 / Fabrication output</div><h2>Gerbers, drills, BOM, positions</h2></div>
+          <p>Export Gerber layers, the drill file, a BOM, and the pick-and-place position file, then upload to JLCPCB.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>kicad-cli pcb export gerbers -o gerbers/ board.kicad_pcb</code><span>Gerber files — one per layer.</span></div>
+          <div class="command-row"><code>kicad-cli pcb export drill -o gerbers/ board.kicad_pcb</code><span>Excellon drill file (.drl).</span></div>
+          <div class="command-row"><code>kicad-cli pcb export pos -o pos.csv --format csv board.kicad_pcb</code><span>Pick-and-place position file.</span></div>
+          <div class="command-row"><code>kicad-cli sch export bom -o bom.csv board.kicad_sch</code><span>Bill of materials.</span></div>
+          <div class="command-row"><code>kicad-cli pcb drc board.kicad_pcb</code><span>Design-rule report.</span></div>
+          <div class="command-row"><code>kicad-cli sch erc board.kicad_sch</code><span>Electrical-rule report.</span></div>
+        </div>
+        <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>JLCPCB setting</th><th>Recommended</th></tr></thead><tbody>
+          <tr><td>Layers</td><td>2 (or 4 when you need inner planes)</td></tr>
+          <tr><td>Board thickness</td><td><code>1.6 mm</code></td></tr>
+          <tr><td>Copper weight</td><td><code>1 oz</code> (2 oz for high current)</td></tr>
+          <tr><td>Min track / clearance</td><td><code>6/6 mil</code> standard (5/5 mil min)</td></tr>
+          <tr><td>Surface finish</td><td>HASL (lead-free) or ENIG</td></tr>
+          <tr><td>Soldermask color</td><td>Green (default)</td></tr>
+        </tbody></table></div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>What's in the zip</h3><p>KiCad's default Protel extensions, one file per layer.</p><pre><code>board-F_Cu.gtl        top copper
+board-B_Cu.gbl        bottom copper
+board-F_Mask.gts      top solder mask
+board-B_Mask.gbs      bottom solder mask
+board-F_Silkscreen.gto  top silkscreen
+board-B_Silkscreen.gbo  bottom silkscreen
+board-Edge_Cuts.gko   board outline
+board.drl             drill file</code></pre></article>
+          <article class="card"><h3>Review before you upload</h3><p>Open GerbView, load every layer, and sanity-check the outline and drill alignment.</p><pre><code>File → Open Gerber Plot File(s)
+# check Edge.Cuts outline
+# check drills line up with pads
+# check silkscreen is legible</code></pre></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">ZIP</div><p><strong>Zip the Gerbers and the drill file together</strong> and upload as one archive — JLCPCB auto-detects the layers. Review every layer in GerbView before you order.</p></div>
+      </section>
+
+      <section class="section searchable" id="shortcuts">
+        <div class="section-head">
+          <div><div class="section-kicker">07 / Shortcuts</div><h2>The hotkeys you'll reach for</h2></div>
+          <p>Defaults for a standard keyboard — remap them in Preferences → Preferences → Hotkeys.</p>
+        </div>
+        <div class="shortcut-grid">
+          <div class="shortcut-group"><h3>Move &amp; edit</h3><div class="shortcut-list">
+            <div class="shortcut-row"><span>Move item</span><div class="keys"><kbd>M</kbd></div></div>
+            <div class="shortcut-row"><span>Drag (connections stay attached)</span><div class="keys"><kbd>G</kbd></div></div>
+            <div class="shortcut-row"><span>Rotate 90° counter-clockwise</span><div class="keys"><kbd>R</kbd></div></div>
+            <div class="shortcut-row"><span>Edit properties</span><div class="keys"><kbd>E</kbd></div></div>
+            <div class="shortcut-row"><span>Copy / paste</span><div class="keys"><kbd>Ctrl</kbd><kbd>C</kbd><kbd>Ctrl</kbd><kbd>V</kbd></div></div>
+            <div class="shortcut-row"><span>Delete</span><div class="keys"><kbd>Del</kbd></div></div>
+          </div></div>
+          <div class="shortcut-group"><h3>Schematic (Eeschema)</h3><div class="shortcut-list">
+            <div class="shortcut-row"><span>Begin wire</span><div class="keys"><kbd>W</kbd></div></div>
+            <div class="shortcut-row"><span>Add symbol</span><div class="keys"><kbd>A</kbd></div></div>
+            <div class="shortcut-row"><span>Add power port (GND/VCC)</span><div class="keys"><kbd>P</kbd></div></div>
+            <div class="shortcut-row"><span>Add net label</span><div class="keys"><kbd>L</kbd></div></div>
+            <div class="shortcut-row"><span>Mirror horizontally</span><div class="keys"><kbd>X</kbd></div></div>
+            <div class="shortcut-row"><span>Mirror vertically</span><div class="keys"><kbd>Y</kbd></div></div>
+          </div></div>
+          <div class="shortcut-group"><h3>Board (Pcbnew)</h3><div class="shortcut-list">
+            <div class="shortcut-row"><span>Route track</span><div class="keys"><kbd>W</kbd></div></div>
+            <div class="shortcut-row"><span>Add via (switch layer)</span><div class="keys"><kbd>V</kbd></div></div>
+            <div class="shortcut-row"><span>Flip to other side</span><div class="keys"><kbd>F</kbd></div></div>
+            <div class="shortcut-row"><span>Refill zones</span><div class="keys"><kbd>B</kbd></div></div>
+            <div class="shortcut-row"><span>Highlight net</span><div class="keys"><kbd>`</kbd></div></div>
+            <div class="shortcut-row"><span>Zoom to fit</span><div class="keys"><kbd>Home</kbd></div></div>
+          </div></div>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">F1</div><p><strong>Press <code>Ctrl+F1</code></strong> in either editor to open the interactive hotkey list, or remap anything under Preferences → Preferences → Hotkeys.</p></div>
+      </section>
+
+      <section class="section searchable" id="gotchas">
+        <div class="section-head">
+          <div><div class="section-kicker">08 / Gotchas</div><h2>Pitfalls that bite every board once</h2></div>
+          <p>Small mistakes that turn into a re-spin.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>Missing ERC / DRC</h3><p>Skip the checks and you ship unconnected nets and clearance shorts. Run both before every export.</p><pre><code>kicad-cli sch erc board.kicad_sch
+kicad-cli pcb drc board.kicad_pcb</code></pre></article>
+          <article class="card"><h3>Wrong footprint</h3><p>A symbol assigned to an <code>0805</code> when you ordered <code>SOIC-8</code>. Verify the package against the actual part before ordering.</p><pre><code>Tools → Assign Footprints
+# compare against the datasheet</code></pre></article>
+          <article class="card"><h3>Netlist mismatch</h3><p>You edited the board but not the schematic. Re-sync so the two can't drift apart.</p><pre><code>Tools → Update PCB
+      from Schematic</code></pre></article>
+          <article class="card"><h3>Power flags missing</h3><p><code>GND</code>/<code>VCC</code> nets driven only by power symbols need a <code>PWR_FLAG</code>, or ERC reports “power pin connected to power pin”.</p><pre><code>place PWR_FLAG on each
+power-only net</code></pre></article>
+          <article class="card"><h3>Silkscreen overlap</h3><p>Refdes text sitting on pads or over holes. Move it to open space and keep it off copper.</p><pre><code>move refdes to open space
+# enable --subtract-soldermask</code></pre></article>
+          <article class="card"><h3>No board outline</h3><p>If <code>Edge.Cuts</code> is missing or open, the fab can't cut your board shape.</p><pre><code>draw a closed shape on
+Edge.Cuts around the board</code></pre></article>
+        </div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">!</div><p><strong>Verify before you order.</strong> Check the board outline (Edge.Cuts), pin-1 orientation, and that every part has a footprint. A re-spin costs more than the extra hour of checking.</p></div>
+      </section>
+
+      <footer class="footer searchable">
+        <strong>Source of truth</strong>
+        <p>This guide covers the KiCad workflow essentials. The official documentation and the JLCPCB capabilities page remain authoritative for edge cases.</p>
+        <div class="footer-links">
+          <a href="https://www.kicad.org/" target="_blank" rel="noreferrer">KiCad</a>
+          <a href="https://docs.kicad.org/" target="_blank" rel="noreferrer">Documentation</a>
+          <a href="https://jlcpcb.com/" target="_blank" rel="noreferrer">JLCPCB</a>
+          <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

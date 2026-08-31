@@ -56,6 +56,29 @@
       border: 1px dashed var(--line); border-radius: var(--radius);
       color: var(--faint); text-align: center; padding: 24px;
     }
+    .site-search { position: relative; max-width: 640px; margin-top: 26px; }
+    .site-search input {
+      width: 100%; padding: 13px 16px;
+      border: 1px solid var(--line); border-radius: 12px;
+      background: var(--panel); color: var(--text); font: inherit; outline: 0;
+    }
+    .site-search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent); }
+    .site-search-results {
+      display: none; position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+      max-height: 420px; overflow: auto; z-index: 40;
+      border: 1px solid var(--line); border-radius: 12px;
+      background: var(--panel); box-shadow: var(--shadow);
+    }
+    .sr-item {
+      display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+      padding: 11px 14px; border-bottom: 1px solid var(--line);
+      text-decoration: none; color: var(--text);
+    }
+    .sr-item:last-child { border-bottom: 0; }
+    .sr-item:hover { background: var(--panel-2); }
+    .sr-title { font-weight: 650; font-size: 14px; }
+    .sr-cat { color: var(--faint); font: 11px var(--mono); white-space: nowrap; }
+    .sr-empty { padding: 18px 14px; color: var(--muted); font-size: 14px; }
   </style>
 </head>
 <body>
@@ -78,13 +101,17 @@
         Cheatsheets, visual guides, little games, and random experiments — each in its own folder, all served from one GitHub Pages site.
       </p>
       <div class="stat-row">
-        <div class="stat"><strong>51</strong><span>cheatsheets &amp; guides</span></div>
+        <div class="stat"><strong>56</strong><span>cheatsheets &amp; guides</span></div>
         <div class="stat"><strong>1</strong><span>link library</span></div>
         <div class="stat"><strong>1</strong><span>playable game</span></div>
       </div>
       <div class="hero-actions" style="margin-top:26px">
         <a class="button primary" href="links/">Browse the link library →</a>
         <a class="button" href="#cheatsheets">See all cheatsheets</a>
+      </div>
+      <div class="site-search">
+        <input id="siteSearch" type="search" placeholder="Search all cheatsheets — rust, nginx, sensor, betaflight…" autocomplete="off" aria-label="Search all cheatsheets">
+        <div id="siteSearchResults" class="site-search-results" role="listbox"></div>
       </div>
     </section>
 
@@ -184,6 +211,13 @@
           <div class="meta"><span class="tag">generic</span><span class="tag">narrowing</span><span class="tag">utility</span></div>
           <div class="go">Open guide →</div>
         </a>
+        <a class="card link-card" href="zig/">
+          <span class="tag">language</span>
+          <h3 style="margin-top:14px">Zig — cheatsheet</h3>
+          <p>Comptime, memory/allocators, optionals/errors, build.zig, and C interop.</p>
+          <div class="meta"><span class="tag">comptime</span><span class="tag">allocator</span><span class="tag">interop</span></div>
+          <div class="go">Open guide →</div>
+        </a>
       </div>
 
       <div class="cat">CLI &amp; shell</div>
@@ -248,6 +282,13 @@
           <div class="meta"><span class="tag">bands</span><span class="tag">antenna</span><span class="tag">SWR</span></div>
           <div class="go">Open guide →</div>
         </a>
+        <a class="card link-card" href="esphome/">
+          <span class="tag">embedded</span>
+          <h3 style="margin-top:14px">ESPHome — cheatsheet</h3>
+          <p>YAML-defined firmware, sensors, and home automation for ESP devices.</p>
+          <div class="meta"><span class="tag">YAML</span><span class="tag">sensor</span><span class="tag">Home Assistant</span></div>
+          <div class="go">Open guide →</div>
+        </a>
       </div>
 
       <div class="cat">Electronics</div>
@@ -271,6 +312,13 @@
           <h3 style="margin-top:14px">DIY hardware list — cheatsheet</h3>
           <p>Modules, ICs, microcontrollers, and sensors — typical and unusual — for DIY builds.</p>
           <div class="meta"><span class="tag">sensors</span><span class="tag">modules</span><span class="tag">MCUs</span></div>
+          <div class="go">Open guide →</div>
+        </a>
+        <a class="card link-card" href="kicad/">
+          <span class="tag">PCB</span>
+          <h3 style="margin-top:14px">KiCad — cheatsheet</h3>
+          <p>Schematic, layout, footprints, design rules, and fabrication output.</p>
+          <div class="meta"><span class="tag">schematic</span><span class="tag">layout</span><span class="tag">gerber</span></div>
           <div class="go">Open guide →</div>
         </a>
       </div>
@@ -321,6 +369,13 @@
           <h3 style="margin-top:14px">OpenGL — cheatsheet</h3>
           <p>Buffers, VAOs, shaders, textures, framebuffers, and the core profile.</p>
           <div class="meta"><span class="tag">VBO</span><span class="tag">VAO</span><span class="tag">framebuffer</span></div>
+          <div class="go">Open guide →</div>
+        </a>
+        <a class="card link-card" href="webgpu/">
+          <span class="tag">graphics</span>
+          <h3 style="margin-top:14px">WebGPU — cheatsheet</h3>
+          <p>Devices, pipelines, buffers, WGSL shaders, and the render/compute pipeline.</p>
+          <div class="meta"><span class="tag">WGSL</span><span class="tag">pipeline</span><span class="tag">compute</span></div>
           <div class="go">Open guide →</div>
         </a>
       </div>
@@ -458,6 +513,13 @@
           <div class="meta"><span class="tag">nginx</span><span class="tag">redis</span><span class="tag">Carmack</span></div>
           <div class="go">Open guide →</div>
         </a>
+        <a class="card link-card" href="ebpf/">
+          <span class="tag">systems</span>
+          <h3 style="margin-top:14px">eBPF — cheatsheet</h3>
+          <p>Programs, maps, hooks, the verifier, and observability tooling.</p>
+          <div class="meta"><span class="tag">kprobe</span><span class="tag">XDP</span><span class="tag">bpftrace</span></div>
+          <div class="go">Open guide →</div>
+        </a>
       </div>
 
       <div class="cat">Quantitative</div>
@@ -542,5 +604,7 @@
   </div>
 
   <script src="assets/app.js"></script>
+  <script src="assets/search-index.js"></script>
+  <script src="assets/search.js"></script>
 </body>
 </html>

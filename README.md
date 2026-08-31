@@ -4,7 +4,7 @@ All the AI slop lives here: little static sites, experiments, and random stuff �
 
 ## Cheatsheets & guides
 
-Each guide is a subfolder, served under `https://makefunstuff.github.io/slop-stuff/<folder>/`. The root **[index.html](./index.html)** is the hub linking everything.
+Each guide is a subfolder, served under `https://makefunstuff.github.io/slop-stuff/<folder>/`. The root **[index.html](./index.html)** is the hub linking everything, with a **site-wide search box** (built from `assets/search-index.js`) that finds any cheatsheet by title, category, or topic.
 
 ### AI & agents
 
@@ -23,6 +23,7 @@ Each guide is a subfolder, served under `https://makefunstuff.github.io/slop-stu
 - **[lua](./lua/)** — tables, metatables, patterns, modules, embedding
 - **[golang](./golang/)** — modules, structs, interfaces, goroutines, channels, errors
 - **[typescript](./typescript/)** — types, interfaces, generics, narrowing, utility types
+- **[zig](./zig/)** — comptime, memory/allocators, optionals/errors, build.zig, C interop
 
 ### CLI & shell
 
@@ -52,12 +53,14 @@ Each guide is a subfolder, served under `https://makefunstuff.github.io/slop-stu
 - **[electrical](./electrical/)** — Ohm's law, logic levels, pull-ups, dividers, power for firmware devs
 - **[sdr](./sdr/)** — IQ, sampling, DSP, GNU Radio, common signals
 - **[hamradio](./hamradio/)** — bands, propagation, antennas, and the math/physics/embedded side of RF
+- **[esphome](./esphome/)** — YAML firmware, sensors, home automation for ESP devices
 
 ### Electronics
 
 - **[electronics](./electronics/)** — components, circuits, op-amps, power supplies, practical electronics
 - **[tubes](./tubes/)** — BJTs, MOSFETs, JFETs, vacuum tubes: operation, biasing, circuits
 - **[hardware](./hardware/)** — modules, ICs, MCUs, and sensors (typical and unusual) for DIY builds
+- **[kicad](./kicad/)** — schematic, layout, footprints, design rules, fabrication output
 
 ### Drones & FPV
 
@@ -70,6 +73,7 @@ Each guide is a subfolder, served under `https://makefunstuff.github.io/slop-stu
 
 - **[shaders](./shaders/)** — GLSL, the pipeline, uniforms/varyings, lighting, SDFs, effects
 - **[opengl](./opengl/)** — buffers, VAOs, shaders, textures, framebuffers, core profile
+- **[webgpu](./webgpu/)** — devices, pipelines, buffers, WGSL shaders, render/compute
 
 ### Game dev
 
@@ -84,6 +88,7 @@ Each guide is a subfolder, served under `https://makefunstuff.github.io/slop-stu
 - **[osdev](./osdev/)** — boot, protected mode, interrupts, paging, kernel basics
 - **[asm](./asm/)** — registers, instructions, addressing, calling conventions, syscalls
 - **[giants](./giants/)** — systems lessons from nginx, Redis, the Linux kernel, and Carmack
+- **[ebpf](./ebpf/)** — programs, maps, hooks, the verifier, observability tooling
 
 ### Quantitative
 

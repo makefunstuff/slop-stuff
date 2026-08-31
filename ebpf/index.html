@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-guide="ebpf">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="eBPF: programs, maps, hooks, the verifier, and observability tooling.">
+  <title>eBPF — Visual Cheatsheet</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../" aria-label="Back to slop-stuff">
+      <span class="brand-mark">bpf_</span>
+      <span>eBPF Guide</span>
+      <span class="version">kernel</span>
+    </a>
+    <label class="search-wrap">
+      <span class="sr-only" hidden>Search guide</span>
+      <input id="search" type="search" aria-label="Search guide" placeholder="Search eBPF, map, kprobe, tracepoint, XDP, verifier, bpf2go…" autocomplete="off">
+    </label>
+    <div class="top-actions">
+      <button class="icon-button" id="themeToggle" type="button" title="Toggle theme" aria-label="Toggle light and dark theme">◐</button>
+      <button class="icon-button" id="printGuide" type="button" title="Print guide" aria-label="Print this guide">Print</button>
+    </div>
+  </header>
+
+  <div class="shell" id="top">
+    <aside class="sidebar" aria-label="Guide sections">
+      <p class="side-label">On this page</p>
+      <nav>
+        <a href="#start"><span class="nav-number">01</span>Start here</a>
+        <a href="#hooks"><span class="nav-number">02</span>Hooks</a>
+        <a href="#maps"><span class="nav-number">03</span>Maps</a>
+        <a href="#tooling"><span class="nav-number">04</span>Tooling</a>
+        <a href="#program"><span class="nav-number">05</span>Writing a program</a>
+        <a href="#verifier"><span class="nav-number">06</span>Verifier</a>
+        <a href="#usecases"><span class="nav-number">07</span>Use cases</a>
+        <a href="#gotchas"><span class="nav-number">08</span>Gotchas</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section class="hero searchable" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="eyebrow">Visual cheatsheet + usage guide</div>
+          <h1 id="hero-title">Programmable <span>kernel.</span></h1>
+          <p>eBPF runs sandboxed programs inside the Linux kernel — safely tracing, filtering, and observing everything — with no kernel module and no reboot.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#start">Start here →</a>
+            <a class="button" href="#hooks">Browse hooks</a>
+            <a class="button" href="#tooling">Tooling</a>
+          </div>
+        </div>
+        <div class="terminal" aria-label="Stylized bpftrace session">
+          <div class="terminal-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="terminal-title">bpftrace</span></div>
+          <div class="terminal-body">
+            <div class="mock-side">
+              <p class="mock-label">Probe</p>
+              <div class="mock-row active">tracepoint</div>
+              <div class="mock-row">kprobe</div>
+              <div class="mock-row">xdp</div>
+            </div>
+            <div class="mock-pane">
+              <div><span class="prompt">❯</span> <span class="cmd">bpftrace -e 'tracepoint:syscalls:sys_enter_open { printf("%s\n", comm); }'</span></div>
+              <br>
+              <div class="dim">Attaching 1 probe…</div>
+              <div class="dim">bash</div>
+              <div class="dim">vim</div>
+              <div class="dim">cat</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cursor"></span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “map”, “kprobe”, “XDP”, “verifier”, or “bpf2go”.</div>
+
+      <section class="section searchable" id="start">
+        <div class="section-head">
+          <div><div class="section-kicker">01 / Start here</div><h2>What eBPF is</h2></div>
+          <p>Small programs compiled to BPF bytecode, loaded into the kernel, proven safe by the verifier, JIT-compiled to native code, and attached to a hook.</p>
+        </div>
+        <div class="model">
+          <div class="model-node agent"><strong>Userspace</strong><small>loads &amp; attaches</small></div><div class="arrow">→</div>
+          <div class="model-node"><strong>Verifier</strong><small>proves safety</small></div><div class="arrow">→</div>
+          <div class="model-node"><strong>JIT</strong><small>native code</small></div><div class="arrow">→</div>
+          <div class="model-node agent"><strong>Kernel hook</strong><small>kprobe · XDP · tc</small></div><div class="arrow">→</div>
+          <div class="model-node"><strong>Maps</strong><small>shared state</small></div>
+        </div>
+        <div class="flow" style="margin-top:16px">
+          <div class="flow-step"><div><strong>Write</strong><p>A <code>SEC</code>-tagged C function, or a Go loader over a small C file.</p></div></div>
+          <div class="flow-step"><div><strong>Compile</strong><p><code>clang -O2 -target bpf</code> emits BPF bytecode into an ELF object file.</p></div></div>
+          <div class="flow-step"><div><strong>Load</strong><p>The <code>bpf()</code> syscall hands the bytecode to the verifier.</p></div></div>
+          <div class="flow-step"><div><strong>Verify + JIT</strong><p>The verifier proves safety, then JIT-compiles to native code.</p></div></div>
+          <div class="flow-step"><div><strong>Attach + run</strong><p>The program binds to a hook and fires on every matching event.</p></div></div>
+        </div>
+        <div class="grid four" style="margin-top:16px">
+          <article class="card"><div class="card-number">1</div><h3>Install tooling</h3><pre><code>sudo apt install clang llvm \\
+  bpftool bpftrace libbpf-dev</code></pre></article>
+          <article class="card"><div class="card-number">2</div><h3>Write</h3><pre><code>SEC("tracepoint/…")
+int prog(void *ctx) { … }
+char LICENSE[] = "GPL";</code></pre></article>
+          <article class="card"><div class="card-number">3</div><h3>Compile</h3><pre><code>clang -O2 -target bpf -g \\
+  -c prog.c -o prog.o</code></pre></article>
+          <article class="card"><div class="card-number">4</div><h3>Load &amp; attach</h3><pre><code>bpftool prog load prog.o \\
+  /sys/fs/bpf/prog autoattach</code></pre></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">KEY</div><p><strong>Nothing runs until the verifier approves.</strong> The bytecode is checked for bounded loops, in-bounds memory access, and whitelisted helpers — then JIT-compiled and attached. Maps are the only shared state between your program and userspace.</p></div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>eBPF</h3><p>Verified, sandboxed, JIT-compiled, no reboot. It can only run through hooks, so a bad program can't crash the kernel.</p></article>
+          <article class="card"><h3>Kernel module</h3><p>Unrestricted native code that can panic the kernel, must be rebuilt against the exact kernel headers, and loads with <code>insmod</code>.</p></article>
+        </div>
+      </section>
+
+      <section class="section searchable" id="hooks">
+        <div class="section-head">
+          <div><div class="section-kicker">02 / Hooks</div><h2>Program types &amp; hooks</h2></div>
+          <p>The hook decides when your program runs and what <code>ctx</code> it receives.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Hook</th><th>Where it runs</th><th>Use when</th><th>Example</th></tr></thead><tbody>
+          <tr><td><code>kprobe</code> / <code>kretprobe</code></td><td>any kernel function (entry / return)</td><td>tracing one function</td><td><code>kprobe:vfs_read</code></td></tr>
+          <tr><td><code>tracepoint</code></td><td>stable kernel tracepoints</td><td>low-overhead, stable ABI</td><td><code>tracepoint:syscalls:sys_enter_open</code></td></tr>
+          <tr><td><code>XDP</code></td><td>earliest point in the NIC driver</td><td>DDoS filter, load balancing</td><td><code>xdp</code></td></tr>
+          <tr><td><code>tc</code></td><td>traffic control ingress / egress</td><td>shaping, policing, redirect</td><td><code>tc/ingress</code></td></tr>
+          <tr><td><code>socket filter</code></td><td>per-socket</td><td>filter one socket's packets</td><td><code>SO_ATTACH_BPF</code></td></tr>
+          <tr><td><code>cgroup</code></td><td>cgroup attach points</td><td>per-container policy</td><td><code>cgroup/skb</code></td></tr>
+          <tr><td><code>uprobe</code> / <code>uretprobe</code></td><td>userspace functions</td><td>tracing applications</td><td><code>uprobe:/bin/bash:readline</code></td></tr>
+        </tbody></table></div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">!</div><p><strong>kprobes are not a stable ABI.</strong> Kernel function names and signatures change between releases. Prefer tracepoints (a stable interface) for long-lived tooling; reach for kprobes when exploring or when no tracepoint exists.</p></div>
+        <div class="grid three" style="margin-top:16px">
+          <article class="card"><h3>Attach a kprobe</h3><pre><code>bpftrace -e 'kprobe:do_sys_open { @[comm] = count(); }'</code></pre></article>
+          <article class="card"><h3>Attach a tracepoint</h3><pre><code>bpftrace -e 'tracepoint:syscalls:sys_enter_open { @[comm] = count(); }'</code></pre></article>
+          <article class="card"><h3>Attach XDP</h3><pre><code>ip link set dev eth0 xdp obj prog.o sec xdp
+# detach:
+ip link set dev eth0 xdp off</code></pre></article>
+        </div>
+      </section>
+
+      <section class="section searchable" id="maps">
+        <div class="section-head">
+          <div><div class="section-kicker">03 / Maps</div><h2>Maps</h2></div>
+          <p>Key/value stores shared between kernel and userspace — the only state that survives between events.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Map type</th><th>Stores</th><th>Use when</th></tr></thead><tbody>
+          <tr><td><code>BPF_MAP_TYPE_HASH</code></td><td>key → value pairs</td><td>counters, lookup tables</td></tr>
+          <tr><td><code>BPF_MAP_TYPE_ARRAY</code></td><td>fixed array, <code>u32</code> index</td><td>per-CPU stats, config</td></tr>
+          <tr><td><code>BPF_MAP_TYPE_PERCPU_HASH</code></td><td>per-CPU copy per key</td><td>avoid races on shared keys</td></tr>
+          <tr><td><code>BPF_MAP_TYPE_LRU_HASH</code></td><td>hash with LRU eviction</td><td>bounded caches</td></tr>
+          <tr><td><code>BPF_MAP_TYPE_PERF_EVENT_ARRAY</code></td><td>events to a perf buffer</td><td>stream events to userspace</td></tr>
+          <tr><td><code>BPF_MAP_TYPE_RINGBUF</code></td><td>lock-free ring buffer</td><td>low-latency event streaming</td></tr>
+          <tr><td><code>BPF_MAP_TYPE_STACK_TRACE</code></td><td>kernel / user stack traces</td><td>profiling, flame graphs</td></tr>
+        </tbody></table></div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Kernel side</h3><p>Look up, update, or delete entries from inside the program.</p><pre><code>__u64 *v = bpf_map_lookup_elem(&amp;counter_map, &amp;key);
+if (v) __sync_fetch_and_add(v, 1);
+else   bpf_map_update_elem(&amp;counter_map, &amp;key, &amp;one, BPF_ANY);</code></pre></article>
+          <article class="card"><h3>Userspace side</h3><p>Open the same map by fd and read it, or inspect it from the shell.</p><pre><code>bpftool map dump name counter_map
+# or in Go:
+objs.CounterMap.Lookup(key)</code></pre></article>
+        </div>
+        <div class="command-index" style="margin-top:16px">
+          <div class="command-row"><code>bpf_map_lookup_elem(&amp;m, &amp;k)</code><span>read a value; <code>NULL</code> if the key is absent.</span></div>
+          <div class="command-row"><code>bpf_map_update_elem(&amp;m, &amp;k, &amp;v, BPF_ANY)</code><span>insert or overwrite a key.</span></div>
+          <div class="command-row"><code>bpf_map_delete_elem(&amp;m, &amp;k)</code><span>remove a key.</span></div>
+          <div class="command-row"><code>bpf_map_get_next_key(&amp;m, &amp;k, &amp;next)</code><span>iterate keys (start with <code>NULL</code>).</span></div>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">⇄</div><p><strong>Maps are the only channel between kernel and user.</strong> Pick <code>BPF_MAP_TYPE_RINGBUF</code> over a perf event array for new streaming code — it's lock-free and supports variable-size records.</p></div>
+      </section>
+
+      <section class="section searchable" id="tooling">
+        <div class="section-head">
+          <div><div class="section-kicker">04 / Tooling</div><h2>Tooling</h2></div>
+          <p>Five layers, from one-liner tracing to production Go loaders.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>bpftool prog list</code><span>list loaded programs and their IDs.</span></div>
+          <div class="command-row"><code>bpftool map dump name counters</code><span>dump a map's key/value pairs.</span></div>
+          <div class="command-row"><code>bpftool prog load prog.o /sys/fs/bpf/prog autoattach</code><span>load + auto-attach an object file.</span></div>
+          <div class="command-row"><code>bpftrace -l 'tracepoint:syscalls:*'</code><span>list available tracepoints.</span></div>
+          <div class="command-row"><code>bpftrace -e 'kprobe:vfs_read { @[comm] = count(); }'</code><span>count reads per process.</span></div>
+          <div class="command-row"><code>python3 ./trace.py</code><span>BCC: tracing in Python with inline C.</span></div>
+          <div class="command-row"><code>clang -O2 -target bpf -g -c prog.c -o prog.o</code><span>compile C to BPF bytecode (libbpf).</span></div>
+          <div class="command-row"><code>go generate</code><span>bpf2go compiles + embeds BPF into Go.</span></div>
+        </div>
+        <div class="tags" style="margin-top:16px">
+          <span class="tag">libbpf</span><span class="tag">BCC</span><span class="tag">cilium/ebpf</span><span class="tag">bpftrace</span><span class="tag">bpftool</span><span class="tag">bpf2go</span>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">▲</div><p><strong>Start with bpftrace to explore, graduate to libbpf or cilium/ebpf for production.</strong> bpftrace and BCC shine for scripts; libbpf (C) and cilium/ebpf (Go) give you static programs, CO-RE, and full lifecycle control.</p></div>
+        <details style="margin-top:16px">
+          <summary>More bpftool + bpftrace recipes</summary>
+          <div class="details-body command-index">
+            <div class="command-row"><code>bpftool prog dump xlated id N</code><span>disassemble a loaded program.</span></div>
+            <div class="command-row"><code>bpftool prog pin id N /sys/fs/bpf/x</code><span>pin a program for later reuse.</span></div>
+            <div class="command-row"><code>bpftool feature probe</code><span>report this kernel's eBPF capabilities.</span></div>
+            <div class="command-row"><code>bpftrace -e 't:block:block_rq_issue { @[args-&gt;comm] = count(); }'</code><span>count block I/O per process.</span></div>
+            <div class="command-row"><code>bpftrace -e 'uprobe:/bin/bash:readline { printf("%s\n", str(arg0)); }'</code><span>log every bash command line.</span></div>
+            <div class="command-row"><code>bpftool btf dump file /sys/kernel/btf/vmlinux format c</code><span>dump kernel BTF as C headers.</span></div>
+          </div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="program">
+        <div class="section-head">
+          <div><div class="section-kicker">05 / Writing a program</div><h2>Writing a program</h2></div>
+          <p>A minimal skeleton: a section-tagged function, a map, and an attach call.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>Complete program (C · libbpf)</h3><p>Counts <code>execve</code> calls per process in a hash map.</p><pre><code>#include &lt;linux/bpf.h&gt;
+#include &lt;bpf/bpf_helpers.h&gt;
+
+char LICENSE[] SEC("license") = "GPL";
+
+struct {
+  __uint(type, BPF_MAP_TYPE_HASH);
+  __uint(max_entries, 1024);
+  __type(key, __u32);   /* pid */
+  __type(value, __u64); /* count */
+} counts SEC(".maps");
+
+SEC("tracepoint/syscalls/sys_enter_execve")
+int count_exec(void *ctx) {
+  __u32 pid = bpf_get_current_pid_tgid() &gt;&gt; 32;
+  __u64 *v = bpf_map_lookup_elem(&amp;counts, &amp;pid);
+  __u64 one = 1;
+  if (v) __sync_fetch_and_add(v, 1);
+  else   bpf_map_update_elem(&amp;counts, &amp;pid, &amp;one, BPF_ANY);
+  return 0;
+}</code></pre></article>
+          <article class="card"><h3>Compile &amp; load</h3><p>Build the object, load it, and read the map.</p><pre><code>clang -O2 -target bpf -g -c prog.c -o prog.o
+bpftool prog load prog.o /sys/fs/bpf/prog autoattach
+bpftool prog list
+bpftool map dump name counts</code></pre></article>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Go with bpf2go</h3><p><code>bpf2go</code> compiles the C and generates Go bindings.</p><pre><code>//go:build linux
+//go:generate go run github.com/cilium/ebpf/cmd/bpf2go counter counter.c
+
+var objs counterObjects
+loadCounterObjects(&amp;objs, nil)
+defer objs.Close()</code></pre></article>
+          <article class="card"><h3>Attach (Go)</h3><p>Attach to the tracepoint, then read maps through the generated struct.</p><pre><code>tp, err := link.Tracepoint("syscalls",
+  "sys_enter_execve", objs.CountExec, nil)
+defer tp.Close()
+// read/write via objs.Counts.Lookup(…)</code></pre></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">SEC</div><p><strong>The section name is the hook.</strong> <code>SEC("tracepoint/syscalls/sys_enter_execve")</code> tells libbpf where to attach. Programs must declare a GPL-compatible license (<code>char LICENSE[] = "GPL"</code>) to call GPL-only helpers.</p></div>
+        <details style="margin-top:16px">
+          <summary>What bpf2go generates</summary>
+          <div class="details-body">
+            <p><code>counter_bpfel.go</code> (little-endian) and <code>counter_bpfeb.go</code> (big-endian) embed the compiled bytecode and declare the <code>counterObjects</code>, <code>counterPrograms</code>, and <code>counterMaps</code> types plus the <code>loadCounterObjects</code> loader — no clang needed at runtime.</p>
+          </div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="verifier">
+        <div class="section-head">
+          <div><div class="section-kicker">06 / Verifier</div><h2>The verifier</h2></div>
+          <p>Before loading, the kernel proves your program is safe. What it enforces:</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Rule</th><th>What the verifier requires</th><th>Why</th></tr></thead><tbody>
+          <tr><td><code>bounded loops</code></td><td>every loop must provably terminate (or be unrolled)</td><td>guarantee finite runtime</td></tr>
+          <tr><td><code>bounds checks</code></td><td>every load/store must be provably in-bounds</td><td>no out-of-bounds access</td></tr>
+          <tr><td><code>no unreachable code</code></td><td>dead instructions are rejected</td><td>verifier explores all paths</td></tr>
+          <tr><td><code>helper whitelist</code></td><td>only known <code>bpf_*</code> helpers may be called</td><td>no arbitrary kernel calls</td></tr>
+          <tr><td><code>pointer safety</code></td><td>kernel pointers can't leak to userspace or into maps</td><td>protect kernel memory</td></tr>
+          <tr><td><code>512-byte stack</code></td><td>per-program stack is capped (4 KB on newer kernels)</td><td>bounded memory use</td></tr>
+          <tr><td><code>1M instructions</code></td><td>complexity limit before rejection</td><td>the verifier itself terminates</td></tr>
+        </tbody></table></div>
+        <div class="state-grid" style="margin-top:16px">
+          <div class="state-card"><strong>SCALAR_VALUE</strong><p>a number; the verifier tracks its value range.</p></div>
+          <div class="state-card working"><strong>PTR_TO_MAP_VALUE</strong><p>pointer into a map value, bounds-checked.</p></div>
+          <div class="state-card blocked"><strong>PTR_TO_STACK</strong><p>pointer into the 512-byte stack.</p></div>
+          <div class="state-card done"><strong>PTR_TO_CTX</strong><p>pointer to the hook context (<code>ctx</code>).</p></div>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Without CO-RE</h3><p>Recompile against the exact kernel headers; struct field offsets are baked in and break across versions.</p></article>
+          <article class="card"><h3>With CO-RE + BTF</h3><p>BTF describes kernel types at load time; CO-RE relocations patch field offsets, so one <code>.o</code> covers many kernels.</p></article>
+        </div>
+        <div class="flow" style="margin-top:16px">
+          <div class="flow-step"><div><strong>Parse</strong><p>libbpf reads the ELF object: programs, maps, and relocations.</p></div></div>
+          <div class="flow-step"><div><strong>Verify</strong><p>The kernel walks every path, checking bounds, loops, and helper calls.</p></div></div>
+          <div class="flow-step"><div><strong>Relocate (CO-RE)</strong><p>Field offsets and helper references are patched using BTF.</p></div></div>
+          <div class="flow-step"><div><strong>JIT + attach</strong><p>Bytecode becomes native code and binds to the hook.</p></div></div>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">CO-RE</div><p><strong>Compile once, run anywhere.</strong> Use <code>bpf_core_read()</code> and <code>__builtin_preserve_access_index</code> so field offsets relocate from BTF instead of being compiled in.</p></div>
+      </section>
+
+      <section class="section searchable" id="usecases">
+        <div class="section-head">
+          <div><div class="section-kicker">07 / Use cases</div><h2>Use cases</h2></div>
+          <p>Observability, networking, security, and profiling — four reasons to reach for eBPF.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>Observability</h3><p>Measure syscall latency as a histogram, with no app changes.</p><pre><code>bpftrace -e 'kprobe:vfs_read { @start[tid] = nsecs; }
+kretprobe:vfs_read /@start[tid]/ {
+  @us = hist((nsecs - @start[tid]) / 1000);
+  delete(@start[tid]); }'</code></pre></article>
+          <article class="card"><h3>Networking (XDP)</h3><p>Drop or redirect packets at the NIC, before the network stack — DDoS filtering and load balancing at line rate.</p><pre><code>SEC("xdp")
+int xdp_filter(struct xdp_md *ctx) {
+  return XDP_DROP; /* or XDP_PASS / XDP_TX */
+}</code></pre></article>
+          <article class="card"><h3>Security</h3><p><code>seccomp-bpf</code> filters syscalls per process; LSM hooks enforce policy across the whole kernel (audit, socket controls).</p><div class="tags"><span class="tag">seccomp</span><span class="tag">LSM</span><span class="tag">audit</span></div></article>
+          <article class="card"><h3>Profiling &amp; tracing</h3><p>Sample stack traces at 99 Hz for flame graphs and CPU profiling.</p><pre><code>bpftrace -e 'profile:hz:99 { @[kstack] = count(); }'</code></pre></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">→</div><p><strong>Pick the hook to match the goal.</strong> Observability → kprobe / tracepoint; networking → XDP / tc; security → seccomp / LSM / cgroup; profiling → perf events via <code>profile:hz</code>.</p></div>
+      </section>
+
+      <section class="section searchable" id="gotchas">
+        <div class="section-head">
+          <div><div class="section-kicker">08 / Gotchas</div><h2>Pitfalls</h2></div>
+          <p>Things that bite everyone once, from verifier rejections to missing helpers.</p>
+        </div>
+        <div class="callout warning"><div class="callout-mark">⚠</div><p><strong>The verifier is conservative.</strong> Correct code can still be rejected. When it is, simplify: fewer branches, explicit bounds checks, constant loop bounds.</p></div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Verifier limits</h3><p>Loops, stack (512 B), and instruction count (1M) are capped. Unroll small loops, move big buffers to maps, and keep <code>SEC</code> functions short.</p><pre><code>#pragma unroll
+for (int i = 0; i &lt; 8; i++) { … }</code></pre></article>
+          <article class="card"><h3>Kernel version &amp; CO-RE</h3><p>Helpers and features vary by kernel. Use BTF + CO-RE, and feature-detect at load time.</p><pre><code>if (bpf_core_enum_value_exists(
+      enum bpf_func_id, BPF_FUNC_…)) { … }</code></pre></article>
+          <article class="card"><h3>Map sizing</h3><p>Maps preallocate memory. <code>max_entries</code> too small → <code>ENOSPC</code> / <code>E2BIG</code>; too big wastes RAM.</p><pre><code>__uint(max_entries, 65536);
+__uint(map_flags, BPF_F_NO_PREALLOC); /* huge hashes */</code></pre></article>
+          <article class="card"><h3>GPL license</h3><p>GPL-only helpers refuse to load unless the program declares a GPL-compatible license.</p><pre><code>char LICENSE[] SEC("license") = "GPL";</code></pre></article>
+          <article class="card"><h3>Privileges</h3><p>Loading programs needs <code>CAP_BPF</code> + <code>CAP_PERFMON</code> (or root). Unprivileged eBPF is heavily restricted and often disabled.</p><pre><code>cat /proc/sys/kernel/unprivileged_bpf_disabled
+# 1 = disabled, 2 = always disabled</code></pre></article>
+          <article class="card"><h3>Ring buffer vs perf</h3><p>Prefer <code>ringbuf</code> for new code — lock-free, single-producer, and supports reservation for variable-size records.</p><pre><code>__uint(type, BPF_MAP_TYPE_RINGBUF);
+__uint(max_entries, 1 &lt;&lt; 20); /* 1 MiB */</code></pre></article>
+        </div>
+      </section>
+
+      <footer class="footer searchable">
+        <strong>Source of truth</strong>
+        <p>This guide covers eBPF essentials. The kernel BPF documentation and ebpf.io remain authoritative for exact helper signatures and feature availability.</p>
+        <div class="footer-links">
+          <a href="https://ebpf.io/" target="_blank" rel="noreferrer">ebpf.io</a>
+          <a href="https://docs.kernel.org/bpf/" target="_blank" rel="noreferrer">kernel BPF docs</a>
+          <a href="https://github.com/cilium/ebpf" target="_blank" rel="noreferrer">cilium/ebpf</a>
+          <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-guide="embedded">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Bare-metal and RTOS development: registers, interrupts, timers, memory layout, boot, and debugging.">
+  <title>Embedded Dev — Visual Cheatsheet</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../" aria-label="Back to slop-stuff">
+      <span class="brand-mark">emb_</span>
+      <span>Embedded Guide</span>
+      <span class="version">bare metal · RTOS</span>
+    </a>
+    <label class="search-wrap">
+      <span class="sr-only" hidden>Search guide</span>
+      <input id="search" type="search" aria-label="Search guide" placeholder="Search interrupt, register, DMA, timer, linker, boot, RTOS…" autocomplete="off">
+    </label>
+    <div class="top-actions">
+      <button class="icon-button" id="themeToggle" type="button" title="Toggle theme" aria-label="Toggle light and dark theme">◐</button>
+      <button class="icon-button" id="printGuide" type="button" title="Print guide" aria-label="Print this guide">Print</button>
+    </div>
+  </header>
+
+  <div class="shell" id="top">
+    <aside class="sidebar" aria-label="Guide sections">
+      <p class="side-label">On this page</p>
+      <nav>
+        <a href="#start"><span class="nav-number">01</span>Start here</a>
+        <a href="#registers"><span class="nav-number">02</span>Registers</a>
+        <a href="#interrupts"><span class="nav-number">03</span>Interrupts</a>
+        <a href="#timers"><span class="nav-number">04</span>Timers</a>
+        <a href="#memory"><span class="nav-number">05</span>Memory</a>
+        <a href="#rtos"><span class="nav-number">06</span>RTOS</a>
+        <a href="#debug"><span class="nav-number">07</span>Debug</a>
+        <a href="#gotchas"><span class="nav-number">08</span>Gotchas</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section class="hero searchable" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="eyebrow">Visual cheatsheet + usage guide</div>
+          <h1 id="hero-title">Code that talks to <span>hardware.</span></h1>
+          <p>Bare-metal and RTOS development on ARM Cortex-M: memory-mapped registers, interrupts and timers, linker scripts and boot code, FreeRTOS, and SWD debugging — from first flash to HardFault.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#start">Start here →</a>
+            <a class="button" href="#interrupts">Interrupts</a>
+            <a class="button" href="#debug">Debug</a>
+          </div>
+        </div>
+        <div class="terminal" aria-label="Stylized arm-none-eabi toolchain session">
+          <div class="terminal-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="terminal-title">arm-none-eabi</span></div>
+          <div class="terminal-body">
+            <div class="mock-side">
+              <p class="mock-label">Target</p>
+              <div class="mock-row active">cortex-m4</div>
+              <div class="mock-row">thumb</div>
+              <div class="mock-row">STM32F4</div>
+            </div>
+            <div class="mock-pane">
+              <div><span class="prompt">❯</span> <span class="cmd">arm-none-eabi-gcc -mcpu=cortex-m4 -mthumb -Os -c main.c -o main.o</span></div>
+              <div><span class="prompt">❯</span> <span class="cmd">arm-none-eabi-gcc -T stm32f4.ld main.o -o firmware.elf</span></div>
+              <div><span class="prompt">❯</span> <span class="cmd">arm-none-eabi-objdump -h firmware.elf</span></div>
+              <div class="dim">Idx Name  Size    VMA</div>
+              <div class="dim"> 0  .text 003c10  08000000</div>
+              <div class="dim"> 1  .data 0000f0  20000000</div>
+              <div class="dim"> 2  .bss  000400  200000f0</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cmd">arm-none-eabi-size firmware.elf</span></div>
+              <div><span class="prompt">❯</span> <span class="cursor"></span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “interrupt”, “register”, “DMA”, “timer”, “linker”, “boot”, or “RTOS”.</div>
+
+      <section class="section searchable" id="start">
+        <div class="section-head">
+          <div><div class="section-kicker">01 / Start here</div><h2>Toolchain &amp; build</h2></div>
+          <p>One cross-toolchain compiles, links, inspects, and flashes firmware for any Cortex-M target. The same four tools appear in every workflow.</p>
+        </div>
+        <div class="grid four">
+          <article class="card"><div class="card-number">1</div><h3>Cross-compile</h3><pre><code>arm-none-eabi-gcc \
+  -mcpu=cortex-m4 -mthumb \
+  -Os -ffreestanding \
+  -c main.c -o main.o</code></pre></article>
+          <article class="card"><div class="card-number">2</div><h3>Inspect the binary</h3><pre><code>arm-none-eabi-objdump -h firmware.elf   # sections
+arm-none-eabi-objdump -d firmware.elf   # disasm
+arm-none-eabi-nm firmware.elf           # symbols
+arm-none-eabi-size firmware.elf         # text/data/bss</code></pre></article>
+          <article class="card"><div class="card-number">3</div><h3>Linker script</h3><pre><code>/* stm32f4.ld */
+MEMORY {
+  FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 512K
+  RAM  (rwx): ORIGIN = 0x20000000, LENGTH = 128K
+}</code></pre></article>
+          <article class="card"><div class="card-number">4</div><h3>Flash it</h3><pre><code>openocd -f interface/stlink.cfg \
+  -f target/stm32f4x.cfg \
+  -c "program firmware.elf verify reset exit"
+
+st-flash write firmware.bin 0x8000000</code></pre></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">KEY</div><p><strong>Startup runs before <code>main()</code>.</strong> The vector table's <code>Reset_Handler</code> (in <code>startup_stm32f4xx.s</code>) sets the stack pointer, copies <code>.data</code> from flash to RAM, zeroes <code>.bss</code>, then calls <code>main()</code>. Your <code>main</code> never returns.</p></div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Make</h3><p>Recipes need a real <kbd>Tab</kbd>, not spaces.</p><pre><code>CC = arm-none-eabi-gcc
+CFLAGS = -mcpu=cortex-m4 -mthumb -Os
+
+firmware.elf: main.o startup.o
+	$(CC) -T stm32f4.ld $^ -o $@
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $&lt; -o $@</code></pre></article>
+          <article class="card"><h3>CMake</h3><p>Cross-compile by naming a generic target.</p><pre><code>set(CMAKE_SYSTEM_NAME Generic)
+set(CMAKE_SYSTEM_PROCESSOR arm)
+set(CMAKE_C_COMPILER arm-none-eabi-gcc)
+set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
+
+add_executable(firmware main.c startup.s)
+target_compile_options(firmware PRIVATE
+  -mcpu=cortex-m4 -mthumb -Os)
+target_link_options(firmware PRIVATE
+  -T ${CMAKE_SOURCE_DIR}/stm32f4.ld)</code></pre></article>
+        </div>
+      </section>
+
+      <section class="section searchable" id="registers">
+        <div class="section-head">
+          <div><div class="section-kicker">02 / Registers</div><h2>Registers &amp; MMIO</h2></div>
+          <p>Peripherals live at fixed addresses. You talk to them by casting an address to a <code>volatile</code> pointer and reading or writing it.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>Memory-mapped register</h3><p>Cast the peripheral address once, then use it like a variable.</p><pre><code>#define GPIOA_ODR (*(volatile uint32_t *)0x40020014UL)
+
+GPIOA_ODR = 0x20;            // write pin 5
+uint32_t v = GPIOA_ODR;      // read it back</code></pre></article>
+          <article class="card"><h3>Read-modify-write</h3><p>Change one bit without disturbing its neighbors.</p><pre><code>GPIOA_ODR |=  (1UL &lt;&lt; 5);   // set bit 5
+GPIOA_ODR &amp;= ~(1UL &lt;&lt; 5);   // clear bit 5
+GPIOA_ODR ^=  (1UL &lt;&lt; 5);   // toggle bit 5</code></pre></article>
+        </div>
+        <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Goal</th><th>Idiom</th></tr></thead><tbody>
+          <tr><td>Set bit n</td><td><code>reg |= (1UL &lt;&lt; n)</code></td></tr>
+          <tr><td>Clear bit n</td><td><code>reg &amp;= ~(1UL &lt;&lt; n)</code></td></tr>
+          <tr><td>Toggle bit n</td><td><code>reg ^= (1UL &lt;&lt; n)</code></td></tr>
+          <tr><td>Test bit n</td><td><code>if (reg &amp; (1UL &lt;&lt; n))</code></td></tr>
+          <tr><td>Write a bit field</td><td><code>reg = (reg &amp; ~MASK) | (val &lt;&lt; SHIFT)</code></td></tr>
+        </tbody></table></div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>#define macros</h3><p>Each register is a named, typed pointer. Simple and fast, but verbose for many registers.</p><pre><code>#define GPIOA_ODR (*(volatile uint32_t *)0x40020014UL)
+#define LED_PIN   (1UL &lt;&lt; 5)
+
+GPIOA_ODR |= LED_PIN;</code></pre></article>
+          <article class="card"><h3>Struct overlay</h3><p>One struct mirrors the peripheral's layout; a pointer maps it over the base address.</p><pre><code>typedef struct {
+  volatile uint32_t MODER;   // 0x00 mode
+  volatile uint32_t OTYPER;  // 0x04 type
+  volatile uint32_t OSPEEDR; // 0x08 speed
+  volatile uint32_t PUPDR;   // 0x0C pull
+  volatile uint32_t IDR;     // 0x10 input
+  volatile uint32_t ODR;     // 0x14 output
+} GPIO_TypeDef;
+
+#define GPIOA ((GPIO_TypeDef *)0x40020000UL)
+GPIOA-&gt;ODR |= (1U &lt;&lt; 5);</code></pre><div class="tags"><span class="tag">volatile</span><span class="tag">MMIO</span><span class="tag">overlay</span><span class="tag">Cortex-M</span></div></article>
+        </div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">!</div><p><strong><code>volatile</code> stops the optimizer.</strong> Without it, the compiler may cache a register read, delete a “redundant” write, or reorder accesses. Read-modify-write is also <strong>not atomic</strong>: an ISR touching the same register mid-sequence can lose a bit — guard shared registers with a critical section.</p></div>
+      </section>
+
+      <section class="section searchable" id="interrupts">
+        <div class="section-head">
+          <div><div class="section-kicker">03 / Interrupts</div><h2>Interrupts &amp; ISRs</h2></div>
+          <p>A peripheral raises an IRQ; the NVIC runs the matching handler. Keep ISRs short, signal through volatile flags, and mask interrupts only for the smallest window.</p>
+        </div>
+        <div class="flow">
+          <div class="flow-step"><div><strong>Peripheral event</strong><p>The UART receives a byte and sets its <code>RXNE</code> flag in <code>SR</code>.</p></div></div>
+          <div class="flow-step"><div><strong>NVIC pends the IRQ</strong><p>The flag maps to an interrupt line; the NVIC compares its priority against whatever is running.</p></div></div>
+          <div class="flow-step"><div><strong>ISR entry</strong><p>The CPU pushes context (R0–R3, R12, LR, PC, xPSR) and jumps to the vector-table entry.</p></div></div>
+          <div class="flow-step"><div><strong>Clear + signal</strong><p>The ISR reads <code>DR</code> (which clears <code>RXNE</code>), sets a volatile flag, and returns to the main loop.</p></div></div>
+        </div>
+        <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Task</th><th>CMSIS call</th></tr></thead><tbody>
+          <tr><td>Enable an IRQ</td><td><code>NVIC_EnableIRQ(USART1_IRQn)</code></td></tr>
+          <tr><td>Disable an IRQ</td><td><code>NVIC_DisableIRQ(USART1_IRQn)</code></td></tr>
+          <tr><td>Set priority</td><td><code>NVIC_SetPriority(USART1_IRQn, 3)</code> — 0 is highest</td></tr>
+          <tr><td>Force it pending</td><td><code>NVIC_SetPendingIRQ(USART1_IRQn)</code></td></tr>
+          <tr><td>Global gate</td><td><code>__enable_irq()</code> / <code>__disable_irq()</code></td></tr>
+        </tbody></table></div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Volatile-flag ISR</h3><p>The ISR does the minimum; <code>main</code> does the work.</p><pre><code>volatile uint8_t rx_byte;
+volatile int    rx_ready = 0;
+
+void USART1_IRQHandler(void) {
+  if (USART1-&gt;SR &amp; USART_SR_RXNE) {
+    rx_byte  = USART1-&gt;DR;   // read clears the flag
+    rx_ready = 1;
+  }
+}
+
+int main(void) {
+  while (1) {
+    if (rx_ready) {
+      rx_ready = 0;
+      /* handle rx_byte quickly */
+    }
+  }
+}</code></pre></article>
+          <article class="card"><h3>Critical section</h3><p>Mask interrupts around a non-atomic read-modify-write.</p><pre><code>__disable_irq();          // suspend all IRQs
+shared |= (1U &lt;&lt; 3);     // now atomic
+__enable_irq();
+
+// Cortex-M priority masking:
+__set_PRIMASK(1);         // block everything
+__set_BASEPRI(2 &lt;&lt; 5);   // block ≤ priority 2</code></pre></article>
+        </div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">!</div><p><strong>ISR rules:</strong> short, no blocking calls, no <code>printf</code> to a slow UART, no <code>delay()</code>. Set a flag or queue an event and let the main loop finish the job. Use <code>volatile</code> for anything shared with main code, and clear the peripheral's flag before returning.</p></div>
+      </section>
+
+      <section class="section searchable" id="timers">
+        <div class="section-head">
+          <div><div class="section-kicker">04 / Timers &amp; peripherals</div><h2>Timers &amp; peripherals</h2></div>
+          <p>SysTick gives you a millisecond heartbeat; hardware timers generate PWM; the UART and ADC move bytes and samples in or out of the chip.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>SysTick 1 ms tick</h3><p>The core timer fires an interrupt every millisecond.</p><pre><code>volatile uint32_t ms_ticks = 0;
+
+void SysTick_Handler(void) { ms_ticks++; }
+
+int main(void) {
+  SysTick_Config(SystemCoreClock / 1000);
+  while (1) {
+    uint32_t now = ms_ticks;
+    /* count elapsed milliseconds */
+  }
+}</code></pre></article>
+          <article class="card"><h3>PWM via a timer</h3><p>Prescaler + auto-reload set the frequency; the capture/compare register sets the duty cycle.</p><pre><code>TIM2-&gt;PSC  = 84 - 1;          // 84 MHz → 1 MHz
+TIM2-&gt;ARR  = 1000 - 1;        // 1 kHz period
+TIM2-&gt;CCR1 = 500;             // 50% duty on CH1
+TIM2-&gt;CCMR1 |= TIM_CCMR1_OC1M_PWM1;
+TIM2-&gt;CCER  |= TIM_CCER_CC1E;
+TIM2-&gt;CR1   |= TIM_CR1_CEN;</code></pre></article>
+        </div>
+        <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>UART method</th><th>How it works</th><th>Best for</th></tr></thead><tbody>
+          <tr><td>Polling</td><td>loop while <code>!(SR &amp; RXNE)</code>, then read <code>DR</code></td><td>simple, blocking code</td></tr>
+          <tr><td>Interrupt</td><td>enable <code>RXNEIE</code>; the ISR reads <code>DR</code></td><td>low latency, event-driven</td></tr>
+          <tr><td>DMA</td><td>a DMA channel streams <code>DR</code> → buffer</td><td>bulk, CPU-free transfer</td></tr>
+        </tbody></table></div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>ADC single conversion</h3><p>Software-trigger one sample and wait for end-of-conversion.</p><pre><code>ADC1-&gt;CR2 |= ADC_CR2_ADON;        // power on
+ADC1-&gt;SQR3 = 0;                   // channel 0 first
+ADC1-&gt;CR2 |= ADC_CR2_SWSTART;     // start
+while (!(ADC1-&gt;SR &amp; ADC_SR_EOC)); // wait
+uint16_t v = ADC1-&gt;DR;            // 12-bit result</code></pre></article>
+          <article class="card"><h3>DMA basics</h3><p>Point a stream at source, destination, and count, then enable it.</p><pre><code>DMA1_Stream0-&gt;PAR  = (uint32_t)src;
+DMA1_Stream0-&gt;M0AR = (uint32_t)dst;
+DMA1_Stream0-&gt;NDTR = N;          // count
+DMA1_Stream0-&gt;CR   = DMA_SxCR_MINC
+                   | DMA_SxCR_TCIE
+                   | DMA_SxCR_EN;</code></pre></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">⌁</div><p><strong>Timer math:</strong> output frequency = <code>timer_clk / (PSC + 1) / (ARR + 1)</code>. On an 84 MHz STM32, <code>PSC = 83</code> and <code>ARR = 999</code> give a clean 1 kHz, and <code>CCR1</code> sets the duty as a fraction of <code>ARR + 1</code>.</p></div>
+      </section>
+
+      <section class="section searchable" id="memory">
+        <div class="section-head">
+          <div><div class="section-kicker">05 / Memory</div><h2>Memory map &amp; sections</h2></div>
+          <p>Code lives in flash, variables in RAM. The linker script decides what goes where; the startup code makes it true before <code>main()</code> runs.</p>
+        </div>
+        <div class="model" aria-label="Cortex-M memory layout">
+          <div class="model-node"><strong>FLASH</strong><small>0x08000000</small></div><div class="arrow">→</div>
+          <div class="model-node"><strong>.text</strong><small>code + .rodata</small></div><div class="arrow">→</div>
+          <div class="model-node"><strong>.data</strong><small>init globals</small></div><div class="arrow">→</div>
+          <div class="model-node"><strong>.bss</strong><small>zero globals</small></div><div class="arrow">→</div>
+          <div class="model-node agent"><strong>stack &amp; heap</strong><small>grow toward each other</small></div>
+        </div>
+        <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Section</th><th>Holds</th><th>Initialized by</th></tr></thead><tbody>
+          <tr><td><code>.text</code></td><td>machine instructions</td><td>flashed</td></tr>
+          <tr><td><code>.rodata</code></td><td>consts, string literals</td><td>flashed</td></tr>
+          <tr><td><code>.data</code></td><td>initialized globals/statics</td><td>startup copies from flash</td></tr>
+          <tr><td><code>.bss</code></td><td>zero-initialized globals</td><td>startup zeroes</td></tr>
+          <tr><td>stack</td><td>locals, call frames</td><td>SP set at reset</td></tr>
+          <tr><td>heap</td><td><code>malloc()</code> / <code>new</code></td><td>runtime</td></tr>
+        </tbody></table></div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Startup: copy .data</h3><p>Initial values are stored in flash and copied into RAM at boot.</p><pre><code>extern uint32_t _sidata, _sdata, _edata;
+uint32_t *src = &amp;_sidata;
+uint32_t *dst = &amp;_sdata;
+while (dst &lt; &amp;_edata) {
+  *dst++ = *src++;
+}</code></pre></article>
+          <article class="card"><h3>Startup: zero .bss</h3><p>Uninitialized globals must start at zero, never garbage.</p><pre><code>extern uint32_t _sbss, _ebss;
+for (uint32_t *p = &amp;_sbss; p &lt; &amp;_ebss; p++) {
+  *p = 0;
+}</code></pre></article>
+        </div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">!</div><p><strong>The stack grows down from the top of RAM; the heap grows up.</strong> When they meet you get silent corruption, not a clean error. Size <code>.stack</code> in the linker script, keep a watermark, and use the MPU to trap overflow on parts that have one.</p></div>
+      </section>
+
+      <section class="section searchable" id="rtos">
+        <div class="section-head">
+          <div><div class="section-kicker">06 / RTOS</div><h2>RTOS basics</h2></div>
+          <p>A scheduler runs tasks by priority and preempts lower ones. Semaphores, mutexes, and queues synchronize them without busy-waiting.</p>
+        </div>
+        <div class="state-grid">
+          <div class="state-card"><strong>Running</strong><p>The highest-priority ready task, actually on the CPU. Only one at a time.</p></div>
+          <div class="state-card working"><strong>Ready</strong><p>Waiting for CPU time; runs when nothing higher-priority is ready.</p></div>
+          <div class="state-card blocked"><strong>Blocked</strong><p>Waiting on a queue, semaphore, or <code>vTaskDelay()</code>. Consumes no CPU.</p></div>
+          <div class="state-card unknown"><strong>Suspended</strong><p>Explicitly paused with <code>vTaskSuspend()</code>; only <code>vTaskResume()</code> wakes it.</p></div>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Create + delay a task</h3><p>Every task is a function that never returns, plus a stack.</p><pre><code>void task(void *arg) {
+  while (1) {
+    toggle_led();
+    vTaskDelay(pdMS_TO_TICKS(500));
+  }
+}
+
+xTaskCreate(task, "blink", 256, NULL, 1, NULL);
+vTaskStartScheduler();</code></pre></article>
+          <article class="card"><h3>Mutex, semaphore, queue</h3><p>Mutexes protect shared state; queues pass data between tasks.</p><pre><code>SemaphoreHandle_t m = xSemaphoreCreateMutex();
+if (xSemaphoreTake(m, pdMS_TO_TICKS(100))) {
+  /* critical region */
+  xSemaphoreGive(m);
+}
+
+QueueHandle_t q = xQueueCreate(8, sizeof(int));
+xQueueSend(q, &amp;val, portMAX_DELAY);
+xQueueReceive(q, &amp;val, portMAX_DELAY);</code></pre></article>
+        </div>
+        <div class="command-index" style="margin-top:16px">
+          <div class="command-row"><code>xTaskCreate(fn, name, stack, arg, prio, handle)</code><span>create a task.</span></div>
+          <div class="command-row"><code>vTaskDelay(pdMS_TO_TICKS(ms))</code><span>block for a time.</span></div>
+          <div class="command-row"><code>xSemaphoreTake / xSemaphoreGive</code><span>mutex lock / unlock.</span></div>
+          <div class="command-row"><code>xQueueSend / xQueueReceive</code><span>message passing.</span></div>
+          <div class="command-row"><code>taskENTER_CRITICAL / taskEXIT_CRITICAL</code><span>disable scheduler preemption.</span></div>
+          <div class="command-row"><code>vTaskStartScheduler()</code><span>start the tick and scheduler.</span></div>
+        </div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">!</div><p><strong>Priority inversion:</strong> a low-priority task holding a mutex blocks a high-priority task, which then waits behind the medium tasks. Fix it by using a <strong>mutex with priority inheritance</strong> — never a binary semaphore — for resources shared across priority levels.</p></div>
+      </section>
+
+      <section class="section searchable" id="debug">
+        <div class="section-head">
+          <div><div class="section-kicker">07 / Debug</div><h2>Debugging</h2></div>
+          <p>SWD gives you a hardware debugger: breakpoints, watchpoints, and register inspection — without touching production code.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>OpenOCD + GDB</h3><p>One terminal hosts the probe; another drives the target.</p><pre><code># terminal 1
+openocd -f interface/stlink.cfg \
+  -f target/stm32f4x.cfg
+
+# terminal 2
+arm-none-eabi-gdb firmware.elf
+(gdb) target remote :3333
+(gdb) monitor reset halt
+(gdb) load</code></pre></article>
+          <article class="card"><h3>HardFault handler</h3><p>Recover the faulting PC from the stacked frame on the MSP.</p><pre><code>void HardFault_Handler(void) {
+  uint32_t *msp = (uint32_t *)__get_MSP();
+  uint32_t pc   = msp[6];   // stacked PC
+  uint32_t lr   = msp[5];   // stacked LR
+  (void)pc; (void)lr;
+  __asm volatile("bkpt #0"); // trap for GDB
+}</code></pre></article>
+        </div>
+        <div class="command-index" style="margin-top:16px">
+          <div class="command-row"><code>break main</code><span>stop at main.</span></div>
+          <div class="command-row"><code>continue</code><span>run to the next breakpoint.</span></div>
+          <div class="command-row"><code>next / step</code><span>step over / into.</span></div>
+          <div class="command-row"><code>print x</code><span>print a variable.</span></div>
+          <div class="command-row"><code>info registers</code><span>dump CPU registers.</span></div>
+          <div class="command-row"><code>x/10wx 0x20000000</code><span>dump 10 words of RAM.</span></div>
+          <div class="command-row"><code>monitor reset halt</code><span>reset and halt via OpenOCD.</span></div>
+          <div class="command-row"><code>watch x</code><span>break when x changes.</span></div>
+        </div>
+        <details style="margin-top:16px">
+          <summary>printf vs semihosting</summary>
+          <div class="details-body"><p>A UART <code>printf</code> needs a driver and is slow; <strong>semihosting</strong> routes syscalls to the host GDB through a breakpoint instruction — no extra hardware, but it stalls whenever no debugger is attached. Use semihosting for development, a buffered UART/DMA logger in production.</p></div>
+        </details>
+        <details>
+          <summary>Logic analyzer</summary>
+          <div class="details-body"><p>For timing bugs — bit-banged protocols, PWM edges, bus contention — capture GPIO transitions with a logic analyzer (Saleae, DSLogic). A scope shows analog shape; a logic analyzer shows digital state and timing at MHz.</p></div>
+        </details>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">SWD</div><p><strong>SWD beats JTAG on modern parts:</strong> two pins (<code>SWDIO</code> + <code>SWCLK</code>) plus power and ground, versus four or five for JTAG (<code>TMS/TCK/TDI/TDO</code>). Both expose the same debug access; SWD is the default on Cortex-M.</p></div>
+      </section>
+
+      <section class="section searchable" id="gotchas">
+        <div class="section-head">
+          <div><div class="section-kicker">08 / Gotchas</div><h2>Pitfalls</h2></div>
+          <p>Six failures that look like hardware problems but are almost always software.</p>
+        </div>
+        <details>
+          <summary>Missing volatile</summary>
+          <div class="details-body"><p>The compiler caches a register read or deletes a write it thinks is redundant. Mark every MMIO pointer and every variable shared with an ISR <code>volatile</code>.</p><pre><code>volatile uint32_t *const REG = (uint32_t *)0x40021000UL;
+volatile int flag;   // shared with an ISR</code></pre></div>
+        </details>
+        <details>
+          <summary>Non-atomic read-modify-write</summary>
+          <div class="details-body"><p><code>REG |= (1 &lt;&lt; 3)</code> reads, modifies, and writes. If an ISR writes the same register in between, its change is lost. Wrap shared RMW in a critical section (<code>__disable_irq()</code> / <code>__enable_irq()</code>).</p></div>
+        </details>
+        <details>
+          <summary>Stack overflow</summary>
+          <div class="details-body"><p>Deep recursion, large locals, or a too-small <code>.stack</code> overruns into <code>.data</code>/heap and faults elsewhere. Raise the stack, avoid deep recursion, and add a watermark or MPU guard.</p></div>
+        </details>
+        <details>
+          <summary>ISR latency</summary>
+          <div class="details-body"><p>A long or blocking ISR delays every other interrupt and can overflow a queue. Keep ISRs tiny — set a flag, queue an event, return — and do the work in the main loop or a task.</p></div>
+        </details>
+        <details>
+          <summary>Watchdog resets</summary>
+          <div class="details-body"><p>The independent watchdog (IWDG) resets the chip when its counter isn't fed. Kick it from the main loop after real progress, not from inside an ISR, so a hung loop still trips the reset.</p></div>
+        </details>
+        <details>
+          <summary>Uninitialized memory</summary>
+          <div class="details-body"><p><code>.bss</code> is zeroed at boot, but stack memory is not — a local variable holds whatever was there before. Initialize every variable before reading it, or make it <code>static</code> to get guaranteed zero-init.</p></div>
+        </details>
+      </section>
+
+      <footer class="footer searchable">
+        <strong>Source of truth</strong>
+        <p>This guide covers the essentials of bare-metal and RTOS development on ARM Cortex-M. The ARM architecture reference manuals and each vendor's datasheet remain authoritative for every register and edge case.</p>
+        <div class="footer-links">
+          <a href="https://developer.arm.com/documentation" target="_blank" rel="noreferrer">ARM documentation</a>
+          <a href="https://www.freertos.org/Documentation/01-FreeRTOS-quick-start/" target="_blank" rel="noreferrer">FreeRTOS quick start</a>
+          <a href="https://interrupt.memfault.com/" target="_blank" rel="noreferrer">Memfault Interrupt</a>
+          <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

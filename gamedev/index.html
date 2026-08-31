@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-guide="gamedev">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Game programming patterns: game loop, component/entity, state machines, object pooling, and messaging.">
+  <title>GameDev Patterns — Visual Cheatsheet</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../" aria-label="Back to slop-stuff">
+      <span class="brand-mark">gd_</span>
+      <span>GameDev Patterns</span>
+      <span class="version">patterns</span>
+    </a>
+    <label class="search-wrap">
+      <span class="sr-only" hidden>Search guide</span>
+      <input id="search" type="search" aria-label="Search guide" placeholder="Search game loop, component, state machine, pool, observer, command…" autocomplete="off">
+    </label>
+    <div class="top-actions">
+      <button class="icon-button" id="themeToggle" type="button" title="Toggle theme" aria-label="Toggle light and dark theme">◐</button>
+      <button class="icon-button" id="printGuide" type="button" title="Print guide" aria-label="Print this guide">Print</button>
+    </div>
+  </header>
+
+  <div class="shell" id="top">
+    <aside class="sidebar" aria-label="Guide sections">
+      <p class="side-label">On this page</p>
+      <nav>
+        <a href="#start"><span class="nav-number">01</span>Start here</a>
+        <a href="#loop"><span class="nav-number">02</span>Game loop</a>
+        <a href="#component"><span class="nav-number">03</span>Components</a>
+        <a href="#state"><span class="nav-number">04</span>State machines</a>
+        <a href="#spawn"><span class="nav-number">05</span>Spawning</a>
+        <a href="#events"><span class="nav-number">06</span>Messaging</a>
+        <a href="#update"><span class="nav-number">07</span>Update methods</a>
+        <a href="#gotchas"><span class="nav-number">08</span>Gotchas</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section class="hero searchable" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="eyebrow">Visual cheatsheet + usage guide</div>
+          <h1 id="hero-title">Patterns that make <span>games tick.</span></h1>
+          <p>Every game is one tight loop — read input, step the simulation, draw a frame. These patterns keep that loop, and the code around it, fast, clear, and debuggable.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#start">Start here →</a>
+            <a class="button" href="#loop">Game loop</a>
+            <a class="button" href="#component">Components</a>
+          </div>
+        </div>
+        <div class="terminal" aria-label="Stylized game loop">
+          <div class="terminal-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="terminal-title">game loop</span></div>
+          <div class="terminal-body">
+            <div class="mock-side">
+              <p class="mock-label">Frame</p>
+              <div class="mock-row active">process input</div>
+              <div class="mock-row">update (fixed)</div>
+              <div class="mock-row">render (interp)</div>
+            </div>
+            <div class="mock-pane">
+              <div><span class="cmd">const STEP = 1 / 60;</span></div>
+              <div><span class="cmd">let lag = 0, prev = 0;</span></div>
+              <br>
+              <div><span class="cmd">function frame(now) {</span></div>
+              <div><span class="dim">  lag += (now - prev) / 1000;</span></div>
+              <div><span class="dim">  prev = now;</span></div>
+              <div><span class="term-accent">  while (lag &gt;= STEP) {</span></div>
+              <div><span class="dim">    update(STEP);   // fixed step</span></div>
+              <div><span class="dim">    lag -= STEP;</span></div>
+              <div><span class="term-accent">  }</span></div>
+              <div><span class="dim">  render(lag / STEP);</span></div>
+              <div><span class="dim">  requestAnimationFrame(frame);</span></div>
+              <div><span class="cmd">}</span></div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cursor"></span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “loop”, “component”, “state”, “pool”, or “observer”.</div>
+
+      <section class="section searchable" id="start">
+        <div class="section-head">
+          <div><div class="section-kicker">01 / Start here</div><h2>Architecture</h2></div>
+          <p>Every game is one loop — input, update, render — driven by a clock. The four ideas below are the whole foundation.</p>
+        </div>
+        <div class="grid four">
+          <article class="card"><div class="card-number">1</div><h3>Game loop</h3><p>One loop runs forever: <code>input()</code>, then <code>update()</code>, then <code>render()</code>. Everything else hangs off it.</p></article>
+          <article class="card"><div class="card-number">2</div><h3>Delta time</h3><p><code>dt = now - last</code>. Multiply movement by <code>dt</code> so speed is constant on any framerate.</p></article>
+          <article class="card"><div class="card-number">3</div><h3>Update vs render</h3><p>Update the simulation at a fixed rate; render as fast as the display allows. Never tie logic to frame rate.</p></article>
+          <article class="card"><div class="card-number">4</div><h3>Determinism</h3><p>A fixed timestep makes physics reproducible — same inputs, same result, every run.</p></article>
+        </div>
+        <div class="flow" style="margin-top:16px">
+          <div class="flow-step"><div><strong>Read input</strong><p>Sample the controller, queue events, or poll state once per tick.</p></div></div>
+          <div class="flow-step"><div><strong>Update</strong><p>Advance the simulation by a fixed <code>dt</code> — physics, AI, timers.</p></div></div>
+          <div class="flow-step"><div><strong>Render</strong><p>Draw the current (interpolated) world state to the screen.</p></div></div>
+          <div class="flow-step"><div><strong>Repeat</strong><p>Loop back — the only thing that ends the game is an exit condition.</p></div></div>
+        </div>
+      </section>
+
+      <section class="section searchable" id="loop">
+        <div class="section-head">
+          <div><div class="section-kicker">02 / Game loop</div><h2>Game loop patterns</h2></div>
+          <p>Decouple update from render, advance time with an accumulator, and queue input so it is handled once per tick.</p>
+        </div>
+        <article class="card">
+          <h3>Fixed timestep with accumulator + interpolation</h3>
+          <pre><code>double previous = getCurrentTime();
+double lag = 0.0;
+while (running) {
+  double current = getCurrentTime();
+  double elapsed = current - previous;
+  previous = current;
+  lag += elapsed;
+
+  processInput();
+
+  while (lag &gt;= MS_PER_UPDATE) {
+    update();              // fixed step — deterministic
+    lag -= MS_PER_UPDATE;
+  }
+
+  render(lag / MS_PER_UPDATE);  // interpolate between states
+}</code></pre>
+        </article>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Decoupled update/render</h3><p>Run <code>update()</code> a fixed number of times per second, but <code>render()</code> as fast as the monitor refreshes. Pass the interpolation factor <code>α</code> so the renderer can blend between the last two states.</p><pre><code>render(lag / MS_PER_UPDATE); // α in [0, 1)</code></pre></article>
+          <article class="card"><h3>Event queue for input</h3><p>Push input events into a queue; drain it at the top of <code>update()</code>. Input is then processed once per simulation step, not once per render frame.</p><pre><code>while (!inputQueue.empty()) {
+  auto event = inputQueue.pop();
+  handleInput(event);
+}</code></pre></article>
+        </div>
+        <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Strategy</th><th>Update rate</th><th>Good for</th><th>Watch out for</th></tr></thead><tbody>
+          <tr><td>Variable timestep</td><td>each frame, <code>dt</code> varies</td><td>simple games</td><td>physics can diverge</td></tr>
+          <tr><td>Fixed timestep</td><td>constant <code>dt</code></td><td>deterministic physics</td><td>spiral of death if too slow</td></tr>
+          <tr><td>Fixed + accumulator</td><td>fixed, capped catch-up</td><td>most real games</td><td>cap the loop, drop spare time</td></tr>
+        </tbody></table></div>
+      </section>
+
+      <section class="section searchable" id="component">
+        <div class="section-head">
+          <div><div class="section-kicker">03 / Components</div><h2>Component &amp; entity</h2></div>
+          <p>Compose objects from small, reusable parts instead of inheriting from a giant base class. ECS takes that idea to the extreme.</p>
+        </div>
+        <div class="model" aria-label="ECS: entities are ids, components are data, systems are behavior">
+          <div class="model-node"><strong>Entity</strong><small>just an id</small></div><div class="arrow">→</div>
+          <div class="model-node agent"><strong>Components</strong><small>plain data</small></div><div class="arrow">→</div>
+          <div class="model-node agent"><strong>Systems</strong><small>behavior</small></div><div class="arrow">→</div>
+          <div class="model-node"><strong>World</strong><small>wires it together</small></div>
+        </div>
+        <div class="grid three" style="margin-top:16px">
+          <article class="card"><h3>Composition over inheritance</h3><p>Build an entity by attaching only the components it needs. No <code>Monster : Actor : Entity</code> ladder to refactor later.</p></article>
+          <article class="card"><h3>Component pattern</h3><p>One component owns one domain — <code>Position</code>, <code>Sprite</code>, <code>Physics</code>. Each knows its own state and can be updated independently.</p></article>
+          <article class="card"><h3>Data locality</h3><p>Store all components of one type contiguously (struct-of-arrays) so a system iterates cache-friendly memory instead of chasing pointers.</p></article>
+        </div>
+        <article class="card" style="margin-top:16px">
+          <h3>Minimal component + system</h3>
+          <pre><code>struct Position { float x, y; };
+struct Velocity { float dx, dy; };
+
+void moveSystem(Array&lt;Position&gt;&amp; pos,
+                Array&lt;Velocity&gt;&amp; vel, float dt) {
+  for (size_t i = 0; i &lt; pos.size(); ++i) {
+    pos[i].x += vel[i].dx * dt;
+    pos[i].y += vel[i].dy * dt;
+  }
+}</code></pre>
+        </article>
+        <div class="tags" style="margin-top:16px">
+          <span class="tag">ECS</span><span class="tag">entity</span><span class="tag">component</span><span class="tag">system</span><span class="tag">SoA</span><span class="tag">cache-friendly</span>
+        </div>
+      </section>
+
+      <section class="section searchable" id="state">
+        <div class="section-head">
+          <div><div class="section-kicker">04 / State machines</div><h2>State machines</h2></div>
+          <p>Model an object as a finite set of states and the transitions between them. Keeps branching logic flat and testable.</p>
+        </div>
+        <div class="state-grid">
+          <div class="state-card"><strong>Idle</strong><p>On ground, no input. Transitions to <code>Running</code> on move.</p></div>
+          <div class="state-card working"><strong>Running</strong><p>On ground, moving. Transitions to <code>Jumping</code> on jump input.</p></div>
+          <div class="state-card done"><strong>Jumping</strong><p>Airborne, rising. Gravity takes over until apex.</p></div>
+          <div class="state-card blocked"><strong>Falling</strong><p>Airborne, descending. Lands back to <code>Idle</code>.</p></div>
+        </div>
+        <div class="model" style="margin-top:16px" aria-label="Player state transitions">
+          <div class="model-node"><strong>Idle</strong><small>grounded</small></div><div class="arrow">→</div>
+          <div class="model-node"><strong>Run</strong><small>move</small></div><div class="arrow">→</div>
+          <div class="model-node agent"><strong>Jump</strong><small>rise</small></div><div class="arrow">→</div>
+          <div class="model-node"><strong>Fall</strong><small>descend</small></div>
+        </div>
+        <div class="grid four" style="margin-top:16px">
+          <article class="card"><h3>Finite state machine</h3><p>A fixed set of states plus explicit transition rules. The classic enemy-AI or UI-state tool.</p></article>
+          <article class="card"><h3>State pattern</h3><p>Each state is an object implementing <code>enter()</code>, <code>exit()</code>, <code>update()</code>. The context delegates to the current one.</p></article>
+          <article class="card"><h3>Pushdown automaton</h3><p>A stack of states: push a new state on top, pop to return. Great for nested menus or “pause over play”.</p></article>
+          <article class="card"><h3>Hierarchical states</h3><p>States have sub-states — <code>Jumping</code> contains <code>Rising</code> / <code>Falling</code>. Share behavior via a parent.</p></article>
+        </div>
+        <details style="margin-top:16px">
+          <summary>State pattern in code</summary>
+          <div class="details-body">
+            <pre><code>class PlayerState {
+public:
+  virtual ~PlayerState() {}
+  virtual void enter() = 0;
+  virtual void update(float dt) = 0;
+  virtual void exit() = 0;
+};
+
+void Player::setState(PlayerState* next) {
+  state_-&gt;exit();
+  state_ = next;
+  state_-&gt;enter();
+}</code></pre>
+          </div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="spawn">
+        <div class="section-head">
+          <div><div class="section-kicker">05 / Spawning</div><h2>Object pooling &amp; spawning</h2></div>
+          <p>Creating and destroying objects every frame is slow and fragments memory. Pool, prototype, and flyweight keep spawning cheap.</p>
+        </div>
+        <div class="grid four">
+          <article class="card"><div class="card-number">1</div><h3>Object pool</h3><p>Recycle dead objects instead of <code>new</code>/<code>delete</code>. Keep a list of free slots; reset on reuse.</p></article>
+          <article class="card"><div class="card-number">2</div><h3>Factory</h3><p>One place that constructs objects, so callers never depend on concrete classes.</p></article>
+          <article class="card"><div class="card-number">3</div><h3>Prototype</h3><p>Clone a configured template instead of building from scratch — spawn varied enemies from one base.</p></article>
+          <article class="card"><div class="card-number">4</div><h3>Flyweight</h3><p>Split shared (intrinsic) state from per-instance state. A thousand trees share one mesh + texture.</p></article>
+        </div>
+        <article class="card" style="margin-top:16px">
+          <h3>Reusable object pool</h3>
+          <pre><code>class ParticlePool {
+  std::vector&lt;Particle*&gt; pool_;   // pre-allocated
+  Particle* obtain() {
+    for (auto* p : pool_)
+      if (!p-&gt;active_) return p;   // reuse
+    return nullptr;                 // exhausted
+  }
+  void release(Particle* p) { p-&gt;reset(); }
+};</code></pre>
+        </article>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">POOL</div><p><strong>Reset on release.</strong> A reused object must look brand-new: clear velocity, timers, and references in <code>release()</code> — or the next spawn inherits stale state.</p></div>
+      </section>
+
+      <section class="section searchable" id="events">
+        <div class="section-head">
+          <div><div class="section-kicker">06 / Messaging</div><h2>Messaging</h2></div>
+          <p>Decouple senders from receivers. Observers, queues, and commands keep systems independent and let you rewind, replay, and remap.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>Observer</h3><p>Subjects notify a list of listeners. Great for one-to-many updates like achievements listening to combat.</p></article>
+          <article class="card"><h3>Event queue</h3><p>Buffer messages and process them later — decouples “something happened” from “handle it now”, and enables replay.</p></article>
+          <article class="card"><h3>Command</h3><p>Wrap an action in an object so it can be queued, remapped, or undone. The input system’s best friend.</p></article>
+        </div>
+        <div class="model" style="margin-top:16px" aria-label="Sender to event queue to receiver">
+          <div class="model-node"><strong>Sender</strong><small>raises event</small></div><div class="arrow">→</div>
+          <div class="model-node agent"><strong>Event queue</strong><small>buffered</small></div><div class="arrow">→</div>
+          <div class="model-node"><strong>Receiver</strong><small>handles later</small></div>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card">
+            <h3>Command: input remap + undo</h3>
+            <pre><code>class JumpCommand : public Command {
+public:
+  void execute() override { actor-&gt;jump(); }
+  void undo()    override { actor-&gt;resetJump(); }
+};
+
+// remap any key to any command
+input.bind(KEY_SPACE, &amp;jumpCommand);</code></pre>
+            <div class="prefix-demo" style="padding:14px;margin:12px 0 0"><kbd>Space</kbd><span class="then">then</span><kbd>Jump</kbd><span class="then">command</span></div>
+          </article>
+          <article class="card">
+            <h3>Observer: one-to-many</h3>
+            <pre><code>class Subject {
+  void notify(Event e) {
+    for (auto* o : observers_) o-&gt;onEvent(e);
+  }
+};</code></pre>
+          </article>
+        </div>
+        <div class="shortcut-grid" style="margin-top:16px">
+          <div class="shortcut-group">
+            <div class="shortcut-list">
+              <div class="shortcut-row"><span>Move forward</span><span class="keys"><kbd>W</kbd></span></div>
+              <div class="shortcut-row"><span>Move back</span><span class="keys"><kbd>S</kbd></span></div>
+              <div class="shortcut-row"><span>Strafe</span><span class="keys"><kbd>A</kbd><kbd>D</kbd></span></div>
+            </div>
+          </div>
+          <div class="shortcut-group">
+            <div class="shortcut-list">
+              <div class="shortcut-row"><span>Jump</span><span class="keys"><kbd>Space</kbd></span></div>
+              <div class="shortcut-row"><span>Fire</span><span class="keys"><kbd>Click</kbd></span></div>
+              <div class="shortcut-row"><span>Reload</span><span class="keys"><kbd>R</kbd></span></div>
+            </div>
+          </div>
+          <div class="shortcut-group">
+            <div class="shortcut-list">
+              <div class="shortcut-row"><span>Undo</span><span class="keys"><kbd>Z</kbd></span></div>
+              <div class="shortcut-row"><span>Pause</span><span class="keys"><kbd>Esc</kbd></span></div>
+              <div class="shortcut-row"><span>Menu</span><span class="keys"><kbd>Tab</kbd></span></div>
+            </div>
+          </div>
+        </div>
+        <div class="command-index" style="margin-top:16px">
+          <div class="command-row"><code>Event::PlayerDied</code><span>Raised once; achievements and UI both listen.</span></div>
+          <div class="command-row"><code>Event::DamageTaken</code><span>Carries amount + source; queued, not applied inline.</span></div>
+          <div class="command-row"><code>Command::undo()</code><span>Reverses the last command — replay and rewind.</span></div>
+          <div class="command-row"><code>Queue::drain()</code><span>Process all buffered events at a safe point in the loop.</span></div>
+        </div>
+      </section>
+
+      <section class="section searchable" id="update">
+        <div class="section-head">
+          <div><div class="section-kicker">07 / Update methods</div><h2>Update methods &amp; behaviors</h2></div>
+          <p>How you run per-object behavior each frame — and how to make big worlds fast without scanning everything.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>Update method</h3><p>Give each entity an <code>update(dt)</code> and call them all from the loop. Keeps behavior next to state.</p><pre><code>for (auto&amp; e : entities) e.update(dt);</code></pre></article>
+          <article class="card"><h3>Double buffer</h3><p>Write to one buffer while reading another, then swap. Lets a system see a consistent previous state.</p><pre><code>std::swap(current_, next_);</code></pre></article>
+          <article class="card"><h3>Dirty flag</h3><p>Mark objects as changed and only recompute the derived data that matters — skip the rest.</p><pre><code>if (dirty_) { rebuild(); dirty_ = false; }</code></pre></article>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Spatial partitioning</h3><p>Divide the world into a grid or quad-tree and only test neighbors in the same cells — collision goes from O(n²) to O(n).</p><pre><code>auto&amp; bucket = grid.cellAt(entity.pos);
+for (auto* other : bucket)
+  if (overlaps(entity, other)) resolve();</code></pre></article>
+          <article class="card"><h3>Delegation over subclassing</h3><p>Instead of overriding <code>update()</code> in a deep class tree, delegate behavior to components. Easier to mix, test, and swap.</p></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">✓</div><p><strong>Rule of thumb:</strong> if two entities need different behavior, change their components — not their place in an inheritance hierarchy.</p></div>
+      </section>
+
+      <section class="section searchable" id="gotchas">
+        <div class="section-head">
+          <div><div class="section-kicker">08 / Gotchas</div><h2>Gotchas</h2></div>
+          <p>Architecture patterns are a map, not the territory. These are the traps that bite even experienced game programmers.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>Premature abstraction</h3><p>Don’t build an ECS, a command bus, and a plugin system before your first prototype runs. Patterns solve problems — introduce them when the problem exists.</p></article>
+          <article class="card"><h3>Cache locality</h3><p>Jumping between heap-allocated objects thrashes the cache. Prefer contiguous arrays and struct-of-arrays for hot paths like physics and rendering.</p></article>
+          <article class="card"><h3>Object lifetime</h3><p>Who owns an entity, and when does it die? Dangling pointers to freed entities are the #1 crash source. Pool, defer deletion, or use IDs instead of raw pointers.</p></article>
+          <article class="card"><h3>Deep inheritance (diamond of death)</h3><p><code>A → B → C → D</code> class ladders collapse under change. Every level couples you to everything above it; prefer composition.</p></article>
+        </div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">⚠</div><p><strong>Over-engineering vs simple code.</strong> The best pattern is the simplest code that ships. A 40-line <code>switch</code> state machine often beats a 400-line state framework — until you have six states and twenty transitions.</p></div>
+      </section>
+
+      <footer class="footer searchable">
+        <strong>Source of truth</strong>
+        <p>These patterns distill Robert Nystrom’s Game Programming Patterns, Richard Fabian’s Data-Oriented Design, and the classic ECS literature. The linked originals remain authoritative.</p>
+        <div class="footer-links">
+          <a href="https://gameprogrammingpatterns.com/" target="_blank" rel="noreferrer">Game Programming Patterns</a>
+          <a href="https://www.dataorienteddesign.com/dodbook/" target="_blank" rel="noreferrer">Data-Oriented Design</a>
+          <a href="https://en.wikipedia.org/wiki/Entity_component_system" target="_blank" rel="noreferrer">Entity component system</a>
+          <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

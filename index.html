@@ -78,7 +78,7 @@
         Cheatsheets, visual guides, little games, and random experiments — each in its own folder, all served from one GitHub Pages site.
       </p>
       <div class="stat-row">
-        <div class="stat"><strong>16</strong><span>cheatsheets &amp; guides</span></div>
+        <div class="stat"><strong>27</strong><span>cheatsheets &amp; guides</span></div>
         <div class="stat"><strong>1</strong><span>playable game</span></div>
         <div class="stat"><strong>∞</strong><span>slop to come</span></div>
       </div>
@@ -159,9 +159,48 @@
           <div class="meta"><span class="tag">tables</span><span class="tag">patterns</span><span class="tag">require</span></div>
           <div class="go">Open guide →</div>
         </a>
+        <a class="card link-card" href="golang/">
+          <span class="tag">language</span>
+          <h3 style="margin-top:14px">Go — cheatsheet</h3>
+          <p>Modules, structs, interfaces, goroutines, channels, and errors.</p>
+          <div class="meta"><span class="tag">goroutine</span><span class="tag">interface</span><span class="tag">module</span></div>
+          <div class="go">Open guide →</div>
+        </a>
+        <a class="card link-card" href="typescript/">
+          <span class="tag">language</span>
+          <h3 style="margin-top:14px">TypeScript — cheatsheet</h3>
+          <p>Types, interfaces, generics, narrowing, and utility types.</p>
+          <div class="meta"><span class="tag">generic</span><span class="tag">narrowing</span><span class="tag">utility</span></div>
+          <div class="go">Open guide →</div>
+        </a>
       </div>
 
-      <div class="cat">Embedded</div>
+      <div class="cat">CLI &amp; shell</div>
+      <div class="grid two">
+        <a class="card link-card" href="jq/">
+          <span class="tag">cli</span>
+          <h3 style="margin-top:14px">jq — cheatsheet</h3>
+          <p>The command-line JSON processor: filters, operators, recipes, and curl pipelines that actually work.</p>
+          <div class="meta"><span class="tag">filters</span><span class="tag">recipes</span><span class="tag">JSON</span></div>
+          <div class="go">Open guide →</div>
+        </a>
+        <a class="card link-card" href="bash/">
+          <span class="tag">shell</span>
+          <h3 style="margin-top:14px">Bash — cheatsheet</h3>
+          <p>Variables, quoting, loops, conditionals, functions, and expansion.</p>
+          <div class="meta"><span class="tag">quoting</span><span class="tag">loop</span><span class="tag">expansion</span></div>
+          <div class="go">Open guide →</div>
+        </a>
+        <a class="card link-card" href="linux-cli/">
+          <span class="tag">shell</span>
+          <h3 style="margin-top:14px">Linux CLI essentials — cheatsheet</h3>
+          <p>sed, awk, grep, find, xargs, sort, tar, and the rest of the toolbox.</p>
+          <div class="meta"><span class="tag">sed</span><span class="tag">awk</span><span class="tag">grep</span></div>
+          <div class="go">Open guide →</div>
+        </a>
+      </div>
+
+      <div class="cat">Embedded &amp; hardware</div>
       <div class="grid two">
         <a class="card link-card" href="esp32/">
           <span class="tag">embedded</span>
@@ -170,15 +209,25 @@
           <div class="meta"><span class="tag">GPIO</span><span class="tag">WiFi</span><span class="tag">OTA</span></div>
           <div class="go">Open guide →</div>
         </a>
-      </div>
-
-      <div class="cat">CLI &amp; data</div>
-      <div class="grid two">
-        <a class="card link-card" href="jq/">
-          <span class="tag">cli</span>
-          <h3 style="margin-top:14px">jq — cheatsheet</h3>
-          <p>The command-line JSON processor: filters, operators, recipes, and curl pipelines that actually work.</p>
-          <div class="meta"><span class="tag">filters</span><span class="tag">recipes</span><span class="tag">JSON</span></div>
+        <a class="card link-card" href="embedded/">
+          <span class="tag">embedded</span>
+          <h3 style="margin-top:14px">Embedded dev — cheatsheet</h3>
+          <p>Bare-metal and RTOS: registers, interrupts, timers, memory layout, and debugging.</p>
+          <div class="meta"><span class="tag">interrupts</span><span class="tag">RTOS</span><span class="tag">linker</span></div>
+          <div class="go">Open guide →</div>
+        </a>
+        <a class="card link-card" href="electrical/">
+          <span class="tag">electronics</span>
+          <h3 style="margin-top:14px">Electrical concepts — cheatsheet</h3>
+          <p>Ohm's law, logic levels, pull-ups, voltage dividers, and power for firmware devs.</p>
+          <div class="meta"><span class="tag">Ohm's law</span><span class="tag">pull-up</span><span class="tag">levels</span></div>
+          <div class="go">Open guide →</div>
+        </a>
+        <a class="card link-card" href="sdr/">
+          <span class="tag">RF</span>
+          <h3 style="margin-top:14px">SDR — cheatsheet</h3>
+          <p>Software-defined radio: IQ, sampling, DSP, GNU Radio, and common signals.</p>
+          <div class="meta"><span class="tag">IQ</span><span class="tag">FFT</span><span class="tag">GNU Radio</span></div>
           <div class="go">Open guide →</div>
         </a>
       </div>
@@ -211,6 +260,42 @@
           <h3 style="margin-top:14px">PromQL — cheatsheet</h3>
           <p>Selectors, rates, aggregation, and functions for Prometheus.</p>
           <div class="meta"><span class="tag">rate</span><span class="tag">sum by</span><span class="tag">histogram</span></div>
+          <div class="go">Open guide →</div>
+        </a>
+      </div>
+
+      <div class="cat">Game dev</div>
+      <div class="grid two">
+        <a class="card link-card" href="sdl/">
+          <span class="tag">gamedev</span>
+          <h3 style="margin-top:14px">SDL2/SDL3 — cheatsheet</h3>
+          <p>Game loop, window, rendering, input, audio, and textures with SDL2/SDL3.</p>
+          <div class="meta"><span class="tag">game loop</span><span class="tag">renderer</span><span class="tag">events</span></div>
+          <div class="go">Open guide →</div>
+        </a>
+        <a class="card link-card" href="gamedev/">
+          <span class="tag">gamedev</span>
+          <h3 style="margin-top:14px">GameDev patterns — cheatsheet</h3>
+          <p>Game loop, component/entity, state machines, object pooling, and messaging.</p>
+          <div class="meta"><span class="tag">game loop</span><span class="tag">ECS</span><span class="tag">state</span></div>
+          <div class="go">Open guide →</div>
+        </a>
+      </div>
+
+      <div class="cat">Systems &amp; CS</div>
+      <div class="grid two">
+        <a class="card link-card" href="allocators/">
+          <span class="tag">systems</span>
+          <h3 style="margin-top:14px">Memory allocators — cheatsheet</h3>
+          <p>Bump, free lists, arenas, slab, buddy, and garbage collection.</p>
+          <div class="meta"><span class="tag">arena</span><span class="tag">free list</span><span class="tag">gc</span></div>
+          <div class="go">Open guide →</div>
+        </a>
+        <a class="card link-card" href="algorithms/">
+          <span class="tag">cs</span>
+          <h3 style="margin-top:14px">Algorithms — cheatsheet</h3>
+          <p>Complexity classes, sorting, searching, data structures, and graphs.</p>
+          <div class="meta"><span class="tag">big-O</span><span class="tag">sort</span><span class="tag">graph</span></div>
           <div class="go">Open guide →</div>
         </a>
       </div>

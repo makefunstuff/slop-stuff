@@ -20,14 +20,14 @@ Each guide is a subfolder, served under `https://makefunstuff.github.io/slop-stu
 - **[cpp](./cpp/)** — STL, smart pointers, templates, modern C++
 - **[python](./python/)** — comprehensions, decorators, dataclasses, stdlib
 - **[lua](./lua/)** — tables, metatables, patterns, modules, embedding
+- **[golang](./golang/)** — modules, structs, interfaces, goroutines, channels, errors
+- **[typescript](./typescript/)** — types, interfaces, generics, narrowing, utility types
 
-### Embedded
-
-- **[esp32](./esp32/)** — GPIO, UART/I2C/SPI, Wi-Fi, storage, power, OTA
-
-### CLI & data
+### CLI & shell
 
 - **[jq](./jq/)** — JSON filters, recipes, operators, flags, curl pipelines
+- **[bash](./bash/)** — variables, quoting, loops, conditionals, functions, expansion
+- **[linux-cli](./linux-cli/)** — sed, awk, grep, find, xargs, sort, tar, and friends
 
 ### Cloud & observability
 
@@ -35,6 +35,23 @@ Each guide is a subfolder, served under `https://makefunstuff.github.io/slop-stu
 - **[gcloud](./gcloud/)** — compute, storage, GKE, IAM, SQL, logging
 - **[grafana](./grafana/)** — panels, variables, transforms, alerts, provisioning
 - **[promql](./promql/)** — selectors, rates, aggregation, functions
+
+### Embedded & hardware
+
+- **[esp32](./esp32/)** — GPIO, UART/I2C/SPI, Wi-Fi, storage, power, OTA
+- **[embedded](./embedded/)** — bare-metal/RTOS: registers, interrupts, timers, memory, boot, debugging
+- **[electrical](./electrical/)** — Ohm's law, logic levels, pull-ups, dividers, power for firmware devs
+- **[sdr](./sdr/)** — IQ, sampling, DSP, GNU Radio, common signals
+
+### Game dev
+
+- **[sdl](./sdl/)** — SDL2/SDL3: game loop, window, rendering, input, audio, textures
+- **[gamedev](./gamedev/)** — game loop, component/entity, state machines, pooling, messaging
+
+### Systems & CS
+
+- **[allocators](./allocators/)** — bump, free lists, arenas, slab, buddy, garbage collection
+- **[algorithms](./algorithms/)** — complexity, sorting, searching, data structures, graphs
 
 ### Editors
 

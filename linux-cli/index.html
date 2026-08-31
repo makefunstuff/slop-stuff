@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-guide="linux-cli">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Everyday Linux command-line tools: sed, awk, grep, find, xargs, sort, and friends.">
+  <title>Linux CLI Essentials — Visual Cheatsheet</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../" aria-label="Back to slop-stuff">
+      <span class="brand-mark">lnx_</span>
+      <span>Linux CLI Guide</span>
+      <span class="version">essentials</span>
+    </a>
+    <label class="search-wrap">
+      <span class="sr-only" hidden>Search guide</span>
+      <input id="search" type="search" aria-label="Search guide" placeholder="Search sed, awk, grep, find, xargs, sort, cut, tar…" autocomplete="off">
+    </label>
+    <div class="top-actions">
+      <button class="icon-button" id="themeToggle" type="button" title="Toggle theme" aria-label="Toggle light and dark theme">◐</button>
+      <button class="icon-button" id="printGuide" type="button" title="Print guide" aria-label="Print this guide">Print</button>
+    </div>
+  </header>
+
+  <div class="shell" id="top">
+    <aside class="sidebar" aria-label="Guide sections">
+      <p class="side-label">On this page</p>
+      <nav>
+        <a href="#start"><span class="nav-number">01</span>Start here</a>
+        <a href="#sed"><span class="nav-number">02</span>sed</a>
+        <a href="#awk"><span class="nav-number">03</span>awk</a>
+        <a href="#grep"><span class="nav-number">04</span>grep &amp; ripgrep</a>
+        <a href="#find"><span class="nav-number">05</span>find &amp; xargs</a>
+        <a href="#text"><span class="nav-number">06</span>Text tools</a>
+        <a href="#archiving"><span class="nav-number">07</span>Files &amp; archives</a>
+        <a href="#processes"><span class="nav-number">08</span>Processes</a>
+        <a href="#gotchas"><span class="nav-number">09</span>Gotchas</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section class="hero searchable" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="eyebrow">Visual cheatsheet + usage guide</div>
+          <h1 id="hero-title">The toolbox for <span>text &amp; files.</span></h1>
+          <p>Everyday Linux command-line tools — sed, awk, grep, find, sort, and friends — in one copy-paste reference. Pipe text in, transform it, ship it out.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#start">Start in 5 minutes →</a>
+            <a class="button" href="#sed">sed</a>
+            <a class="button" href="#awk">awk</a>
+          </div>
+        </div>
+        <div class="terminal" aria-label="Stylized shell session">
+          <div class="terminal-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="terminal-title">sh</span></div>
+          <div class="terminal-body">
+            <div><span class="prompt">$</span> <span class="cmd">cat access.log | sort | uniq -c | sort -rn | head</span></div>
+            <div class="dim">  42 /index.html</div>
+            <div class="dim">  18 /about</div>
+            <div class="dim">   7 /login</div>
+            <br>
+            <div><span class="prompt">$</span> <span class="cmd">find . -name '*.log' -mtime +7 -delete</span></div>
+            <div class="dim"># removed 3 files</div>
+            <br>
+            <div><span class="prompt">$</span> <span class="cursor"></span></div>
+          </div>
+        </div>
+      </section>
+
+      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “sed”, “awk”, “grep”, “find”, “sort”, or “tar”.</div>
+
+      <section class="section searchable" id="start">
+        <div class="section-head">
+          <div><div class="section-kicker">01 / Start here</div><h2>The daily loop</h2></div>
+          <p>Move around, chain commands, and read the manual. These six habits carry most of the rest.</p>
+        </div>
+        <div class="grid four">
+          <article class="card"><div class="card-number">1</div><h3>Navigate</h3><pre><code>cd ~/projects    # go to projects
+ls -la           # all files + details
+pwd              # print working dir</code></pre></article>
+          <article class="card"><div class="card-number">2</div><h3>Pipe</h3><pre><code>cat f.txt | grep err | wc -l
+# stdout → stdin of the next cmd</code></pre></article>
+          <article class="card"><div class="card-number">3</div><h3>Redirect</h3><pre><code>ls &gt; files.txt        # overwrite
+echo hi &gt;&gt; log        # append
+cmd 2&gt;/dev/null       # drop stderr</code></pre></article>
+          <article class="card"><div class="card-number">4</div><h3>Help &amp; history</h3><pre><code>man ls
+ls --help
+history | tail -20
+!!                    # rerun last command</code></pre></article>
+        </div>
+        <div class="callout"><div class="callout-mark">&amp;&amp;</div><p><strong>Chain with <code>&amp;&amp;</code> and <code>||</code>.</strong> <code>a &amp;&amp; b</code> runs <code>b</code> only if <code>a</code> succeeds; <code>a || b</code> runs <code>b</code> only if <code>a</code> fails. Combine them: <code>make &amp;&amp; make install || echo "build failed"</code>.</p></div>
+      </section>
+
+      <section class="section searchable" id="sed">
+        <div class="section-head">
+          <div><div class="section-kicker">02 / sed</div><h2>sed</h2></div>
+          <p>A stream editor: apply substitutions and filters to text line by line, without opening an editor.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Expression</th><th>Meaning</th><th>Example</th></tr></thead><tbody>
+          <tr><td><code>s/old/new/</code></td><td>Replace first match on each line</td><td><code>sed 's/foo/bar/' f</code></td></tr>
+          <tr><td><code>s/old/new/g</code></td><td>Replace every match on the line</td><td><code>sed 's/foo/bar/g' f</code></td></tr>
+          <tr><td><code>/pattern/d</code></td><td>Delete matching lines</td><td><code>sed '/^$/d' f</code></td></tr>
+          <tr><td><code>-n '5p'</code></td><td>Print only line 5</td><td><code>sed -n '5p' f</code></td></tr>
+          <tr><td><code>-n '2,5p'</code></td><td>Print lines 2 through 5</td><td><code>sed -n '2,5p' f</code></td></tr>
+          <tr><td><code>-i</code></td><td>Edit the file in place</td><td><code>sed -i 's/a/b/' f</code></td></tr>
+          <tr><td><code>-E</code></td><td>Extended regex (<code>+</code>, <code>|</code>, <code>()</code> unescaped)</td><td><code>sed -E 's/a+/b/' f</code></td></tr>
+          <tr><td><code>-e '…'</code></td><td>Apply multiple commands</td><td><code>sed -e 's/a/b/' -e 's/c/d/' f</code></td></tr>
+        </tbody></table></div>
+        <div class="grid two">
+          <article class="card"><h3>Capture groups</h3><p>Wrap part of a match and replay it with <code>\1</code>, <code>\2</code>… Use plain parens with <code>-E</code>, escaped parens in basic regex.</p><pre><code>sed -E 's/(foo)(bar)/\2\1/'    # ERE → barfoo
+sed 's/\(foo\)\(bar\)/\2\1/'   # BRE → barfoo</code></pre></article>
+          <article class="card"><h3>In-place editing</h3><p>GNU and BSD disagree on <code>-i</code>: GNU takes an optional backup suffix, BSD requires an empty argument.</p><pre><code>sed -i.bak 's/old/new/g' file  # GNU: backup
+sed -i '' 's/old/new/g' file    # macOS/BSD</code></pre></article>
+        </div>
+      </section>
+
+      <section class="section searchable" id="awk">
+        <div class="section-head">
+          <div><div class="section-kicker">03 / awk</div><h2>awk</h2></div>
+          <p>A tiny programming language for columns and rows — the fastest way to slice, sum, and reshape tabular text.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Variable</th><th>Meaning</th></tr></thead><tbody>
+          <tr><td><code>$0</code></td><td>The whole line</td></tr>
+          <tr><td><code>$1, $2, …</code></td><td>Fields (split on whitespace by default)</td></tr>
+          <tr><td><code>NF</code></td><td>Number of fields in the line</td></tr>
+          <tr><td><code>NR</code></td><td>Line (record) number so far</td></tr>
+          <tr><td><code>FS</code></td><td>Input field separator (default whitespace)</td></tr>
+          <tr><td><code>OFS</code></td><td>Output field separator</td></tr>
+          <tr><td><code>BEGIN</code></td><td>Block that runs once before input</td></tr>
+          <tr><td><code>END</code></td><td>Block that runs once after input</td></tr>
+        </tbody></table></div>
+        <div class="command-index">
+          <div class="command-row"><code>awk '{print $2}' file</code><span>Print column 2.</span></div>
+          <div class="command-row"><code>awk -F: '{print $1}' /etc/passwd</code><span>Split on <code>:</code> and print usernames.</span></div>
+          <div class="command-row"><code>awk '{s += $1} END {print s}' file</code><span>Sum of column 1.</span></div>
+          <div class="command-row"><code>awk '{s += $1; n++} END {print s/n}' file</code><span>Average of column 1.</span></div>
+          <div class="command-row"><code>awk '$3 &gt; 100' file</code><span>Lines where column 3 exceeds 100.</span></div>
+          <div class="command-row"><code>awk 'END {print NR}' file</code><span>Count lines.</span></div>
+          <div class="command-row"><code>awk '{print $NF}' file</code><span>Last field of each line.</span></div>
+          <div class="command-row"><code>awk 'BEGIN {OFS=","} {print $1, $3}' file</code><span>Rearrange columns, comma-joined.</span></div>
+        </div>
+        <details>
+          <summary>More awk recipes</summary>
+          <div class="details-body grid two">
+            <div><h4>Skip the header row</h4><pre><code>awk 'NR&gt;1 {print $1}' file</code></pre></div>
+            <div><h4>Number the lines</h4><pre><code>awk '{print NR ": " $0}' file</code></pre></div>
+            <div><h4>Find long lines</h4><pre><code>awk 'length($0) &gt; 80' file</code></pre></div>
+            <div><h4>Swap field order</h4><pre><code>awk '{print $3, $1}' file</code></pre></div>
+          </div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="grep">
+        <div class="section-head">
+          <div><div class="section-kicker">04 / grep</div><h2>grep &amp; ripgrep</h2></div>
+          <p>Find lines that match a pattern. ripgrep (<code>rg</code>) does the same faster and respects <code>.gitignore</code>.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Flag</th><th>Effect</th></tr></thead><tbody>
+          <tr><td><code>-E</code></td><td>Extended regex (<code>+</code>, <code>|</code>, <code>()</code> without escaping)</td></tr>
+          <tr><td><code>-F</code></td><td>Fixed string — literal text, no regex</td></tr>
+          <tr><td><code>-r</code></td><td>Recursive search through directories</td></tr>
+          <tr><td><code>-v</code></td><td>Invert — show lines that do NOT match</td></tr>
+          <tr><td><code>-i</code></td><td>Case-insensitive matching</td></tr>
+          <tr><td><code>-l</code></td><td>Only filenames that contain a match</td></tr>
+          <tr><td><code>-n</code></td><td>Show line numbers</td></tr>
+          <tr><td><code>-c</code></td><td>Count matches per file</td></tr>
+          <tr><td><code>-o</code></td><td>Print only the matching part, one per line</td></tr>
+          <tr><td><code>-A N</code> / <code>-B N</code> / <code>-C N</code></td><td>Show N lines after / before / around each match</td></tr>
+        </tbody></table></div>
+        <div class="grid two">
+          <article class="card"><h3>ripgrep equivalents</h3><pre><code>grep -r "foo" .     →  rg "foo"
+grep -rn "foo" .    →  rg -n "foo"
+grep -rl "foo" .    →  rg -l "foo"
+grep -v "foo" f     →  rg -v "foo" f</code></pre></article>
+          <article class="card"><h3>Typical pipelines</h3><pre><code>grep -rn "TODO" src/
+grep -oE '[0-9]+\.[0-9]+' log
+grep -A2 -B1 "error" log
+ps aux | grep nginx
+rg "TODO" -g '*.js'</code></pre></article>
+        </div>
+        <details>
+          <summary>grep recipes</summary>
+          <div class="details-body grid two">
+            <div><h4>Exclude a directory</h4><pre><code>grep -rn "foo" --exclude-dir=node_modules .</code></pre></div>
+            <div><h4>Whole-word match</h4><pre><code>grep -w "err" log</code></pre></div>
+            <div><h4>Count across files</h4><pre><code>grep -rc "foo" src/</code></pre></div>
+            <div><h4>Search inside gzip'd logs</h4><pre><code>zgrep "foo" access.log.gz</code></pre></div>
+          </div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="find">
+        <div class="section-head">
+          <div><div class="section-kicker">05 / find &amp; xargs</div><h2>find &amp; xargs</h2></div>
+          <p>Locate files by name, type, age, or size, then act on them — safely — with <code>xargs</code>.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Expression</th><th>Meaning</th></tr></thead><tbody>
+          <tr><td><code>-name '*.log'</code></td><td>Match filename pattern (quote the glob!)</td></tr>
+          <tr><td><code>-iname '*.log'</code></td><td>Case-insensitive name match</td></tr>
+          <tr><td><code>-type f</code> / <code>-type d</code></td><td>Files only / directories only</td></tr>
+          <tr><td><code>-mtime +7</code></td><td>Modified more than 7 days ago</td></tr>
+          <tr><td><code>-mtime -1</code></td><td>Modified within the last day</td></tr>
+          <tr><td><code>-size +100M</code></td><td>Larger than 100 MB</td></tr>
+          <tr><td><code>-exec cmd {} \;</code></td><td>Run <code>cmd</code> on each match</td></tr>
+          <tr><td><code>-delete</code></td><td>Delete matches (careful!)</td></tr>
+          <tr><td><code>-print0</code></td><td>NUL-separated output (for <code>xargs -0</code>)</td></tr>
+        </tbody></table></div>
+        <div class="grid two">
+          <article class="card"><h3>-exec vs -delete</h3><pre><code>find . -name '*.tmp' -delete
+find . -name '*.log' -exec rm {} \;
+find . -name '*.log' -print0 | xargs -0 rm</code></pre></article>
+          <article class="card"><h3>Batch with xargs</h3><p><code>xargs</code> turns stdin into arguments; <code>-0</code> pairs with <code>-print0</code> to survive spaces and newlines.</p><pre><code>echo a b c | xargs mkdir
+find . -name '*.txt' -print0 | xargs -0 wc -l</code></pre></article>
+        </div>
+        <div class="callout warning"><div class="callout-mark">!</div><p><strong>Quote your patterns.</strong> <code>find . -name *.log</code> lets the shell expand <code>*.log</code> first. Write <code>find . -name '*.log'</code> so <code>find</code> does the matching.</p></div>
+      </section>
+
+      <section class="section searchable" id="text">
+        <div class="section-head">
+          <div><div class="section-kicker">06 / Text tools</div><h2>Text tools</h2></div>
+          <p>The small tools that sort, split, count, and compare text, ready to pipe together.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>sort flag</th><th>Effect</th></tr></thead><tbody>
+          <tr><td><code>-n</code></td><td>Numeric sort (10 comes after 9)</td></tr>
+          <tr><td><code>-r</code></td><td>Reverse order</td></tr>
+          <tr><td><code>-k 2</code></td><td>Sort by column 2</td></tr>
+          <tr><td><code>-u</code></td><td>Unique — drop duplicate adjacent lines</td></tr>
+          <tr><td><code>-t,</code></td><td>Field separator used with <code>-k</code></td></tr>
+          <tr><td><code>-h</code></td><td>Human-readable sizes (1K, 2M)</td></tr>
+        </tbody></table></div>
+        <div class="grid three">
+          <article class="card"><h3>cut &amp; tr</h3><pre><code>cut -d, -f1 file      # field 1, comma
+cut -c1-10 file       # characters 1–10
+tr 'a-z' 'A-Z' &lt; f    # uppercase
+tr -d '\r' &lt; f        # strip CRLF</code></pre></article>
+          <article class="card"><h3>uniq &amp; wc</h3><pre><code>sort f | uniq -c      # count each line
+sort f | uniq         # dedupe (sort first!)
+wc -l file            # line count
+wc -w -c file         # words, bytes</code></pre></article>
+          <article class="card"><h3>head, tail, diff, comm, paste, join</h3><pre><code>head -5 f; tail -5 f
+comm -12 a b          # lines in both
+diff -u a b           # unified diff
+paste a b             # columns side by side
+join a b              # merge on common field</code></pre></article>
+        </div>
+        <details>
+          <summary>More pipelines</summary>
+          <div class="details-body grid two">
+            <div><h4>Top 5 most common lines</h4><pre><code>sort f | uniq -c | sort -rn | head -5</code></pre></div>
+            <div><h4>Column total</h4><pre><code>cut -d, -f3 f | paste -sd+ | bc</code></pre></div>
+            <div><h4>Unique values in a column</h4><pre><code>cut -d, -f1 f | sort -u</code></pre></div>
+            <div><h4>Merge sorted files</h4><pre><code>sort -m a b | uniq</code></pre></div>
+          </div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="archiving">
+        <div class="section-head">
+          <div><div class="section-kicker">07 / Files &amp; archives</div><h2>Files &amp; archives</h2></div>
+          <p>Bundle, compress, sync, and move files, and keep an eye on disk space.</p>
+        </div>
+        <div class="grid four">
+          <article class="card"><h3>tar</h3><pre><code>tar czf a.tgz dir     # create
+tar xzf a.tgz         # extract
+tar tzf a.tgz         # list</code></pre></article>
+          <article class="card"><h3>gzip &amp; zstd</h3><pre><code>gzip file             # → file.gz
+gunzip file.gz
+zstd file             # faster modern
+unzstd file.zst</code></pre></article>
+          <article class="card"><h3>zip</h3><pre><code>zip -r out.zip dir
+unzip out.zip
+unzip -l out.zip      # list</code></pre></article>
+          <article class="card"><h3>rsync</h3><pre><code>rsync -av src/ dst/
+rsync -av --delete src/ dst/
+rsync -av host:src/ ./</code></pre></article>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>Copy &amp; move</h3><pre><code>cp -r src dst         # recursive
+cp -a src dst         # preserve attrs
+mv old new            # rename / move</code></pre></article>
+          <article class="card"><h3>Disk &amp; space</h3><pre><code>du -sh dir            # dir size
+du -h --max-depth=1   # one level
+df -h                 # free space</code></pre></article>
+          <article class="card"><h3>dd, chmod, chown</h3><pre><code>dd if=img.iso of=/dev/sdb bs=4M status=progress
+chmod +x script.sh
+chmod 644 file
+chown user:group file</code></pre></article>
+        </div>
+      </section>
+
+      <section class="section searchable" id="processes">
+        <div class="section-head">
+          <div><div class="section-kicker">08 / Processes</div><h2>Processes &amp; system</h2></div>
+          <p>See what's running, stop it, follow its logs, and inspect its ports and files.</p>
+        </div>
+        <div class="grid four">
+          <article class="card"><h3>ps &amp; top</h3><pre><code>ps aux                # all processes
+ps aux | grep nginx
+top                   # live view
+htop                  # nicer live view</code></pre></article>
+          <article class="card"><h3>kill</h3><pre><code>kill 1234             # SIGTERM
+kill -9 1234          # SIGKILL
+pkill -f "node app"
+pgrep -l node</code></pre></article>
+          <article class="card"><h3>systemctl</h3><pre><code>systemctl status nginx
+systemctl restart nginx
+systemctl enable nginx
+journalctl -u nginx -f</code></pre></article>
+          <article class="card"><h3>Network &amp; files</h3><pre><code>ss -tulpn             # listening ports
+lsof -i :80           # who owns port 80
+lsof -p 1234          # files a PID has open
+which python3; type ls</code></pre></article>
+        </div>
+        <div class="callout"><div class="callout-mark">15</div><p><strong>Signals: SIGTERM first, SIGKILL last.</strong> <code>kill 1234</code> sends SIGTERM (a polite request the process may handle); <code>kill -9 1234</code> sends SIGKILL, which nothing can catch — use it only when a process ignores SIGTERM.</p></div>
+      </section>
+
+      <section class="section searchable" id="gotchas">
+        <div class="section-head">
+          <div><div class="section-kicker">09 / Gotchas</div><h2>Gotchas</h2></div>
+          <p>Behaviors that silently change results — quoting, shell expansion, portability, and spaces in filenames.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>Quote your variables</h3><p>Unquoted <code>$var</code> word-splits on spaces and globs. Always double-quote in scripts.</p><pre><code>for f in *.txt; do echo "$f"; done
+cat "$file"          # not cat $file</code></pre></article>
+          <article class="card"><h3>The shell expands first</h3><p>Globs, <code>$var</code>, and <code>$(…)</code> are expanded by the shell before the command ever runs.</p><pre><code>echo *.txt           # shell expands glob
+echo "*.txt"         # literal asterisk
+find . -name '*.txt' # find does the matching</code></pre></article>
+          <article class="card"><h3>GNU vs BSD (macOS)</h3><p>macOS ships BSD tools with different flags.</p><pre><code># GNU:  sed -i 's/a/b/' f
+# BSD:  sed -i '' 's/a/b/' f
+# GNU has grep -P; BSD doesn't
+brew install coreutils</code></pre></article>
+        </div>
+        <div class="callout warning"><div class="callout-mark">!</div><p><strong>Spaces in filenames break naive pipelines.</strong> <code>for f in $(ls)</code> and unquoted <code>xargs</code> split on whitespace. Use <code>find -print0 | xargs -0</code> or a <code>while read</code> loop to stay safe.</p></div>
+      </section>
+
+      <footer class="footer searchable">
+        <strong>Source of truth</strong>
+        <p>This guide covers everyday Linux CLI essentials. The authoritative references below win for edge cases and exact flag semantics.</p>
+        <div class="footer-links">
+          <a href="https://www.gnu.org/software/sed/manual/sed.html" target="_blank" rel="noreferrer">sed manual</a>
+          <a href="https://www.gnu.org/software/gawk/manual/gawk.html" target="_blank" rel="noreferrer">gawk manual</a>
+          <a href="https://www.man7.org/linux/man-pages/" target="_blank" rel="noreferrer">Linux man pages</a>
+          <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-guide="typescript">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="The daily TypeScript surface: types, interfaces, generics, narrowing, utility types, and tsconfig.">
+  <title>TypeScript — Visual Cheatsheet &amp; Usage Guide</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../" aria-label="Back to slop-stuff">
+      <span class="brand-mark">ts_</span>
+      <span>TypeScript Guide</span>
+      <span class="version">5.x</span>
+    </a>
+    <label class="search-wrap">
+      <span class="sr-only" hidden>Search guide</span>
+      <input id="search" type="search" aria-label="Search guide" placeholder="Search interface, generic, union, narrowing, utility type, tsconfig…" autocomplete="off">
+    </label>
+    <div class="top-actions">
+      <button class="icon-button" id="themeToggle" type="button" title="Toggle theme" aria-label="Toggle light and dark theme">◐</button>
+      <button class="icon-button" id="printGuide" type="button" title="Print guide" aria-label="Print this guide">Print</button>
+    </div>
+  </header>
+
+  <div class="shell" id="top">
+    <aside class="sidebar" aria-label="Guide sections">
+      <p class="side-label">On this page</p>
+      <nav>
+        <a href="#start"><span class="nav-number">01</span>Start here</a>
+        <a href="#primitives"><span class="nav-number">02</span>Types</a>
+        <a href="#interfaces"><span class="nav-number">03</span>Interfaces</a>
+        <a href="#functions"><span class="nav-number">04</span>Functions</a>
+        <a href="#classes"><span class="nav-number">05</span>Classes</a>
+        <a href="#narrowing"><span class="nav-number">06</span>Narrowing</a>
+        <a href="#utilities"><span class="nav-number">07</span>Utility types</a>
+        <a href="#tooling"><span class="nav-number">08</span>Tooling</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section class="hero searchable" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="eyebrow">Visual cheatsheet + usage guide</div>
+          <h1 id="hero-title">Types that <span>catch bugs early.</span></h1>
+          <p>TypeScript is JavaScript with types: annotate once and the compiler catches whole classes of bugs before they ship. This is the daily surface — types, interfaces, generics, narrowing, and the tooling around <code>tsc</code>.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#start">Start in 5 minutes →</a>
+            <a class="button" href="#functions">See generics</a>
+            <a class="button" href="#utilities">Browse utility types</a>
+          </div>
+        </div>
+        <div class="terminal" aria-label="Stylized tsc session">
+          <div class="terminal-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="terminal-title">tsc</span></div>
+          <div class="terminal-body">
+            <div class="mock-side">
+              <p class="mock-label">mode</p>
+              <div class="mock-row active">strict</div>
+              <div class="mock-row">watch</div>
+            </div>
+            <div class="mock-pane">
+              <div><span class="prompt">❯</span> <span class="cmd">tsc --strict</span></div>
+              <div class="dim">Found 0 errors</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cmd">tsc --noEmit</span></div>
+              <div class="dim">type-check only — no JS emitted</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cmd">tsc --init</span></div>
+              <div class="dim">Created tsconfig.json</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cursor"></span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “interface”, “generic”, “union”, “narrowing”, “utility type”, or “tsconfig”.</div>
+
+      <section class="section searchable" id="start">
+        <div class="section-head">
+          <div><div class="section-kicker">01 / Start here</div><h2>Setup &amp; compile</h2></div>
+          <p><code>tsc</code> checks your types and emits plain JavaScript. A single <code>tsconfig.json</code> drives every flag and file.</p>
+        </div>
+        <div class="grid four">
+          <article class="card"><div class="card-number">1</div><h3>Install</h3><pre><code>npm i -g typescript    # global CLI
+tsc --version          # → Version 5.x.x
+# or project-local:
+npm i -D typescript</code></pre></article>
+          <article class="card"><div class="card-number">2</div><h3>Compile a file</h3><pre><code>tsc app.ts          # → app.js
+tsc src/*.ts        # compile a set
+tsc --watch         # recompile on save</code></pre></article>
+          <article class="card"><div class="card-number">3</div><h3>Init &amp; config</h3><pre><code>tsc --init          # write tsconfig.json
+tsc -p tsconfig.json
+tsc --noEmit        # type-check only
+tsc --strict        # full strictness</code></pre></article>
+          <article class="card"><div class="card-number">4</div><h3>Run (node / bun)</h3><pre><code>tsc app.ts &amp;&amp; node app.js
+npx tsx app.ts      # run TS directly
+bun run app.ts      # bun runs TS natively</code></pre></article>
+        </div>
+        <br>
+        <div class="flow">
+          <div class="flow-step"><div><strong>Write</strong><p><code>app.ts</code> — annotated source.</p></div></div>
+          <div class="flow-step"><div><strong>Type-check</strong><p><code>tsc --noEmit</code> — find errors.</p></div></div>
+          <div class="flow-step"><div><strong>Transpile</strong><p><code>tsc</code> — strip types, emit <code>.js</code>.</p></div></div>
+          <div class="flow-step"><div><strong>Run</strong><p><code>node app.js</code> or <code>bun app.ts</code>.</p></div></div>
+        </div>
+        <br>
+        <div class="callout"><div class="callout-mark">KEY</div><p><strong>Type-check ≠ build.</strong> <code>tsc</code> both checks and emits JavaScript; <code>tsc --noEmit</code> checks only. <code>--strict</code> turns on the whole strictness family at once (and is on by default in the generated <code>tsconfig.json</code>).</p></div>
+      </section>
+
+      <section class="section searchable" id="primitives">
+        <div class="section-head">
+          <div><div class="section-kicker">02 / Types</div><h2>Types &amp; annotations</h2></div>
+          <p>The building blocks: primitives, arrays, tuples, and the operators that combine them.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>Primitives &amp; annotations</h3><pre><code>let age: number = 36;
+let name: string = "Ada";
+let ok: boolean = true;
+let big: bigint = 100n;
+let none: null = null;
+let undef: undefined = undefined;
+let sym: symbol = Symbol("id");</code></pre></article>
+          <article class="card"><h3>Arrays &amp; tuples</h3><pre><code>let nums: number[] = [1, 2, 3];
+let names: Array&lt;string&gt; = ["a", "b"];
+let pair: [string, number] = ["Ada", 36];
+let ro: readonly string[] = ["x"];
+
+// array of objects
+let users: { id: number }[] = [];</code></pre></article>
+          <article class="card"><h3>Union &amp; intersection</h3><pre><code>let id: string | number = "u1";
+let maybe: string | null = null;
+
+type Draggable = { drag(): void };
+type Resizable = { resize(): void };
+type Widget = Draggable &amp; Resizable;
+// has BOTH drag() and resize()</code></pre></article>
+        </div>
+        <br>
+        <div class="grid two">
+          <article class="card"><h3>Literal types &amp; aliases</h3><pre><code>type Mode = "on" | "off";
+type Status = "idle" | "loading" | "done";
+type ID = string | number;
+type Point = { x: number; y: number };
+
+let mode: Mode = "on";   // ✓
+// mode = "maybe";       // ✗ error</code></pre></article>
+          <article class="card"><h3>unknown vs any vs never</h3><pre><code>let a: any = risky();     // opts out of checking
+a.nope().still.fine();     // no error — dangerous
+
+let u: unknown = risky();  // safe: must narrow
+if (typeof u === "string") console.log(u.length);
+
+function fail(): never { throw new Error("boom"); }</code></pre></article>
+        </div>
+        <br>
+        <div class="tags">
+          <span class="tag">any = opt out of checking</span>
+          <span class="tag">unknown = safe, narrow before use</span>
+          <span class="tag">never = function never returns</span>
+        </div>
+        <br>
+        <div class="callout warning"><div class="callout-mark">!</div><p><strong>Avoid <code>any</code>.</strong> It silently disables checking and lets type errors through. Prefer <code>unknown</code> and narrow with <code>typeof</code> / <code>in</code> before using the value.</p></div>
+      </section>
+
+      <section class="section searchable" id="interfaces">
+        <div class="section-head">
+          <div><div class="section-kicker">03 / Interfaces</div><h2>Interfaces &amp; type aliases</h2></div>
+          <p>Interfaces describe object shapes; type aliases describe any shape — and both compose.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>interface vs type</h3><pre><code>interface User { name: string }
+type User = { name: string };
+
+type ID = string | number;   // type: unions
+type Pair = [string, number];// type: tuples
+
+interface A { a: number }
+interface A { b: string }    // interface: merges</code></pre></article>
+          <article class="card"><h3>Optional &amp; readonly</h3><pre><code>interface User {
+  readonly id: number;
+  name: string;
+  email?: string;        // optional
+}
+
+const u: User = { id: 1, name: "Ada" };
+// u.id = 2;             // ✗ readonly</code></pre></article>
+          <article class="card"><h3>extends</h3><pre><code>interface Animal { name: string }
+interface Dog extends Animal {
+  breed: string;
+}
+interface A extends B, C {} // multiple
+
+// type aliases extend via &amp;
+type Dog2 = Animal &amp; { breed: string };</code></pre></article>
+          <article class="card"><h3>Index signatures</h3><pre><code>interface Scores {
+  [key: string]: number;
+}
+let s: Scores = { math: 90, art: 88 };
+
+interface Dict&lt;T&gt; {
+  [key: string]: T;
+}
+let d: Dict&lt;boolean&gt; = { active: true };</code></pre></article>
+          <article class="card"><h3>Function types</h3><pre><code>type Fn = (x: number) =&gt; string;
+const f: Fn = (x) =&gt; String(x);
+
+type Callback = (err: Error | null, data?: string) =&gt; void;</code></pre></article>
+          <article class="card"><h3>Call signatures</h3><pre><code>interface Comparator {
+  (a: string, b: string): number;
+}
+const byLen: Comparator = (a, b) =&gt; a.length - b.length;
+
+byLen("a", "bbb");   // -2</code></pre></article>
+        </div>
+        <br>
+        <div class="callout"><div class="callout-mark">KEY</div><p><strong>Interface for object shapes, type for everything else.</strong> A <code>type</code> alias can express unions, primitives, and tuples; an <code>interface</code> can be reopened and merged later. For plain object shapes the two are interchangeable — pick one and stay consistent.</p></div>
+      </section>
+
+      <section class="section searchable" id="functions">
+        <div class="section-head">
+          <div><div class="section-kicker">04 / Functions</div><h2>Functions &amp; generics</h2></div>
+          <p>Annotate parameters and returns, then make functions reusable across types with generics.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>Parameters &amp; return</h3><pre><code>function add(a: number, b: number): number {
+  return a + b;
+}
+const sub = (a: number, b: number): number =&gt; a - b;
+
+function log(msg: string): void {
+  console.log(msg);
+}</code></pre></article>
+          <article class="card"><h3>Generics &lt;T&gt;</h3><pre><code>function identity&lt;T&gt;(x: T): T { return x; }
+
+identity&lt;string&gt;("hi");   // T = string
+identity(42);            // T = number (inferred)
+
+function first&lt;T&gt;(arr: T[]): T | undefined {
+  return arr[0];
+}</code></pre></article>
+          <article class="card"><h3>Generic constraints</h3><pre><code>function longest&lt;T extends { length: number }&gt;(a: T, b: T): T {
+  return a.length &gt;= b.length ? a : b;
+}
+longest("ab", "cde");     // "cde"
+longest([1], [1, 2, 3]);  // [1, 2, 3]
+
+function get&lt;T, K extends keyof T&gt;(obj: T, key: K): T[K] {
+  return obj[key];
+}</code></pre></article>
+          <article class="card"><h3>Function overloads</h3><pre><code>function parse(x: string): number;
+function parse(x: number): string;
+function parse(x: string | number): number | string {
+  return typeof x === "string" ? Number(x) : String(x);
+}
+parse("42");   // number
+parse(42);     // string</code></pre></article>
+          <article class="card"><h3>Rest &amp; default params</h3><pre><code>function sum(...nums: number[]): number {
+  return nums.reduce((a, b) =&gt; a + b, 0);
+}
+sum(1, 2, 3);   // 6
+
+function greet(name: string, greeting = "hi") {
+  return `${greeting}, ${name}`;
+}</code></pre></article>
+          <article class="card"><h3>Return types: void &amp; never</h3><pre><code>function log(msg: string): void {
+  console.log(msg);       // returns nothing
+}
+function fail(msg: string): never {
+  throw new Error(msg);   // never returns
+}
+function loop(): never {
+  while (true) {}         // never returns
+}</code></pre></article>
+        </div>
+        <br>
+        <div class="callout"><div class="callout-mark">KEY</div><p><strong>Let inference do the work.</strong> <code>identity(42)</code> infers <code>T = number</code> — you rarely write <code>&lt;number&gt;</code> by hand. Constraints (<code>&lt;T extends …&gt;</code>) let you promise a capability while keeping the exact type.</p></div>
+      </section>
+
+      <section class="section searchable" id="classes">
+        <div class="section-head">
+          <div><div class="section-kicker">05 / Classes</div><h2>Classes &amp; objects</h2></div>
+          <p>Classes add visibility and inheritance; parameter properties cut the boilerplate.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>class &amp; constructor</h3><pre><code>class Point {
+  x: number;
+  y: number;
+  constructor(x: number, y: number) {
+    this.x = x;
+    this.y = y;
+  }
+}
+const p = new Point(3, 4);
+p.x;   // 3</code></pre></article>
+          <article class="card"><h3>Parameter properties</h3><pre><code>class Point {
+  constructor(public x: number, public y: number) {}
+}
+// shorthand for: declare the field
+// AND assign it in the constructor
+
+const p = new Point(3, 4);
+p.x;   // 3</code></pre></article>
+          <article class="card"><h3>Visibility</h3><pre><code>class Account {
+  public id: string;        // default
+  private balance = 0;      // this class only
+  protected owner: string;  // + subclasses
+  readonly created: Date;   // assign once
+}
+
+// a.balance;   // ✗ private
+// a.owner;     // ✗ protected</code></pre></article>
+          <article class="card"><h3>abstract</h3><pre><code>abstract class Shape {
+  abstract area(): number;   // subclass must implement
+  describe() {
+    return `area ${this.area()}`;
+  }
+}
+class Square extends Shape {
+  constructor(private s: number) { super(); }
+  area() { return this.s * this.s; }
+}</code></pre></article>
+          <article class="card"><h3>implements</h3><pre><code>interface Named { name: string }
+interface Greeter { greet(): string }
+
+class Person implements Named, Greeter {
+  constructor(public name: string) {}
+  greet() { return `hi ${this.name}`; }
+}</code></pre></article>
+          <article class="card"><h3>Enums</h3><pre><code>enum Direction { Up, Down, Left, Right }
+Direction.Up;     // 0
+Direction[1];     // "Down"
+
+enum Status { Ok = 200, NotFound = 404 }
+
+const enum Color { Red, Green }
+// inlined at compile time — no runtime object</code></pre></article>
+        </div>
+        <br>
+        <div class="callout warning"><div class="callout-mark">!</div><p><strong>Enums are runtime objects</strong>; a <code>const enum</code> is inlined and emits nothing. For simple finite sets, a union of string literals (<code>"on" | "off"</code>) is often lighter and easier to extend.</p></div>
+      </section>
+
+      <section class="section searchable" id="narrowing">
+        <div class="section-head">
+          <div><div class="section-kicker">06 / Narrowing</div><h2>Narrowing &amp; type guards</h2></div>
+          <p>A union is only useful after you shrink it to one branch — these are the tools that do it.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>typeof</h3><pre><code>function len(x: string | number) {
+  if (typeof x === "string") {
+    return x.length;         // string here
+  }
+  return String(x).length;   // number here
+}
+// narrows: string number boolean
+// symbol bigint undefined object function</code></pre></article>
+          <article class="card"><h3>instanceof</h3><pre><code>function message(e: Error | string) {
+  if (e instanceof Error) {
+    return e.message;   // Error here
+  }
+  return e;             // string here
+}</code></pre></article>
+          <article class="card"><h3>in</h3><pre><code>type Bird = { fly(): void };
+type Fish = { swim(): void };
+
+function move(a: Bird | Fish) {
+  if ("fly" in a) a.fly();
+  else a.swim();
+}</code></pre></article>
+          <article class="card"><h3>Discriminated unions</h3><pre><code>type Shape =
+  | { kind: "circle"; r: number }
+  | { kind: "rect"; w: number; h: number };
+
+function area(s: Shape) {
+  switch (s.kind) {
+    case "circle": return Math.PI * s.r ** 2;
+    case "rect":   return s.w * s.h;
+  }
+}</code></pre></article>
+          <article class="card"><h3>Type predicates</h3><pre><code>function isFish(pet: Bird | Fish): pet is Fish {
+  return (pet as Fish).swim !== undefined;
+}
+
+if (isFish(pet)) {
+  pet.swim();   // narrowed to Fish
+} else {
+  pet.fly();    // narrowed to Bird
+}</code></pre></article>
+          <article class="card"><h3>satisfies &amp; as const</h3><pre><code>const palette = { red: "#f00", green: "#0f0" } as const;
+// palette.red: "#f00" — a literal, not string
+
+const config = { port: 8080 } satisfies ServerConfig;
+// keeps the exact type AND checks it
+// against ServerConfig</code></pre></article>
+        </div>
+        <br>
+        <div class="callout"><div class="callout-mark">KEY</div><p><code>satisfies</code> validates without widening — your literal types survive. <code>as const</code> makes a value deeply readonly and keeps its literals, the backbone of discriminated unions.</p></div>
+      </section>
+
+      <section class="section searchable" id="utilities">
+        <div class="section-head">
+          <div><div class="section-kicker">07 / Utility types</div><h2>Utility &amp; mapped types</h2></div>
+          <p>Built-in type transformers for reshaping existing types, plus the <code>keyof</code> machinery behind them.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Utility</th><th>What it does</th></tr></thead><tbody>
+          <tr><td><code>Partial&lt;T&gt;</code></td><td>makes every property optional</td></tr>
+          <tr><td><code>Required&lt;T&gt;</code></td><td>makes every property required</td></tr>
+          <tr><td><code>Readonly&lt;T&gt;</code></td><td>makes every property readonly</td></tr>
+          <tr><td><code>Pick&lt;T, K&gt;</code></td><td>keeps only the keys <code>K</code></td></tr>
+          <tr><td><code>Omit&lt;T, K&gt;</code></td><td>drops the keys <code>K</code></td></tr>
+          <tr><td><code>Record&lt;K, V&gt;</code></td><td>maps keys <code>K</code> to the value type <code>V</code></td></tr>
+          <tr><td><code>ReturnType&lt;F&gt;</code></td><td>return type of function <code>F</code></td></tr>
+          <tr><td><code>Parameters&lt;F&gt;</code></td><td>tuple of function <code>F</code>'s parameters</td></tr>
+          <tr><td><code>NonNullable&lt;T&gt;</code></td><td>removes <code>null</code> and <code>undefined</code></td></tr>
+          <tr><td><code>Awaited&lt;T&gt;</code></td><td>the resolved type of a promise</td></tr>
+          <tr><td><code>Exclude&lt;T, U&gt;</code></td><td>types in <code>T</code> not in <code>U</code></td></tr>
+          <tr><td><code>Extract&lt;T, U&gt;</code></td><td>types in <code>T</code> also in <code>U</code></td></tr>
+        </tbody></table></div>
+        <br>
+        <div class="grid two">
+          <article class="card"><h3>keyof &amp; indexed access</h3><pre><code>type User = { id: number; name: string };
+type K = keyof User;          // "id" | "name"
+type Name = User["name"];     // string
+
+function get&lt;T, K extends keyof T&gt;(obj: T, key: K): T[K] {
+  return obj[key];
+}
+get(user, "name");   // string (checked key)</code></pre></article>
+          <article class="card"><h3>Mapped types</h3><pre><code>type Flags&lt;T&gt; = { [K in keyof T]: boolean };
+type UserFlags = Flags&lt;User&gt;;
+// { id: boolean; name: boolean }
+
+// the built-ins, from scratch:
+type Partial&lt;T&gt; = { [K in keyof T]?: T[K] };
+type Readonly&lt;T&gt; = { readonly [K in keyof T]: T[K] };
+
+type Pick&lt;T, K extends keyof T&gt; = { [P in K]: T[P] };</code></pre></article>
+        </div>
+        <br>
+        <div class="callout"><div class="callout-mark">KEY</div><p><code>keyof</code> + mapped types are the building blocks — <code>Partial</code>, <code>Readonly</code>, <code>Pick</code>, and <code>Omit</code> are all implemented this way in the standard library.</p></div>
+      </section>
+
+      <section class="section searchable" id="tooling">
+        <div class="section-head">
+          <div><div class="section-kicker">08 / Tooling</div><h2>Tooling &amp; config</h2></div>
+          <p>Configure the compiler, ship declaration files, and wire up linting and direct execution.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>tsconfig.json</h3><pre><code>{
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "esnext",
+    "strict": true,
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "include": ["src"]
+}</code></pre></article>
+          <article class="card"><h3>Strict flags</h3><pre><code>"strict": true                  // all below ON
+"noImplicitAny": true
+"strictNullChecks": true
+"noUncheckedIndexedAccess": true
+"exactOptionalPropertyTypes": true
+"noImplicitReturns": true</code></pre></article>
+          <article class="card"><h3>Declaration files</h3><pre><code>declare const API_URL: string;   // ambient value
+declare module "*.css";          // wildcard module
+
+// types.d.ts — types only, ships no JS
+export interface Config { port: number }
+
+tsc --declaration       // emit .d.ts for your code</code></pre></article>
+          <article class="card"><h3>tsx &amp; ts-node</h3><pre><code>npm i -D tsx
+npx tsx app.ts        # run TS directly
+
+npm i -D ts-node
+npx ts-node app.ts
+
+# types in one-off scripts:
+npx tsx -e 'const n: number = 2'</code></pre></article>
+          <article class="card"><h3>ESLint + typescript-eslint</h3><pre><code>npm i -D eslint typescript-eslint
+
+// eslint.config.mjs
+import tseslint from "typescript-eslint";
+export default tseslint.config(
+  ...tseslint.configs.recommended,
+);
+
+npx eslint .</code></pre></article>
+          <article class="card"><h3>Vite / bundlers</h3><pre><code># Vite runs TS with no build step
+npm create vite@latest my-app -- --template vanilla-ts
+npm run dev
+
+# esbuild strips types instantly
+esbuild src/app.ts --bundle --outfile=dist/app.js</code></pre></article>
+        </div>
+        <br>
+        <div class="shortcut-grid">
+          <div class="shortcut-group">
+            <h4>tsc — check &amp; build</h4>
+            <div class="shortcut-list">
+              <div class="shortcut-row"><span>Type-check only</span><span class="keys"><kbd>tsc --noEmit</kbd></span></div>
+              <div class="shortcut-row"><span>Watch mode</span><span class="keys"><kbd>tsc --watch</kbd></span></div>
+              <div class="shortcut-row"><span>Init config</span><span class="keys"><kbd>tsc --init</kbd></span></div>
+            </div>
+          </div>
+          <div class="shortcut-group">
+            <h4>tsc — emit</h4>
+            <div class="shortcut-list">
+              <div class="shortcut-row"><span>Output dir</span><span class="keys"><kbd>tsc --outDir dist</kbd></span></div>
+              <div class="shortcut-row"><span>Declaration files</span><span class="keys"><kbd>tsc --declaration</kbd></span></div>
+              <div class="shortcut-row"><span>Use a project</span><span class="keys"><kbd>tsc -p tsconfig.json</kbd></span></div>
+            </div>
+          </div>
+          <div class="shortcut-group">
+            <h4>run directly</h4>
+            <div class="shortcut-list">
+              <div class="shortcut-row"><span>tsx</span><span class="keys"><kbd>npx tsx app.ts</kbd></span></div>
+              <div class="shortcut-row"><span>ts-node</span><span class="keys"><kbd>npx ts-node app.ts</kbd></span></div>
+              <div class="shortcut-row"><span>bun</span><span class="keys"><kbd>bun run app.ts</kbd></span></div>
+            </div>
+          </div>
+        </div>
+        <br>
+        <div class="callout warning"><div class="callout-mark">!</div><p><strong>Declaration files (<code>.d.ts</code>) are types only.</strong> They are stripped from the emitted JavaScript and exist so other projects (and your editor) can consume your public types.</p></div>
+      </section>
+
+      <footer class="footer searchable">
+        <strong>Source of truth</strong>
+        <p>This guide covers the daily TypeScript surface. The official TypeScript Handbook and the tsconfig reference remain authoritative for edge cases and version-specific behavior.</p>
+        <div class="footer-links">
+          <a href="https://www.typescriptlang.org/docs/" target="_blank" rel="noreferrer">TypeScript docs</a>
+          <a href="https://www.typescriptlang.org/tsconfig/" target="_blank" rel="noreferrer">tsconfig reference</a>
+          <a href="https://www.typescriptlang.org/docs/handbook/utility-types.html" target="_blank" rel="noreferrer">Utility types</a>
+          <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

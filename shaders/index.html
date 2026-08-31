@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-guide="shaders">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="GPU shaders: the pipeline, GLSL syntax, uniforms/varyings, lighting, SDFs, and common effects.">
+  <title>Shaders — Visual Cheatsheet</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../" aria-label="Back to slop-stuff">
+      <span class="brand-mark">glsl_</span>
+      <span>Shaders Guide</span>
+      <span class="version">GLSL · HLSL</span>
+    </a>
+    <label class="search-wrap">
+      <span class="sr-only" hidden>Search guide</span>
+      <input id="search" type="search" aria-label="Search guide" placeholder="Search GLSL, vertex, fragment, uniform, varying, lighting, noise…" autocomplete="off">
+    </label>
+    <div class="top-actions">
+      <button class="icon-button" id="themeToggle" type="button" title="Toggle theme" aria-label="Toggle light and dark theme">◐</button>
+      <button class="icon-button" id="printGuide" type="button" title="Print guide" aria-label="Print this guide">Print</button>
+    </div>
+  </header>
+
+  <div class="shell" id="top">
+    <aside class="sidebar" aria-label="Guide sections">
+      <p class="side-label">On this page</p>
+      <nav>
+        <a href="#start"><span class="nav-number">01</span>Start here</a>
+        <a href="#glsl"><span class="nav-number">02</span>GLSL</a>
+        <a href="#uniforms"><span class="nav-number">03</span>Uniforms &amp; varyings</a>
+        <a href="#lighting"><span class="nav-number">04</span>Lighting</a>
+        <a href="#sdf"><span class="nav-number">05</span>SDFs &amp; raymarching</a>
+        <a href="#effects"><span class="nav-number">06</span>Effects</a>
+        <a href="#gl"><span class="nav-number">07</span>Integration</a>
+        <a href="#gotchas"><span class="nav-number">08</span>Gotchas</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section class="hero searchable" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="eyebrow">Visual cheatsheet + usage guide</div>
+          <h1 id="hero-title">Programs that run <span>on the GPU.</span></h1>
+          <p>A shader is a small program executed by the graphics card: the vertex stage transforms geometry, the fragment stage paints every pixel. One language, millions of pixels in parallel.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#start">Start in 5 minutes →</a>
+            <a class="button" href="#lighting">See lighting</a>
+            <a class="button" href="#sdf">Raymarch SDFs</a>
+          </div>
+        </div>
+        <div class="terminal" aria-label="Stylized GLSL fragment shader">
+          <div class="terminal-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="terminal-title">fragment.glsl</span></div>
+          <div class="terminal-body">
+            <div class="mock-side">
+              <p class="mock-label">Inputs</p>
+              <div class="mock-row active">uniform vec3 u_light</div>
+              <div class="mock-row">uniform float u_time</div>
+              <div class="mock-row">varying vec2 v_uv</div>
+            </div>
+            <div class="mock-pane">
+              <div><span class="cmd">precision highp float;</span></div>
+              <br>
+              <div><span class="cmd">void main() {</span></div>
+              <div><span class="cmd">  vec3 n = normalize(vec3(v_uv - 0.5, 0.5));</span></div>
+              <div><span class="cmd">  float d = max(dot(n, u_light), 0.0);</span></div>
+              <div><span class="cmd">  gl_FragColor = vec4(vec3(d), 1.0);</span></div>
+              <div><span class="cmd">}</span></div>
+              <br>
+              <div><span class="prompt">▸</span> <span class="dim">// runs once per pixel, in parallel</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “vertex”, “fragment”, “uniform”, “lighting”, or “noise”.</div>
+
+      <section class="section searchable" id="start">
+        <div class="section-head">
+          <div><div class="section-kicker">01 / Start here</div><h2>The pipeline</h2></div>
+          <p>Every draw call flows through fixed stages: geometry is transformed, triangles are rasterized, and each pixel is shaded.</p>
+        </div>
+        <div class="model" aria-label="Graphics pipeline: vertex, rasterization, fragment, framebuffer">
+          <div class="model-node"><strong>Vertex</strong><small>transforms points</small></div><div class="arrow">→</div>
+          <div class="model-node agent"><strong>Rasterizer</strong><small>fills triangles</small></div><div class="arrow">→</div>
+          <div class="model-node agent"><strong>Fragment</strong><small>colors pixels</small></div><div class="arrow">→</div>
+          <div class="model-node"><strong>Framebuffer</strong><small>final image</small></div>
+        </div>
+        <div class="tags" style="margin-top:16px">
+          <span class="tag">per-vertex</span><span class="tag">per-primitive</span><span class="tag">per-pixel</span><span class="tag">massively parallel</span>
+        </div>
+        <div class="grid four" style="margin-top:16px">
+          <article class="card"><div class="card-number">1</div><h3>Vertex shader</h3><p>Runs once per vertex. Transforms local position into clip space and passes data downstream.</p><pre><code>gl_Position = u_proj * u_view *
+              u_model * vec4(a_pos, 1.0);</code></pre></article>
+          <article class="card"><div class="card-number">2</div><h3>Rasterization</h3><p>Fixed function. Assembles primitives, clips, and interpolates varyings across each triangle.</p><pre><code>// no code — the GPU does it.
+// varyings are linearly
+// interpolated per pixel.</code></pre></article>
+          <article class="card"><div class="card-number">3</div><h3>Fragment shader</h3><p>Runs once per pixel (fragment). Reads interpolated inputs and writes a color.</p><pre><code>gl_FragColor =
+  vec4(1.0, 0.5, 0.0, 1.0);</code></pre></article>
+          <article class="card"><div class="card-number">4</div><h3>Output</h3><p>The color is blended and written to the framebuffer, then presented to the screen.</p><pre><code>// depth test &amp; blend
+// happen after the
+// fragment shader runs.</code></pre></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">KEY</div><p><strong>Vertex = geometry, fragment = pixels.</strong> You can't control the loop — the GPU schedules millions of invocations for you. Write each shader as the code for a <em>single</em> vertex or <em>single</em> pixel and let parallelism do the rest.</p></div>
+      </section>
+
+      <section class="section searchable" id="glsl">
+        <div class="section-head">
+          <div><div class="section-kicker">02 / GLSL</div><h2>GLSL syntax &amp; types</h2></div>
+          <p>GLSL is C-like, with vector and matrix types as first-class citizens and swizzle sugar on top.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Type</th><th>Meaning</th><th>Example</th></tr></thead><tbody>
+          <tr><td><code>float</code></td><td>32-bit scalar</td><td><code>float t = 0.5;</code></td></tr>
+          <tr><td><code>int</code> / <code>bool</code></td><td>integer, boolean</td><td><code>bool hit = false;</code></td></tr>
+          <tr><td><code>vec2 / vec3 / vec4</code></td><td>2 / 3 / 4-component vector</td><td><code>vec3 color = vec3(1.0);</code></td></tr>
+          <tr><td><code>mat2 / mat3 / mat4</code></td><td>square matrices</td><td><code>mat4 model = mat4(1.0);</code></td></tr>
+          <tr><td><code>sampler2D</code></td><td>2D texture handle</td><td><code>uniform sampler2D tex;</code></td></tr>
+          <tr><td><code>samplerCube</code></td><td>cubemap handle</td><td><code>uniform samplerCube env;</code></td></tr>
+        </tbody></table></div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Swizzling</h3><p>Rearrange components with <code>.xyzw</code>, <code>.rgba</code>, or <code>.stpq</code> — all three names are equivalent.</p><pre><code>vec4 c = vec4(1.0, 0.0, 0.0, 1.0);
+vec3 rgb = c.rgb;   // == c.xyz
+vec2 st  = c.xy;
+vec2 rev = c.zy;    // reorder</code></pre></article>
+          <article class="card"><h3>Built-in variables</h3><p>Every stage declares well-known inputs and outputs for you.</p><pre><code>gl_Position   // vertex OUT: clip-space
+gl_FragCoord  // fragment IN: x,y + depth
+gl_FragColor  // fragment OUT: color
+gl_PointSize  // point sprite size</code></pre></article>
+        </div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">⚠</div><p><strong>Precision matters on mobile.</strong> Fragment shaders must declare <code>precision mediump float;</code> (or <code>highp</code>) — GLSL ES requires it, and <code>highp</code> isn't available everywhere. Qualifiers: <code>lowp</code> (fast, low range), <code>mediump</code> (default on most phones), <code>highp</code> (full precision).</p></div>
+        <details style="margin-top:16px">
+          <summary>Built-in functions you'll use constantly</summary>
+          <div class="details-body command-index">
+            <div class="command-row"><code>mix(a, b, t)</code><span>Linear blend between a and b.</span></div>
+            <div class="command-row"><code>clamp(x, lo, hi)</code><span>Clamp x into [lo, hi].</span></div>
+            <div class="command-row"><code>smoothstep(e0, e1, x)</code><span>Smooth Hermite ramp 0 → 1.</span></div>
+            <div class="command-row"><code>step(edge, x)</code><span>0 below edge, 1 above.</span></div>
+            <div class="command-row"><code>length(x) / distance(a, b)</code><span>Vector magnitude / separation.</span></div>
+            <div class="command-row"><code>normalize(x)</code><span>Scale to unit length.</span></div>
+            <div class="command-row"><code>dot(a, b) / cross(a, b)</code><span>Dot and cross product.</span></div>
+            <div class="command-row"><code>fract(x) / mod(x, y)</code><span>Fractional part / modulus.</span></div>
+          </div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="uniforms">
+        <div class="section-head">
+          <div><div class="section-kicker">03 / Uniforms &amp; varyings</div><h2>Uniforms &amp; varyings</h2></div>
+          <p>Data enters a shader two ways: <code>uniform</code> (constant for the whole draw) and <code>in</code>/<code>out</code> (per-vertex, interpolated).</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Qualifier</th><th>Scope</th><th>Set by</th><th>Example</th></tr></thead><tbody>
+          <tr><td><code>uniform</code></td><td>constant per draw call</td><td>CPU / JS via <code>glUniform*</code></td><td><code>uniform mat4 u_view;</code></td></tr>
+          <tr><td><code>attribute</code> / <code>in</code></td><td>per-vertex input</td><td>CPU via vertex buffers</td><td><code>in vec3 a_pos;</code></td></tr>
+          <tr><td><code>varying</code> / <code>out</code></td><td>vertex writes, fragment reads</td><td>interpolated by rasterizer</td><td><code>out vec2 v_uv;</code></td></tr>
+        </tbody></table></div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Modern syntax (GLSL 3.30+)</h3><p><code>attribute</code>/<code>varying</code> are legacy; modern GLSL uses explicit <code>in</code>/<code>out</code>.</p><pre><code>// vertex shader
+in  vec3 a_pos;
+out vec2 v_uv;
+
+// fragment shader
+in  vec2 v_uv;
+out vec4 fragColor;</code></pre></article>
+          <article class="card"><h3>Interpolation</h3><p>The rasterizer linearly blends each <code>out</code> value across the triangle's surface, so the fragment sees a smooth value.</p><pre><code>// vertex writes per-corner
+v_uv = a_uv;
+// fragment reads the
+// interpolated value here</code></pre></article>
+        </div>
+        <details style="margin-top:16px">
+          <summary>Full vertex + fragment skeleton</summary>
+          <div class="details-body grid two">
+            <div><h4>vertex.glsl</h4><pre><code>uniform mat4 u_proj, u_view;
+in vec3 a_pos; in vec2 a_uv;
+out vec2 v_uv;
+
+void main() {
+  v_uv = a_uv;
+  gl_Position = u_proj * u_view * vec4(a_pos, 1.0);
+}</code></pre></div>
+            <div><h4>fragment.glsl</h4><pre><code>precision mediump float;
+uniform sampler2D tex;
+in vec2 v_uv;
+out vec4 fragColor;
+
+void main() {
+  fragColor = texture(tex, v_uv);
+}</code></pre></div>
+          </div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="lighting">
+        <div class="section-head">
+          <div><div class="section-kicker">04 / Lighting</div><h2>Lighting &amp; shading</h2></div>
+          <p>Realistic shading composes a few terms: ambient (constant), diffuse (Lambert), and specular (Blinn-Phong).</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>Diffuse — Lambert</h3><p>Brightness falls off with the cosine between the surface normal <code>n</code> and light direction <code>l</code>.</p><pre><code>float ndl = max(dot(n, l), 0.0);
+vec3 diffuse = baseColor * ndl;</code></pre></article>
+          <article class="card"><h3>Specular — Blinn-Phong</h3><p>Highlight around the half-vector <code>h</code>, sharpened by the <code>shininess</code> exponent.</p><pre><code>vec3 h = normalize(l + v);
+float spec =
+  pow(max(dot(n, h), 0.0),
+      shininess);</code></pre></article>
+          <article class="card"><h3>Ambient</h3><p>A constant term so shadowed areas aren't pitch black. Add it to the others.</p><pre><code>vec3 ambient = ambientColor * baseColor;
+vec3 final =
+  ambient + diffuse + specular;</code></pre></article>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Normal mapping</h3><p>Perturb the normal with a texture so a flat surface appears bumpy.</p><pre><code>vec3 n = texture(normalMap, v_uv).rgb;
+n = normalize(n * 2.0 - 1.0); // 0..1 → -1..1
+n = normalize(tbn * n);       // to world</code></pre></article>
+          <article class="card"><h3>Fresnel</h3><p>Surfaces reflect more at grazing angles — edges glow.</p><pre><code>float fresnel =
+  pow(1.0 - max(dot(v, n), 0.0), 5.0);
+color += rimColor * fresnel;</code></pre></article>
+        </div>
+        <details style="margin-top:16px">
+          <summary>Complete Blinn-Phong fragment shader</summary>
+          <div class="details-body"><pre><code>precision highp float;
+
+uniform vec3 u_lightPos;
+uniform vec3 u_viewPos;
+uniform vec3 u_baseColor;
+varying vec3 v_normal;
+varying vec3 v_worldPos;
+
+void main() {
+  vec3 n = normalize(v_normal);
+  vec3 l = normalize(u_lightPos - v_worldPos);
+  vec3 v = normalize(u_viewPos - v_worldPos);
+  vec3 h = normalize(l + v);
+
+  float diffuse = max(dot(n, l), 0.0);
+  float spec    = pow(max(dot(n, h), 0.0), 64.0);
+  vec3  ambient = vec3(0.05) * u_baseColor;
+
+  vec3 color = ambient + u_baseColor * diffuse
+             + vec3(1.0) * spec;
+  gl_FragColor = vec4(color, 1.0);
+}</code></pre></div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="sdf">
+        <div class="section-head">
+          <div><div class="section-kicker">05 / SDF</div><h2>SDFs &amp; raymarching</h2></div>
+          <p>A signed distance function returns the distance to the nearest surface. March along the ray by that distance until you hit something.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>Sphere SDF</h3><p>Negative inside, positive outside, zero on the surface.</p><pre><code>float sdSphere(vec3 p, float r) {
+  return length(p) - r;
+}</code></pre></article>
+          <article class="card"><h3>Raymarching loop</h3><p>Advance <code>t</code> by the distance — it's safe because <code>d</code> is a lower bound.</p><pre><code>float t = 0.0;
+for (int i = 0; i &lt; 64; i++) {
+  float d = map(ro + rd * t);
+  if (d &lt; 0.001) break; // hit
+  t += d;
+  if (t &gt; 100.0) break; // miss
+}</code></pre></article>
+          <article class="card"><h3>Boolean ops</h3><p>Combine shapes with min/max — the whole power of SDFs in three lines.</p><pre><code>float opUnion(float a, float b)     { return min(a, b); }
+float opIntersect(float a, float b) { return max(a, b); }
+float opSubtract(float a, float b)  { return max(a, -b); }</code></pre></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">✓</div><p><strong>Normals come free.</strong> Differentiate the SDF with a numerical gradient to get the surface normal: <code>normalize(vec3(map(p+e)-map(p-e)))</code> sampled along each axis. No mesh needed.</p></div>
+      </section>
+
+      <section class="section searchable" id="effects">
+        <div class="section-head">
+          <div><div class="section-kicker">06 / Effects</div><h2>Common effects</h2></div>
+          <p>Small fragment-shader post-processes that transform the final image or synthesize detail.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>Value noise</h3><p>Hash coordinates into pseudo-random noise.</p><pre><code>float hash(vec2 p) {
+  return fract(sin(dot(p,
+    vec2(12.9898, 78.233))) *
+    43758.5453);
+}</code></pre></article>
+          <article class="card"><h3>Vignette</h3><p>Darken the corners to focus the frame.</p><pre><code>float vig = smoothstep(0.8, 0.3,
+  distance(v_uv, vec2(0.5)));
+color *= vig;</code></pre></article>
+          <article class="card"><h3>Gamma correction</h3><p>Convert linear light back to display space.</p><pre><code>color = pow(color, vec3(1.0 / 2.2));</code></pre></article>
+          <article class="card"><h3>Posterization</h3><p>Quantize to a small number of color levels.</p><pre><code>float levels = 6.0;
+color = floor(color * levels) / levels;</code></pre></article>
+          <article class="card"><h3>Dithering</h3><p>Add tiny noise to hide banding in gradients.</p><pre><code>color += (hash(gl_FragCoord.xy) - 0.5)
+         / 255.0;</code></pre></article>
+          <article class="card"><h3>UV distortion</h3><p>Wobble the UVs for a ripple or heat-haze look.</p><pre><code>vec2 uv = v_uv + 0.02 *
+  sin(v_uv * 10.0 + u_time);</code></pre></article>
+        </div>
+      </section>
+
+      <section class="section searchable" id="gl">
+        <div class="section-head">
+          <div><div class="section-kicker">07 / Integration</div><h2>GLSL in OpenGL/WebGL</h2></div>
+          <p>Shaders are compiled and linked into a program on the CPU side, then fed values through uniforms and attributes.</p>
+        </div>
+        <div class="flow">
+          <div class="flow-step"><div><strong>Compile</strong><p>Create a shader, attach source, compile, and check <code>GL_COMPILE_STATUS</code>.</p></div></div>
+          <div class="flow-step"><div><strong>Link</strong><p>Attach both stages to a program and link them into a pipeline.</p></div></div>
+          <div class="flow-step"><div><strong>Use</strong><p>Make the program current — all subsequent draws run through it.</p></div></div>
+          <div class="flow-step"><div><strong>Set uniforms</strong><p>Look up locations and push values every time before drawing.</p></div></div>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>OpenGL (C)</h3><pre><code>GLuint vs = glCreateShader(GL_VERTEX_SHADER);
+glShaderSource(vs, 1, &amp;src, NULL);
+glCompileShader(vs);
+
+GLuint prog = glCreateProgram();
+glAttachShader(prog, vs);
+glAttachShader(prog, fs);
+glLinkProgram(prog);
+glUseProgram(prog);</code></pre></article>
+          <article class="card"><h3>Uniforms &amp; attributes</h3><p>Resolve locations once, set values per draw. WebGL uses <code>gl.getUniformLocation</code>.</p><pre><code>GLint uLoc = glGetUniformLocation(prog, "u_time");
+glUniform1f(uLoc, t);
+
+GLint aLoc = glGetAttribLocation(prog, "a_pos");
+glEnableVertexAttribArray(aLoc);</code></pre></article>
+        </div>
+        <div class="command-index" style="margin-top:16px">
+          <div class="command-row"><code>glUniform1f(loc, x)</code><span>Set a float uniform.</span></div>
+          <div class="command-row"><code>glUniform3f(loc, x, y, z)</code><span>Set a vec3 uniform.</span></div>
+          <div class="command-row"><code>glUniform1i(loc, n)</code><span>Set an int or sampler unit.</span></div>
+          <div class="command-row"><code>glUniformMatrix4fv(loc, 1, GL_FALSE, m)</code><span>Upload a mat4 (column-major).</span></div>
+        </div>
+      </section>
+
+      <section class="section searchable" id="gotchas">
+        <div class="section-head">
+          <div><div class="section-kicker">08 / Gotchas</div><h2>Pitfalls</h2></div>
+          <p>Small behaviors that break shaders in surprising ways — and how to avoid them.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>Swizzle lvalues</h3><p>Assigning to a swizzled lvalue with a repeated component is undefined — <code>v.xx = vec2(1.0)</code> is invalid.</p><pre><code>v.xyz = vec3(1.0); // ok
+v.x = 1.0;         // ok
+v.xx = vec2(1.0);  // ✗ invalid</code></pre></article>
+          <article class="card"><h3>Precision on mobile</h3><p>GLSL ES fragment shaders default to no float precision; declare it or compilation fails on some drivers.</p><pre><code>precision mediump float; // first line</code></pre></article>
+          <article class="card"><h3>Branch divergence</h3><p>The GPU runs threads in lockstep warps; an <code>if</code> executes both sides and masks, so don't put huge work in branches.</p><pre><code>// prefer step/mix/select
+float v = step(0.5, x);</code></pre></article>
+          <article class="card"><h3>Uniforms don't persist</h3><p>Values reset when you re-link the program or the context is lost — set uniforms after <code>glUseProgram</code>, every frame.</p><pre><code>glUseProgram(prog);
+glUniform1f(uTime, now); // each frame</code></pre></article>
+          <article class="card"><h3>Coordinate spaces</h3><p>Know your origin: <code>gl_FragCoord</code> is bottom-left in OpenGL but top-left in many WebGL and texture conventions.</p><pre><code>// flip if needed
+vec2 uv = vec2(gl_FragCoord.x,
+  u_res.y - gl_FragCoord.y) / u_res;</code></pre></article>
+          <article class="card"><h3>Gamma vs linear</h3><p>Do lighting math in linear space and gamma-correct only at the very end — never blend in sRGB.</p><pre><code>color = pow(color, vec3(1.0 / 2.2)); // last step</code></pre></article>
+        </div>
+      </section>
+
+      <footer class="footer searchable">
+        <strong>Source of truth</strong>
+        <p>This guide covers GLSL essentials. The Khronos GLSL wiki, The Book of Shaders, and Inigo Quilez's articles remain authoritative for the edge cases.</p>
+        <div class="footer-links">
+          <a href="https://www.khronos.org/opengl/wiki/Core_Language_(GLSL)" target="_blank" rel="noreferrer">Khronos GLSL wiki</a>
+          <a href="https://thebookofshaders.com/" target="_blank" rel="noreferrer">The Book of Shaders</a>
+          <a href="https://iquilezles.org/articles/" target="_blank" rel="noreferrer">Inigo Quilez</a>
+          <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

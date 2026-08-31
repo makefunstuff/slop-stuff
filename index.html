@@ -78,7 +78,7 @@
         Cheatsheets, visual guides, little games, and random experiments — each in its own folder, all served from one GitHub Pages site.
       </p>
       <div class="stat-row">
-        <div class="stat"><strong>31</strong><span>cheatsheets &amp; guides</span></div>
+        <div class="stat"><strong>41</strong><span>cheatsheets &amp; guides</span></div>
         <div class="stat"><strong>1</strong><span>playable game</span></div>
         <div class="stat"><strong>∞</strong><span>slop to come</span></div>
       </div>
@@ -239,7 +239,25 @@
         </a>
       </div>
 
-      <div class="cat">Cloud &amp; observability</div>
+      <div class="cat">Graphics</div>
+      <div class="grid two">
+        <a class="card link-card" href="shaders/">
+          <span class="tag">graphics</span>
+          <h3 style="margin-top:14px">Shaders — cheatsheet</h3>
+          <p>GLSL, the pipeline, uniforms/varyings, lighting, SDFs, and common effects.</p>
+          <div class="meta"><span class="tag">GLSL</span><span class="tag">lighting</span><span class="tag">SDF</span></div>
+          <div class="go">Open guide →</div>
+        </a>
+        <a class="card link-card" href="opengl/">
+          <span class="tag">graphics</span>
+          <h3 style="margin-top:14px">OpenGL — cheatsheet</h3>
+          <p>Buffers, VAOs, shaders, textures, framebuffers, and the core profile.</p>
+          <div class="meta"><span class="tag">VBO</span><span class="tag">VAO</span><span class="tag">framebuffer</span></div>
+          <div class="go">Open guide →</div>
+        </a>
+      </div>
+
+      <div class="cat">Cloud, DevOps &amp; observability</div>
       <div class="grid two">
         <a class="card link-card" href="kubectl/">
           <span class="tag">cloud</span>
@@ -267,6 +285,38 @@
           <h3 style="margin-top:14px">PromQL — cheatsheet</h3>
           <p>Selectors, rates, aggregation, and functions for Prometheus.</p>
           <div class="meta"><span class="tag">rate</span><span class="tag">sum by</span><span class="tag">histogram</span></div>
+          <div class="go">Open guide →</div>
+        </a>
+        <a class="card link-card" href="devops/">
+          <span class="tag">devops</span>
+          <h3 style="margin-top:14px">Infrastructure &amp; DevOps — cheatsheet</h3>
+          <p>CI/CD, containers, orchestration, IaC, observability, and deployment strategies.</p>
+          <div class="meta"><span class="tag">CI/CD</span><span class="tag">Docker</span><span class="tag">Terraform</span></div>
+          <div class="go">Open guide →</div>
+        </a>
+      </div>
+
+      <div class="cat">Data &amp; databases</div>
+      <div class="grid two">
+        <a class="card link-card" href="postgres/">
+          <span class="tag">database</span>
+          <h3 style="margin-top:14px">Postgres management — cheatsheet</h3>
+          <p>psql, users/permissions, backups, replication, tuning, and monitoring.</p>
+          <div class="meta"><span class="tag">psql</span><span class="tag">pg_dump</span><span class="tag">VACUUM</span></div>
+          <div class="go">Open guide →</div>
+        </a>
+        <a class="card link-card" href="kafka/">
+          <span class="tag">streaming</span>
+          <h3 style="margin-top:14px">Kafka — cheatsheet</h3>
+          <p>Topics, partitions, producers, consumers, offsets, and operations.</p>
+          <div class="meta"><span class="tag">topic</span><span class="tag">partition</span><span class="tag">consumer group</span></div>
+          <div class="go">Open guide →</div>
+        </a>
+        <a class="card link-card" href="db-optimization/">
+          <span class="tag">database</span>
+          <h3 style="margin-top:14px">Database optimization — cheatsheet</h3>
+          <p>Indexes, query plans, normalization vs denormalization, and tuning.</p>
+          <div class="meta"><span class="tag">index</span><span class="tag">EXPLAIN</span><span class="tag">join</span></div>
           <div class="go">Open guide →</div>
         </a>
       </div>
@@ -312,6 +362,20 @@
           <div class="meta"><span class="tag">SoA</span><span class="tag">cache</span><span class="tag">ECS</span></div>
           <div class="go">Open guide →</div>
         </a>
+        <a class="card link-card" href="osdev/">
+          <span class="tag">systems</span>
+          <h3 style="margin-top:14px">OS dev — cheatsheet</h3>
+          <p>Booting, protected mode, interrupts, paging, and kernel basics.</p>
+          <div class="meta"><span class="tag">GDT</span><span class="tag">IDT</span><span class="tag">paging</span></div>
+          <div class="go">Open guide →</div>
+        </a>
+        <a class="card link-card" href="asm/">
+          <span class="tag">systems</span>
+          <h3 style="margin-top:14px">Assembly — cheatsheet</h3>
+          <p>Registers, instructions, addressing, calling conventions, and syscalls.</p>
+          <div class="meta"><span class="tag">registers</span><span class="tag">syscall</span><span class="tag">x86-64</span></div>
+          <div class="go">Open guide →</div>
+        </a>
       </div>
 
       <div class="cat">Quantitative</div>
@@ -328,6 +392,24 @@
           <h3 style="margin-top:14px">Finance — value investing cheatsheet</h3>
           <p>Financial statements, valuation ratios, DCF, and margin of safety.</p>
           <div class="meta"><span class="tag">P/E</span><span class="tag">DCF</span><span class="tag">margin of safety</span></div>
+          <div class="go">Open guide →</div>
+        </a>
+      </div>
+
+      <div class="cat">Security</div>
+      <div class="grid two">
+        <a class="card link-card" href="pentesting/">
+          <span class="tag">offensive</span>
+          <h3 style="margin-top:14px">Pentesting — cheatsheet</h3>
+          <p>Recon, scanning, exploitation, privilege escalation, and reporting.</p>
+          <div class="meta"><span class="tag">nmap</span><span class="tag">exploit</span><span class="tag">privesc</span></div>
+          <div class="go">Open guide →</div>
+        </a>
+        <a class="card link-card" href="security/">
+          <span class="tag">defensive</span>
+          <h3 style="margin-top:14px">Security practices — cheatsheet</h3>
+          <p>Auth, secrets, supply chain, hardening, web security, and incident response.</p>
+          <div class="meta"><span class="tag">auth</span><span class="tag">secrets</span><span class="tag">hardening</span></div>
           <div class="go">Open guide →</div>
         </a>
       </div>

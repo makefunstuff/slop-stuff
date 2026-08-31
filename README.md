@@ -30,12 +30,19 @@ Each guide is a subfolder, served under `https://makefunstuff.github.io/slop-stu
 - **[bash](./bash/)** — variables, quoting, loops, conditionals, functions, expansion
 - **[linux-cli](./linux-cli/)** — sed, awk, grep, find, xargs, sort, tar, and friends
 
-### Cloud & observability
+### Cloud, DevOps & observability
 
 - **[kubectl](./kubectl/)** — inspect, run, edit, debug, contexts
 - **[gcloud](./gcloud/)** — compute, storage, GKE, IAM, SQL, logging
 - **[grafana](./grafana/)** — panels, variables, transforms, alerts, provisioning
 - **[promql](./promql/)** — selectors, rates, aggregation, functions
+- **[devops](./devops/)** — CI/CD, containers, orchestration, IaC, observability, deployment
+
+### Data & databases
+
+- **[postgres](./postgres/)** — psql, users/permissions, backups, replication, tuning, monitoring
+- **[kafka](./kafka/)** — topics, partitions, producers, consumers, offsets, operations
+- **[db-optimization](./db-optimization/)** — indexes, query plans, normalization vs denormalization, tuning
 
 ### Embedded & hardware
 
@@ -43,6 +50,11 @@ Each guide is a subfolder, served under `https://makefunstuff.github.io/slop-stu
 - **[embedded](./embedded/)** — bare-metal/RTOS: registers, interrupts, timers, memory, boot, debugging
 - **[electrical](./electrical/)** — Ohm's law, logic levels, pull-ups, dividers, power for firmware devs
 - **[sdr](./sdr/)** — IQ, sampling, DSP, GNU Radio, common signals
+
+### Graphics
+
+- **[shaders](./shaders/)** — GLSL, the pipeline, uniforms/varyings, lighting, SDFs, effects
+- **[opengl](./opengl/)** — buffers, VAOs, shaders, textures, framebuffers, core profile
 
 ### Game dev
 
@@ -54,11 +66,18 @@ Each guide is a subfolder, served under `https://makefunstuff.github.io/slop-stu
 - **[allocators](./allocators/)** — bump, free lists, arenas, slab, buddy, garbage collection
 - **[algorithms](./algorithms/)** — complexity, sorting, searching, data structures, graphs
 - **[dop](./dop/)** — Data-Oriented Design: SoA vs AoS, cache locality, ECS, layout patterns
+- **[osdev](./osdev/)** — boot, protected mode, interrupts, paging, kernel basics
+- **[asm](./asm/)** — registers, instructions, addressing, calling conventions, syscalls
 
 ### Quantitative
 
 - **[math](./math/)** — linear algebra, probability, calculus, discrete, and signal/DSP math
 - **[finance](./finance/)** — value investing: statements, valuation ratios, DCF, margin of safety
+
+### Security
+
+- **[pentesting](./pentesting/)** — recon, scanning, exploitation, privilege escalation, reporting
+- **[security](./security/)** — auth, secrets, supply chain, hardening, web security, incident response
 
 ### Editors
 

@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-guide="postgres">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="psql, users/permissions, backups, replication, tuning, and monitoring for PostgreSQL.">
+  <title>Postgres Management — Visual Cheatsheet</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../" aria-label="Back to slop-stuff">
+      <span class="brand-mark">pg_</span>
+      <span>Postgres Guide</span>
+      <span class="version">psql · admin</span>
+    </a>
+    <label class="search-wrap">
+      <span class="sr-only" hidden>Search guide</span>
+      <input id="search" type="search" aria-label="Search guide" placeholder="Search psql, VACUUM, EXPLAIN, pg_dump, replication, role…" autocomplete="off">
+    </label>
+    <div class="top-actions">
+      <button class="icon-button" id="themeToggle" type="button" title="Toggle theme" aria-label="Toggle light and dark theme">◐</button>
+      <button class="icon-button" id="printGuide" type="button" title="Print guide" aria-label="Print this guide">Print</button>
+    </div>
+  </header>
+
+  <div class="shell" id="top">
+    <aside class="sidebar" aria-label="Guide sections">
+      <p class="side-label">On this page</p>
+      <nav>
+        <a href="#start"><span class="nav-number">01</span>Start here</a>
+        <a href="#users"><span class="nav-number">02</span>Users &amp; permissions</a>
+        <a href="#backup"><span class="nav-number">03</span>Backups</a>
+        <a href="#replication"><span class="nav-number">04</span>Replication</a>
+        <a href="#tuning"><span class="nav-number">05</span>Tuning</a>
+        <a href="#monitoring"><span class="nav-number">06</span>Monitoring</a>
+        <a href="#maintenance"><span class="nav-number">07</span>Maintenance</a>
+        <a href="#gotchas"><span class="nav-number">08</span>Gotchas</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section class="hero searchable" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="eyebrow">Visual cheatsheet + usage guide</div>
+          <h1 id="hero-title">Run Postgres <span>in production.</span></h1>
+          <p>PostgreSQL is the database you keep for years. This cheatsheet covers the operational half — <code>psql</code>, roles and privileges, backups, replication, and the tuning knobs that keep it fast under load.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#start">Start with psql →</a>
+            <a class="button" href="#backup">Backups</a>
+            <a class="button" href="#tuning">Tuning</a>
+          </div>
+        </div>
+        <div class="terminal" aria-label="Stylized psql session">
+          <div class="terminal-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="terminal-title">psql</span></div>
+          <div class="terminal-body">
+            <div class="mock-pane">
+              <div><span class="prompt">❯</span> <span class="cmd">psql -U postgres -d appdb</span></div>
+              <div class="dim">appdb=#</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cmd">\l</span></div>
+              <div class="dim">appdb | postgres | UTF8 | …</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cmd">\dt</span></div>
+              <div class="dim">users · orders · events</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cmd">EXPLAIN ANALYZE SELECT * FROM users;</span></div>
+              <div class="dim">Execution Time: 2.314 ms</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cursor"></span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “psql”, “VACUUM”, “pg_dump”, “replication”, or “role”.</div>
+
+      <section class="section searchable" id="start">
+        <div class="section-head">
+          <div><div class="section-kicker">01 / Start here</div><h2>psql basics</h2></div>
+          <p>Connect with <code>psql</code>, then orient yourself with the <code>\</code> backslash commands. They never touch the server's SQL parser.</p>
+        </div>
+        <div class="grid four">
+          <article class="card"><div class="card-number">1</div><h3>Connect</h3><pre><code>psql -U postgres -d appdb
+psql "postgres://u:p@host:5432/db"
+# -h host -p 5432 -U user -d db</code></pre></article>
+          <article class="card"><div class="card-number">2</div><h3>List &amp; inspect</h3><pre><code>\l           # databases
+\dt          # tables
+\d users     # one table
+\dn          # schemas</code></pre></article>
+          <article class="card"><div class="card-number">3</div><h3>Expanded &amp; copy</h3><pre><code>\x on        # vertical output
+\copy users TO 'u.csv' CSV HEADER
+\conninfo     # who/where am I</code></pre></article>
+          <article class="card"><div class="card-number">4</div><h3>.pgpass</h3><pre><code># host:port:db:user:password
+localhost:5432:appdb:app:s3cret
+chmod 600 ~/.pgpass</code></pre></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">KEY</div><p><strong>Meta-commands start with a backslash</strong> and run inside <code>psql</code> only. Real SQL ends with <code>;</code> — <code>\l</code> lists databases, but <code>SELECT * FROM users;</code> is a query you can send from any client. <code>\?</code> lists every meta-command.</p></div>
+        <details style="margin-top:16px">
+          <summary>More psql meta-commands</summary>
+          <div class="details-body">
+            <div class="command-index">
+              <div class="command-row"><code>\du</code><span>List roles and their attributes.</span></div>
+              <div class="command-row"><code>\dp users</code><span>Table privileges (the ACL).</span></div>
+              <div class="command-row"><code>\di</code><span>List indexes.</span></div>
+              <div class="command-row"><code>\dv</code><span>List views.</span></div>
+              <div class="command-row"><code>\d+ users</code><span>Extended describe with storage/size.</span></div>
+              <div class="command-row"><code>\timing on</code><span>Show query execution time.</span></div>
+              <div class="command-row"><code>\e</code><span>Edit the last query in $EDITOR.</span></div>
+              <div class="command-row"><code>\i schema.sql</code><span>Run a SQL file.</span></div>
+              <div class="command-row"><code>\! pg_dump --version</code><span>Escape to a shell command.</span></div>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="users">
+        <div class="section-head">
+          <div><div class="section-kicker">02 / Users &amp; permissions</div><h2>Users &amp; permissions</h2></div>
+          <p>Postgres calls users and groups <em>roles</em>. Privileges are granted per object, and row-level security adds a per-row filter.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Statement</th><th>What it does</th><th>Tip</th></tr></thead><tbody>
+          <tr><td><code>CREATE ROLE app LOGIN PASSWORD 's3cret'</code></td><td>Creates a role that can connect.</td><td><code>NOLOGIN</code> makes a group.</td></tr>
+          <tr><td><code>ALTER ROLE app CREATEDB</code></td><td>Adds attributes (<code>SUPERUSER</code>, <code>REPLICATION</code>…).</td><td>Avoid <code>SUPERUSER</code> for apps.</td></tr>
+          <tr><td><code>GRANT SELECT, INSERT, UPDATE ON users TO app</code></td><td>Table privileges; also <code>DELETE</code>, <code>TRUNCATE</code>.</td><td><code>GRANT ALL</code> for everything.</td></tr>
+          <tr><td><code>GRANT USAGE ON SCHEMA public TO app</code></td><td>Lets the role touch the schema.</td><td>Required before table access.</td></tr>
+          <tr><td><code>REVOKE ALL ON users FROM app</code></td><td>Removes privileges.</td><td><code>GRANT OPTION</code> can spread rights.</td></tr>
+          <tr><td><code>ALTER TABLE users OWNER TO app</code></td><td>Transfers ownership.</td><td>Only the owner can drop/alter.</td></tr>
+          <tr><td><code>ALTER TABLE users ENABLE ROW LEVEL SECURITY</code></td><td>Turns on RLS.</td><td>No policy = no rows visible.</td></tr>
+          <tr><td><code>CREATE POLICY p ON users USING (tenant_id = current_setting('app.tenant'))</code></td><td>Per-row filter.</td><td>Add <code>WITH CHECK</code> for writes.</td></tr>
+        </tbody></table></div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">✓</div><p><strong>Least privilege:</strong> grant only what an app needs, and put each app in its own role. Check membership with <code>\du</code> and a role's grants with <code>\dp users</code>.</p></div>
+        <details style="margin-top:16px">
+          <summary>Role membership &amp; switching</summary>
+          <div class="details-body grid two">
+            <div><h4>Group membership</h4><pre><code>GRANT app TO admin;
+# admin inherits app's rights
+REVOKE app FROM admin;
+SET ROLE app;   -- become app
+RESET ROLE;     -- back to self</code></pre></div>
+            <div><h4>Check who has what</h4><pre><code>\du          # roles + members
+\dp users    # per-table ACL
+SELECT * FROM pg_roles;
+SELECT * FROM information_schema
+  .table_privileges;</code></pre></div>
+          </div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="backup">
+        <div class="section-head">
+          <div><div class="section-kicker">03 / Backups</div><h2>Backups &amp; restore</h2></div>
+          <p>Logical dumps with <code>pg_dump</code> for portability, or physical WAL-based backups for point-in-time recovery.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>pg_dump -Fc appdb &gt; appdb.dump</code><span>Compressed custom-format dump (best default).</span></div>
+          <div class="command-row"><code>pg_restore -d appdb appdb.dump</code><span>Restore a custom-format dump.</span></div>
+          <div class="command-row"><code>pg_dump -Fp --clean appdb &gt; appdb.sql</code><span>Plain-text SQL dump.</span></div>
+          <div class="command-row"><code>pg_dumpall &gt; cluster.sql</code><span>Whole cluster: roles + every database.</span></div>
+          <div class="command-row"><code>pg_basebackup -D /backup -F t -z -X stream</code><span>Physical base backup for PITR.</span></div>
+          <div class="command-row"><code>archive_command = 'cp %p /wal/%f'</code><span>Ship WAL segments for continuous recovery.</span></div>
+        </div>
+        <div class="flow" style="margin-top:16px">
+          <div class="flow-step"><div><strong>Base backup</strong><p><code>pg_basebackup</code> copies the cluster while <code>wal_level</code> keeps WAL flowing.</p></div></div>
+          <div class="flow-step"><div><strong>Archive WAL</strong><p><code>archive_command</code> files every segment away as changes happen.</p></div></div>
+          <div class="flow-step"><div><strong>Restore base</strong><p>Recover the base backup into a fresh <code>$PGDATA</code>.</p></div></div>
+          <div class="flow-step"><div><strong>Replay to a point</strong><p><code>recovery_target_time</code> in <code>postgresql.conf</code> replays WAL up to the crash.</p></div></div>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>pg_dump flags</h3><pre><code>-Fc           custom format
+--schema=s    one schema only
+-t users      one table only
+--no-owner    omit ownership
+--no-acl      omit privileges
+-j 4          parallel workers</code></pre></article>
+          <article class="card"><h3>pg_restore flags</h3><pre><code>-l            list contents
+--clean       drop before create
+--no-owner    skip ownership
+-j 4          parallel restore
+-C            create DB first
+--data-only / --schema-only</code></pre></article>
+        </div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">⚠</div><p><strong>A backup you haven't restored isn't a backup.</strong> Run a test restore on a schedule — <code>pg_restore -l</code> lists a dump's contents, and <code>pg_dump</code> against a live, changing DB can miss nothing only if it completes cleanly.</p></div>
+      </section>
+
+      <section class="section searchable" id="replication">
+        <div class="section-head">
+          <div><div class="section-kicker">04 / Replication</div><h2>Replication</h2></div>
+          <p>Streaming replication ships the write-ahead log to standbys; logical replication replays individual changes between databases.</p>
+        </div>
+        <div class="model" aria-label="Streaming replication data flow">
+          <div class="model-node"><strong>Primary</strong><small>accepts writes</small></div><div class="arrow">→</div>
+          <div class="model-node"><strong>WAL stream</strong><small>binary change log</small></div><div class="arrow">→</div>
+          <div class="model-node"><strong>Standby</strong><small>replays WAL</small></div><div class="arrow">→</div>
+          <div class="model-node agent"><strong>Read scaling</strong><small>hot_standby = on</small></div>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Primary config</h3><pre><code>wal_level = replica
+max_wal_senders = 10
+wal_keep_size = 1GB
+# standby sync level
+synchronous_commit = on</code></pre></article>
+          <article class="card"><h3>Standby config</h3><pre><code>hot_standby = on
+primary_conninfo = 'host=pg1
+  port=5432 user=repl
+  password=s3cret'
+# created via pg_basebackup -R</code></pre></article>
+        </div>
+        <div class="state-grid" style="margin-top:16px">
+          <div class="state-card done"><strong>on</strong><p>Wait for standby to acknowledge the WAL before committing.</p></div>
+          <div class="state-card working"><strong>remote_apply</strong><p>Standby also applies the change — strongest consistency.</p></div>
+          <div class="state-card blocked"><strong>local</strong><p>Only the local flush is confirmed; standbys lag.</p></div>
+          <div class="state-card unknown"><strong>off</strong><p>Async: no wait, possible data loss on failover.</p></div>
+        </div>
+        <div class="command-index" style="margin-top:16px">
+          <div class="command-row"><code>CREATE PUBLICATION pub FOR TABLE users;</code><span>Publish changes (logical).</span></div>
+          <div class="command-row"><code>CREATE SUBSCRIPTION sub CONNECTION 'host=pg1 dbname=appdb' PUBLICATION pub;</code><span>Subscribe to them.</span></div>
+          <div class="command-row"><code>SELECT pg_is_in_recovery();</code><span>Am I a standby? true = read-only replica.</span></div>
+          <div class="command-row"><code>SELECT client_addr, state FROM pg_stat_replication;</code><span>Who is replicating from me.</span></div>
+        </div>
+        <details style="margin-top:16px">
+          <summary>Logical replication, step by step</summary>
+          <div class="details-body">
+            <div class="flow">
+              <div class="flow-step"><div><strong>Publisher</strong><p>On the source: <code>wal_level = logical</code> and <code>CREATE PUBLICATION pub FOR ALL TABLES;</code></p></div></div>
+              <div class="flow-step"><div><strong>Subscriber</strong><p>On the target: <code>CREATE SUBSCRIPTION sub CONNECTION 'host=pg1' PUBLICATION pub;</code></p></div></div>
+              <div class="flow-step"><div><strong>Stream changes</strong><p>Rows replicate as they commit; the initial copy happens first.</p></div></div>
+              <div class="flow-step"><div><strong>Filter &amp; transform</strong><p>Unlike streaming, logical replication can target single tables or apply row filters.</p></div></div>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="tuning">
+        <div class="section-head">
+          <div><div class="section-kicker">05 / Tuning</div><h2>Tuning &amp; config</h2></div>
+          <p>Most settings live in <code>postgresql.conf</code> (or <code>ALTER SYSTEM</code>). Start with the memory knobs, then let autovacuum breathe.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Default</th><th>Rule of thumb</th></tr></thead><tbody>
+          <tr><td><code>shared_buffers</code></td><td>128MB</td><td>25% of RAM for a dedicated DB server.</td></tr>
+          <tr><td><code>work_mem</code></td><td>4MB</td><td>Per sort/hash — raise for big queries, but it multiplies by connections.</td></tr>
+          <tr><td><code>effective_cache_size</code></td><td>4GB</td><td>Total RAM the OS + Postgres can cache; the planner trusts it.</td></tr>
+          <tr><td><code>max_connections</code></td><td>100</td><td>Don't oversize — each slot costs memory. Use a pooler.</td></tr>
+          <tr><td><code>maintenance_work_mem</code></td><td>64MB</td><td>Bigger speeds <code>VACUUM</code>, <code>REINDEX</code>, <code>CREATE INDEX</code>.</td></tr>
+          <tr><td><code>autovacuum</code></td><td>on</td><td>Leave on; lower <code>autovacuum_vacuum_scale_factor</code> to ~0.01.</td></tr>
+          <tr><td><code>wal_level</code></td><td>replica</td><td><code>replica</code> for replication; <code>minimal</code> only for bulk loads.</td></tr>
+        </tbody></table></div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">⌁</div><p>Apply live without a restart: <code>ALTER SYSTEM SET work_mem = '16MB';</code> then <code>SELECT pg_reload_conf();</code>. <code>SHOW work_mem;</code> confirms the value your session actually sees.</p></div>
+        <details style="margin-top:16px">
+          <summary>More config worth knowing</summary>
+          <div class="details-body">
+            <div class="tags">
+              <span class="tag">checkpoint_timeout</span><span class="tag">random_page_cost</span><span class="tag">idle_in_transaction_session_timeout</span><span class="tag">statement_timeout</span><span class="tag">lock_timeout</span><span class="tag">jit</span><span class="tag">track_io_timing</span><span class="tag">synchronous_commit</span>
+            </div>
+            <div class="command-index" style="margin-top:12px">
+              <div class="command-row"><code>statement_timeout = '30s'</code><span>Cancel queries that run too long.</span></div>
+              <div class="command-row"><code>lock_timeout = '5s'</code><span>Fail rather than wait on a lock forever.</span></div>
+              <div class="command-row"><code>random_page_cost = 1.1</code><span>On SSD storage, bias the planner toward index scans.</span></div>
+              <div class="command-row"><code>checkpoint_timeout = '15min'</code><span>Spread checkpoints to smooth I/O.</span></div>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="monitoring">
+        <div class="section-head">
+          <div><div class="section-kicker">06 / Monitoring</div><h2>Monitoring</h2></div>
+          <p>The <code>pg_stat_*</code> views are the dashboard. Query them before you reach for an external tool.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>SELECT * FROM pg_stat_activity;</code><span>Every connection and its current query.</span></div>
+          <div class="command-row"><code>SELECT pid, now()-xact_start AS t, query FROM pg_stat_activity WHERE state = 'idle in transaction';</code><span>Transactions holding locks open.</span></div>
+          <div class="command-row"><code>SELECT * FROM pg_stat_database;</code><span>Per-DB commits, rollbacks, blk reads, deadlocks.</span></div>
+          <div class="command-row"><code>SELECT * FROM pg_locks WHERE NOT granted;</code><span>Locks currently waiting.</span></div>
+          <div class="command-row"><code>SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event IS NOT NULL;</code><span>Who's blocked and on what.</span></div>
+          <div class="command-row"><code>EXPLAIN (ANALYZE, BUFFERS) SELECT …;</code><span>Real plan, timing, and I/O.</span></div>
+          <div class="command-row"><code>SELECT relname, n_dead_tup FROM pg_stat_user_tables ORDER BY n_dead_tup DESC;</code><span>Dead tuples → upcoming bloat.</span></div>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Slow query log</h3><pre><code>log_min_duration_statement = 250
+# log statements &gt; 250ms
+log_statement = 'mod'
+# log DDL + writes</code></pre></article>
+          <article class="card"><h3>Blocked query killer</h3><pre><code>SELECT pg_cancel_backend(pid);
+# interrupt one backend
+SELECT pg_terminate_backend(pid);
+# hard-kill it</code></pre></article>
+        </div>
+        <details style="margin-top:16px">
+          <summary>More monitoring queries</summary>
+          <div class="details-body">
+            <div class="command-index">
+              <div class="command-row"><code>SELECT * FROM pg_stat_user_tables ORDER BY seq_scan DESC;</code><span>Tables missing indexes (heavy sequential scans).</span></div>
+              <div class="command-row"><code>SELECT * FROM pg_stat_user_indexes WHERE idx_scan = 0;</code><span>Indexes that are never used.</span></div>
+              <div class="command-row"><code>SELECT datname, numbackends, xact_commit, deadlocks FROM pg_stat_database;</code><span>Load and contention per DB.</span></div>
+              <div class="command-row"><code>SELECT now() - pg_last_xact_replay_timestamp() AS lag;</code><span>Replication lag on a standby.</span></div>
+              <div class="command-row"><code>SELECT * FROM pg_statio_user_tables;</code><span>Cache hit ratio per table.</span></div>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="maintenance">
+        <div class="section-head">
+          <div><div class="section-kicker">07 / Maintenance</div><h2>Maintenance</h2></div>
+          <p>Postgres marks deleted rows dead and reaps them later. <code>VACUUM</code> keeps tables and indexes healthy so queries stay fast.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>VACUUM (ANALYZE) users;</code><span>Reclaim dead tuples and refresh planner stats.</span></div>
+          <div class="command-row"><code>VACUUM FULL users;</code><span>Rewrite the table to shrink it — locks, use rarely.</span></div>
+          <div class="command-row"><code>ANALYZE users;</code><span>Refresh statistics so plans stay good.</span></div>
+          <div class="command-row"><code>REINDEX INDEX idx_users_email;</code><span>Rebuild a bloated index.</span></div>
+          <div class="command-row"><code>SELECT relname, n_live_tup, n_dead_tup, round(100.0*n_dead_tup/NULLIF(n_live_tup,0),1) AS bloat FROM pg_stat_user_tables;</code><span>Spot tables needing VACUUM.</span></div>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Partitioning</h3><pre><code>CREATE TABLE events (
+  id bigint, ts timestamptz
+) PARTITION BY RANGE (ts);
+
+CREATE TABLE events_2025
+  PARTITION OF events
+  FOR VALUES FROM
+  ('2025-01-01') TO ('2026-01-01');</code></pre></article>
+          <article class="card"><h3>Table maintenance</h3><pre><code>CREATE INDEX CONCURRENTLY
+  idx_users_email
+  ON users (email);
+# no full lock
+
+ALTER TABLE users
+  SET (autovacuum_vacuum_scale_factor
+       = 0.01);</code></pre></article>
+        </div>
+      </section>
+
+      <section class="section searchable" id="gotchas">
+        <div class="section-head">
+          <div><div class="section-kicker">08 / Gotchas</div><h2>Pitfalls</h2></div>
+          <p>Five ways a healthy-looking Postgres quietly degrades in production.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>Connection exhaustion</h3><p>Each connection is a backend process with its own <code>work_mem</code>. A pool of 1000 connections can eat RAM fast.</p><pre><code>SELECT count(*) FROM pg_stat_activity;
+# put PgBouncer in front</code></pre></article>
+          <article class="card"><h3>Idle-in-transaction</h3><p>A connection that opened a transaction and walked away holds locks and blocks <code>VACUUM</code>.</p><pre><code>SET idle_in_transaction_session_timeout
+  = '5min';</code></pre></article>
+          <article class="card"><h3>Bloat</h3><p>Dead tuples accumulate until autovacuum or a manual <code>VACUUM</code> cleans up. Tables and indexes swell, queries slow.</p><pre><code>VACUUM (ANALYZE) big_table;</code></pre></article>
+          <article class="card"><h3>Wrong index choice</h3><p>A single-column index doesn't serve a two-column <code>WHERE a AND b</code>. Unused indexes cost every write.</p><pre><code>SELECT * FROM pg_stat_user_indexes
+  WHERE idx_scan = 0;</code></pre></article>
+        </div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">⚠</div><p><strong>Missing backups is the one that ends the company.</strong> A replica is not a backup — a dropped table or <code>DELETE</code> replays onto the standby too. Keep logical dumps <em>and</em> WAL archives, and test the restore.</p></div>
+      </section>
+
+      <footer class="footer searchable">
+        <strong>Source of truth</strong>
+        <p>This guide covers the operational essentials of running PostgreSQL. The official documentation and the <code>psql(1)</code> manual remain authoritative for edge cases.</p>
+        <div class="footer-links">
+          <a href="https://www.postgresql.org/docs/" target="_blank" rel="noreferrer">PostgreSQL docs</a>
+          <a href="https://www.postgresql.org/docs/current/app-psql.html" target="_blank" rel="noreferrer">psql manual</a>
+          <a href="https://wiki.postgresql.org/wiki/" target="_blank" rel="noreferrer">Postgres wiki</a>
+          <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

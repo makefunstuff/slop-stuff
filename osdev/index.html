@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-guide="osdev">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Booting, protected mode, interrupts, paging, and kernel basics for hobby OS development.">
+  <title>OS Dev — Visual Cheatsheet</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../" aria-label="Back to slop-stuff">
+      <span class="brand-mark">os_</span>
+      <span>OS Dev Guide</span>
+      <span class="version">kernel</span>
+    </a>
+    <label class="search-wrap">
+      <span class="sr-only" hidden>Search guide</span>
+      <input id="search" type="search" aria-label="Search guide" placeholder="Search boot, GDT, IDT, interrupt, paging, scheduler, syscall…" autocomplete="off">
+    </label>
+    <div class="top-actions">
+      <button class="icon-button" id="themeToggle" type="button" title="Toggle theme" aria-label="Toggle light and dark theme">◐</button>
+      <button class="icon-button" id="printGuide" type="button" title="Print guide" aria-label="Print this guide">Print</button>
+    </div>
+  </header>
+
+  <div class="shell" id="top">
+    <aside class="sidebar" aria-label="Guide sections">
+      <p class="side-label">On this page</p>
+      <nav>
+        <a href="#start"><span class="nav-number">01</span>Start here</a>
+        <a href="#mode"><span class="nav-number">02</span>Protected mode</a>
+        <a href="#interrupts"><span class="nav-number">03</span>Interrupts</a>
+        <a href="#paging"><span class="nav-number">04</span>Paging</a>
+        <a href="#scheduler"><span class="nav-number">05</span>Scheduler</a>
+        <a href="#drivers"><span class="nav-number">06</span>Drivers</a>
+        <a href="#tooling"><span class="nav-number">07</span>Tooling</a>
+        <a href="#gotchas"><span class="nav-number">08</span>Gotchas</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section class="hero searchable" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="eyebrow">Visual cheatsheet + usage guide</div>
+          <h1 id="hero-title">Write an OS <span>from scratch.</span></h1>
+          <p>Bare-metal x86: boot with GRUB, drop into protected or long mode, wire up interrupts and paging, then grow a scheduler. Everything here is copy-paste ready for a hobby kernel.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#start">Start here →</a>
+            <a class="button" href="#interrupts">Interrupts &amp; IDT</a>
+            <a class="button" href="#paging">Paging &amp; memory</a>
+          </div>
+        </div>
+        <div class="terminal" aria-label="Stylized QEMU boot session">
+          <div class="terminal-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="terminal-title">qemu</span></div>
+          <div class="terminal-body">
+            <div class="mock-side">
+              <p class="mock-label">boot</p>
+              <div class="mock-row active">grub</div>
+              <div class="mock-row">kernel</div>
+            </div>
+            <div class="mock-pane">
+              <div><span class="prompt">❯</span> <span class="cmd">qemu-system-x86_64 -kernel kernel.bin</span></div>
+              <div class="dim">SeaBIOS — booting from multiboot image…</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cmd">grub-mkrescue -o os.iso isodir</span></div>
+              <div class="dim">GRUB loading multiboot kernel…</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cmd">boot</span></div>
+              <div class="dim">Hello, world from my kernel</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cursor"></span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “boot”, “GDT”, “interrupt”, “paging”, or “scheduler”.</div>
+
+      <section class="section searchable" id="start">
+        <div class="section-head">
+          <div><div class="section-kicker">01 / Start here</div><h2>The boot process</h2></div>
+          <p>Firmware → bootloader → kernel. The kernel is a plain binary with no libc, no <code>main()</code>, and no OS underneath it.</p>
+        </div>
+        <div class="flow">
+          <div class="flow-step"><div><strong>BIOS / UEFI firmware</strong><p>Runs first. Initializes hardware, then loads a bootloader from disk (MBR, or an EFI executable).</p></div></div>
+          <div class="flow-step"><div><strong>Bootloader (GRUB)</strong><p>Reads the kernel image, sets up 32-bit protected mode, and passes a multiboot info struct (memory map, framebuffer, modules).</p></div></div>
+          <div class="flow-step"><div><strong>Kernel entry</strong><p>Your <code>_start</code> runs: set up a stack, zero the BSS, and hand control to C.</p></div></div>
+          <div class="flow-step"><div><strong>Kernel takes over</strong><p>Build a GDT/IDT, enable paging, then never return — the kernel is the environment now.</p></div></div>
+        </div>
+        <div class="grid four" style="margin-top:16px">
+          <article class="card"><div class="card-number">1</div><h3>Cross-compile</h3><pre><code>x86_64-elf-gcc -ffreestanding -c kernel.c -o kernel.o
+x86_64-elf-ld -T linker.ld -o kernel.bin kernel.o</code></pre></article>
+          <article class="card"><div class="card-number">2</div><h3>Freestanding flags</h3><pre><code>-ffreestanding  # no hosted libc
+-nostdlib       # no libc / crt0
+-mno-red-zone   # safe interrupts (x86-64)
+-mno-mmx -mno-sse</code></pre></article>
+          <article class="card"><div class="card-number">3</div><h3>Multiboot header</h3><pre><code>; multiboot header (GRUB)
+align 4
+dd 0x1BADB002       ; magic
+dd 0x00000003       ; flags
+dd -(0x1BADB002 + 0x00000003)  ; checksum</code></pre></article>
+          <article class="card"><div class="card-number">4</div><h3>Run in QEMU</h3><pre><code>qemu-system-x86_64 -kernel kernel.bin
+qemu-system-x86_64 -cdrom os.iso
+qemu-system-x86_64 -s -S   # wait for GDB</code></pre></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">KEY</div><p><strong>The multiboot header must sit in the first 8192 bytes</strong> of the image and be 4-byte aligned, or GRUB refuses to load it. Link it at the top of <code>.text</code> with its own section like <code>*(.multiboot)</code>.</p></div>
+      </section>
+
+      <section class="section searchable" id="mode">
+        <div class="section-head">
+          <div><div class="section-kicker">02 / Protected mode</div><h2>Protected mode &amp; GDT</h2></div>
+          <p>Three CPU modes. Protected mode turns on segmentation and privilege rings; long mode adds 64-bit. Both need a GDT.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Mode</th><th>Width</th><th>Addressable</th><th>Notes</th></tr></thead><tbody>
+          <tr><td><code>real</code></td><td>16-bit</td><td>1 MiB (20-bit seg:off)</td><td>Where the CPU boots; BIOS services live here.</td></tr>
+          <tr><td><code>protected</code></td><td>32-bit</td><td>4 GiB</td><td>GDT segments + optional paging + rings 0–3.</td></tr>
+          <tr><td><code>long</code></td><td>64-bit</td><td>48-bit virtual</td><td>Paging is mandatory; segmentation mostly flattened.</td></tr>
+        </tbody></table></div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>GDT entry (C struct)</h3><pre><code>struct gdt_entry {
+  uint16_t limit_low;
+  uint16_t base_low;
+  uint8_t  base_middle;
+  uint8_t  access;      // P, DPL, S, type
+  uint8_t  granularity; // limit_high + flags
+  uint8_t  base_high;
+} __attribute__((packed));</code></pre></article>
+          <article class="card"><h3>Load the GDT</h3><pre><code>lgdt [gdt_descriptor]  ; load GDTR
+
+jmp 0x08:reload_cs     ; far jump reloads CS
+reload_cs:
+  mov ax, 0x10         ; data segment
+  mov ds, ax
+  mov ss, ax
+  mov es, ax</code></pre></article>
+        </div>
+        <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Segment</th><th>Role</th></tr></thead><tbody>
+          <tr><td><code>CS</code></td><td>Code segment — also encodes the current privilege level (CPL).</td></tr>
+          <tr><td><code>DS</code> / <code>ES</code> / <code>FS</code> / <code>GS</code></td><td>Data segments; <code>FS</code>/<code>GS</code> hold per-CPU or thread-local bases.</td></tr>
+          <tr><td><code>SS</code></td><td>Stack segment — must match CPL.</td></tr>
+        </tbody></table></div>
+        <div class="model" style="margin-top:16px">
+          <div class="model-node"><strong>real mode</strong><small>16-bit</small></div>
+          <span class="arrow">→</span>
+          <div class="model-node agent"><strong>protected mode</strong><small>CR0.PE = 1</small></div>
+          <span class="arrow">→</span>
+          <div class="model-node agent"><strong>PAE paging</strong><small>CR4.PAE = 1</small></div>
+          <span class="arrow">→</span>
+          <div class="model-node agent"><strong>long mode</strong><small>EFER.LME + CR0.PG</small></div>
+        </div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">!</div><p><strong>Segment selectors are not just an index.</strong> Bits 0–1 are the requestor privilege level (RPL) and bit 2 is the table indicator (TI). Index bits 3–15 pick the descriptor — 0 is the required null descriptor, so valid entries start at <code>0x08</code>.</p></div>
+      </section>
+
+      <section class="section searchable" id="interrupts">
+        <div class="section-head">
+          <div><div class="section-kicker">03 / Interrupts</div><h2>Interrupts &amp; IDT</h2></div>
+          <p>The IDT routes every interrupt and exception to a handler. Vectors 0–31 are CPU exceptions, 32+ are IRQs and software traps.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>IDT entry (C struct)</h3><pre><code>struct idt_entry {
+  uint16_t offset_low;
+  uint16_t selector;    // code segment
+  uint8_t  ist;         // interrupt stack table
+  uint8_t  type_attr;   // 0x8E: present, ring0,
+                        // 32-bit interrupt gate
+  uint16_t offset_mid;
+  uint32_t offset_high;
+  uint32_t zero;
+} __attribute__((packed));</code></pre></article>
+          <article class="card"><h3>Remap the PIC</h3><pre><code>outb(0x20, 0x11);  // init primary PIC
+outb(0xA0, 0x11);  // init secondary PIC
+outb(0x21, 0x20);  // IRQ0-7  → vectors 32-39
+outb(0xA1, 0x28);  // IRQ8-15 → vectors 40-47
+outb(0x21, 0x04);
+outb(0xA1, 0x02);
+outb(0x21, 0x01);
+outb(0xA1, 0x01);</code></pre></article>
+        </div>
+        <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Vector</th><th>Exception</th><th>What fires it</th></tr></thead><tbody>
+          <tr><td><code>0</code></td><td>Divide error</td><td>Divide by zero (<code>DIV</code>/<code>IDIV</code>).</td></tr>
+          <tr><td><code>6</code></td><td>Invalid opcode</td><td>Executing an undefined instruction.</td></tr>
+          <tr><td><code>8</code></td><td>Double fault</td><td>An exception while handling an exception.</td></tr>
+          <tr><td><code>13</code></td><td>General protection fault</td><td>Bad segment, ring violation, privileged write.</td></tr>
+          <tr><td><code>14</code></td><td>Page fault</td><td>Bad address; <code>CR2</code> holds the faulting address.</td></tr>
+        </tbody></table></div>
+        <div class="tags" style="margin-top:16px">
+          <span class="tag">cli — clear interrupts (disable)</span>
+          <span class="tag">sti — set interrupts (enable)</span>
+          <span class="tag">hlt — halt until the next interrupt</span>
+          <span class="tag">iretq — return from an interrupt</span>
+        </div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">!</div><p><strong>Remap the PIC before enabling interrupts.</strong> By default IRQ0 maps to vector 8, which collides with the CPU's double-fault exception. Remap to 32–47 and remember to send EOI (<code>outb(0x20, 0x20)</code>) at the end of every IRQ handler.</p></div>
+      </section>
+
+      <section class="section searchable" id="paging">
+        <div class="section-head">
+          <div><div class="section-kicker">04 / Paging</div><h2>Paging &amp; memory</h2></div>
+          <p>Paging translates virtual addresses through a 4-level table into physical frames, and is how you isolate processes and demand-page.</p>
+        </div>
+        <div class="model">
+          <div class="model-node"><strong>virtual addr</strong><small>48-bit</small></div>
+          <span class="arrow">→</span>
+          <div class="model-node agent"><strong>PML4</strong><small>CR3</small></div>
+          <span class="arrow">→</span>
+          <div class="model-node agent"><strong>PDPT</strong><small>512 × 1 GiB</small></div>
+          <span class="arrow">→</span>
+          <div class="model-node agent"><strong>PD</strong><small>512 × 2 MiB</small></div>
+          <span class="arrow">→</span>
+          <div class="model-node agent"><strong>PT</strong><small>512 × 4 KiB</small></div>
+          <span class="arrow">→</span>
+          <div class="model-node"><strong>frame</strong><small>physical page</small></div>
+        </div>
+        <div class="prefix-demo" style="margin-top:16px">
+          <kbd>1 KiB</kbd> = <kbd>2^10 bytes</kbd> · <kbd>1 MiB</kbd> = <kbd>2^20 bytes</kbd> · <kbd>1 GiB</kbd> = <kbd>2^30 bytes</kbd> · <kbd>4 KiB page</kbd> = <kbd>2^12 offset bits</kbd>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Frame allocator (bitmap)</h3><pre><code>#define FRAME_SIZE 4096
+static uint32_t frames[FRAMES / 32];
+
+void set_frame(uint32_t i)   { frames[i / 32] |= 1 &lt;&lt; (i % 32); }
+int  test_frame(uint32_t i)  { return frames[i / 32] &amp; (1 &lt;&lt; (i % 32)); }
+
+uint32_t alloc_frame() {
+  for (uint32_t i = 0; i &lt; FRAMES; i++)
+    if (!test_frame(i)) {
+      set_frame(i);
+      return i * FRAME_SIZE;
+    }
+  return 0;  // out of memory
+}</code></pre></article>
+          <article class="card"><h3>kmalloc (bump heap)</h3><pre><code>void *heap_top = (void *)HEAP_START;
+
+void *kmalloc(size_t n) {
+  n = (n + 7) &amp; ~7;          // 8-byte align
+  void *p = heap_top;
+  heap_top += n;             // bump the pointer
+  return p;
+}
+// a real kernel adds free-lists or
+// slabs on top of this.</code></pre></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">KEY</div><p><strong>On a page fault (<code>int 14</code>) the faulting virtual address is in <code>CR2</code></strong> and the error code tells you why: bit 0 = protection, bit 1 = write, bit 2 = user-mode, bit 4 = instruction fetch. Use it to grow the stack, COW, or kill the process.</p></div>
+      </section>
+
+      <section class="section searchable" id="scheduler">
+        <div class="section-head">
+          <div><div class="section-kicker">05 / Processes &amp; scheduling</div><h2>Processes &amp; scheduling</h2></div>
+          <p>A task is a saved register set plus a stack. Scheduling is swapping those between CPU and memory, triggered by a timer IRQ.</p>
+        </div>
+        <div class="state-grid">
+          <div class="state-card working"><strong>Ready</strong><p>Runnable and waiting for a CPU; sitting in the run queue.</p></div>
+          <div class="state-card done"><strong>Running</strong><p>The task currently executing on this CPU.</p></div>
+          <div class="state-card blocked"><strong>Blocked</strong><p>Waiting on I/O, a lock, or a timer before it can run.</p></div>
+          <div class="state-card unknown"><strong>Exited</strong><p>Finished; its resources await reclamation.</p></div>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Context switch (x86-64)</h3><pre><code>; void switch_context(ctx_t *old, ctx_t *new)
+switch_context:
+  push rbp
+  push rbx
+  push r12
+  push r13
+  push r14
+  push r15
+  mov  [rdi], rsp     ; save old stack
+  mov  rsp, [rsi]     ; load new stack
+  pop  r15
+  pop  r14
+  pop  r13
+  pop  r12
+  pop  rbx
+  pop  rbp
+  ret                 ; jump into new task</code></pre></article>
+          <article class="card"><h3>Round-robin scheduler</h3><pre><code>void schedule() {
+  task_t *next = current-&gt;next;
+  if (!next) next = run_queue;   // wrap
+  if (current-&gt;state == RUNNING)
+    current-&gt;state = READY;
+  next-&gt;state = RUNNING;
+  switch_context(&amp;current-&gt;ctx, &amp;next-&gt;ctx);
+}</code></pre></article>
+        </div>
+        <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>ABI</th><th>Instruction</th><th>Number</th><th>Args</th></tr></thead><tbody>
+          <tr><td>32-bit</td><td><code>int 0x80</code></td><td><code>eax</code></td><td><code>ebx, ecx, edx, esi, edi, ebp</code></td></tr>
+          <tr><td>64-bit</td><td><code>syscall</code></td><td><code>rax</code></td><td><code>rdi, rsi, rdx, r10, r8, r9</code> → result in <code>rax</code></td></tr>
+        </tbody></table></div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">!</div><p><strong><code>syscall</code> clobbers <code>rcx</code> and <code>r11</code>.</strong> The CPU stores the return RIP and RFLAGS there, so do not rely on their values across the call. Kernel entry also swaps to a kernel stack — never use the user stack for kernel state.</p></div>
+      </section>
+
+      <section class="section searchable" id="drivers">
+        <div class="section-head">
+          <div><div class="section-kicker">06 / Drivers</div><h2>Drivers &amp; hardware</h2></div>
+          <p>Hardware is reachable two ways: x86 I/O ports (<code>inb</code>/<code>outb</code>) and memory-mapped registers (MMIO) you read and write like RAM.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>VGA text mode</h3><pre><code>volatile uint16_t *vga = (uint16_t *)0xB8000;
+// cell: low byte = char, high byte = color
+vga[y * 80 + x] = (0x0F &lt;&lt; 8) | 'H';
+// 0x0F = white on black;
+// blink: 0x8F, red: 0x0C</code></pre></article>
+          <article class="card"><h3>Keyboard (PS/2)</h3><pre><code>uint8_t sc = inb(0x60);   // scancode
+outb(0x20, 0x20);         // EOI to PIC
+// 0x1C = Enter, 0x01 = Esc
+// bit 7 set → key release</code></pre></article>
+          <article class="card"><h3>PIT timer</h3><pre><code>outb(0x43, 0x36);   // ch0, lobyte/hibyte,
+                    // square wave
+uint16_t div = 1193182 / freq;
+outb(0x40, div &amp; 0xFF);
+outb(0x40, div &gt;&gt; 8);</code></pre></article>
+        </div>
+        <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Port</th><th>Device</th><th>Purpose</th></tr></thead><tbody>
+          <tr><td><code>0x20</code> / <code>0xA0</code></td><td>PIC</td><td>Command register (primary / secondary).</td></tr>
+          <tr><td><code>0x21</code> / <code>0xA1</code></td><td>PIC</td><td>Data / interrupt mask register.</td></tr>
+          <tr><td><code>0x60</code> / <code>0x64</code></td><td>PS/2</td><td>Data port / status &amp; command port.</td></tr>
+          <tr><td><code>0x40</code> / <code>0x43</code></td><td>PIT</td><td>Counter 0 / mode command.</td></tr>
+          <tr><td><code>0xCF8</code> / <code>0xCFC</code></td><td>PCI</td><td>Config address / config data.</td></tr>
+        </tbody></table></div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>PCI config read</h3><pre><code>// bus/dev/func/reg → 0xCF8, data ← 0xCFC
+uint32_t pci_read(int bus, int dev, int func, int reg) {
+  uint32_t addr = 0x80000000
+    | (bus &lt;&lt; 16) | (dev &lt;&lt; 11)
+    | (func &lt;&lt; 8) | (reg &amp; 0xFC);
+  outl(0xCF8, addr);
+  return inl(0xCFC);
+}</code></pre></article>
+          <article class="card"><h3>Memory-mapped I/O</h3><pre><code>// device registers at a physical address
+volatile uint32_t *status =
+  (uint32_t *)DEVICE_STATUS;
+
+while (!(*status &amp; READY)) {
+  /* spin until the device is ready */
+}
+*status = COMMAND_START;   // kick it off</code></pre></article>
+        </div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">!</div><p><strong>MMIO writes must be <code>volatile</code> and uncached.</strong> The compiler and CPU may reorder or drop plain reads/writes. Mark device pages uncacheable (MTRR/PAT) and use <code>volatile</code>, or your register pokes get optimized away.</p></div>
+      </section>
+
+      <section class="section searchable" id="tooling">
+        <div class="section-head">
+          <div><div class="section-kicker">07 / Tooling</div><h2>Tooling</h2></div>
+          <p>The toolchain that builds, boots, and debugs a kernel — QEMU, GRUB, a linker script, and GDB over the wire.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>qemu-system-x86_64 -kernel kernel.bin</code><span>Boot a raw multiboot kernel.</span></div>
+          <div class="command-row"><code>qemu-system-x86_64 -cdrom os.iso</code><span>Boot a GRUB ISO.</span></div>
+          <div class="command-row"><code>qemu-system-x86_64 -s -S</code><span>Start paused; wait for GDB on <code>:1234</code>.</span></div>
+          <div class="command-row"><code>qemu-system-x86_64 -d int,cpu_reset</code><span>Log interrupts and resets to stderr.</span></div>
+          <div class="command-row"><code>grub-mkrescue -o os.iso isodir</code><span>Build a bootable ISO from a GRUB tree.</span></div>
+          <div class="command-row"><code>x86_64-elf-gcc -ffreestanding -c kernel.c</code><span>Compile without a hosted libc.</span></div>
+          <div class="command-row"><code>x86_64-elf-ld -T linker.ld -o kernel.bin *.o</code><span>Link with a custom linker script.</span></div>
+          <div class="command-row"><code>gdb kernel.bin</code><span>Then <code>target remote :1234</code> inside GDB.</span></div>
+          <div class="command-row"><code>objdump -d kernel.bin</code><span>Disassemble the final image.</span></div>
+          <div class="command-row"><code>nm kernel.bin</code><span>List symbols and their addresses.</span></div>
+          <div class="command-row"><code>readelf -l kernel.bin</code><span>Inspect ELF segments and entry point.</span></div>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Linker script</h3><pre><code>ENTRY(_start)
+SECTIONS {
+  . = 1M;                /* load at 1 MiB */
+  .text : { *(.multiboot) *(.text) }
+  .rodata : { *(.rodata) }
+  .data : { *(.data) }
+  .bss : { *(COMMON) *(.bss) }
+}</code></pre></article>
+          <article class="card"><h3>GDB remote session</h3><pre><code>(gdb) target remote :1234
+(gdb) file kernel.bin
+(gdb) break kmain
+(gdb) continue
+(gdb) info registers
+(gdb) x/16bx 0xB8000</code></pre></article>
+        </div>
+      </section>
+
+      <section class="section searchable" id="gotchas">
+        <div class="section-head">
+          <div><div class="section-kicker">08 / Gotchas</div><h2>Pitfalls</h2></div>
+          <p>The five mistakes that sink every first kernel: assuming libc, trusting the compiler on MMIO, racing interrupts, and forgetting the stack and ABI.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>No libc — freestanding</h3><p><code>printf</code>, <code>malloc</code>, and <code>memcpy</code> don't exist. Write them, or bring a minimal subset.</p><pre><code>void *memset(void *dst, int c, size_t n) {
+  unsigned char *p = dst;
+  while (n--) *p++ = (unsigned char)c;
+  return dst;
+}</code></pre></article>
+          <article class="card"><h3>volatile MMIO</h3><p>Without <code>volatile</code>, the compiler hoists the read out of the loop — the device flag never changes in its view.</p><pre><code>volatile uint32_t *status = (uint32_t *)REG;
+while (!(*status &amp; READY)) {}   // must re-read
+*status = START;                // must not be dropped</code></pre></article>
+          <article class="card"><h3>Interrupts &amp; races</h3><p>An IRQ can fire between any two instructions. Guard shared state by disabling interrupts around the critical section.</p><pre><code>cli();               // disable interrupts
+count++;             // atomic-ish now
+sti();               // re-enable</code></pre></article>
+          <article class="card"><h3>Stack setup</h3><p>There is no stack until you make one. Set <code>esp</code>/<code>rsp</code> before the first <code>call</code> or any C code.</p><pre><code>section .bss
+align 16
+stack_bottom: resb 16384
+stack_top:
+
+; in _start:
+mov esp, stack_top     ; 32-bit
+; or mov rsp, stack_top (64-bit)</code></pre></article>
+        </div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">!</div><p><strong>Bare metal still follows the platform ABI.</strong> On x86-64 SysV: args go in <code>rdi, rsi, rdx, rcx, r8, r9</code>, the stack must be 16-byte aligned before each <code>call</code>, and the 128-byte red zone below <code>rsp</code> becomes unsafe once interrupts can fire. Your assembly must match the C compiler's expectations.</p></div>
+      </section>
+
+      <footer class="footer searchable">
+        <strong>Source of truth</strong>
+        <p>This guide covers boot, protected mode, interrupts, paging, and scheduling essentials. The OSDev Wiki and the GRUB/QEMU manuals remain authoritative for edge cases and version-specific behavior.</p>
+        <div class="footer-links">
+          <a href="https://wiki.osdev.org/" target="_blank" rel="noreferrer">OSDev Wiki</a>
+          <a href="https://www.gnu.org/software/grub/manual/multiboot/" target="_blank" rel="noreferrer">GRUB Multiboot</a>
+          <a href="https://www.qemu.org/docs/master/" target="_blank" rel="noreferrer">QEMU docs</a>
+          <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

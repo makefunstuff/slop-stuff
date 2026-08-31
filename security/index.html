@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-guide="security">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Authentication, secrets, supply chain, hardening, web security, and incident response.">
+  <title>Security Practices — Visual Cheatsheet</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../" aria-label="Back to slop-stuff">
+      <span class="brand-mark">sec_</span>
+      <span>Security Guide</span>
+      <span class="version">defensive</span>
+    </a>
+    <label class="search-wrap">
+      <span class="sr-only" hidden>Search guide</span>
+      <input id="search" type="search" aria-label="Search guide" placeholder="Search auth, secret, OWASP, hardening, supply chain, incident…" autocomplete="off">
+    </label>
+    <div class="top-actions">
+      <button class="icon-button" id="themeToggle" type="button" title="Toggle theme" aria-label="Toggle light and dark theme">◐</button>
+      <button class="icon-button" id="printGuide" type="button" title="Print guide" aria-label="Print this guide">Print</button>
+    </div>
+  </header>
+
+  <div class="shell" id="top">
+    <aside class="sidebar" aria-label="Guide sections">
+      <p class="side-label">On this page</p>
+      <nav>
+        <a href="#start"><span class="nav-number">01</span>Start here</a>
+        <a href="#auth"><span class="nav-number">02</span>Auth</a>
+        <a href="#secrets"><span class="nav-number">03</span>Secrets</a>
+        <a href="#supplychain"><span class="nav-number">04</span>Supply chain</a>
+        <a href="#hardening"><span class="nav-number">05</span>Hardening</a>
+        <a href="#websec"><span class="nav-number">06</span>Web &amp; API</a>
+        <a href="#incident"><span class="nav-number">07</span>Incident response</a>
+        <a href="#gotchas"><span class="nav-number">08</span>Gotchas</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section class="hero searchable" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="eyebrow">Visual cheatsheet + usage guide</div>
+          <h1 id="hero-title">Defend like <span>it's always attacked.</span></h1>
+          <p>Authentication, secrets, supply chain, web security, and incident response — the habits and commands that keep a system standing under pressure.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#start">Start with the basics →</a>
+            <a class="button" href="#auth">Auth &amp; identity</a>
+            <a class="button" href="#websec">Web &amp; API</a>
+          </div>
+        </div>
+        <div class="terminal" aria-label="Stylized security hardening session">
+          <div class="terminal-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="terminal-title">hardening</span></div>
+          <div class="terminal-body">
+            <div class="mock-side">
+              <p class="mock-label">Controls</p>
+              <div class="mock-row active">least-privilege</div>
+              <div class="mock-row">mfa</div>
+              <div class="mock-row">rotate-secrets</div>
+            </div>
+            <div class="mock-pane">
+              <div><span class="prompt">❯</span> <span class="cmd">docker run --user 10001 --read-only --cap-drop ALL app</span></div>
+              <div class="dim">non-root · read-only · no caps ✓</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cmd">aws iam attach-role-policy --role app --policy-arn …read-only</span></div>
+              <div class="dim">least privilege: one role, one bucket ✓</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cmd">vault write -f secret/rotate/api-key</span></div>
+              <div class="dim">api-key rotated · 30d → 0d ✓</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cursor"></span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “auth”, “secret”, “OWASP”, “harden”, or “incident”.</div>
+
+      <section class="section searchable" id="start">
+        <div class="section-head">
+          <div><div class="section-kicker">01 / Start here</div><h2>Security fundamentals</h2></div>
+          <p>Four ideas underpin every secure system: the CIA triad, threat modeling, least privilege, and defense in depth.</p>
+        </div>
+        <div class="grid four">
+          <article class="card"><div class="card-number">1</div><h3>CIA triad</h3><p><strong>Confidentiality</strong> (encryption, access control), <strong>Integrity</strong> (hashing, signatures), <strong>Availability</strong> (redundancy, rate limits).</p></article>
+          <article class="card"><div class="card-number">2</div><h3>Threat modeling</h3><p>Map assets, entry points, and trust boundaries. Use STRIDE or attack trees <em>before</em> writing code.</p></article>
+          <article class="card"><div class="card-number">3</div><h3>Least privilege</h3><p>Grant the minimum access a task needs — scoped IAM roles, short-lived tokens, narrow permissions.</p></article>
+          <article class="card"><div class="card-number">4</div><h3>Defense in depth</h3><p>Layer independent controls (network, app, data) so a single failure isn't a full compromise.</p></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">KEY</div><p><strong>Assume breach.</strong> Design so a single compromised credential, host, or dependency does not hand an attacker the whole system.</p></div>
+      </section>
+
+      <section class="section searchable" id="auth">
+        <div class="section-head">
+          <div><div class="section-kicker">02 / Auth</div><h2>Authentication &amp; authorization</h2></div>
+          <p>Prove who someone is (authN), then decide what they may do (authZ). Never store passwords in plaintext.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Password hashing</th><th>Work factor</th><th>Use when</th><th>Notes</th></tr></thead><tbody>
+          <tr><td><code>bcrypt</code></td><td>cost 12+</td><td>Default for web apps</td><td>Slow, salted, battle-tested.</td></tr>
+          <tr><td><code>argon2id</code></td><td>memory + time + lanes</td><td>Highest assurance</td><td>PHC winner; resists GPU cracking.</td></tr>
+          <tr><td><code>scrypt</code></td><td>N, r, p</td><td>Memory-hard alternative</td><td>Common in crypto libraries.</td></tr>
+          <tr><td><code>PBKDF2</code></td><td>600k+ iterations</td><td>FIPS / legacy</td><td>Older but fine at high iterations.</td></tr>
+          <tr><td><code>MD5 / SHA-1 / plain</code></td><td>—</td><td>Never</td><td>Fast hashes crack at scale.</td></tr>
+        </tbody></table></div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Hash + verify (Node)</h3><pre><code>const hash = await bcrypt.hash(pw, 12);
+const ok = await bcrypt.compare(pw, hash);</code></pre></article>
+          <article class="card"><h3>Hash (argon2 CLI)</h3><pre><code>echo -n "p@ss" | argon2 salt \
+  -id -t 3 -m 65536 -p 4</code></pre></article>
+          <article class="card"><h3>MFA</h3><p>Require a second factor: TOTP app, WebAuthn passkey, or backup codes. Enroll admins and finance first.</p></article>
+          <article class="card"><h3>OAuth 2.0 / OIDC</h3><p>Use the <strong>authorization code + PKCE</strong> flow for apps. OIDC layers identity (ID token + <code>/userinfo</code>) on top of OAuth.</p></article>
+          <article class="card"><h3>JWT</h3><p>Signed, not secret. Verify <code>alg</code>, <code>exp</code>, <code>aud</code>, and signature; keep tokens short-lived and reject <code>alg=none</code>.</p></article>
+          <article class="card"><h3>Sessions</h3><p>Server-side sessions with cookies flagged <code>HttpOnly; Secure; SameSite=Lax</code>. Rotate the session id on login.</p></article>
+        </div>
+        <div class="command-index" style="margin-top:16px">
+          <div class="command-row"><code>RBAC</code><span>roles → permissions. “Admin can delete users”.</span></div>
+          <div class="command-row"><code>ABAC</code><span>attributes → policy. “Delete if resource.owner == user”.</span></div>
+          <div class="command-row"><code>2FA / MFA</code><span>something you know + have + are.</span></div>
+          <div class="command-row"><code>PKCE</code><span>proof key for code exchange — OAuth for public clients.</span></div>
+        </div>
+      </section>
+
+      <section class="section searchable" id="secrets">
+        <div class="section-head">
+          <div><div class="section-kicker">03 / Secrets</div><h2>Secrets &amp; keys</h2></div>
+          <p>Credentials live in a secret manager, never in source control. Rotate before you leak.</p>
+        </div>
+        <div class="callout warning"><div class="callout-mark">!</div><p><strong>A secret pushed to git is compromised forever.</strong> Treat repo history as public: rotate the credential immediately, then scrub with <code>git filter-repo</code> or <code>bfg</code> — rotation always comes first.</p></div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Env vars</h3><p>Fine for local dev, but they leak into child processes, crash dumps, and CI logs.</p><pre><code>export DATABASE_URL=postgres://…
+node app.js</code></pre></article>
+          <article class="card"><h3>Vaults / secret managers</h3><p>Central store with audit, rotation, and access control. Inject at runtime, not build time.</p><pre><code>vault kv get secret/app/db
+aws secretsmanager get-secret-value \
+  --secret-id app/db</code></pre></article>
+        </div>
+        <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Tool</th><th>Kind</th><th>Rotation</th><th>Use for</th></tr></thead><tbody>
+          <tr><td><code>HashiCorp Vault</code></td><td>self-hosted vault</td><td>dynamic secrets</td><td>platform-wide secrets + PKI</td></tr>
+          <tr><td><code>AWS Secrets Manager</code></td><td>managed vault</td><td>built-in</td><td>AWS workloads</td></tr>
+          <tr><td><code>GCP Secret Manager</code></td><td>managed vault</td><td>versioned</td><td>GCP workloads</td></tr>
+          <tr><td><code>SOPS</code></td><td>encrypted files</td><td>manual</td><td>git-friendly config secrets</td></tr>
+          <tr><td><code>Doppler / Infisical</code></td><td>managed vault</td><td>built-in</td><td>dev → prod sync</td></tr>
+        </tbody></table></div>
+        <div class="command-index" style="margin-top:16px">
+          <div class="command-row"><code>echo ".env" &gt;&gt; .gitignore</code><span>keep <code>.env</code>, <code>*.pem</code>, and <code>*.key</code> out of git.</span></div>
+          <div class="command-row"><code>gitleaks detect --source .</code><span>scan history for committed secrets.</span></div>
+          <div class="command-row"><code>trufflehog git file://. --only-verified</code><span>live-verify leaked credentials.</span></div>
+          <div class="command-row"><code>git filter-repo --path .env --invert-paths</code><span>scrub a file from history (then rotate).</span></div>
+        </div>
+      </section>
+
+      <section class="section searchable" id="supplychain">
+        <div class="section-head">
+          <div><div class="section-kicker">04 / Supply chain</div><h2>Supply chain</h2></div>
+          <p>Your app ships other people's code. Pin it, hash it, and know what's inside.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>Pin &amp; lock</h3><p>Commit lockfiles and pin exact versions in production. Avoid <code>^</code> / <code>~</code> ranges for deploys.</p><pre><code>package-lock.json   npm
+yarn.lock           yarn
+Cargo.lock          rust
+go.sum               go
+Pipfile.lock         python</code></pre></article>
+          <article class="card"><h3>SBOM</h3><p>Ship a machine-readable bill of materials (SPDX / CycloneDX) with every release.</p><pre><code>syft dir:. -o spdx-json &gt; sbom.json
+syft image:app:latest -o cyclonedx-json</code></pre></article>
+          <article class="card"><h3>Signed commits</h3><p>Sign commits and tags so history is verifiable. Enable SSH or GPG signing.</p><pre><code>git config commit.gpgsign true
+git config user.signingkey KEYID</code></pre></article>
+        </div>
+        <div class="command-index" style="margin-top:16px">
+          <div class="command-row"><code>npm audit --omit=dev</code><span>known CVEs in your JS deps.</span></div>
+          <div class="command-row"><code>pip-audit</code><span>audit Python environments.</span></div>
+          <div class="command-row"><code>osv-scanner -r .</code><span>scan many ecosystems via OSV.</span></div>
+          <div class="command-row"><code>Dependabot / Renovate</code><span>automated PRs for outdated, vulnerable deps.</span></div>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">✓</div><p><strong>Lockfiles are not optional in CI.</strong> Run <code>npm ci</code>, <code>pip install --require-hashes</code>, and <code>go mod verify</code> so builds use the pinned, hashed dependency graph.</p></div>
+      </section>
+
+      <section class="section searchable" id="hardening">
+        <div class="section-head">
+          <div><div class="section-kicker">05 / Hardening</div><h2>Hardening</h2></div>
+          <p>Shrink the attack surface: remove what you don't need, lock down what remains, patch fast.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>Containers non-root</h3><p>Drop root, use a read-only filesystem, and drop capabilities.</p><pre><code>FROM node:20-alpine
+USER 10001
+COPY --chown=10001 . /app
+# run: --read-only --cap-drop ALL</code></pre></article>
+          <article class="card"><h3>TLS everywhere</h3><p>TLS 1.2+ only, HSTS, automate certs. Never terminate at the edge without re-encrypting.</p><pre><code>Strict-Transport-Security:
+  max-age=31536000; includeSubDomains</code></pre></article>
+          <article class="card"><h3>SSH hardening</h3><p>Keys only, no root login, minimal ciphers.</p><pre><code># /etc/ssh/sshd_config
+PermitRootLogin no
+PasswordAuthentication no
+AllowUsers deploy</code></pre></article>
+        </div>
+        <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Practice</th><th>What it means</th><th>Quick win</th></tr></thead><tbody>
+          <tr><td>Least privilege</td><td>minimal perms on users, roles, processes</td><td>run as non-root, scope IAM to resources</td></tr>
+          <tr><td>Network segmentation</td><td>isolate tiers; deny by default</td><td>security groups / subnets per tier</td></tr>
+          <tr><td>Patch management</td><td>apply security updates on a cadence</td><td>auto OS + dependency updates, track CVEs</td></tr>
+          <tr><td>CIS benchmarks</td><td>configuration baselines</td><td>run a CIS scanner, apply Level 1</td></tr>
+          <tr><td>Disable unused</td><td>turn off ports, services, features</td><td>remove debug endpoints and unused deps</td></tr>
+        </tbody></table></div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">⌁</div><p>CIS benchmarks (cisecurity.org) give step-by-step baselines for Linux, Windows, cloud, and Kubernetes. Start with Level 1 — safe for most workloads.</p></div>
+      </section>
+
+      <section class="section searchable" id="websec">
+        <div class="section-head">
+          <div><div class="section-kicker">06 / Web &amp; API</div><h2>Web &amp; API security</h2></div>
+          <p>Assume every request is hostile: validate input, set headers, and limit abuse.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>OWASP Top 10 (2021)</th><th>Risk</th><th>Core defense</th></tr></thead><tbody>
+          <tr><td><code>A01</code> Broken access control</td><td>users reach others' data</td><td>authorize every request server-side</td></tr>
+          <tr><td><code>A02</code> Cryptographic failures</td><td>data exposed in transit/at rest</td><td>TLS 1.2+, strong ciphers</td></tr>
+          <tr><td><code>A03</code> Injection</td><td>SQL, OS, LDAP command injection</td><td>parameterized queries, allowlists</td></tr>
+          <tr><td><code>A04</code> Insecure design</td><td>flaws baked into architecture</td><td>threat modeling, fail closed</td></tr>
+          <tr><td><code>A05</code> Security misconfiguration</td><td>defaults, debug, verbose errors</td><td>harden, disable unused features</td></tr>
+          <tr><td><code>A06</code> Vulnerable components</td><td>old deps with known CVEs</td><td>pin + scan + patch</td></tr>
+          <tr><td><code>A07</code> Auth failures</td><td>credential stuffing, weak MFA</td><td>MFA, rate-limit login, bcrypt</td></tr>
+          <tr><td><code>A08</code> Integrity failures</td><td>unsigned updates, CI poisoning</td><td>SBOM, signed commits</td></tr>
+          <tr><td><code>A09</code> Logging failures</td><td>no visibility into attacks</td><td>structured logs + alerting</td></tr>
+          <tr><td><code>A10</code> SSRF</td><td>server fetches attacker URLs</td><td>allowlist outbound, block metadata IPs</td></tr>
+        </tbody></table></div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Content-Security-Policy</h3><p>Restrict what the browser may load and execute — the single best header against XSS.</p><pre><code>Content-Security-Policy: default-src 'self';
+  script-src 'self'; object-src 'none';
+  frame-ancestors 'none'</code></pre></article>
+          <article class="card"><h3>CORS</h3><p>CORS relaxes the same-origin policy — only for the origins you actually need, with explicit methods.</p><pre><code>Access-Control-Allow-Origin: https://app.example.com
+Access-Control-Allow-Methods: GET, POST
+Access-Control-Allow-Credentials: true</code></pre></article>
+          <article class="card"><h3>SQL injection → parameterize</h3><p>Never concatenate user input into SQL. Use bound parameters everywhere.</p><pre><code>cursor.execute(
+  "SELECT * FROM users WHERE id = %s",
+  (user_id,))</code></pre></article>
+          <article class="card"><h3>XSS → escape output</h3><p>Context-aware output encoding; sanitize HTML with DOMPurify; prefer templates that auto-escape.</p><pre><code>// Go html/template escapes by default
+tmpl.Execute(w, userInput)</code></pre></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">✓</div><p><strong>Rate limiting</strong> is the cheap fix for brute force, scraping, and DDoS: <code>express-rate-limit</code>, nginx <code>limit_req</code>, or an API gateway throttle — especially on login and token endpoints.</p></div>
+      </section>
+
+      <section class="section searchable" id="incident">
+        <div class="section-head">
+          <div><div class="section-kicker">07 / Incident response</div><h2>Incident response</h2></div>
+          <p>Plan before the breach: detect, contain, eradicate, recover — then learn from it.</p>
+        </div>
+        <div class="flow">
+          <div class="flow-step"><div><strong>Prepare</strong><p>Playbooks, contacts, and tooling ready before you need them. Run tabletop exercises.</p></div></div>
+          <div class="flow-step"><div><strong>Detect</strong><p>Alerts from SIEM, IDS, and logs. Confirm the scope: what, when, which systems.</p></div></div>
+          <div class="flow-step"><div><strong>Contain</strong><p>Isolate hosts, revoke keys, disable accounts, snapshot evidence. Stop the bleed first.</p></div></div>
+          <div class="flow-step"><div><strong>Eradicate</strong><p>Remove the foothold: patch, reimage, rotate secrets, delete persistence.</p></div></div>
+          <div class="flow-step"><div><strong>Recover</strong><p>Restore from clean backups, monitor for recurrence, bring services back gradually.</p></div></div>
+          <div class="flow-step"><div><strong>Learn</strong><p>Post-mortem: what failed, what slowed you, and one concrete change to prevent a repeat.</p></div></div>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Logging that helps</h3><p>Structured, centralized, tamper-evident. Log auth events, admin actions, and failures — never secrets or PII.</p><pre><code>{"ts":"…","evt":"login_failed",
+ "user":"ada","ip":"203.0.113.7"}</code></pre></article>
+          <article class="card"><h3>Backups = 3-2-1</h3><p>Three copies, two media, one offsite. Test restores — an untested backup is a hope, not a plan.</p><pre><code># restore drill, not just a copy job
+pg_restore -d app latest.dump</code></pre></article>
+        </div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">!</div><p><strong>Don't destroy evidence during containment.</strong> Capture memory, disk images, and logs <em>before</em> reimaging a compromised host — you'll need them for the post-mortem and any legal follow-up.</p></div>
+      </section>
+
+      <section class="section searchable" id="gotchas">
+        <div class="section-head">
+          <div><div class="section-kicker">08 / Gotchas</div><h2>Pitfalls</h2></div>
+          <p>The mistakes that keep showing up in breach reports — and how to avoid them.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>Hardcoded secrets</h3><p>API keys and passwords in code, config, or frontends are the #1 breach cause. Move them to a vault and rotate.</p><pre><code># bad
+API_KEY = "sk_live_4x…"
+# good
+API_KEY = os.environ["API_KEY"]</code></pre></article>
+          <article class="card"><h3>Roll-your-own crypto</h3><p>Hand-written ciphers and homegrown token formats break quietly. Use vetted libraries and standard primitives.</p><pre><code># use libsodium / WebCrypto / Go crypto
+# never invent AES modes or "encoding"</code></pre></article>
+          <article class="card"><h3>Over-permissioned IAM</h3><p>Admin access for every service means one leak = total control. Least privilege, short-lived, scoped to resource.</p><pre><code>"Action": ["s3:GetObject"],
+"Resource": ["arn:aws:s3:::app/*"]</code></pre></article>
+          <article class="card"><h3>Logging PII &amp; secrets</h3><p>Logs capture tokens, passwords, and user data, then leak via SIEM or support tickets. Redact by default.</p><pre><code>log.info("login", user=u.id)   # not u.email
+# redact: mask tokens, never log bodies</code></pre></article>
+          <article class="card"><h3>Missing MFA</h3><p>Single-factor accounts fall to phishing and credential stuffing. MFA is the biggest lever against account takeover.</p><pre><code># require for all human users
+# hardware keys &gt; TOTP &gt; SMS</code></pre></article>
+        </div>
+      </section>
+
+      <footer class="footer searchable">
+        <strong>Source of truth</strong>
+        <p>This guide summarizes industry practice. The OWASP Top 10, the OWASP Cheat Sheet Series, and the CIS Benchmarks remain authoritative for details.</p>
+        <div class="footer-links">
+          <a href="https://owasp.org/www-project-top-ten/" target="_blank" rel="noreferrer">OWASP Top 10</a>
+          <a href="https://cheatsheetseries.owasp.org/" target="_blank" rel="noreferrer">OWASP Cheat Sheets</a>
+          <a href="https://www.cisecurity.org/cis-benchmarks" target="_blank" rel="noreferrer">CIS Benchmarks</a>
+          <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

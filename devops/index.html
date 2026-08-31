@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-guide="devops">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="CI/CD, containers, orchestration, infrastructure as code, observability, and deployment strategies.">
+  <title>Infrastructure &amp; DevOps — Visual Cheatsheet</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../" aria-label="Back to slop-stuff">
+      <span class="brand-mark">do_</span>
+      <span>DevOps Guide</span>
+      <span class="version">infra</span>
+    </a>
+    <label class="search-wrap">
+      <span class="sr-only" hidden>Search guide</span>
+      <input id="search" type="search" aria-label="Search guide" placeholder="Search Docker, CI, Terraform, Kubernetes, pipeline, deploy…" autocomplete="off">
+    </label>
+    <div class="top-actions">
+      <button class="icon-button" id="themeToggle" type="button" title="Toggle theme" aria-label="Toggle light and dark theme">◐</button>
+      <button class="icon-button" id="printGuide" type="button" title="Print guide" aria-label="Print this guide">Print</button>
+    </div>
+  </header>
+
+  <div class="shell" id="top">
+    <aside class="sidebar" aria-label="Guide sections">
+      <p class="side-label">On this page</p>
+      <nav>
+        <a href="#start"><span class="nav-number">01</span>Start here</a>
+        <a href="#ci"><span class="nav-number">02</span>CI/CD</a>
+        <a href="#containers"><span class="nav-number">03</span>Containers</a>
+        <a href="#orchestration"><span class="nav-number">04</span>Orchestration</a>
+        <a href="#iac"><span class="nav-number">05</span>Infrastructure as code</a>
+        <a href="#observability"><span class="nav-number">06</span>Observability</a>
+        <a href="#deploy"><span class="nav-number">07</span>Deployment strategies</a>
+        <a href="#gotchas"><span class="nav-number">08</span>Gotchas</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section class="hero searchable" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="eyebrow">Visual cheatsheet + usage guide</div>
+          <h1 id="hero-title">Ship software <span>that ships itself.</span></h1>
+          <p>DevOps is the loop that turns code into running, observable systems: commit, build, test, deploy, watch — then do it again. This page is the map of the whole toolchain.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#start">Start here →</a>
+            <a class="button" href="#ci">CI/CD</a>
+            <a class="button" href="#containers">Containers</a>
+          </div>
+        </div>
+        <div class="terminal" aria-label="Stylized build-test-deploy pipeline">
+          <div class="terminal-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="terminal-title">pipeline</span></div>
+          <div class="terminal-body">
+            <div class="mock-pane">
+              <div><span class="prompt">❯</span> <span class="cmd">git push origin main</span></div>
+              <div class="dim">build  → docker build -t app:1.2.3 .</div>
+              <div class="dim">test   → pytest -q  ✓ 142 passed</div>
+              <div class="dim">deploy → kubectl apply -f deploy.yaml</div>
+              <br>
+              <div><span class="prompt">✓</span> <span class="cmd">pipeline green — 3m 12s</span></div>
+              <div><span class="prompt">❯</span> <span class="cursor"></span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “Docker”, “Terraform”, “Kubernetes”, “pipeline”, or “deploy”.</div>
+
+      <section class="section searchable" id="start">
+        <div class="section-head">
+          <div><div class="section-kicker">01 / Start here</div><h2>The DevOps loop</h2></div>
+          <p>Plan → code → build → test → release → deploy → monitor. Each stage is automated and feeds the next; monitoring feeds back into planning.</p>
+        </div>
+        <div class="model" aria-label="The DevOps loop">
+          <div class="model-node"><strong>Plan</strong><small>issue → branch</small></div><div class="arrow">→</div>
+          <div class="model-node"><strong>Code</strong><small>commit + review</small></div><div class="arrow">→</div>
+          <div class="model-node"><strong>Build</strong><small>image / artifact</small></div><div class="arrow">→</div>
+          <div class="model-node"><strong>Test</strong><small>unit + e2e</small></div><div class="arrow">→</div>
+          <div class="model-node"><strong>Release</strong><small>tag + changelog</small></div><div class="arrow">→</div>
+          <div class="model-node"><strong>Deploy</strong><small>progressive rollout</small></div><div class="arrow">→</div>
+          <div class="model-node agent"><strong>Monitor</strong><small>metrics feed the next plan</small></div>
+        </div>
+        <div class="grid four" style="margin-top:16px">
+          <article class="card"><div class="card-number">1</div><h3>Automate</h3><p>Anything done twice by hand becomes a script, a job, or a pipeline.</p></article>
+          <article class="card"><div class="card-number">2</div><h3>Version everything</h3><p>Code, config, and infrastructure all live in git and get reviewed.</p></article>
+          <article class="card"><div class="card-number">3</div><h3>Observe</h3><p>Metrics, logs, and traces tell you what's happening in production.</p></article>
+          <article class="card"><div class="card-number">4</div><h3>Ship small</h3><p>Small, reversible changes make rollback a reflex, not a fire drill.</p></article>
+        </div>
+      </section>
+
+      <section class="section searchable" id="ci">
+        <div class="section-head">
+          <div><div class="section-kicker">02 / CI/CD</div><h2>CI/CD</h2></div>
+          <p>Continuous integration builds and tests every change; continuous delivery deploys it. Both are declarative YAML describing jobs, stages, and triggers.</p>
+        </div>
+        <div class="flow">
+          <div class="flow-step"><div><strong>Commit</strong><p><code>git push</code> triggers the pipeline via a webhook.</p></div></div>
+          <div class="flow-step"><div><strong>Build</strong><p>Compile or build the image; restore the cache.</p></div></div>
+          <div class="flow-step"><div><strong>Test</strong><p>Unit, integration, and lint in parallel jobs.</p></div></div>
+          <div class="flow-step"><div><strong>Deploy</strong><p>Publish artifacts, then release behind an approval gate.</p></div></div>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>GitHub Actions</h3><pre><code>name: CI
+on:
+  push: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build</code></pre></article>
+          <article class="card"><h3>GitLab CI</h3><pre><code>stages: [build, test, deploy]
+
+build:
+  stage: build
+  image: node:20
+  script:
+    - npm ci
+    - npm run build
+  artifacts:
+    paths: [dist/]
+
+test:
+  stage: test
+  script: npm test
+
+deploy:
+  stage: deploy
+  script: ./deploy.sh
+  only: [main]</code></pre></article>
+        </div>
+        <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Concept</th><th>GitHub Actions</th><th>GitLab CI</th></tr></thead><tbody>
+          <tr><td>Pipeline</td><td><code>workflow</code></td><td><code>pipeline</code></td></tr>
+          <tr><td>Unit of work</td><td><code>job</code></td><td><code>job</code></td></tr>
+          <tr><td>Ordering</td><td><code>needs:</code></td><td><code>stage</code></td></tr>
+          <tr><td>Triggers</td><td><code>on:</code></td><td><code>rules:</code> / <code>only:</code></td></tr>
+          <tr><td>Reusable step</td><td><code>uses:</code> (action)</td><td><code>image:</code> / <code>extends:</code></td></tr>
+          <tr><td>Secrets</td><td><code>secrets.NAME</code></td><td><code>$NAME</code> (masked var)</td></tr>
+          <tr><td>Outputs</td><td><code>actions/upload-artifact</code></td><td><code>artifacts:</code></td></tr>
+        </tbody></table></div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">!</div><p><strong>Never print secrets.</strong> Store tokens in the CI secret store and reference them as env vars. Add an <code>environment</code> (GitHub) or <code>environment:</code> (GitLab) block to require manual approval before production deploys.</p></div>
+      </section>
+
+      <section class="section searchable" id="containers">
+        <div class="section-head">
+          <div><div class="section-kicker">03 / Containers</div><h2>Containers</h2></div>
+          <p>An image is a read-only filesystem snapshot; a container is a running instance of it. A Dockerfile is the recipe that builds the image.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>Dockerfile</h3><pre><code>FROM python:3.12-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY . .
+EXPOSE 8000
+CMD ["uvicorn", "app.main:app"]</code></pre></article>
+          <article class="card"><h3>Build &amp; run</h3><pre><code>docker build -t app:1.2.3 .
+docker run -p 8000:8000 app:1.2.3
+docker push ghcr.io/acme/app:1.2.3
+docker pull ghcr.io/acme/app:1.2.3</code></pre></article>
+          <article class="card"><h3>Docker Compose</h3><pre><code>services:
+  web:
+    build: .
+    ports: ["8000:8000"]
+  db:
+    image: postgres:16
+    volumes: ["pg:/var/lib/postgresql/data"]
+volumes:
+  pg:</code></pre></article>
+        </div>
+        <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Instruction</th><th>What it does</th></tr></thead><tbody>
+          <tr><td><code>FROM</code></td><td>Base image to start from.</td></tr>
+          <tr><td><code>WORKDIR</code></td><td>Set the working directory.</td></tr>
+          <tr><td><code>COPY</code></td><td>Copy files from the build context into the image.</td></tr>
+          <tr><td><code>RUN</code></td><td>Execute a command at build time (installs).</td></tr>
+          <tr><td><code>CMD</code></td><td>Default command when the container starts.</td></tr>
+          <tr><td><code>ENTRYPOINT</code></td><td>Fixed executable; <code>CMD</code> becomes its args.</td></tr>
+          <tr><td><code>ENV</code></td><td>Set an environment variable.</td></tr>
+          <tr><td><code>EXPOSE</code></td><td>Document which port the app listens on.</td></tr>
+        </tbody></table></div>
+        <div class="command-index" style="margin-top:16px">
+          <div class="command-row"><code>docker ps -a</code><span>List containers (add <code>-a</code> for stopped).</span></div>
+          <div class="command-row"><code>docker images</code><span>List local images.</span></div>
+          <div class="command-row"><code>docker logs -f NAME</code><span>Follow a container's stdout.</span></div>
+          <div class="command-row"><code>docker exec -it NAME sh</code><span>Open a shell inside a running container.</span></div>
+          <div class="command-row"><code>docker compose up -d</code><span>Start the whole stack, detached.</span></div>
+          <div class="command-row"><code>docker compose down -v</code><span>Stop and remove volumes too.</span></div>
+        </div>
+        <div class="tags" style="margin-top:16px">
+          <span class="tag">Docker Hub</span>
+          <span class="tag">ghcr.io</span>
+          <span class="tag">Amazon ECR</span>
+          <span class="tag">Google Artifact Registry</span>
+          <span class="tag">Quay</span>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">KEY</div><p><strong>Image ≠ container.</strong> An image is immutable and versioned; a container is its writable runtime layer. Kill the container and the image is untouched — that's what makes rollback cheap.</p></div>
+      </section>
+
+      <section class="section searchable" id="orchestration">
+        <div class="section-head">
+          <div><div class="section-kicker">04 / Orchestration</div><h2>Orchestration</h2></div>
+          <p>Kubernetes runs your containers across a cluster: a Deployment keeps N replicas alive, a Service gives them a stable address, and a controller reconciles actual state toward desired state.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>Pod</h3><p>The smallest unit: one or more containers sharing a network and volume.</p></article>
+          <article class="card"><h3>Deployment</h3><p>Declares replicas and the rollout strategy; owns a ReplicaSet.</p></article>
+          <article class="card"><h3>Service</h3><p>A stable IP and DNS name that load-balances across matching Pods.</p></article>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Deployment</h3><pre><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels: {app: web}
+  template:
+    metadata:
+      labels: {app: web}
+    spec:
+      containers:
+        - name: web
+          image: app:1.2.3
+          ports: [{containerPort: 8000}]</code></pre></article>
+          <article class="card"><h3>Service</h3><pre><code>apiVersion: v1
+kind: Service
+metadata:
+  name: web
+spec:
+  selector: {app: web}
+  ports:
+    - port: 80
+      targetPort: 8000</code></pre></article>
+        </div>
+        <div class="command-index" style="margin-top:16px">
+          <div class="command-row"><code>kubectl scale deploy/web --replicas=5</code><span>Scale the Deployment up or down.</span></div>
+          <div class="command-row"><code>kubectl set image deploy/web web=app:1.3.0</code><span>Roll out a new image version.</span></div>
+          <div class="command-row"><code>kubectl rollout status deploy/web</code><span>Watch a rolling update finish.</span></div>
+          <div class="command-row"><code>kubectl rollout undo deploy/web</code><span>Roll back the last rollout.</span></div>
+          <div class="command-row"><code>helm install app ./chart</code><span>Install a Helm release.</span></div>
+          <div class="command-row"><code>helm upgrade app ./chart</code><span>Apply changed values.</span></div>
+          <div class="command-row"><code>helm rollback app 2</code><span>Return to release revision 2.</span></div>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">⌁</div><p>Helm is templating + release management over raw manifests: <code>values.yaml</code> holds per-environment config, <code>helm template</code> renders manifests for review, and releases are versioned so you can <code>rollback</code>. For the full kubectl command reference, see the <a href="../kubectl/">kubectl cheatsheet</a>.</p></div>
+      </section>
+
+      <section class="section searchable" id="iac">
+        <div class="section-head">
+          <div><div class="section-kicker">05 / Infrastructure as code</div><h2>Infrastructure as code</h2></div>
+          <p>Declare servers, networks, and services in files, then converge the real world to match. Terraform plans and applies; Ansible configures the machines.</p>
+        </div>
+        <div class="flow">
+          <div class="flow-step"><div><strong>Write</strong><p><code>main.tf</code> declares resources and modules.</p></div></div>
+          <div class="flow-step"><div><strong>Init</strong><p><code>terraform init</code> downloads providers and modules.</p></div></div>
+          <div class="flow-step"><div><strong>Plan</strong><p><code>terraform plan</code> diffs desired vs. actual.</p></div></div>
+          <div class="flow-step"><div><strong>Apply</strong><p><code>terraform apply</code> converges the real world.</p></div></div>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Resource &amp; module</h3><pre><code>resource "aws_instance" "web" {
+  ami           = "ami-0c55b159cbfafe1f0"
+  instance_type = "t3.micro"
+}
+
+module "vpc" {
+  source = "terraform-aws-modules/vpc/aws"
+  cidr   = "10.0.0.0/16"
+}</code></pre></article>
+          <article class="card"><h3>State</h3><p>State records what Terraform manages. Keep it in a shared backend and never edit it by hand.</p><pre><code>terraform {
+  backend "s3" {
+    bucket = "acme-tfstate"
+    key    = "prod/terraform.tfstate"
+  }
+}</code></pre></article>
+        </div>
+        <div class="command-index" style="margin-top:16px">
+          <div class="command-row"><code>terraform init</code><span>Install providers and modules.</span></div>
+          <div class="command-row"><code>terraform plan -out=tfplan</code><span>Preview changes, save the plan.</span></div>
+          <div class="command-row"><code>terraform apply tfplan</code><span>Apply exactly the reviewed plan.</span></div>
+          <div class="command-row"><code>terraform fmt</code><span>Format all <code>.tf</code> files.</span></div>
+          <div class="command-row"><code>terraform destroy</code><span>Tear down everything in state.</span></div>
+          <div class="command-row"><code>terraform import aws_instance.web i-1234</code><span>Adopt existing resources.</span></div>
+        </div>
+        <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Ansible</th><th>Meaning</th></tr></thead><tbody>
+          <tr><td><code>inventory</code></td><td>List of hosts, grouped.</td></tr>
+          <tr><td><code>playbook</code></td><td>YAML file of ordered plays and tasks.</td></tr>
+          <tr><td><code>module</code></td><td>Idempotent unit of work (e.g. <code>apt</code>, <code>copy</code>).</td></tr>
+          <tr><td><code>role</code></td><td>Reusable bundle of tasks, templates, and vars.</td></tr>
+          <tr><td><code>ansible-playbook site.yml</code></td><td>Run a playbook against the inventory.</td></tr>
+        </tbody></table></div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">⚠</div><p><strong>Config drift is the enemy.</strong> Once a human hand-edits a server, reality and code diverge. Re-run apply/playbook on a schedule and treat manual changes as a bug to be codified, not a fix to keep.</p></div>
+      </section>
+
+      <section class="section searchable" id="observability">
+        <div class="section-head">
+          <div><div class="section-kicker">06 / Observability</div><h2>Observability</h2></div>
+          <p>Metrics tell you something is wrong; logs tell you what; traces tell you where. Together they turn “it's slow” into “this service on this path”.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>Metrics</h3><p>Numbers over time: request rate, latency, error rate, saturation. Scraped by Prometheus, queried with PromQL.</p></article>
+          <article class="card"><h3>Logs</h3><p>Structured, searchable lines. Shipped to Loki and searched with LogQL.</p></article>
+          <article class="card"><h3>Traces</h3><p>One request's path through services, as spans. Correlated to logs by trace id.</p></article>
+        </div>
+        <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Term</th><th>Meaning</th><th>Example</th></tr></thead><tbody>
+          <tr><td><code>SLI</code></td><td>Measured indicator of a behavior</td><td>p99 latency of <code>GET /api</code></td></tr>
+          <tr><td><code>SLO</code></td><td>Target for the SLI over a window</td><td>p99 &lt; 300 ms over 30 days</td></tr>
+          <tr><td><code>Error budget</code></td><td>Allowed misses = <code>1 - SLO</code></td><td>burned down by incidents</td></tr>
+        </tbody></table></div>
+        <div class="command-index" style="margin-top:16px">
+          <div class="command-row"><code>rate(http_requests_total[5m])</code><span>Requests per second, smoothed.</span></div>
+          <div class="command-row"><code>histogram_quantile(0.99, rate(http_duration_bucket[5m]))</code><span>p99 latency from a histogram.</span></div>
+          <div class="command-row"><code>sum(rate(http_errors_total[5m])) / sum(rate(http_requests_total[5m]))</code><span>Error ratio.</span></div>
+        </div>
+        <div class="state-grid" style="margin-top:16px">
+          <div class="state-card"><strong>healthy</strong><p>SLIs inside budget, no pages.</p></div>
+          <div class="state-card working"><strong>pending</strong><p>Alert triggered, waiting to confirm.</p></div>
+          <div class="state-card blocked"><strong>firing</strong><p>SLO breached; on-call is paged.</p></div>
+          <div class="state-card done"><strong>resolved</strong><p>Incident closed, postmortem filed.</p></div>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">✓</div><p><strong>Alert on symptoms, not causes.</strong> Page on “p99 latency &gt; SLO for 10 minutes”, not on “CPU &gt; 80%”. Dashboard with Grafana, query with PromQL/LogQL, and link every alert to a runbook.</p></div>
+      </section>
+
+      <section class="section searchable" id="deploy">
+        <div class="section-head">
+          <div><div class="section-kicker">07 / Deployment strategies</div><h2>Deployment strategies</h2></div>
+          <p>How you move a new version into production decides how safely you can roll back. Pick by blast radius and how much traffic you can afford to risk.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Strategy</th><th>How it works</th><th>Rollback</th></tr></thead><tbody>
+          <tr><td>Rolling</td><td>Replace instances one at a time.</td><td>Instant — old pods still exist.</td></tr>
+          <tr><td>Blue / green</td><td>Run old and new side by side, flip a router.</td><td>Flip the router back.</td></tr>
+          <tr><td>Canary</td><td>Send a small % of traffic to the new version.</td><td>Cut the canary's traffic to 0.</td></tr>
+          <tr><td>Feature flag</td><td>Ship the code, toggle the behavior per user.</td><td>Turn the flag off — no redeploy.</td></tr>
+        </tbody></table></div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Canary by percentage</h3><pre><code>kubectl apply -f web-v2.yaml
+# shift 10% of traffic to v2
+kubectl patch svc web \
+  -p '{"spec":{"selector":{"version":"v2"}}}'</code></pre></article>
+          <article class="card"><h3>Rollback checklist</h3><pre><code>kubectl rollout undo deploy/web
+helm rollback app 1
+terraform apply tfplan.backup
+git revert &lt;sha&gt; &amp;&amp; git push</code></pre></article>
+        </div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">⚠</div><p><strong>Rehearse rollback before you need it.</strong> A deploy that can't be undone in one command is a bet you'll lose at 3 a.m. Run a rollback drill as part of every release.</p></div>
+      </section>
+
+      <section class="section searchable" id="gotchas">
+        <div class="section-head">
+          <div><div class="section-kicker">08 / Gotchas</div><h2>Pitfalls</h2></div>
+          <p>Five mistakes that ship broken systems faster than any outage could.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>Secrets in code</h3><p>A token in a repo is a token on every clone. Use a secret store and scan history.</p><pre><code># bad
+password: "hunter2"
+# good
+password: ${DB_PASSWORD}</code></pre></article>
+          <article class="card"><h3>Config drift</h3><p>Hand-edited servers drift from IaC until the next apply wipes your fix.</p><pre><code>terraform plan   # shows the drift
+terraform apply  # converge back</code></pre></article>
+          <article class="card"><h3>Oversized images</h3><p>Multi-gigabyte images slow every build and rollout. Use slim bases and multi-stage builds.</p><pre><code>docker build --pull .
+docker images | sort -k7 -h</code></pre></article>
+          <article class="card"><h3>No rollback plan</h3><p>If you can't undo in one command, the deploy is a trap.</p><pre><code>kubectl rollout undo deploy/web
+helm rollback app 1</code></pre></article>
+        </div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">⚠</div><p><strong>Production data in dev.</strong> Copies of prod databases in dev environments leak PII and drift from schema. Use synthetic or anonymized data, and never run a dev tool against the prod endpoint.</p></div>
+      </section>
+
+      <footer class="footer searchable">
+        <strong>Source of truth</strong>
+        <p>This guide maps the DevOps toolchain and its essential commands. The official docs for each tool remain authoritative for flags, versions, and edge cases.</p>
+        <div class="footer-links">
+          <a href="https://docs.github.com/en/actions" target="_blank" rel="noreferrer">GitHub Actions docs</a>
+          <a href="https://docs.docker.com/" target="_blank" rel="noreferrer">Docker docs</a>
+          <a href="https://developer.hashicorp.com/terraform" target="_blank" rel="noreferrer">Terraform docs</a>
+          <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

@@ -154,6 +154,12 @@ R = (5 - 2) / 0.02 = 150 Ω</code></pre></article>
           <article class="card"><h3>Transistor (BJT)</h3><p>A current-controlled switch and amplifier: a small base current switches a bigger collector–emitter current. NPN switches the low side.</p><pre><code>Ic = β × Ib    (β = hFE, ~100–300)</code></pre></article>
           <article class="card"><h3>Voltage regulator</h3><p>Turns a varying input into a steady output. Linear types (7805, LDO) waste heat; switching types (buck, boost) are efficient.</p><pre><code>7805: 7–25 V in → 5 V out</code></pre></article>
         </div>
+        <div class="table-wrap"><table><thead><tr><th>Property</th><th>BJT</th><th>MOSFET</th></tr></thead><tbody>
+          <tr><td>Controlled by</td><td>base current</td><td>gate voltage</td></tr>
+          <tr><td>Input</td><td>current gain β</td><td>near-zero gate current</td></tr>
+          <tr><td>Low-side switch</td><td>NPN</td><td>N-channel</td></tr>
+          <tr><td>On-state drop</td><td>Vce(sat) ≈ 0.2 V</td><td>Rds(on) × Id</td></tr>
+        </tbody></table></div>
         <div class="tags"><span class="tag">1N4148</span><span class="tag">1N4007</span><span class="tag">2N2222</span><span class="tag">BC547</span><span class="tag">LM358</span><span class="tag">LM7805</span><span class="tag">IRFZ44N</span></div>
         <div class="callout"><div class="callout-mark">OP</div><p><strong>Op-amps</strong> are the building block of amplification, filtering, and comparison — see <a href="#opamp">section 04</a> for the circuits and formulas.</p></div>
       </section>
@@ -190,6 +196,17 @@ Vout = Vin × (1 + R2 / R1)</code></pre></article>
             <div><h4>Notch</h4><pre><code>twin-T, or a state-variable</code></pre><p>Rejects a single narrow frequency (e.g. 50/60 Hz hum).</p></div>
           </div>
         </details>
+        <details>
+          <summary>Choosing an op-amp</summary>
+          <div class="details-body">
+            <div class="table-wrap"><table><thead><tr><th>Spec</th><th>Meaning</th><th>Rule of thumb</th></tr></thead><tbody>
+              <tr><td>Gain-bandwidth (GBW)</td><td>gain × bandwidth product</td><td>pick GBW &gt; gain × f_signal × 10</td></tr>
+              <tr><td>Slew rate</td><td>max V/µs the output can move</td><td>SR &gt; 2π × f × V_peak</td></tr>
+              <tr><td>Rail-to-rail</td><td>output swings to the supplies</td><td>needed for low-voltage, single-supply</td></tr>
+              <tr><td>Input offset</td><td>DC error at the input</td><td>µV–mV; matters for precision DC</td></tr>
+            </tbody></table></div>
+          </div>
+        </details>
       </section>
 
       <section class="section searchable" id="power">
@@ -202,6 +219,12 @@ Vout = Vin × (1 + R2 / R1)</code></pre></article>
           <tr><td><code>LDO</code></td><td>Linear</td><td>Regulates with a tiny input–output headroom</td></tr>
           <tr><td>Buck</td><td>Switching</td><td>Efficiently steps voltage down (e.g. 12 V → 5 V)</td></tr>
           <tr><td>Boost</td><td>Switching</td><td>Efficiently steps voltage up (e.g. 3.7 V → 5 V)</td></tr>
+        </tbody></table></div>
+        <div class="table-wrap"><table><thead><tr><th>Rail</th><th>Typical use</th></tr></thead><tbody>
+          <tr><td>3.3 V</td><td>modern logic, sensors, microcontrollers</td></tr>
+          <tr><td>5 V</td><td>Arduino, USB, classic logic</td></tr>
+          <tr><td>12 V</td><td>motors, relays, LED strips</td></tr>
+          <tr><td>24 V</td><td>industrial, robotics</td></tr>
         </tbody></table></div>
         <div class="grid two">
           <article class="card"><h3>Linear vs switching</h3><p>Linear regulators are simple and quiet but burn the difference as heat. Switching regulators are efficient but add ripple and EMI.</p><pre><code>linear:    P_loss = (Vin - Vout) × I
@@ -277,6 +300,11 @@ duty = t_on / (t_on + t_off)</code></pre></article>
           <div class="state-card blocked"><strong>Floating</strong><p>An unconnected input — undefined and oscillating. Always tie it high or low.</p></div>
           <div class="state-card working"><strong>PWM</strong><p>Switching 0 to Vcc fast; the average is <code>duty × Vcc</code>.</p></div>
         </div>
+        <div class="table-wrap"><table><thead><tr><th>Logic (typical)</th><th>Input HIGH</th><th>Input LOW</th></tr></thead><tbody>
+          <tr><td>5 V TTL</td><td>≥ 2.0 V</td><td>≤ 0.8 V</td></tr>
+          <tr><td>3.3 V CMOS</td><td>≥ 2.0 V</td><td>≤ 0.8 V</td></tr>
+          <tr><td>5 V CMOS</td><td>≥ 3.5 V</td><td>≤ 1.5 V</td></tr>
+        </tbody></table></div>
         <div class="table-wrap"><table><thead><tr><th>Instrument</th><th>Measures</th><th>Reach for it when</th></tr></thead><tbody>
           <tr><td>Multimeter</td><td>Voltage, current, resistance, continuity</td><td>Checking rails, values, wiring</td></tr>
           <tr><td>Oscilloscope</td><td>Voltage over time (waveforms)</td><td>Ripple, timing, glitches, signals</td></tr>

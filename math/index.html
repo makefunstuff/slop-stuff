@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-guide="math">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Applied math for programmers: linear algebra, probability, calculus, discrete math, and signal/DSP math.">
+  <title>Mathematics — Visual Cheatsheet</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../" aria-label="Back to slop-stuff">
+      <span class="brand-mark">∑_</span>
+      <span>Math Guide</span>
+      <span class="version">applied</span>
+    </a>
+    <label class="search-wrap">
+      <span class="sr-only" hidden>Search guide</span>
+      <input id="search" type="search" aria-label="Search guide" placeholder="Search vector, matrix, derivative, probability, Fourier, modular…" autocomplete="off">
+    </label>
+    <div class="top-actions">
+      <button class="icon-button" id="themeToggle" type="button" title="Toggle theme" aria-label="Toggle light and dark theme">◐</button>
+      <button class="icon-button" id="printGuide" type="button" title="Print guide" aria-label="Print this guide">Print</button>
+    </div>
+  </header>
+
+  <div class="shell" id="top">
+    <aside class="sidebar" aria-label="Guide sections">
+      <p class="side-label">On this page</p>
+      <nav>
+        <a href="#start"><span class="nav-number">01</span>Start here</a>
+        <a href="#linear"><span class="nav-number">02</span>Linear algebra</a>
+        <a href="#prob"><span class="nav-number">03</span>Probability</a>
+        <a href="#calc"><span class="nav-number">04</span>Calculus</a>
+        <a href="#discrete"><span class="nav-number">05</span>Discrete math</a>
+        <a href="#dsp"><span class="nav-number">06</span>Signal &amp; DSP</a>
+        <a href="#gotchas"><span class="nav-number">07</span>Gotchas</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section class="hero searchable" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="eyebrow">Visual cheatsheet + usage guide</div>
+          <h1 id="hero-title">The math behind <span>the code.</span></h1>
+          <p>Mathematics is the hidden runtime of software: the linear algebra in ML, the probability in analytics, the calculus in optimization, and the DSP behind every signal. Here's the toolkit, in one place.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#start">Start here →</a>
+            <a class="button" href="#linear">Linear algebra</a>
+            <a class="button" href="#calc">Calculus</a>
+          </div>
+        </div>
+        <div class="terminal" aria-label="Stylized math notebook">
+          <div class="terminal-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="terminal-title">applied math</span></div>
+          <div class="terminal-body">
+            <div class="mock-side">
+              <p class="mock-label">Areas</p>
+              <div class="mock-row active">Linear algebra</div>
+              <div class="mock-row">Probability</div>
+              <div class="mock-row">Calculus</div>
+              <div class="mock-row">DSP</div>
+            </div>
+            <div class="mock-pane">
+              <div><span class="prompt">❯</span> <span class="cmd">a · b = |a||b| cos θ</span></div>
+              <div class="dim">dot product</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cmd">P(A|B) = P(B|A) · P(A) / P(B)</span></div>
+              <div class="dim">Bayes' theorem</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cmd">θ = θ − α · ∇J(θ)</span></div>
+              <div class="dim">gradient descent</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cmd">X(f) = ∫ x(t) e^(−j2πft) dt</span></div>
+              <div class="dim">Fourier transform</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cursor"></span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “vector”, “matrix”, “derivative”, “probability”, “Fourier”, or “modular”.</div>
+
+      <section class="section searchable" id="start">
+        <div class="section-head">
+          <div><div class="section-kicker">01 / Start here</div><h2>Notation &amp; constants</h2></div>
+          <p>The symbols you'll meet in every area below, the constants that keep appearing, and the rules that keep expressions unambiguous.</p>
+        </div>
+        <div class="grid four">
+          <article class="card"><div class="card-number">1</div><h3>Greek letters</h3><p><code>α β γ θ λ μ π σ φ ω</code> stand for angles, means, weights, rates, and frequencies.</p></article>
+          <article class="card"><div class="card-number">2</div><h3>Sum &amp; product</h3><p><code>∑ xi</code> adds a sequence; <code>∏ xi</code> multiplies it. The index goes under the symbol.</p></article>
+          <article class="card"><div class="card-number">3</div><h3>Calculus ops</h3><p><code>∫</code> integrates, <code>∂</code> is a partial derivative, and <code>∇</code> is the gradient (vector of partials).</p></article>
+          <article class="card"><div class="card-number">4</div><h3>Sets &amp; logic</h3><p><code>∈</code> "in", <code>∀</code> "for all", <code>∃</code> "exists", <code>⇒</code> "implies".</p></article>
+        </div>
+        <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Symbol</th><th>Meaning</th><th>Example</th></tr></thead><tbody>
+          <tr><td><code>∑</code></td><td>Summation</td><td><code>∑ xi = x1 + x2 + … + xn</code></td></tr>
+          <tr><td><code>∏</code></td><td>Product</td><td><code>∏ xi = x1 · x2 · … · xn</code></td></tr>
+          <tr><td><code>∫</code></td><td>Integral</td><td><code>∫ f(x) dx</code></td></tr>
+          <tr><td><code>∂</code></td><td>Partial derivative</td><td><code>∂f/∂x</code></td></tr>
+          <tr><td><code>∇</code></td><td>Nabla — gradient</td><td><code>∇f = (∂f/∂x, ∂f/∂y)</code></td></tr>
+          <tr><td><code>∈</code></td><td>Element of</td><td><code>x ∈ {1, 2, 3}</code></td></tr>
+          <tr><td><code>∀</code></td><td>For all</td><td><code>∀x &gt; 0</code></td></tr>
+          <tr><td><code>∃</code></td><td>There exists</td><td><code>∃x : f(x) = 0</code></td></tr>
+          <tr><td><code>⇒</code></td><td>Implies</td><td><code>a = b ⇒ a + c = b + c</code></td></tr>
+          <tr><td><code>|x|</code></td><td>Absolute value / magnitude</td><td><code>|−3| = 3</code></td></tr>
+          <tr><td><code>‖x‖</code></td><td>Vector norm (length)</td><td><code>‖x‖ = √(x1² + x2²)</code></td></tr>
+          <tr><td><code>≈ ≠</code></td><td>Approximately / not equal</td><td><code>π ≈ 3.14</code>, <code>1 ≠ 2</code></td></tr>
+        </tbody></table></div>
+        <div class="grid three" style="margin-top:16px">
+          <article class="card"><h3>Constants</h3><pre><code>π ≈ 3.14159    # circle: C = 2πr
+e ≈ 2.71828    # Euler: d/dx e^x = e^x
+φ ≈ 1.61803    # golden ratio (1 + √5)/2
+√2 ≈ 1.41421   # unit-square diagonal
+γ ≈ 0.57721    # Euler–Mascheroni</code></pre></article>
+          <article class="card"><h3>Order of operations</h3><pre><code>P — Parentheses     ( )
+E — Exponents       2^3 = 8
+M — Multiply / Divide  (left → right)
+A — Add / Subtract     (left → right)
+
+(2 + 3) × 4² = 5 × 16 = 80
+2 + 3 × 4   = 2 + 12 = 14</code></pre></article>
+          <article class="card"><h3>Log identities</h3><pre><code>log(ab)  = log a + log b
+log(a/b) = log a − log b
+log(a^n) = n · log a
+log_b a  = log a / log b   # change base
+ln e = 1      log 1 = 0</code></pre></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">∑</div><p><strong>Read the notation.</strong> Juxtaposition means multiply (<code>2x</code> is <code>2·x</code>, <code>ab</code> is <code>a·b</code>), and powers bind tighter than negation: <code>−x² = −(x²)</code>. When in doubt, add parentheses.</p></div>
+      </section>
+
+      <section class="section searchable" id="linear">
+        <div class="section-head">
+          <div><div class="section-kicker">02 / Linear algebra</div><h2>Linear algebra</h2></div>
+          <p>Vectors and matrices are the machinery behind ML weights and 3D graphics. A matrix is a linear transform: it maps vectors to vectors.</p>
+        </div>
+        <div class="model" aria-label="Vector to matrix to transform chain">
+          <div class="model-node"><strong>Vector</strong><small>n components</small></div>
+          <div class="arrow">→</div>
+          <div class="model-node agent"><strong>Matrix A</strong><small>m×n numbers</small></div>
+          <div class="arrow">→</div>
+          <div class="model-node"><strong>Transform</strong><small>y = Ax</small></div>
+          <div class="arrow">→</div>
+          <div class="model-node agent"><strong>Eigenvector</strong><small>Av = λv</small></div>
+          <div class="arrow">→</div>
+          <div class="model-node"><strong>Result</strong><small>mapped vector</small></div>
+        </div>
+        <div class="grid three" style="margin-top:16px">
+          <article class="card"><h3>Dot &amp; cross product</h3><pre><code># dot → scalar (alignment)
+a · b = |a||b| cos θ
+      = a1 b1 + a2 b2 + a3 b3
+
+# cross → vector (3D only, ⊥ to both)
+a × b = (a2b3 − a3b2,
+         a3b1 − a1b3,
+         a1b2 − a2b1)</code></pre></article>
+          <article class="card"><h3>Matrix multiplication</h3><pre><code># (m×n) · (n×p) = (m×p)
+# entry (i,j) = row i · column j
+
+A = [[1, 2],
+     [3, 4]]
+B = [[5], [6]]
+A·B = [[1·5+2·6],
+       [3·5+4·6]] = [[17], [39]]</code></pre></article>
+          <article class="card"><h3>Transpose / inverse / det</h3><pre><code>A^T     # rows ↔ cols: (A^T)[i][j] = A[j][i]
+A^-1    # inverse: A·A^-1 = I
+det(A)  # volume scale of the transform
+        # invertible ⟺ det(A) ≠ 0</code></pre></article>
+        </div>
+        <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Operation</th><th>Definition</th><th>Use in practice</th></tr></thead><tbody>
+          <tr><td><code>A^T</code></td><td>Transpose — flip rows and columns</td><td>Switch basis; dot product <code>a·b = a^T b</code></td></tr>
+          <tr><td><code>A^-1</code></td><td>Inverse — undo the transform</td><td>Solve <code>Ax = b</code> → <code>x = A^-1 b</code></td></tr>
+          <tr><td><code>det(A)</code></td><td>Determinant — volume scale factor</td><td>Invertibility test; change of variables</td></tr>
+          <tr><td><code>λ</code></td><td>Eigenvalue — <code>Av = λv</code></td><td>PCA, vibration modes, stability</td></tr>
+          <tr><td><code>rank(A)</code></td><td>Dimension of the column space</td><td>Linear independence, solvability</td></tr>
+        </tbody></table></div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">M</div><p><strong>ML &amp; 3D:</strong> a neural-net layer's weights are a matrix, and the forward pass is <code>y = Ax + b</code>. In 3D graphics, rotation, scale, and translation are 4×4 matrices multiplied into every vertex.</p></div>
+        <div class="tags" style="margin-top:16px">
+          <span class="tag">matrix</span>
+          <span class="tag">eigenvalue</span>
+          <span class="tag">transform</span>
+          <span class="tag">tensor</span>
+          <span class="tag">quaternion</span>
+          <span class="tag">PCA</span>
+        </div>
+      </section>
+
+      <section class="section searchable" id="prob">
+        <div class="section-head">
+          <div><div class="section-kicker">03 / Probability</div><h2>Probability &amp; statistics</h2></div>
+          <p>Quantifying uncertainty: rules for combining events, the distributions that model real data, and the summaries that describe it.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>Probability rules</h3><pre><code>0 ≤ P(A) ≤ 1
+P(not A)  = 1 − P(A)
+P(A ∪ B)  = P(A) + P(B) − P(A ∩ B)
+P(A ∩ B)  = P(A) · P(B)   # if independent</code></pre></article>
+          <article class="card"><h3>Conditional &amp; Bayes</h3><pre><code>P(A|B) = P(A ∩ B) / P(B)     # conditional
+P(A ∩ B) = P(A|B) · P(B)     # chain rule
+
+# Bayes' theorem
+P(A|B) = P(B|A) · P(A) / P(B)</code></pre></article>
+          <article class="card"><h3>Expectation &amp; variance</h3><pre><code>E[X]    = Σ x · p(x)      # mean
+Var(X)  = E[X²] − E[X]²   # variance
+σ       = √Var(X)         # std deviation
+Cov(X,Y) = E[XY] − E[X]E[Y]</code></pre></article>
+        </div>
+        <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Distribution</th><th>Notation</th><th>Models</th><th>Mean, Variance</th></tr></thead><tbody>
+          <tr><td>Uniform</td><td><code>U(a, b)</code></td><td>Equally likely in <code>[a, b]</code></td><td><code>(a+b)/2</code>, <code>(b−a)²/12</code></td></tr>
+          <tr><td>Bernoulli</td><td><code>Ber(p)</code></td><td>Single success/failure</td><td><code>p</code>, <code>p(1−p)</code></td></tr>
+          <tr><td>Binomial</td><td><code>Bin(n, p)</code></td><td>Successes in <code>n</code> trials</td><td><code>np</code>, <code>np(1−p)</code></td></tr>
+          <tr><td>Poisson</td><td><code>Pois(λ)</code></td><td>Events per interval</td><td><code>λ</code>, <code>λ</code></td></tr>
+          <tr><td>Normal</td><td><code>N(μ, σ²)</code></td><td>Sums, measurement noise</td><td><code>μ</code>, <code>σ²</code></td></tr>
+          <tr><td>Exponential</td><td><code>Exp(λ)</code></td><td>Wait time to next event</td><td><code>1/λ</code>, <code>1/λ²</code></td></tr>
+        </tbody></table></div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Bayes' theorem, worked</h3><p>A rare disease hits 1% of people; a test is 99% accurate. A positive result is still only a coin flip.</p><pre><code>P(disease)   = 0.01
+P(+|disease) = 0.99
+P(+|healthy) = 0.01
+P(+) = 0.99·0.01 + 0.01·0.99 = 0.0198
+P(disease|+) = 0.99·0.01 / 0.0198 ≈ 0.5</code></pre></article>
+          <article class="card"><h3>Hypothesis testing</h3><p>Frame the claim as the null hypothesis <code>H0</code>. The p-value is <code>P(data | H0 true)</code>; if it's below <code>α</code>, reject <code>H0</code>.</p><pre><code>H0: no effect
+α  = 0.05    # significance level
+if p-value &lt; α: reject H0</code></pre></article>
+        </div>
+        <details style="margin-top:16px">
+          <summary>Hypothesis testing in one picture</summary>
+          <div class="details-body">
+            <p>Every decision lands in one of four boxes. The two error types trade off — tightening one loosens the other.</p>
+            <div class="state-grid">
+              <div class="state-card done"><strong>Reject H0, H0 false</strong><p>Correct — true positive, the test's power <code>1 − β</code>.</p></div>
+              <div class="state-card blocked"><strong>Reject H0, H0 true</strong><p>Type I error — false positive, rate <code>α</code>.</p></div>
+              <div class="state-card working"><strong>Keep H0, H0 false</strong><p>Type II error — false negative, rate <code>β</code>.</p></div>
+              <div class="state-card unknown"><strong>Keep H0, H0 true</strong><p>Correct — true negative.</p></div>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="calc">
+        <div class="section-head">
+          <div><div class="section-kicker">04 / Calculus</div><h2>Calculus &amp; optimization</h2></div>
+          <p>Derivatives measure change, gradients point uphill, and gradient descent steps downhill to the minimum — the engine of ML training.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>Derivative</h3><pre><code>f'(x) = lim h→0 (f(x+h) − f(x)) / h
+
+d/dx x^n   = n x^(n−1)
+d/dx e^x   = e^x
+d/dx ln x  = 1/x
+d/dx sin x = cos x</code></pre></article>
+          <article class="card"><h3>Chain rule &amp; partial</h3><pre><code># chain rule: derivative of a composition
+d/dx f(g(x)) = f'(g(x)) · g'(x)
+
+# partial: treat other vars as constants
+∂/∂x (x² + xy + y²) = 2x + y</code></pre></article>
+          <article class="card"><h3>Integral</h3><pre><code># definite integral = area under the curve
+∫[a,b] f(x) dx = F(b) − F(a)    # F' = f
+
+∫ x^n dx = x^(n+1)/(n+1) + C
+∫ e^x dx = e^x + C
+∫ 1/x dx = ln|x| + C</code></pre></article>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Gradient &amp; descent</h3><pre><code># gradient: vector of partials, points uphill
+∇J = (∂J/∂θ1, ∂J/∂θ2, …)
+
+# gradient descent: step downhill
+θ = θ − α ∇J(θ)
+# α = learning rate (step size)</code></pre></article>
+          <article class="card"><h3>Convexity</h3><p>A convex function is a bowl: any chord lies above the graph, and a local minimum is the global minimum. Gradient descent is safe on convex losses.</p><pre><code>f''(x) ≥ 0  → convex  (bowl)
+f''(x) ≤ 0  → concave (hill)
+f''(x) = 0  → inflection point</code></pre></article>
+        </div>
+        <div class="command-index" style="margin-top:16px">
+          <div class="command-row"><code>f'(x)</code><span>derivative — instantaneous rate of change.</span></div>
+          <div class="command-row"><code>∂f/∂x</code><span>partial derivative — change along one axis.</span></div>
+          <div class="command-row"><code>∇J(θ)</code><span>gradient — all partials; points uphill.</span></div>
+          <div class="command-row"><code>θ = θ − α∇J</code><span>gradient descent — step against the gradient.</span></div>
+        </div>
+        <details style="margin-top:16px">
+          <summary>The backprop connection</summary>
+          <div class="details-body">
+            <p>Backpropagation is the chain rule applied across a network: compute the gradient of the loss with respect to every weight by multiplying local derivatives backward from the output.</p>
+            <pre><code># forward:  y = f3(w3 · f2(w2 · f1(w1 · x)))
+# backward: dL/dw1 = dL/dy · dy/dh2 · dh2/dh1 · dh1/dw1
+#           (chain rule, layer by layer)
+# update:   w = w − α · dL/dw</code></pre>
+          </div>
+        </details>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">α</div><p><strong>Learning rate:</strong> too big and you overshoot and diverge; too small and you crawl. <code>0.1</code>, <code>0.01</code>, and <code>0.001</code> are common starting points — schedule it down as training converges.</p></div>
+      </section>
+
+      <section class="section searchable" id="discrete">
+        <div class="section-head">
+          <div><div class="section-kicker">05 / Discrete math</div><h2>Discrete math</h2></div>
+          <p>Counting, divisibility, and graphs — the math of algorithms, cryptography, and data structures.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>Permutations &amp; combinations</h3><pre><code># permutations: order matters
+P(n, k) = n! / (n − k)!
+
+# combinations: order doesn't matter
+C(n, k) = n! / (k!(n − k)!)
+        = (n choose k)</code></pre></article>
+          <article class="card"><h3>Modular arithmetic</h3><pre><code>a ≡ b (mod m)   # a − b divisible by m
+7 ≡ 1 (mod 3)
+
+(a + b) mod m = (a mod m + b mod m) mod m
+(a · b) mod m = (a mod m · b mod m) mod m
+# clock arithmetic: 14:00 = 2:00</code></pre></article>
+          <article class="card"><h3>Number theory</h3><pre><code>gcd(a, b)            # greatest common divisor
+lcm(a, b) = a·b / gcd(a, b)
+prime: divisible only by 1 and itself
+# Euclid's algorithm
+gcd(a, b) = gcd(b, a mod b)</code></pre></article>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Graph theory</h3><pre><code>G = (V, E)       # vertices + edges
+degree(v) = # edges touching v
+Σ degrees = 2·|E|           # handshaking lemma
+tree: connected, no cycles, |E| = |V| − 1</code></pre></article>
+          <article class="card"><h3>Boolean logic</h3><pre><code>AND:  A ∧ B   # true only if both
+OR:   A ∨ B   # false only if neither
+NOT:  ¬A      # flip
+XOR:  A ⊕ B   # true if exactly one
+
+De Morgan: ¬(A ∧ B) = ¬A ∨ ¬B
+           ¬(A ∨ B) = ¬A ∧ ¬B</code></pre></article>
+        </div>
+        <details style="margin-top:16px">
+          <summary>Binomial coefficients &amp; Pascal's triangle</summary>
+          <div class="details-body">
+            <p>Each entry is the sum of the two above it, and row <code>n</code> lists the coefficients of <code>(x + y)^n</code>.</p>
+            <pre><code>        1
+      1   1
+    1   2   1
+  1   3   3   1
+1   4   6   4   1
+
+# (x + y)^4 = x⁴ + 4x³y + 6x²y² + 4xy³ + y⁴</code></pre>
+          </div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="dsp">
+        <div class="section-head">
+          <div><div class="section-kicker">06 / Signal &amp; DSP</div><h2>Signal/DSP math</h2></div>
+          <p>The bridge between continuous reality and sampled data: complex numbers, the Fourier transform, and the sampling rules that keep a digital signal faithful. (Companion to the SDR page.)</p>
+        </div>
+        <div class="prefix-demo">
+          <kbd>1 GHz</kbd> = <kbd>1000 MHz</kbd> = <kbd>10⁶ kHz</kbd> = <kbd>10⁹ Hz</kbd>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>Complex numbers</h3><pre><code>z = a + jb            # rectangular
+  = r e^(jθ)          # polar
+  = r(cos θ + j sin θ)
+r = |z| = √(a² + b²)  # magnitude
+θ = atan2(b, a)       # phase
+conjugate: a − jb</code></pre></article>
+          <article class="card"><h3>Euler's formula</h3><pre><code>e^(jθ) = cos θ + j sin θ
+
+e^(jπ) + 1 = 0      # Euler identity
+cos θ = (e^(jθ) + e^(−jθ)) / 2
+sin θ = (e^(jθ) − e^(−jθ)) / (2j)</code></pre></article>
+          <article class="card"><h3>Fourier transform</h3><pre><code># continuous → spectrum
+X(f) = ∫ x(t) e^(−j2πft) dt
+
+# discrete (DFT / FFT)
+X[k] = Σ_n x[n] e^(−j2πkn/N)
+# k = frequency bin, N = samples</code></pre></article>
+        </div>
+        <div class="flow" style="margin-top:16px">
+          <div class="flow-step"><div><h4>Sample</h4><p>An ADC turns the continuous signal into discrete samples <code>x[n]</code>.</p></div></div>
+          <div class="flow-step"><div><h4>Window</h4><p>Multiply by a Hann window to reduce spectral leakage from the edges.</p></div></div>
+          <div class="flow-step"><div><h4>FFT</h4><p>Transform time-domain samples into frequency bins <code>X[k]</code>.</p></div></div>
+          <div class="flow-step"><div><h4>Filter</h4><p>Convolve with a kernel to pass a band and reject the rest.</p></div></div>
+          <div class="flow-step"><div><h4>Detect</h4><p>Threshold, demodulate, or extract features from the result.</p></div></div>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Sampling &amp; Nyquist</h3><pre><code>fs &gt; 2 · f_max   # Nyquist rate
+# sample too slowly → aliasing
+# (high freqs fold back as low freqs)
+
+Δt = 1/fs         # sample period
+# 44.1 kHz audio captures up to 22.05 kHz</code></pre></article>
+          <article class="card"><h3>Convolution</h3><pre><code># blur / echo = convolution with a kernel
+(y * h)[n] = Σ_k x[k] h[n − k]
+
+# convolution ⟺ multiplication in frequency
+FFT(x * h) = X(f) · H(f)   # filtering</code></pre></article>
+        </div>
+        <details style="margin-top:16px">
+          <summary>Z-transform basics</summary>
+          <div class="details-body">
+            <p>The Z-transform is the discrete-time analogue of the Laplace transform: a polynomial in <code>z^-1</code> that encodes a filter's response and reveals stability through its poles.</p>
+            <pre><code>X(z) = Σ x[n] z^(−n)      # z = e^(jω)
+
+# one-sample delay
+x[n−1]  ↔  z^-1 X(z)
+
+# transfer function; stable iff poles inside |z| = 1
+H(z) = Y(z) / X(z) = B(z) / A(z)</code></pre>
+          </div>
+        </details>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">∫</div><p><strong>Time vs frequency:</strong> a signal is easier to read in one domain than the other — a filter is a convolution in time but a simple multiplication in frequency. The FFT is the shortcut between them, at <code>O(N log N)</code>.</p></div>
+        <div class="tags" style="margin-top:16px">
+          <span class="tag">FFT</span>
+          <span class="tag">convolution</span>
+          <span class="tag">Nyquist</span>
+          <span class="tag">IQ</span>
+          <span class="tag">Z-transform</span>
+          <span class="tag">DFT</span>
+        </div>
+      </section>
+
+      <section class="section searchable" id="gotchas">
+        <div class="section-head">
+          <div><div class="section-kicker">07 / Gotchas</div><h2>Pitfalls</h2></div>
+          <p>Small mistakes that silently corrupt a calculation or a model.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>Order of operations</h3><p><code>−x²</code> means <code>−(x²)</code>, not <code>(−x)²</code>. Division and multiplication bind equally and evaluate left to right.</p><pre><code>−2² = −4    (not 4)
+(−2)² = 4
+2/3·4 = (2/3)·4 = 8/3 ≈ 2.667</code></pre></article>
+          <article class="card"><h3>Units &amp; dimensions</h3><p>Carry units through the whole calculation. A mismatched unit (meters vs feet, seconds vs milliseconds) silently scales the answer wrong.</p><pre><code># 60 km / 1.5 h = 40 km/h
+# 60 m  / 1.5 s = 40 m/s   ← different!</code></pre></article>
+          <article class="card"><h3>Floating-point error</h3><p><code>0.1 + 0.2</code> is not exactly <code>0.3</code>. Never compare floats with <code>==</code>; use a tolerance.</p><pre><code>0.1 + 0.2     # 0.30000000000000004
+abs(a − b) &lt; 1e-9   # compare this way</code></pre></article>
+          <article class="card"><h3>Mean vs median</h3><p>The mean is dragged by outliers; the median is not. For skewed data like income or latency, report the median — or both.</p><pre><code># [1, 2, 3, 4, 100]
+mean   = 22    # outlier pulled it up
+median = 3     # robust</code></pre></article>
+          <article class="card"><h3>Integer overflow</h3><p>A signed 32-bit int wraps at <code>2,147,483,647</code>. Multiplication or summing can overflow silently and wrap negative.</p><pre><code># int32 max = 2^31 − 1 = 2147483647
+2_000_000_000 + 2_000_000_000  # overflows
+# use int64 / bigint for large counts</code></pre></article>
+          <article class="card"><h3>Correlation ≠ causation</h3><p>Two series moving together doesn't mean one causes the other — a third factor or pure coincidence is common.</p><pre><code># ice cream sales ↑ and drownings ↑
+# both driven by summer, not each other
+# control for confounders, run experiments</code></pre></article>
+        </div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">⚠</div><p><strong>Check your inputs.</strong> Most "math bugs" aren't the formula — they're a wrong unit, an off-by-one index, a silent overflow, or comparing floats with <code>==</code>. Sanity-check the magnitude of every result.</p></div>
+      </section>
+
+      <footer class="footer searchable">
+        <strong>Source of truth</strong>
+        <p>This guide covers the math that shows up in everyday programming. The linked references remain authoritative for rigorous definitions and edge cases.</p>
+        <div class="footer-links">
+          <a href="https://tutorial.math.lamar.edu/" target="_blank" rel="noreferrer">Paul's Online Math Notes</a>
+          <a href="https://www.khanacademy.org/math" target="_blank" rel="noreferrer">Khan Academy</a>
+          <a href="https://en.wikipedia.org/wiki/Linear_algebra" target="_blank" rel="noreferrer">Linear algebra (Wikipedia)</a>
+          <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

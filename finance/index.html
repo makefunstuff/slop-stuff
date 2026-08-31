@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-guide="finance">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Stock analysis the value-investing way: financial statements, valuation ratios, DCF, and margin of safety.">
+  <title>Finance — Value Investing Cheatsheet</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../" aria-label="Back to slop-stuff">
+      <span class="brand-mark">fin_</span>
+      <span>Finance Guide</span>
+      <span class="version">value investing</span>
+    </a>
+    <label class="search-wrap">
+      <span class="sr-only" hidden>Search guide</span>
+      <input id="search" type="search" aria-label="Search guide" placeholder="Search P/E, DCF, intrinsic value, margin of safety, ROE, free cash flow…" autocomplete="off">
+    </label>
+    <div class="top-actions">
+      <button class="icon-button" id="themeToggle" type="button" title="Toggle theme" aria-label="Toggle light and dark theme">◐</button>
+      <button class="icon-button" id="printGuide" type="button" title="Print guide" aria-label="Print this guide">Print</button>
+    </div>
+  </header>
+
+  <div class="shell" id="top">
+    <aside class="sidebar" aria-label="Guide sections">
+      <p class="side-label">On this page</p>
+      <nav>
+        <a href="#start"><span class="nav-number">01</span>Start here</a>
+        <a href="#statements"><span class="nav-number">02</span>Financial statements</a>
+        <a href="#ratios"><span class="nav-number">03</span>Valuation ratios</a>
+        <a href="#quality"><span class="nav-number">04</span>Quality</a>
+        <a href="#dcf"><span class="nav-number">05</span>DCF</a>
+        <a href="#graham"><span class="nav-number">06</span>Graham &amp; Buffett</a>
+        <a href="#process"><span class="nav-number">07</span>Process</a>
+        <a href="#gotchas"><span class="nav-number">08</span>Gotchas</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section class="hero searchable" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="eyebrow">Visual cheatsheet + usage guide</div>
+          <h1 id="hero-title">Buy businesses, <span>not tickers.</span></h1>
+          <p>Value investing means estimating a company's <code>intrinsic value</code> and buying only when Mr. Market offers it at a big enough <code>margin of safety</code>.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#start">Start in 5 minutes →</a>
+            <a class="button" href="#ratios">See ratios</a>
+            <a class="button" href="#dcf">Run a DCF</a>
+          </div>
+        </div>
+        <div class="terminal" aria-label="Stylized DCF valuation session">
+          <div class="terminal-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="terminal-title">valuation</span></div>
+          <div class="terminal-body">
+            <div class="mock-side">
+              <p class="mock-label">Method</p>
+              <div class="mock-row active">DCF</div>
+              <div class="mock-row">Graham</div>
+              <div class="mock-row">P/E comps</div>
+            </div>
+            <div class="mock-pane">
+              <div><span class="prompt">❯</span> <span class="cmd">fcf = [100, 108, 117, 126, 136]   # FCF forecasts (M)</span></div>
+              <div><span class="prompt">❯</span> <span class="cmd">r, g, n = 0.10, 0.03, 5           # WACC, growth, years</span></div>
+              <div><span class="prompt">❯</span> <span class="cmd">pv = sum(f / (1+r)**(i+1) for i, f in enumerate(fcf))</span></div>
+              <div class="dim">≈ 438.6</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cmd">tv = fcf[-1] * (1+g) / (r - g)    # terminal value</span></div>
+              <div class="dim">≈ 2_001</div>
+              <div><span class="prompt">❯</span> <span class="cmd">value = pv + tv / (1+r)**n        # enterprise value</span></div>
+              <div class="dim">≈ 1_681</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cmd">margin = 1 - price / value        # margin of safety</span></div>
+              <div class="dim">buy when margin &gt; 0.30</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cursor"></span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “P/E”, “DCF”, “margin of safety”, “ROE”, or “free cash flow”.</div>
+
+      <section class="section searchable" id="start">
+        <div class="section-head">
+          <div><div class="section-kicker">01 / Start here</div><h2>Value investing mindset</h2></div>
+          <p>Four ideas define the discipline. Price is what you pay; value is what you get.</p>
+        </div>
+        <div class="grid four">
+          <article class="card"><div class="card-number">1</div><h3>Intrinsic value</h3><p>The present value of all future cash flows a business will produce. Independent of what the market quotes today.</p></article>
+          <article class="card"><div class="card-number">2</div><h3>Margin of safety</h3><p>Buy only when price sits well below intrinsic value — the discount absorbs your estimation error.</p></article>
+          <article class="card"><div class="card-number">3</div><h3>Mr. Market</h3><p>Graham's manic partner quotes a price daily. You're free to ignore him, or profit when he's fearful.</p></article>
+          <article class="card"><div class="card-number">4</div><h3>Circle of competence</h3><p>Invest only in businesses you can understand and value. The size of the circle matters less than knowing its edge.</p></article>
+        </div>
+        <p>The fifth idea ties them together:</p>
+        <div class="callout"><div class="callout-mark">KEY</div><p><strong>Think in decades, not quarters.</strong> Compounding needs time. Treat a share as a slice of ownership in a real business you'd be glad to hold for ten years — not a ticket to flip on the next earnings print.</p></div>
+      </section>
+
+      <section class="section searchable" id="statements">
+        <div class="section-head">
+          <div><div class="section-kicker">02 / Financial statements</div><h2>Financial statements</h2></div>
+          <p>Three linked reports tell the story. Read them together, never in isolation.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>Income statement</h3>
+            <ul>
+              <li><strong>Revenue</strong> — the top line.</li>
+              <li><strong>COGS</strong> — direct cost of goods sold.</li>
+              <li><strong>Gross profit</strong> = revenue − COGS.</li>
+              <li><strong>Operating income</strong> — after opex.</li>
+              <li><strong>Net income</strong> — the bottom line.</li>
+            </ul>
+          </article>
+          <article class="card"><h3>Balance sheet</h3>
+            <ul>
+              <li><strong>Assets</strong> = liabilities + equity.</li>
+              <li><strong>Current</strong> vs <strong>non-current</strong>.</li>
+              <li>Watch cash, receivables, inventory.</li>
+              <li>Watch debt, goodwill, intangibles.</li>
+              <li>Book value = assets − liabilities.</li>
+            </ul>
+          </article>
+          <article class="card"><h3>Cash flow statement</h3>
+            <ul>
+              <li><strong>Operating</strong> — cash from the business.</li>
+              <li><strong>Investing</strong> — capex, acquisitions.</li>
+              <li><strong>Financing</strong> — debt, dividends, buybacks.</li>
+              <li><strong>FCF</strong> = operating cash flow − capex.</li>
+            </ul>
+          </article>
+        </div>
+        <p>What to look for:</p>
+        <div class="callout"><div class="callout-mark">✓</div><p><strong>Cash is fact, earnings are opinion.</strong> Prefer companies where <code>free cash flow ≈ net income</code>. Be wary when receivables or inventory grow faster than sales — it can mean earnings are being pulled forward with accruals.</p></div>
+      </section>
+
+      <section class="section searchable" id="ratios">
+        <div class="section-head">
+          <div><div class="section-kicker">03 / Valuation ratios</div><h2>Valuation ratios</h2></div>
+          <p>Quick heuristics for what's cheap and what's expensive. Always compare within a sector.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Ratio</th><th>Formula</th><th>Cheap signal</th><th>Expensive signal</th></tr></thead><tbody>
+          <tr><td><code>P/E</code></td><td>Price ÷ EPS</td><td>&lt; 15×</td><td>&gt; 25×</td></tr>
+          <tr><td><code>P/B</code></td><td>Price ÷ book value / share</td><td>&lt; 1.5×</td><td>&gt; 3×</td></tr>
+          <tr><td><code>P/S</code></td><td>Market cap ÷ revenue</td><td>&lt; 1×</td><td>&gt; 3×</td></tr>
+          <tr><td><code>EV/EBITDA</code></td><td>(Mkt cap + debt − cash) ÷ EBITDA</td><td>&lt; 8×</td><td>&gt; 14×</td></tr>
+          <tr><td><code>PEG</code></td><td>P/E ÷ EPS growth %</td><td>&lt; 1</td><td>&gt; 2</td></tr>
+          <tr><td><code>Dividend yield</code></td><td>Dividend ÷ price</td><td>&gt; 4%</td><td>&lt; 1.5%</td></tr>
+        </tbody></table></div>
+        <p>Sector caveats — the same number means different things in different industries:</p>
+        <details>
+          <summary>Why a “cheap” multiple isn't universal</summary>
+          <div class="details-body grid two">
+            <div><h4>Cyclicals</h4><p>P/E looks lowest at the peak of the cycle — earnings are inflated. Use normalized, mid-cycle earnings.</p></div>
+            <div><h4>Banks &amp; insurers</h4><p>P/E and EV/EBITDA mislead; use P/B and ROE, and watch loan-loss reserves.</p></div>
+            <div><h4>Asset-heavy</h4><p>Depreciation hides true economics; EV/EBITDA and FCF matter more than P/E.</p></div>
+            <div><h4>Growth</h4><p>A high P/E can be fair if growth and ROIC justify it; lean on PEG and DCF.</p></div>
+          </div>
+        </details>
+        <p>A low multiple is a hypothesis, not a verdict:</p>
+        <div class="callout"><div class="callout-mark">⌁</div><p>Cyclicals look cheapest at the top (high earnings inflate the denominator) and dearest at the bottom. Low <code>P/E</code> can also signal a <strong>value trap</strong> — a cheap business in permanent decline. Cross-check every multiple against quality and growth.</p></div>
+      </section>
+
+      <section class="section searchable" id="quality">
+        <div class="section-head">
+          <div><div class="section-kicker">04 / Quality</div><h2>Quality metrics</h2></div>
+          <p>Cheap and good beats cheap and bad. These measure whether the business compounds.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>ROE = Net income ÷ Equity</code><span>Return on equity; consistently &gt; 15% is strong.</span></div>
+          <div class="command-row"><code>ROIC = NOPAT ÷ Invested capital</code><span>Value is created only when ROIC &gt; WACC.</span></div>
+          <div class="command-row"><code>Gross margin = (Rev − COGS) ÷ Rev</code><span>Pricing power; compare to industry peers.</span></div>
+          <div class="command-row"><code>Operating margin = Op income ÷ Rev</code><span>Efficiency before interest and taxes.</span></div>
+          <div class="command-row"><code>Net margin = Net income ÷ Rev</code><span>What's actually left for shareholders.</span></div>
+          <div class="command-row"><code>Debt/equity = Total debt ÷ Equity</code><span>&lt; 1 is conservative; check interest coverage too.</span></div>
+          <div class="command-row"><code>FCF = OCF − Capex</code><span>Cash the business can return to owners.</span></div>
+          <div class="command-row"><code>Moat = durable advantage</code><span>Network effects, switching costs, brand, cost lead.</span></div>
+        </div>
+      </section>
+
+      <section class="section searchable" id="dcf">
+        <div class="section-head">
+          <div><div class="section-kicker">05 / DCF</div><h2>DCF &amp; intrinsic value</h2></div>
+          <p>Intrinsic value is the discounted sum of future cash. Here's the whole machine.</p>
+        </div>
+        <pre><code>Value  = Σ FCF_t / (1 + r)^t  +  TV / (1 + r)^n
+TV     = FCF_{n+1} / (r − g)              # Gordon growth (needs r &gt; g)
+
+Gordon growth model:  P  = D_1 / (r − g)
+Present value:        PV = FV / (1 + r)^t</code></pre>
+        <p>The pipeline from forecast to per-share value:</p>
+        <div class="model">
+          <div class="model-node"><strong>FCF forecasts</strong><small>5–10 years</small></div>
+          <div class="arrow">→</div>
+          <div class="model-node"><strong>Discount</strong><small>@ WACC</small></div>
+          <div class="arrow">→</div>
+          <div class="model-node agent"><strong>+ Terminal value</strong><small>Gordon growth</small></div>
+          <div class="arrow">→</div>
+          <div class="model-node"><strong>Enterprise value</strong><small>− net debt</small></div>
+          <div class="arrow">→</div>
+          <div class="model-node agent"><strong>Intrinsic / share</strong><small>÷ shares</small></div>
+        </div>
+        <p>The three knobs:</p>
+        <div class="grid three">
+          <article class="card"><h3>WACC</h3><p>The blended cost of capital. <code>WACC = (E/V)·rₑ + (D/V)·r_d·(1 − t)</code>. Higher WACC → lower value.</p></article>
+          <article class="card"><h3>Discount rate</h3><p>The required return you demand (often 8–12%). Use it to discount each year's cash flow back to today.</p></article>
+          <article class="card"><h3>Terminal value</h3><p>Value of everything beyond the forecast. Gordon growth <code>FCF_{n+1} / (r − g)</code> needs <code>r &gt; g</code>.</p></article>
+        </div>
+        <p>Worked example — the arithmetic behind the terminal above:</p>
+        <details>
+          <summary>DCF step by step</summary>
+          <div class="details-body">
+            <pre><code>fcf  = [100, 108, 117, 126, 136]     # M, next 5 years
+r    = 0.10                           # WACC / discount rate
+g    = 0.03                           # perpetual growth
+
+pv   = sum(f/(1+r)**(i+1) for i,f in enumerate(fcf))
+# ≈ 90.9 + 89.3 + 87.9 + 86.1 + 84.5 = 438.6
+
+tv    = fcf[-1] * (1+g) / (r - g)     # = 140.08 / 0.07 ≈ 2001
+value = pv + tv / (1+r)**5            # = 438.6 + 1242.5 ≈ 1681
+
+margin = 1 - price / value            # buy when &gt; 0.30</code></pre>
+          </div>
+        </details>
+        <div class="callout warning"><div class="callout-mark">!</div><p><strong>The output is only as good as the inputs.</strong> Small changes in <code>g</code> or the discount rate swing the answer wildly. Run a range (bear / base / bull), never a single point.</p></div>
+      </section>
+
+      <section class="section searchable" id="graham">
+        <div class="section-head">
+          <div><div class="section-kicker">06 / Graham &amp; Buffett</div><h2>Graham &amp; Buffett</h2></div>
+          <p>Two quick intrinsic-value shortcuts and the discipline behind them.</p>
+        </div>
+        <pre><code>Graham number  = √(22.5 × EPS × BVPS)      # 22.5 = 15 P/E × 1.5 P/B
+
+Owner earnings = Net income
+               + depreciation &amp; amortization
+               − maintenance capex
+               − Δ working capital</code></pre>
+        <p>Buffett's refinement of Graham:</p>
+        <div class="grid two">
+          <article class="card"><h3>Defensive investor criteria</h3>
+            <ul>
+              <li>Adequate size (a large company).</li>
+              <li>Current ratio ≥ 2; low long-term debt.</li>
+              <li>Positive EPS for the past 10 years.</li>
+              <li>20 years of uninterrupted dividends.</li>
+              <li>EPS growth ≥ 33% over 10 years.</li>
+              <li>P/E ≤ 15× average 3-year EPS.</li>
+              <li>P/B ≤ 1.5× (or P/E × P/B ≤ 22.5).</li>
+            </ul>
+          </article>
+          <article class="card"><h3>Moat thinking</h3>
+            <p>“It's far better to buy a wonderful company at a fair price than a fair company at a wonderful price.” A durable moat lets a business earn excess returns for years.</p>
+            <div class="tags">
+              <span class="tag">network effects</span>
+              <span class="tag">switching costs</span>
+              <span class="tag">cost advantage</span>
+              <span class="tag">brand</span>
+              <span class="tag">intangibles</span>
+            </div>
+          </article>
+        </div>
+        <div class="callout warning"><div class="callout-mark">!</div><p><strong>Owner earnings ≠ reported earnings.</strong> It subtracts the capex needed to <em>maintain</em> the business — a company can report profit while quietly consuming its productive base.</p></div>
+      </section>
+
+      <section class="section searchable" id="process">
+        <div class="section-head">
+          <div><div class="section-kicker">07 / Process</div><h2>Screening &amp; checklist</h2></div>
+          <p>Turn the philosophy into a repeatable pipeline.</p>
+        </div>
+        <div class="flow">
+          <div class="flow-step"><div><strong>Screen</strong><p>Filter a universe by ratios: P/E &lt; 20, P/B &lt; 2, ROE &gt; 15%, debt/equity &lt; 1, positive FCF.</p></div></div>
+          <div class="flow-step"><div><strong>Read the filings</strong><p>10-K / 10-Q, MD&amp;A, and footnotes. Understand how the company actually makes money.</p></div></div>
+          <div class="flow-step"><div><strong>Estimate intrinsic value</strong><p>DCF, Graham number, or conservative comps. Use a range, not a point.</p></div></div>
+          <div class="flow-step"><div><strong>Decide</strong><p>Buy only with a margin of safety. No good price for a bad business; no bad price for a good one you don't understand.</p></div></div>
+        </div>
+        <p>Rules of thumb to run the first pass:</p>
+        <details>
+          <summary>Screening criteria</summary>
+          <div class="details-body">
+            <div class="command-index">
+              <div class="command-row"><code>P/E &lt; 20, P/B &lt; 2</code><span>Cheap enough to investigate further.</span></div>
+              <div class="command-row"><code>ROE &gt; 15% for 5+ years</code><span>A compounding machine.</span></div>
+              <div class="command-row"><code>Debt/equity &lt; 1</code><span>Survives a downturn.</span></div>
+              <div class="command-row"><code>FCF &gt; 0 and growing</code><span>Real cash, not accounting profit.</span></div>
+              <div class="command-row"><code>Dividends ≤ FCF</code><span>The payout is actually affordable.</span></div>
+              <div class="command-row"><code>Insider ownership &gt; 0</code><span>Management has skin in the game.</span></div>
+            </div>
+          </div>
+        </details>
+        <p>Due diligence in two columns:</p>
+        <div class="grid two">
+          <article class="card"><h3>Quantitative checklist</h3>
+            <ul>
+              <li>Revenue and EPS growth over 5–10 years.</li>
+              <li>Stable or rising gross / operating margins.</li>
+              <li>ROE and ROIC above cost of capital.</li>
+              <li>FCF ≈ net income; low accruals.</li>
+              <li>Debt serviceable; interest coverage &gt; 3.</li>
+            </ul>
+          </article>
+          <article class="card"><h3>Qualitative questions</h3>
+            <ul>
+              <li>Is there a durable moat, or will competition erode it?</li>
+              <li>Is management honest and aligned with owners?</li>
+              <li>Is the industry growing, stable, or shrinking?</li>
+              <li>Is there customer or supplier concentration risk?</li>
+            </ul>
+          </article>
+        </div>
+        <div class="callout warning"><div class="callout-mark">✕</div><p><strong>Red flags:</strong> revenue recognized before cash, receivables/inventory outpacing sales, serial acquisitions that grow goodwill, constant non-GAAP add-backs, auditor or CFO churn, and related-party deals.</p></div>
+      </section>
+
+      <section class="section searchable" id="gotchas">
+        <div class="section-head">
+          <div><div class="section-kicker">08 / Gotchas</div><h2>Pitfalls</h2></div>
+          <p>Ways a value investor loses money. Know them before the market teaches you.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>Value traps</h3><p>Cheap keeps getting cheaper because the business is deteriorating. Cheap ≠ undervalued.</p></article>
+          <article class="card"><h3>Accounting tricks</h3><p>Channel stuffing, capitalizing expenses, cookie-jar reserves. Watch cash flow vs earnings.</p></article>
+          <article class="card"><h3>Survivorship bias</h3><p>Backtests and index histories omit the bankrupt — past returns look better than they were.</p></article>
+          <article class="card"><h3>Over-leverage</h3><p>Debt amplifies losses in a downturn. High leverage turns a bad year into a wipeout.</p></article>
+          <article class="card"><h3>Anchoring</h3><p>Fixating on a past price or your purchase price instead of intrinsic value. The market owes you nothing.</p></article>
+          <article class="card"><h3>Confirmation bias</h3><p>Seeking only evidence that agrees with your thesis. Actively hunt for the bear case.</p></article>
+        </div>
+      </section>
+
+      <footer class="footer searchable">
+        <strong>Source of truth</strong>
+        <p>This guide summarizes value-investing essentials. The linked primary sources and each company's own filings remain authoritative for specific figures.</p>
+        <div class="footer-links">
+          <a href="https://www.investopedia.com/" target="_blank" rel="noreferrer">Investopedia</a>
+          <a href="https://www.investopedia.com/terms/g/grahamnumber.asp" target="_blank" rel="noreferrer">Graham number</a>
+          <a href="https://www.buffett.cn/" target="_blank" rel="noreferrer">Buffett.cn</a>
+          <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

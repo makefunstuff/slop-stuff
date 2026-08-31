@@ -6,12 +6,13 @@ All the AI slop lives here: little static sites, experiments, and random stuff �
 
 Each guide is a subfolder, served under `https://makefunstuff.github.io/slop-stuff/<folder>/`. The root **[index.html](./index.html)** is the hub linking everything.
 
-### Agent tools
+### AI & agents
 
 - **[herdr-cheatsheet](./herdr-cheatsheet/)** — Herdr: workspaces, panes, agents, remote, automation, plugins
 - **[herdr-agentic](./herdr-agentic/)** — agentic patterns with Herdr: orchestrator-worker, reviewer, parallel worktrees
 - **[hermes-agent](./hermes-agent/)** — Hermes Agent: CLI, keybindings, slash commands, sessions, providers, config
 - **[omp](./omp/)** — omp harness: tools, subagents, LSP/DAP, hashline edits, providers, memory
+- **[llm-ai](./llm-ai/)** — LLM & AI: tokens, embeddings, attention, transformers, RAG, prompting, agents, evals
 
 ### Languages
 
@@ -52,6 +53,12 @@ Each guide is a subfolder, served under `https://makefunstuff.github.io/slop-stu
 
 - **[allocators](./allocators/)** — bump, free lists, arenas, slab, buddy, garbage collection
 - **[algorithms](./algorithms/)** — complexity, sorting, searching, data structures, graphs
+- **[dop](./dop/)** — Data-Oriented Design: SoA vs AoS, cache locality, ECS, layout patterns
+
+### Quantitative
+
+- **[math](./math/)** — linear algebra, probability, calculus, discrete, and signal/DSP math
+- **[finance](./finance/)** — value investing: statements, valuation ratios, DCF, margin of safety
 
 ### Editors
 

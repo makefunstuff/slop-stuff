@@ -104,7 +104,10 @@
           <tr><td><code>PBKDF2</code></td><td>600k+ iterations</td><td>FIPS / legacy</td><td>Older but fine at high iterations.</td></tr>
           <tr><td><code>MD5 / SHA-1 / plain</code></td><td>—</td><td>Never</td><td>Fast hashes crack at scale.</td></tr>
         </tbody></table></div>
-        <div class="grid two" style="margin-top:16px">
+        <div class="prefix-demo">
+          <kbd>bcrypt cost 10</kbd> = <kbd>~100 ms</kbd> <kbd>cost 12</kbd> = <kbd>~400 ms</kbd> <kbd>argon2id</kbd> = <kbd>memory-hard</kbd>
+        </div>
+        <div class="grid two">
           <article class="card"><h3>Hash + verify (Node)</h3><pre><code>const hash = await bcrypt.hash(pw, 12);
 const ok = await bcrypt.compare(pw, hash);</code></pre></article>
           <article class="card"><h3>Hash (argon2 CLI)</h3><pre><code>echo -n "p@ss" | argon2 salt \
@@ -114,6 +117,22 @@ const ok = await bcrypt.compare(pw, hash);</code></pre></article>
           <article class="card"><h3>JWT</h3><p>Signed, not secret. Verify <code>alg</code>, <code>exp</code>, <code>aud</code>, and signature; keep tokens short-lived and reject <code>alg=none</code>.</p></article>
           <article class="card"><h3>Sessions</h3><p>Server-side sessions with cookies flagged <code>HttpOnly; Secure; SameSite=Lax</code>. Rotate the session id on login.</p></article>
         </div>
+        <div class="model" style="margin-top:16px" aria-label="OIDC login flow">
+          <div class="model-node"><strong>User</strong><small>browser</small></div><div class="arrow">→</div>
+          <div class="model-node"><strong>App</strong><small>client + PKCE</small></div><div class="arrow">→</div>
+          <div class="model-node"><strong>IdP</strong><small>authorize + token</small></div><div class="arrow">→</div>
+          <div class="model-node agent"><strong>API</strong><small>validates JWT</small></div>
+        </div>
+        <details style="margin-top:16px">
+          <summary>JWT anatomy &amp; verification</summary>
+          <div class="details-body">
+            <p>A JWT is <code>header.payload.signature</code>, each part base64url-encoded. Never trust it without verifying the signature and claims:</p>
+            <pre><code># header:  {"alg":"HS256","typ":"JWT"}
+# payload: {"sub":"42","exp":1710000000,"aud":"api"}
+# verify:  signature, exp (not expired),
+#          aud (for your API), iss (trusted)</code></pre>
+          </div>
+        </details>
         <div class="command-index" style="margin-top:16px">
           <div class="command-row"><code>RBAC</code><span>roles → permissions. “Admin can delete users”.</span></div>
           <div class="command-row"><code>ABAC</code><span>attributes → policy. “Delete if resource.owner == user”.</span></div>
@@ -148,6 +167,17 @@ aws secretsmanager get-secret-value \
           <div class="command-row"><code>trufflehog git file://. --only-verified</code><span>live-verify leaked credentials.</span></div>
           <div class="command-row"><code>git filter-repo --path .env --invert-paths</code><span>scrub a file from history (then rotate).</span></div>
         </div>
+        <div class="card" style="margin-top:16px">
+          <h3>Patterns that must never be committed</h3>
+          <div class="tags">
+            <span class="tag">aws_access_key_id</span>
+            <span class="tag">AKIA…</span>
+            <span class="tag">ghp_…</span>
+            <span class="tag">sk_live_…</span>
+            <span class="tag">xoxb-…</span>
+            <span class="tag">-----BEGIN PRIVATE KEY-----</span>
+          </div>
+        </div>
       </section>
 
       <section class="section searchable" id="supplychain">
@@ -170,8 +200,19 @@ git config user.signingkey KEYID</code></pre></article>
           <div class="command-row"><code>npm audit --omit=dev</code><span>known CVEs in your JS deps.</span></div>
           <div class="command-row"><code>pip-audit</code><span>audit Python environments.</span></div>
           <div class="command-row"><code>osv-scanner -r .</code><span>scan many ecosystems via OSV.</span></div>
+          <div class="command-row"><code>trivy fs .</code><span>scan repo, containers, and IaC for CVEs and misconfigs.</span></div>
+          <div class="command-row"><code>govulncheck ./...</code><span>Go-specific vulnerability analysis.</span></div>
           <div class="command-row"><code>Dependabot / Renovate</code><span>automated PRs for outdated, vulnerable deps.</span></div>
         </div>
+        <details style="margin-top:16px">
+          <summary>Dependency hygiene checklist</summary>
+          <div class="details-body grid two">
+            <div><h4>Pin</h4><pre><code>npm ci        # exact lockfile install
+pip install --require-hashes -r reqs.txt</code></pre></div>
+            <div><h4>Scan</h4><pre><code>npm audit --omit=dev
+osv-scanner -r .</code></pre></div>
+          </div>
+        </details>
         <div class="callout" style="margin-top:16px"><div class="callout-mark">✓</div><p><strong>Lockfiles are not optional in CI.</strong> Run <code>npm ci</code>, <code>pip install --require-hashes</code>, and <code>go mod verify</code> so builds use the pinned, hashed dependency graph.</p></div>
       </section>
 
@@ -199,6 +240,32 @@ AllowUsers deploy</code></pre></article>
           <tr><td>CIS benchmarks</td><td>configuration baselines</td><td>run a CIS scanner, apply Level 1</td></tr>
           <tr><td>Disable unused</td><td>turn off ports, services, features</td><td>remove debug endpoints and unused deps</td></tr>
         </tbody></table></div>
+        <div class="shortcut-grid" style="margin-top:16px">
+          <div class="shortcut-group">
+            <h4>Containers</h4>
+            <div class="shortcut-list">
+              <div class="shortcut-row"><span>Run as non-root</span><span class="keys"><kbd>USER 10001</kbd></span></div>
+              <div class="shortcut-row"><span>Read-only rootfs</span><span class="keys"><kbd>--read-only</kbd></span></div>
+              <div class="shortcut-row"><span>Drop capabilities</span><span class="keys"><kbd>--cap-drop ALL</kbd></span></div>
+            </div>
+          </div>
+          <div class="shortcut-group">
+            <h4>Linux</h4>
+            <div class="shortcut-list">
+              <div class="shortcut-row"><span>Disable root SSH</span><span class="keys"><kbd>PermitRootLogin no</kbd></span></div>
+              <div class="shortcut-row"><span>Keys only</span><span class="keys"><kbd>PasswordAuthentication no</kbd></span></div>
+              <div class="shortcut-row"><span>Brute-force lockout</span><span class="keys"><kbd>fail2ban maxretry 5</kbd></span></div>
+            </div>
+          </div>
+          <div class="shortcut-group">
+            <h4>Network</h4>
+            <div class="shortcut-list">
+              <div class="shortcut-row"><span>TLS version</span><span class="keys"><kbd>1.2+</kbd></span></div>
+              <div class="shortcut-row"><span>HSTS max-age</span><span class="keys"><kbd>31536000</kbd></span></div>
+              <div class="shortcut-row"><span>Firewall default</span><span class="keys"><kbd>deny</kbd></span></div>
+            </div>
+          </div>
+        </div>
         <div class="callout" style="margin-top:16px"><div class="callout-mark">⌁</div><p>CIS benchmarks (cisecurity.org) give step-by-step baselines for Linux, Windows, cloud, and Kubernetes. Start with Level 1 — safe for most workloads.</p></div>
       </section>
 
@@ -232,6 +299,23 @@ Access-Control-Allow-Credentials: true</code></pre></article>
           <article class="card"><h3>XSS → escape output</h3><p>Context-aware output encoding; sanitize HTML with DOMPurify; prefer templates that auto-escape.</p><pre><code>// Go html/template escapes by default
 tmpl.Execute(w, userInput)</code></pre></article>
         </div>
+        <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Header</th><th>What it does</th><th>Example</th></tr></thead><tbody>
+          <tr><td><code>Content-Security-Policy</code></td><td>allowlist of script/style sources</td><td><code>default-src 'self'</code></td></tr>
+          <tr><td><code>Strict-Transport-Security</code></td><td>force HTTPS</td><td><code>max-age=31536000</code></td></tr>
+          <tr><td><code>X-Frame-Options</code></td><td>block clickjacking</td><td><code>DENY</code></td></tr>
+          <tr><td><code>Referrer-Policy</code></td><td>limit referrer leakage</td><td><code>strict-origin-when-cross-origin</code></td></tr>
+          <tr><td><code>Permissions-Policy</code></td><td>disable camera/mic/geolocation</td><td><code>geolocation=()</code></td></tr>
+          <tr><td><code>X-Content-Type-Options</code></td><td>stop MIME sniffing</td><td><code>nosniff</code></td></tr>
+        </tbody></table></div>
+        <details style="margin-top:16px">
+          <summary>The four classics, one line each</summary>
+          <div class="details-body grid two">
+            <div><h4>SQLi</h4><p>User input becomes SQL. Fix: bound parameters, never string concat.</p></div>
+            <div><h4>XSS</h4><p>User input becomes HTML/JS. Fix: output-encode, CSP, DOMPurify.</p></div>
+            <div><h4>CSRF</h4><p>Cross-site requests ride the victim's cookies. Fix: SameSite + CSRF token.</p></div>
+            <div><h4>SSRF</h4><p>Server fetches attacker-controlled URLs. Fix: allowlist, block metadata IPs.</p></div>
+          </div>
+        </details>
         <div class="callout" style="margin-top:16px"><div class="callout-mark">✓</div><p><strong>Rate limiting</strong> is the cheap fix for brute force, scraping, and DDoS: <code>express-rate-limit</code>, nginx <code>limit_req</code>, or an API gateway throttle — especially on login and token endpoints.</p></div>
       </section>
 
@@ -247,6 +331,12 @@ tmpl.Execute(w, userInput)</code></pre></article>
           <div class="flow-step"><div><strong>Eradicate</strong><p>Remove the foothold: patch, reimage, rotate secrets, delete persistence.</p></div></div>
           <div class="flow-step"><div><strong>Recover</strong><p>Restore from clean backups, monitor for recurrence, bring services back gradually.</p></div></div>
           <div class="flow-step"><div><strong>Learn</strong><p>Post-mortem: what failed, what slowed you, and one concrete change to prevent a repeat.</p></div></div>
+        </div>
+        <div class="state-grid" style="margin-top:16px">
+          <div class="state-card"><strong>healthy</strong><p>Serving traffic with normal telemetry.</p></div>
+          <div class="state-card working"><strong>degraded</strong><p>Serving but failing checks — investigate now.</p></div>
+          <div class="state-card blocked"><strong>contained</strong><p>Isolated from the network, no egress.</p></div>
+          <div class="state-card done"><strong>restored</strong><p>Rebuilt from clean image, back in rotation.</p></div>
         </div>
         <div class="grid two" style="margin-top:16px">
           <article class="card"><h3>Logging that helps</h3><p>Structured, centralized, tamper-evident. Log auth events, admin actions, and failures — never secrets or PII.</p><pre><code>{"ts":"…","evt":"login_failed",
@@ -275,6 +365,12 @@ API_KEY = os.environ["API_KEY"]</code></pre></article>
 # redact: mask tokens, never log bodies</code></pre></article>
           <article class="card"><h3>Missing MFA</h3><p>Single-factor accounts fall to phishing and credential stuffing. MFA is the biggest lever against account takeover.</p><pre><code># require for all human users
 # hardware keys &gt; TOTP &gt; SMS</code></pre></article>
+          <article class="card"><h3><code>curl … | bash</code></h3><p>Piping a remote script to a shell skips review and runs as you. Download, inspect, verify, then run.</p><pre><code>curl -fsSL URL -o install.sh
+sha256sum install.sh   # verify
+bash install.sh</code></pre></article>
+          <article class="card"><h3>Default credentials</h3><p>Ship with the vendor's default login and scanners will find you in minutes. Change on first boot; rotate regularly.</p><pre><code># change before exposing anything
+admin / admin
+root / password</code></pre></article>
         </div>
       </section>
 

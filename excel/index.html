@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-guide="excel">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Formulas, functions, pivot tables, lookups, and spreadsheet shortcuts.">
+  <title>Excel &amp; Spreadsheets — Visual Cheatsheet</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../" aria-label="Back to slop-stuff">
+      <span class="brand-mark">xl_</span>
+      <span>Excel Guide</span>
+      <span class="version">spreadsheets</span>
+    </a>
+    <label class="search-wrap">
+      <span class="sr-only" hidden>Search guide</span>
+      <input id="search" type="search" aria-label="Search guide" placeholder="Search VLOOKUP, pivot, IF, SUMIFS, formula, shortcut, chart…" autocomplete="off">
+    </label>
+    <div class="top-actions">
+      <button class="icon-button" id="themeToggle" type="button" title="Toggle theme" aria-label="Toggle light and dark theme">◐</button>
+      <button class="icon-button" id="printGuide" type="button" title="Print guide" aria-label="Print this guide">Print</button>
+    </div>
+  </header>
+
+  <div class="shell" id="top">
+    <aside class="sidebar" aria-label="Guide sections">
+      <p class="side-label">On this page</p>
+      <nav>
+        <a href="#start"><span class="nav-number">01</span>Start here</a>
+        <a href="#functions"><span class="nav-number">02</span>Functions</a>
+        <a href="#lookup"><span class="nav-number">03</span>Lookups</a>
+        <a href="#pivot"><span class="nav-number">04</span>Pivot tables</a>
+        <a href="#text"><span class="nav-number">05</span>Text &amp; cleaning</a>
+        <a href="#shortcuts"><span class="nav-number">06</span>Shortcuts</a>
+        <a href="#advanced"><span class="nav-number">07</span>Advanced</a>
+        <a href="#gotchas"><span class="nav-number">08</span>Gotchas</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section class="hero searchable" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="eyebrow">Visual cheatsheet + usage guide</div>
+          <h1 id="hero-title">Wrangle data <span>in a grid.</span></h1>
+          <p>Excel turns a blank grid into a live calculation engine. Learn the functions, lookups, and shortcuts that do the heavy lifting — then steal the formulas.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#start">Start in 5 minutes →</a>
+            <a class="button" href="#functions">Browse functions</a>
+            <a class="button" href="#lookup">Master lookups</a>
+          </div>
+        </div>
+        <div class="terminal" aria-label="Stylized Excel formula bar">
+          <div class="terminal-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="terminal-title">formula bar</span></div>
+          <div class="terminal-body">
+            <div class="mock-side">
+              <p class="mock-label">Sheet1</p>
+              <div class="mock-row active">A2 · Region</div>
+              <div class="mock-row">B2 · Sales</div>
+              <div class="mock-row">C2 · Margin</div>
+            </div>
+            <div class="mock-pane">
+              <div><span class="prompt">=</span> <span class="cmd">XLOOKUP("West", A2:A10, B2:B10, "—")</span></div>
+              <div class="dim">→ 4820</div>
+              <br>
+              <div><span class="prompt">=</span> <span class="cmd">SUMIFS(B:B, A:A, "West", C:C, "&gt;0.2")</span></div>
+              <div class="dim">→ 12,840</div>
+              <br>
+              <div><span class="prompt">=</span> <span class="cmd">IF(B2&gt;1000, "High", "Low")</span></div>
+              <div class="dim">→ High</div>
+              <br>
+              <div><span class="prompt">=</span> <span class="cursor"></span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “XLOOKUP”, “pivot”, “SUMIFS”, “F4”, or “chart”.</div>
+
+      <section class="section searchable" id="start">
+        <div class="section-head">
+          <div><div class="section-kicker">01 / Start here</div><h2>The essentials</h2></div>
+          <p>Every formula starts with <code>=</code>. Learn how Excel addresses cells before you write anything else.</p>
+        </div>
+        <div class="grid four">
+          <article class="card"><div class="card-number">1</div><h3>Cells &amp; ranges</h3><p>A colon spans a contiguous block.</p><pre><code>=A1 + B2
+=SUM(A1:A10)</code></pre></article>
+          <article class="card"><div class="card-number">2</div><h3>References</h3><p><code>$</code> locks the part that follows it.</p><pre><code>$A$1   locked row + column
+$A1    locked column only
+A$1    locked row only
+A1     both shift</code></pre></article>
+          <article class="card"><div class="card-number">3</div><h3>Autofill</h3><p>Drag the fill handle to extend a pattern.</p><pre><code>Jan, Feb, Mar…
+1, 2, 3…
+Q1, Q2, Q3…</code></pre></article>
+          <article class="card"><div class="card-number">4</div><h3>Formula basics</h3><p>Type, commit, edit, cancel.</p><pre><code>=SUM(B2:B10)   Enter commits
+F2             edits the cell
+Esc            cancels</code></pre></article>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>Operators</h3><p>Arithmetic and comparison operators build the conditions inside every formula.</p><pre><code>+  -  *  /  ^         arithmetic
+=  &gt;  &lt;  &gt;=  &lt;=  &lt;&gt;    compare</code></pre></article>
+          <article class="card"><h3>Order of operations</h3><p>Multiplication binds tighter than addition; parentheses always win.</p><pre><code>=(B2 + C2) * D2
+=B2 + C2 * D2</code></pre></article>
+        </div>
+        <div class="callout"><div class="callout-mark">KEY</div><p><strong>Absolute vs relative.</strong> <code>$A$1</code> is fully locked; <code>A$1</code> locks the row; <code>$A1</code> locks the column; plain <code>A1</code> shifts both when copied or filled. Press <kbd>F4</kbd> to cycle through them.</p></div>
+      </section>
+
+      <section class="section searchable" id="functions">
+        <div class="section-head">
+          <div><div class="section-kicker">02 / Functions</div><h2>Key functions</h2></div>
+          <p>The ten functions that answer most spreadsheet questions.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Function</th><th>What it does</th><th>Example</th></tr></thead><tbody>
+          <tr><td><code>SUM</code></td><td>Adds a range of numbers</td><td><code>=SUM(B2:B10)</code></td></tr>
+          <tr><td><code>AVERAGE</code></td><td>Mean of a range</td><td><code>=AVERAGE(B2:B10)</code></td></tr>
+          <tr><td><code>COUNT</code></td><td>Counts numeric cells only</td><td><code>=COUNT(B2:B10)</code></td></tr>
+          <tr><td><code>MAX</code> / <code>MIN</code></td><td>Largest / smallest value</td><td><code>=MAX(B2:B10)</code></td></tr>
+          <tr><td><code>IF</code></td><td>Branch on a condition</td><td><code>=IF(B2&gt;1000,"High","Low")</code></td></tr>
+          <tr><td><code>SUMIF(S)</code></td><td>Sum that meets criteria</td><td><code>=SUMIF(A:A,"West",B:B)</code></td></tr>
+          <tr><td><code>COUNTIF(S)</code></td><td>Count that meets criteria</td><td><code>=COUNTIFS(A:A,"West",C:C,"&gt;0.2")</code></td></tr>
+          <tr><td><code>TEXT</code></td><td>Format a number as text</td><td><code>=TEXT(B2,"$#,##0.00")</code></td></tr>
+          <tr><td><code>DATE</code></td><td>Build a date from parts</td><td><code>=DATE(2025,1,15)</code></td></tr>
+          <tr><td><code>ROUND</code></td><td>Round to N digits</td><td><code>=ROUND(B2,2)</code></td></tr>
+        </tbody></table></div>
+        <details>
+          <summary>A few more worth knowing</summary>
+          <div class="details-body command-index">
+            <div class="command-row"><code>=IFERROR(formula, fallback)</code><span>Hide #N/A and other errors.</span></div>
+            <div class="command-row"><code>=IFS(test1, v1, test2, v2)</code><span>Cleaner than nested IF.</span></div>
+            <div class="command-row"><code>=MEDIAN(B2:B10)</code><span>Middle value, ignores outliers.</span></div>
+            <div class="command-row"><code>=SUMPRODUCT(A2:A10, B2:B10)</code><span>Weighted sum without an array formula.</span></div>
+            <div class="command-row"><code>=YEAR(A2) / MONTH(A2) / DAY(A2)</code><span>Pull date parts apart.</span></div>
+            <div class="command-row"><code>=EDATE(A2, 3)</code><span>Shift a date by N months.</span></div>
+          </div>
+        </details>
+        <div class="callout"><div class="callout-mark">✓</div><p><strong>Tip:</strong> <code>COUNT</code> ignores text and blanks; use <code>COUNTA</code> to count any non-empty cell and <code>COUNTBLANK</code> for the empties.</p></div>
+      </section>
+
+      <section class="section searchable" id="lookup">
+        <div class="section-head">
+          <div><div class="section-kicker">03 / Lookups</div><h2>Lookups</h2></div>
+          <p>Match a value in one place and pull back the value next to it.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Function</th><th>Use when</th><th>Example</th></tr></thead><tbody>
+          <tr><td><code>XLOOKUP</code></td><td>Modern default — exact by default, any direction</td><td><code>=XLOOKUP(E2,A2:A10,B2:B10,"Not found")</code></td></tr>
+          <tr><td><code>VLOOKUP</code></td><td>Classic; searches first column, returns right</td><td><code>=VLOOKUP(E2,A2:C10,3,FALSE)</code></td></tr>
+          <tr><td><code>HLOOKUP</code></td><td>Horizontal version of VLOOKUP</td><td><code>=HLOOKUP(E2,A1:J2,2,FALSE)</code></td></tr>
+          <tr><td><code>INDEX</code>/<code>MATCH</code></td><td>Two-way, pre-XLOOKUP workhorse</td><td><code>=INDEX(B2:B10,MATCH(E2,A2:A10,0))</code></td></tr>
+        </tbody></table></div>
+        <div class="callout"><div class="callout-mark">⌁</div><p><strong>XLOOKUP syntax:</strong> <code>=XLOOKUP(lookup_value, lookup_array, return_array, [if_not_found], [match_mode], [search_mode])</code>. A <code>match_mode</code> of <code>0</code> forces an exact match; <code>-1</code>/<code>1</code> allow approximate.</p></div>
+        <details>
+          <summary>XLOOKUP match modes</summary>
+          <div class="details-body">
+            <div class="table-wrap"><table><thead><tr><th>match_mode</th><th>Meaning</th></tr></thead><tbody>
+              <tr><td><code>0</code></td><td>Exact match (default)</td></tr>
+              <tr><td><code>-1</code></td><td>Exact, else next smaller</td></tr>
+              <tr><td><code>1</code></td><td>Exact, else next larger</td></tr>
+              <tr><td><code>2</code></td><td>Wildcard match (<code>*</code> and <code>?</code>)</td></tr>
+            </tbody></table></div>
+          </div>
+        </details>
+        <div class="grid two">
+          <article class="card"><h3>XLOOKUP vs VLOOKUP</h3><p>XLOOKUP can return <strong>left</strong> of the lookup column, defaults to exact match, and never needs a column index number.</p><pre><code>=XLOOKUP("West", A2:A10, B2:B10)
+=VLOOKUP("West", A2:C10, 3, FALSE)</code></pre></article>
+          <article class="card"><h3>INDEX/MATCH, step by step</h3><p><code>MATCH</code> finds the row number; <code>INDEX</code> returns the value at that row.</p><pre><code>=MATCH(E2, A2:A10, 0)
+=INDEX(B2:B10, 3)</code></pre></article>
+        </div>
+      </section>
+
+      <section class="section searchable" id="pivot">
+        <div class="section-head">
+          <div><div class="section-kicker">04 / Pivot tables</div><h2>Pivot tables &amp; analysis</h2></div>
+          <p>Summarize thousands of rows into a report without writing a single formula.</p>
+        </div>
+        <div class="flow">
+          <div class="flow-step"><div><strong>Select</strong><p>Click a cell in your data and go to Insert → PivotTable.</p></div></div>
+          <div class="flow-step"><div><strong>Choose range</strong><p>Pick the data range (or a Table) and where the pivot should land.</p></div></div>
+          <div class="flow-step"><div><strong>Drag fields</strong><p>Drop fields into <code>Rows</code> (categories), <code>Columns</code>, <code>Values</code> (numbers), and <code>Filters</code>.</p></div></div>
+          <div class="flow-step"><div><strong>Set summary</strong><p>Values default to Sum; switch to Count or Average via Value Field Settings.</p></div></div>
+          <div class="flow-step"><div><strong>Refresh</strong><p>Press <kbd>Alt</kbd><kbd>F5</kbd> when the source data changes.</p></div></div>
+        </div>
+        <div class="grid four">
+          <article class="card"><h3>Charts</h3><p>Select data → Insert → Chart. <kbd>Alt</kbd><kbd>F1</kbd> inserts one instantly.</p></article>
+          <article class="card"><h3>Conditional formatting</h3><p>Home → Conditional Formatting to color-code values, bars, and duplicates.</p></article>
+          <article class="card"><h3>Data validation</h3><p>Data → Data Validation to restrict input or build dropdown lists.</p></article>
+          <article class="card"><h3>Slicers</h3><p>PivotTable Analyze → Insert Slicer for clickable, visual filters.</p></article>
+        </div>
+        <details>
+          <summary>Common pivot tweaks</summary>
+          <div class="details-body command-index">
+            <div class="command-row"><code>Show Values As → % of Grand Total</code><span>Turn raw counts into percentages.</span></div>
+            <div class="command-row"><code>Right-click a date → Group…</code><span>Group by month, quarter, or year.</span></div>
+            <div class="command-row"><code>Design → Report Layout → Repeat All Item Labels</code><span>Fill blank row labels down.</span></div>
+            <div class="command-row"><code>Sort → More Sort Options → Value</code><span>Sort by a value column, not the label.</span></div>
+            <div class="command-row"><code>Design → Report Layout → Tabular Form</code><span>Flatten the default compact layout.</span></div>
+            <div class="command-row"><code>Right-click → Refresh</code><span>Re-read the source data on demand.</span></div>
+          </div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="text">
+        <div class="section-head">
+          <div><div class="section-kicker">05 / Text &amp; cleaning</div><h2>Text &amp; cleaning</h2></div>
+          <p>Functions that split, join, trim, and reshape messy strings.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Function</th><th>What it does</th><th>Example</th></tr></thead><tbody>
+          <tr><td><code>CONCAT</code></td><td>Join text with no separator</td><td><code>=CONCAT(A2,B2)</code></td></tr>
+          <tr><td><code>TEXTJOIN</code></td><td>Join with a delimiter, skip blanks</td><td><code>=TEXTJOIN(", ",TRUE,A2:A10)</code></td></tr>
+          <tr><td><code>TEXTSPLIT</code></td><td>Split text by a delimiter</td><td><code>=TEXTSPLIT(A2,",")</code></td></tr>
+          <tr><td><code>TRIM</code></td><td>Strip leading, trailing, and double spaces</td><td><code>=TRIM(A2)</code></td></tr>
+          <tr><td><code>SUBSTITUTE</code></td><td>Replace exact text occurrences</td><td><code>=SUBSTITUTE(A2,"-","")</code></td></tr>
+          <tr><td><code>LEN</code></td><td>Character count</td><td><code>=LEN(A2)</code></td></tr>
+          <tr><td><code>FIND</code></td><td>Position of a substring (case-sensitive)</td><td><code>=FIND("@",A2)</code></td></tr>
+          <tr><td><code>LEFT</code> / <code>RIGHT</code> / <code>MID</code></td><td>Slice text from either end or the middle</td><td><code>=MID(A2,4,3)</code></td></tr>
+        </tbody></table></div>
+        <details>
+          <summary>Handy cleaning recipes</summary>
+          <div class="details-body grid two">
+            <div><h4>Split “Last, First”</h4><pre><code>=LEFT(A2, FIND(",", A2)-1)</code></pre></div>
+            <div><h4>Extract the domain</h4><pre><code>=MID(A2, FIND("@", A2)+1, 99)</code></pre></div>
+            <div><h4>First word of a cell</h4><pre><code>=LEFT(A2, FIND(" ", A2)-1)</code></pre></div>
+            <div><h4>Clean then split</h4><pre><code>=TEXTSPLIT(TRIM(A2), ",")</code></pre></div>
+          </div>
+        </details>
+        <div class="callout"><div class="callout-mark">⌁</div><p><strong>Cleaning pipeline:</strong> chain <code>=TRIM(SUBSTITUTE(A2, CHAR(160), " "))</code> to nuke non-breaking spaces, then <code>LEFT</code>/<code>MID</code> to split on position.</p></div>
+      </section>
+
+      <section class="section searchable" id="shortcuts">
+        <div class="section-head">
+          <div><div class="section-kicker">06 / Shortcuts</div><h2>Shortcuts</h2></div>
+          <p>Move, select, and edit without ever touching the mouse.</p>
+        </div>
+        <div class="shortcut-grid">
+          <div class="shortcut-group"><h3>Navigation</h3><div class="shortcut-list">
+            <div class="shortcut-row"><span>Jump to edge of data</span><div class="keys"><kbd>Ctrl</kbd><kbd>→</kbd><kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd></div></div>
+            <div class="shortcut-row"><span>Go to A1 / last cell</span><div class="keys"><kbd>Ctrl</kbd><kbd>Home</kbd><kbd>Ctrl</kbd><kbd>End</kbd></div></div>
+            <div class="shortcut-row"><span>Next / previous sheet</span><div class="keys"><kbd>Ctrl</kbd><kbd>PgDn</kbd><kbd>PgUp</kbd></div></div>
+            <div class="shortcut-row"><span>Go To dialog</span><div class="keys"><kbd>F5</kbd></div></div>
+          </div></div>
+          <div class="shortcut-group"><h3>Selection</h3><div class="shortcut-list">
+            <div class="shortcut-row"><span>Extend to edge of data</span><div class="keys"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>→</kbd></div></div>
+            <div class="shortcut-row"><span>Select current region</span><div class="keys"><kbd>Ctrl</kbd><kbd>A</kbd></div></div>
+            <div class="shortcut-row"><span>Select row / column</span><div class="keys"><kbd>Shift</kbd><kbd>Space</kbd><kbd>Ctrl</kbd><kbd>Space</kbd></div></div>
+            <div class="shortcut-row"><span>Select to last cell</span><div class="keys"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>End</kbd></div></div>
+          </div></div>
+          <div class="shortcut-group"><h3>Editing</h3><div class="shortcut-list">
+            <div class="shortcut-row"><span>Edit active cell</span><div class="keys"><kbd>F2</kbd></div></div>
+            <div class="shortcut-row"><span>Cycle reference type</span><div class="keys"><kbd>F4</kbd></div></div>
+            <div class="shortcut-row"><span>Fill down / right</span><div class="keys"><kbd>Ctrl</kbd><kbd>D</kbd><kbd>Ctrl</kbd><kbd>R</kbd></div></div>
+            <div class="shortcut-row"><span>New line inside cell</span><div class="keys"><kbd>Alt</kbd><kbd>Enter</kbd></div></div>
+          </div></div>
+          <div class="shortcut-group"><h3>Formatting</h3><div class="shortcut-list">
+            <div class="shortcut-row"><span>Toggle filters</span><div class="keys"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>L</kbd></div></div>
+            <div class="shortcut-row"><span>Format Cells dialog</span><div class="keys"><kbd>Ctrl</kbd><kbd>1</kbd></div></div>
+            <div class="shortcut-row"><span>Bold / italic</span><div class="keys"><kbd>Ctrl</kbd><kbd>B</kbd><kbd>Ctrl</kbd><kbd>I</kbd></div></div>
+            <div class="shortcut-row"><span>Currency / percent</span><div class="keys"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>$</kbd><kbd>%</kbd></div></div>
+          </div></div>
+          <div class="shortcut-group"><h3>Entering data</h3><div class="shortcut-list">
+            <div class="shortcut-row"><span>Confirm and move down / right</span><div class="keys"><kbd>Enter</kbd><kbd>Tab</kbd></div></div>
+            <div class="shortcut-row"><span>Fill selection with active cell</span><div class="keys"><kbd>Ctrl</kbd><kbd>Enter</kbd></div></div>
+            <div class="shortcut-row"><span>Today's date / current time</span><div class="keys"><kbd>Ctrl</kbd><kbd>;</kbd><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>:</kbd></div></div>
+            <div class="shortcut-row"><span>Insert a comment / note</span><div class="keys"><kbd>Shift</kbd><kbd>F2</kbd></div></div>
+          </div></div>
+        </div>
+        <div class="callout warning"><div class="callout-mark">!</div><p><strong>On a Mac,</strong> swap <kbd>Ctrl</kbd> for <kbd>⌘</kbd> and <kbd>Alt</kbd> for <kbd>⌥</kbd>; function keys often need <kbd>Fn</kbd> too.</p></div>
+      </section>
+
+      <section class="section searchable" id="advanced">
+        <div class="section-head">
+          <div><div class="section-kicker">07 / Advanced</div><h2>Advanced</h2></div>
+          <p>Once basics are boring, these techniques scale to real models.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>Array formulas</h3><p>Modern Excel spills results into adjacent cells; reference the whole spill with <code>#</code>.</p><pre><code>=SORT(A2:A10)
+=A2#</code></pre></article>
+          <article class="card"><h3>LET</h3><p>Name intermediate values so a formula reads top-to-bottom and calculates once.</p><pre><code>=LET(x, A2:A10,
+     y, x*1.2,
+     SUM(y))</code></pre></article>
+          <article class="card"><h3>LAMBDA</h3><p>Define your own reusable function, with or without a named range.</p><pre><code>=LAMBDA(price, price*1.2)(A2)</code></pre></article>
+          <article class="card"><h3>Named ranges</h3><p>Formulas → Name Manager to name cells, then reference them by name.</p><pre><code>=SUM(West_Sales)</code></pre></article>
+          <article class="card"><h3>Tables</h3><p>Press <kbd>Ctrl</kbd><kbd>T</kbd> to make a Table; structured references use column names.</p><pre><code>=[@Sales]*[@Qty]</code></pre></article>
+          <article class="card"><h3>Power Query</h3><p>Data → Get Data imports and shapes data repeatably — each recorded step reruns on refresh.</p></article>
+        </div>
+        <div class="callout warning"><div class="callout-mark">!</div><p><strong>Spill errors.</strong> Dynamic array formulas fill adjacent cells automatically; if anything is in the way you get <code>#SPILL!</code>. Clear the blocking cells to let the array spill.</p></div>
+      </section>
+
+      <section class="section searchable" id="gotchas">
+        <div class="section-head">
+          <div><div class="section-kicker">08 / Gotchas</div><h2>Pitfalls</h2></div>
+          <p>Small behaviors that silently corrupt a workbook.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>VLOOKUP can't look left</h3><p>It only searches the <strong>first</strong> column and returns to the <strong>right</strong>. Use <code>XLOOKUP</code> or <code>INDEX</code>/<code>MATCH</code> to return a column to the left.</p></article>
+          <article class="card"><h3>Text vs number</h3><p><code>"123"</code> is not <code>123</code>. Numbers stored as text break <code>SUM</code> and sorting. Fix with <code>=VALUE(A2)</code> or Text to Columns.</p></article>
+          <article class="card"><h3>Forgotten $ locks</h3><p>Copying <code>=A1*B1</code> down becomes <code>=A2*B2</code> — usually right, but a tax rate in <code>B1</code> should be <code>$B$1</code>.</p></article>
+          <article class="card"><h3>Volatile functions</h3><p><code>NOW()</code>, <code>TODAY()</code>, <code>RAND()</code>, <code>OFFSET()</code>, and <code>INDIRECT()</code> recalculate on every change and slow large workbooks.</p></article>
+        </div>
+        <div class="callout warning"><div class="callout-mark">!</div><p><strong>Merged cells</strong> break sorting, filtering, and range references. Prefer “Center Across Selection” (Format Cells → Alignment) for the same look with none of the pain.</p></div>
+        <details>
+          <summary>Error values, decoded</summary>
+          <div class="details-body">
+            <div class="table-wrap"><table><thead><tr><th>Error</th><th>Meaning</th></tr></thead><tbody>
+              <tr><td><code>#N/A</code></td><td>Value not found — usually a lookup miss.</td></tr>
+              <tr><td><code>#VALUE!</code></td><td>Wrong type, e.g. math on text.</td></tr>
+              <tr><td><code>#REF!</code></td><td>Reference was deleted or is invalid.</td></tr>
+              <tr><td><code>#DIV/0!</code></td><td>Division by zero or an empty cell.</td></tr>
+              <tr><td><code>#NAME?</code></td><td>Unrecognized function or range name.</td></tr>
+              <tr><td><code>#NUM!</code></td><td>Invalid numeric value, e.g. <code>SQRT</code> of a negative.</td></tr>
+              <tr><td><code>#SPILL!</code></td><td>A dynamic array can't spill — something is blocking.</td></tr>
+              <tr><td><code>#NULL!</code></td><td>Range intersection that doesn't exist.</td></tr>
+            </tbody></table></div>
+          </div>
+        </details>
+      </section>
+
+      <footer class="footer searchable">
+        <strong>Source of truth</strong>
+        <p>This guide covers the everyday essentials. Microsoft's official function reference remains authoritative for exact argument order and edge cases.</p>
+        <div class="footer-links">
+          <a href="https://support.microsoft.com/excel" target="_blank" rel="noreferrer">Microsoft Excel support</a>
+          <a href="https://exceljet.net/" target="_blank" rel="noreferrer">Exceljet</a>
+          <a href="https://www.contextures.com/" target="_blank" rel="noreferrer">Contextures</a>
+          <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

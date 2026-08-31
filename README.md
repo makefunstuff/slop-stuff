@@ -43,6 +43,7 @@ Each guide is a subfolder, served under `https://makefunstuff.github.io/slop-stu
 - **[postgres](./postgres/)** — psql, users/permissions, backups, replication, tuning, monitoring
 - **[kafka](./kafka/)** — topics, partitions, producers, consumers, offsets, operations
 - **[db-optimization](./db-optimization/)** — indexes, query plans, normalization vs denormalization, tuning
+- **[excel](./excel/)** — formulas, functions, pivot tables, lookups, shortcuts
 
 ### Embedded & hardware
 
@@ -50,6 +51,20 @@ Each guide is a subfolder, served under `https://makefunstuff.github.io/slop-stu
 - **[embedded](./embedded/)** — bare-metal/RTOS: registers, interrupts, timers, memory, boot, debugging
 - **[electrical](./electrical/)** — Ohm's law, logic levels, pull-ups, dividers, power for firmware devs
 - **[sdr](./sdr/)** — IQ, sampling, DSP, GNU Radio, common signals
+- **[hamradio](./hamradio/)** — bands, propagation, antennas, and the math/physics/embedded side of RF
+
+### Electronics
+
+- **[electronics](./electronics/)** — components, circuits, op-amps, power supplies, practical electronics
+- **[tubes](./tubes/)** — BJTs, MOSFETs, JFETs, vacuum tubes: operation, biasing, circuits
+- **[hardware](./hardware/)** — modules, ICs, MCUs, and sensors (typical and unusual) for DIY builds
+
+### Drones & FPV
+
+- **[betaflight](./betaflight/)** — rates, PIDs, filters, modes, CLI
+- **[ardupilot](./ardupilot/)** — firmware, flight modes, failsafes, tuning, Mission Planner
+- **[pid-tuning](./pid-tuning/)** — P/I/D terms, tuning methods, symptoms, implementation
+- **[fpv](./fpv/)** — frames, motors, ESCs, VTX, radios, batteries, build workflow
 
 ### Graphics
 
@@ -68,6 +83,7 @@ Each guide is a subfolder, served under `https://makefunstuff.github.io/slop-stu
 - **[dop](./dop/)** — Data-Oriented Design: SoA vs AoS, cache locality, ECS, layout patterns
 - **[osdev](./osdev/)** — boot, protected mode, interrupts, paging, kernel basics
 - **[asm](./asm/)** — registers, instructions, addressing, calling conventions, syscalls
+- **[giants](./giants/)** — systems lessons from nginx, Redis, the Linux kernel, and Carmack
 
 ### Quantitative
 

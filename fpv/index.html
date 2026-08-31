@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-guide="fpv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="FPV drone build and setup: frames, motors, ESCs, VTX, radios, and video.">
+  <title>FPV Engineer — Visual Cheatsheet</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../" aria-label="Back to slop-stuff">
+      <span class="brand-mark">fpv_</span>
+      <span>FPV Engineer Guide</span>
+      <span class="version">drone tech</span>
+    </a>
+    <label class="search-wrap">
+      <span class="sr-only" hidden>Search guide</span>
+      <input id="search" type="search" aria-label="Search guide" placeholder="Search motor, ESC, VTX, antenna, radio link, video, battery…" autocomplete="off">
+    </label>
+    <div class="top-actions">
+      <button class="icon-button" id="themeToggle" type="button" title="Toggle theme" aria-label="Toggle light and dark theme">◐</button>
+      <button class="icon-button" id="printGuide" type="button" title="Print guide" aria-label="Print this guide">Print</button>
+    </div>
+  </header>
+
+  <div class="shell" id="top">
+    <aside class="sidebar" aria-label="Guide sections">
+      <p class="side-label">On this page</p>
+      <nav>
+        <a href="#start"><span class="nav-number">01</span>Start here</a>
+        <a href="#power"><span class="nav-number">02</span>Motors &amp; ESCs</a>
+        <a href="#video"><span class="nav-number">03</span>Video &amp; VTX</a>
+        <a href="#radio"><span class="nav-number">04</span>Radio links</a>
+        <a href="#battery"><span class="nav-number">05</span>Batteries</a>
+        <a href="#build"><span class="nav-number">06</span>Build &amp; solder</a>
+        <a href="#tuning"><span class="nav-number">07</span>First flight</a>
+        <a href="#gotchas"><span class="nav-number">08</span>Gotchas</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section class="hero searchable" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="eyebrow">Visual cheatsheet + usage guide</div>
+          <h1 id="hero-title">Build the drone <span>from parts.</span></h1>
+          <p>An FPV quad is a short list of off-the-shelf parts wired into one machine: frame, flight controller, ESC, motors, VTX, camera, and receiver. Pick compatible pieces, wire them in the right order, and tune the result.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#start">Start in 5 minutes →</a>
+            <a class="button" href="#power">Motors &amp; ESCs</a>
+            <a class="button" href="#video">Video &amp; VTX</a>
+          </div>
+        </div>
+        <div class="terminal" aria-label="Stylized FPV build parts list">
+          <div class="terminal-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="terminal-title">build</span></div>
+          <div class="terminal-body">
+            <div class="mock-side">
+              <p class="mock-label">Parts list</p>
+              <div class="mock-row active">frame — 5" carbon</div>
+              <div class="mock-row">FC — F405 stack</div>
+              <div class="mock-row">ESC — 4-in-1 45A</div>
+              <div class="mock-row">motors — 2207 1750KV</div>
+              <div class="mock-row">props — 5.1" × 3</div>
+              <div class="mock-row">VTX — 800 mW</div>
+              <div class="mock-row">camera — 19 mm</div>
+            </div>
+            <div class="mock-pane">
+              <div><span class="prompt">❯</span> <span class="cmd">betaflight-configurator</span></div>
+              <div class="dim">firmware: 4.5 · target: STM32F405</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cmd">set dshot_bidir = ON</span></div>
+              <div class="dim">dshot_bidir set to ON</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cmd">resource MOTOR 1 B04</span></div>
+              <div class="dim">MOTOR 1 set to B04</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cursor"></span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “motor”, “ESC”, “VTX”, “ELRS”, “LiPo”, or “Betaflight”.</div>
+
+      <section class="section searchable" id="start">
+        <div class="section-head">
+          <div><div class="section-kicker">01 / Start here</div><h2>The build anatomy</h2></div>
+          <p>Nine parts make a quad. Everything else — GPS, buzzer, LEDs — is optional. Pick a frame size first; it decides every other component.</p>
+        </div>
+        <div class="model" aria-label="FPV drone build anatomy: frame, flight controller, ESC, motors, props, battery, VTX, camera, receiver">
+          <div class="model-node"><strong>Frame</strong><small>carbon skeleton</small></div><div class="arrow">→</div>
+          <div class="model-node agent"><strong>FC</strong><small>flight controller</small></div><div class="arrow">→</div>
+          <div class="model-node"><strong>ESC</strong><small>motor driver</small></div><div class="arrow">→</div>
+          <div class="model-node"><strong>Motors</strong><small>brushless</small></div><div class="arrow">→</div>
+          <div class="model-node"><strong>Props</strong><small>thrust</small></div><div class="arrow">→</div>
+          <div class="model-node"><strong>Battery</strong><small>LiPo power</small></div><div class="arrow">→</div>
+          <div class="model-node"><strong>VTX</strong><small>video out</small></div><div class="arrow">→</div>
+          <div class="model-node"><strong>Camera</strong><small>video in</small></div><div class="arrow">→</div>
+          <div class="model-node"><strong>RX</strong><small>control link</small></div>
+        </div>
+        <div class="grid four">
+          <article class="card"><div class="card-number">1</div><h3>Frame</h3><p>Size is prop diameter: <code>3"</code> micro, <code>5"</code> freestyle, <code>7"</code> long range. Carbon plate + standoffs.</p><pre><code>5" freestyle  ·  ~250 g AUW
+7" long range  ·  ~400 g AUW</code></pre></article>
+          <article class="card"><div class="card-number">2</div><h3>FC + RX</h3><p>The FC runs <code>Betaflight</code> or <code>INAV</code>. The receiver (ELRS/Crossfire) feeds it stick positions over a UART.</p><pre><code>FC: F405 / F722 / H743
+RX: ExpressLRS 2.4 GHz</code></pre></article>
+          <article class="card"><div class="card-number">3</div><h3>Power train</h3><p>Battery → ESC → motors → props. ESC amperage must cover the motors' burst draw.</p><pre><code>4S/6S LiPo → 45A ESC
+→ 2207 1750KV → 5.1"</code></pre></article>
+          <article class="card"><div class="card-number">4</div><h3>Video + control</h3><p>Camera feeds the VTX, which broadcasts to your goggles. Analog or digital (DJI / Walksnail / HDZero).</p><pre><code>camera → VTX → antenna
+RC: radio → RX → FC</code></pre></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">KEY</div><p><strong>Choose the battery voltage first.</strong> It locks in motor KV and ESC rating: <code>6S</code> wants <code>~1750 KV</code> motors on a 5", while <code>4S</code> wants <code>~2450 KV</code>. Mixing them up gives a sluggish or overheated quad.</p></div>
+      </section>
+
+      <section class="section searchable" id="power">
+        <div class="section-head">
+          <div><div class="section-kicker">02 / Motors &amp; ESCs</div><h2>Motors &amp; ESCs</h2></div>
+          <p>Motor size and KV set the thrust; the ESC's amperage and DShot protocol decide how cleanly it's delivered.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Motor size</th><th>Typical build</th><th>KV range</th><th>Prop</th></tr></thead><tbody>
+          <tr><td><code>0702 / 0802</code></td><td>Tiny whoop (1S)</td><td><code>18000–25000</code></td><td>31–40 mm</td></tr>
+          <tr><td><code>1404 / 1505</code></td><td>Micro (2–3")</td><td><code>3800–4500</code></td><td>3"</td></tr>
+          <tr><td><code>2207 / 2306</code></td><td>Freestyle (5")</td><td><code>1700–1900</code> (6S)</td><td>5"</td></tr>
+          <tr><td><code>2207 / 2306</code></td><td>Freestyle (5")</td><td><code>2300–2500</code> (4S)</td><td>5"</td></tr>
+          <tr><td><code>2507 / 2806.5</code></td><td>Long range (7")</td><td><code>1300–1600</code></td><td>7"</td></tr>
+        </tbody></table></div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Motor size &amp; KV</h3><p><code>2207</code> = 22 mm stator width, 7 mm tall — bigger stator, more torque. KV is unloaded RPM per volt: lower KV spins bigger props efficiently, higher KV favors small props.</p><pre><code>2207 1750KV × 6S ≈ 38 850 RPM no-load
+1404 4500KV × 4S ≈ 66 600 RPM no-load</code></pre></article>
+          <article class="card"><h3>Thrust-to-weight</h3><p>Every gram counts. A 5" freestyle quad should push <code>≥4:1</code>; anything below <code>2:1</code> barely flies. Check motor thrust tables at your prop size.</p><pre><code>thrust = 4 × 900 g  →  3600 g
+AUW   = 700 g      →  ~5:1</code></pre></article>
+          <article class="card"><h3>ESC amperage</h3><p>Rate the ESC above the motors' peak draw with margin. A <code>4-in-1</code> ESC carries all four motors on one board; individual ESCs sit on the arms.</p><pre><code>5" 6S:  40–60 A (4-in-1)
+7" LR:  40–55 A (4-in-1)</code></pre></article>
+          <article class="card"><h3>DShot protocol</h3><p>Digital ESC protocol, immune to calibration drift. <code>DShot300/600</code> is standard; <code>bidirectional DShot</code> reads motor RPM for filtering.</p><pre><code>set dshot_bidir = ON
+set motor_poles = 14</code></pre></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">⌁</div><p>Prop size and pitch tune the feel: more pitch (<code>5.1 × 4.3</code>) = more grip and amp draw, less pitch = more efficiency and float. Match the prop's hub to the motor's shaft (1.5 mm vs 5 mm).</p></div>
+        <div class="tags" style="margin-top:16px">
+          <span class="tag">DShot300</span><span class="tag">DShot600</span><span class="tag">bidirectional</span><span class="tag">RPM filter</span><span class="tag">4-in-1</span><span class="tag">prop-in</span><span class="tag">prop-out</span>
+        </div>
+      </section>
+
+      <section class="section searchable" id="video">
+        <div class="section-head">
+          <div><div class="section-kicker">03 / Video</div><h2>Video &amp; VTX</h2></div>
+          <p>The camera and VTX make the live feed. Analog is cheap and resilient; digital systems trade latency and price for a clean image.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>System</th><th>Latency</th><th>Image</th><th>Notes</th></tr></thead><tbody>
+          <tr><td><code>Analog</code></td><td>~20 ms</td><td>700 TVL</td><td>Cheapest, degrades to snow instead of dropping out.</td></tr>
+          <tr><td><code>DJI O3 / O4</code></td><td>~28–40 ms</td><td>4K / 1080p</td><td>Closed ecosystem, best image quality.</td></tr>
+          <tr><td><code>Walksnail</code></td><td>~22–32 ms</td><td>1080p</td><td>Open, compatible goggles, good night mode.</td></tr>
+          <tr><td><code>HDZero</code></td><td>~14 ms fixed</td><td>720p / 1080p</td><td>Lowest, fixed-latency digital; race standard.</td></tr>
+        </tbody></table></div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>VTX power</h3><p>More milliwatts = more range, more heat, more interference for others. Race on <code>25 mW</code>, fly around on <code>200–400 mW</code>, push <code>800 mW–1 W+</code> for long range.</p><pre><code>25 mW   — indoor / race
+200 mW  — general
+800 mW  — long range</code></pre></article>
+          <article class="card"><h3>Antennas</h3><p>Circular-polarized (CP) antennas reject multipath. <code>RHCP</code> and <code>LHCP</code> must match on both ends; mixing halves the signal. Omni for all-around, patch/helical for range.</p><pre><code>VTX: RHCP omni (u.FL / MMCX / SMA)
+Goggle: RHCP omni + patch</code></pre></article>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Channels &amp; bands</h3><p>5.8 GHz, 40 channels across bands <code>A/B/E/F/R</code>. Raceband is the community default — spacing avoids bleed-over between pilots.</p><pre><code>R1 5658 · R2 5695 · R3 5732 · R4 5769
+R5 5806 · R6 5843 · R7 5880 · R8 5917</code></pre></article>
+          <article class="card"><h3>VTX tables</h3><p>Betaflight needs a VTX table matching your hardware to set power and channel from the OSD. Load the manufacturer's JSON via the Video Transmitter tab.</p><pre><code>SA (SmartAudio)  — many analog VTX
+IRC Tramp        — TBS / others</code></pre></article>
+        </div>
+        <div class="tags" style="margin-top:16px">
+          <span class="tag">RHCP</span><span class="tag">LHCP</span><span class="tag">u.FL</span><span class="tag">MMCX</span><span class="tag">SMA</span><span class="tag">RP-SMA</span><span class="tag">omni</span><span class="tag">patch</span>
+        </div>
+      </section>
+
+      <section class="section searchable" id="radio">
+        <div class="section-head">
+          <div><div class="section-kicker">04 / Radio links</div><h2>Radio links</h2></div>
+          <p>The control link is a serial stream from your radio to the flight controller. ExpressLRS is the modern default; Crossfire owns the long-range niche.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Link</th><th>Band</th><th>Packet rate</th><th>Notes</th></tr></thead><tbody>
+          <tr><td><code>ExpressLRS (ELRS)</code></td><td>2.4 GHz / 900 MHz</td><td>50–500 Hz</td><td>Open-source, cheap, high refresh, LBT-free firmware.</td></tr>
+          <tr><td><code>TBS Crossfire</code></td><td>900 MHz</td><td>50–150 Hz</td><td>Proven long range, up to 2 W, paid hardware.</td></tr>
+          <tr><td><code>FrSky ACCST / ACCESS</code></td><td>2.4 GHz</td><td>~9 ms</td><td>Legacy; being replaced by ELRS.</td></tr>
+        </tbody></table></div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Protocols to the FC</h3><p>The receiver talks to the FC over a serial protocol. <code>CRSF</code> (ELRS/Crossfire) is the one you want; <code>SBUS</code> and <code>PPM</code> are older and slower.</p><pre><code>CRSF  — full telemetry, native
+SBUS  — inverted serial, no telemetry</code></pre></article>
+          <article class="card"><h3>Binding ELRS</h3><p>Set a <strong>binding phrase</strong> on both the module and receiver once; they pair automatically forever. Traditional bind is the fallback.</p><pre><code># shared passphrase, e.g.
+MyFpvQuad-2024
+# then: wifi / lua → Bind</code></pre></article>
+          <article class="card"><h3>Failsafe</h3><p>Configure what the FC does when the link dies. <code>Drop</code> disarms immediately; <code>Land</code> glides down. Stage 1 holds last input, stage 2 enacts the action.</p><pre><code>failsafe = DROP
+guard time ≈ 1.0 s (stage 1)</code></pre></article>
+          <article class="card"><h3>Link quality</h3><p>Watch <code>LQ</code> (0–100) and <code>RSSI dBm</code> in the OSD, not just RSSI percent. 2.4 GHz is low latency; 900 MHz penetrates walls and range better.</p><pre><code>LQ ≥ 80  — solid
+LQ &lt; 50  — turn back
+RSSI dBm ≤ -105 — near limit</code></pre></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">✓</div><p><strong>Tip:</strong> set the receiver protocol to <code>CRSF</code> and enable <code>Telemetry</code> on the same UART in the Ports tab, or your radio shows nothing about battery voltage or link health.</p></div>
+        <div class="tags" style="margin-top:16px">
+          <span class="tag">2.4 GHz</span><span class="tag">900 MHz</span><span class="tag">500 Hz</span><span class="tag">CRSF</span><span class="tag">SBUS</span><span class="tag">telemetry</span><span class="tag">binding phrase</span>
+        </div>
+      </section>
+
+      <section class="section searchable" id="battery">
+        <div class="section-head">
+          <div><div class="section-kicker">05 / Batteries</div><h2>Batteries &amp; power</h2></div>
+          <p>A LiPo is cells in series. Cell count sets voltage; capacity and C-rating set how hard and how long it can push current.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Cells</th><th>Nominal</th><th>Full charge</th><th>Storage</th><th>Typical use</th></tr></thead><tbody>
+          <tr><td><code>1S</code></td><td>3.7 V</td><td>4.2 V</td><td>3.8 V</td><td>Tiny whoop</td></tr>
+          <tr><td><code>2S</code></td><td>7.4 V</td><td>8.4 V</td><td>7.6 V</td><td>Micro / 2"</td></tr>
+          <tr><td><code>3S</code></td><td>11.1 V</td><td>12.6 V</td><td>11.4 V</td><td>Light 3"</td></tr>
+          <tr><td><code>4S</code></td><td>14.8 V</td><td>16.8 V</td><td>15.2 V</td><td>3–5" classic</td></tr>
+          <tr><td><code>6S</code></td><td>22.2 V</td><td>25.2 V</td><td>22.8 V</td><td>5–7" modern</td></tr>
+        </tbody></table></div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>C-rating &amp; mAh</h3><p>Capacity (<code>mAh</code>) is runtime; C-rating is max current = <code>capacity(A) × C</code>. A 1300 mAh 100C pack claims 130 A burst — treat peak C as optimistic.</p><pre><code>1.3 Ah × 100C = 130 A (burst)
+300 mAh whoop → 1300 mAh 5" → 3000 mAh 7"</code></pre></article>
+          <article class="card"><h3>Connectors</h3><p><code>XT30</code> for small builds, <code>XT60</code> for 5" and up. The balance lead (JST-XH) lets the charger watch each cell.</p><pre><code>XT30 — ≤ ~30 A (micro)
+XT60 — ≤ ~60 A (5"+)</code></pre></article>
+          <article class="card"><h3>Charging</h3><p>Balance-charge at <code>1C</code>: a 1300 mAh pack charges at 1.3 A. Never leave a LiPo unattended, and charge in a LiPo-safe bag.</p><pre><code>1300 mAh @ 1C → 1.3 A
+4S  → "4S 14.8V" balance mode</code></pre></article>
+          <article class="card"><h3>Storage &amp; safety</h3><p>Store at <code>3.8 V/cell</code>, never below <code>3.0 V/cell</code>. Land around <code>3.5 V/cell</code> under load so it recovers to ~3.7 V resting.</p><pre><code>storage: 3.8 V/cell
+never below: 3.0 V/cell (damage)</code></pre></article>
+        </div>
+        <div class="prefix-demo" style="margin-top:16px">
+          <kbd>1S</kbd> = <kbd>3.7 V</kbd> · <kbd>4S</kbd> = <kbd>14.8 V</kbd> · <kbd>6S</kbd> = <kbd>22.2 V</kbd> · <kbd>storage</kbd> = <kbd>3.8 V/cell</kbd> · <kbd>min</kbd> = <kbd>3.0 V/cell</kbd>
+        </div>
+        <div class="state-grid" style="margin-top:16px">
+          <div class="state-card"><strong>4.20 V/cell</strong><p>Fully charged — fly soon, never store a pack here for days.</p></div>
+          <div class="state-card working"><strong>3.80 V/cell</strong><p>Storage voltage — the safe resting point between sessions.</p></div>
+          <div class="state-card blocked"><strong>3.50 V/cell</strong><p>Under-load landing target; recovers to ~3.7 V resting.</p></div>
+          <div class="state-card done"><strong>&lt; 3.0 V/cell</strong><p>Over-discharged — permanent damage and fire risk on recharge.</p></div>
+        </div>
+        <details style="margin-top:16px">
+          <summary>Parallel charging</summary>
+          <div class="details-body grid two">
+            <div><h4>Rules</h4><p>Only charge identical packs — same cell count and similar capacity — and keep cell voltages close before connecting to the board.</p></div>
+            <div><h4>Math</h4><p>Total current = <code>1C × sum of capacities</code>. Two 1300 mAh packs in parallel charge at <code>2.6 A</code>.</p></div>
+          </div>
+        </details>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">⚠</div><p><strong>LiPos are a fire risk.</strong> A punctured, over-discharged, or over-charged cell can vent with flame. Dispose of puffing or damaged packs at a battery recycler — never in household trash.</p></div>
+      </section>
+
+      <section class="section searchable" id="build">
+        <div class="section-head">
+          <div><div class="section-kicker">06 / Build &amp; solder</div><h2>Build &amp; solder</h2></div>
+          <p>Build in an order that keeps the wiring testable: frame, then electronics, then a smoke test before any prop ever goes on.</p>
+        </div>
+        <div class="flow">
+          <div class="flow-step"><div><strong>Prep the frame</strong><p>Mount motors on the arms and route wires to the center. Use a frame diagram to keep left/right straight.</p></div></div>
+          <div class="flow-step"><div><strong>Solder the stack</strong><p>Tin pads and wires first, use flux, and keep the iron at <code>350–400 °C</code>. ESC power pads → XT60 pigtail; FC → ESC signal harness.</p></div></div>
+          <div class="flow-step"><div><strong>Wire motor order</strong><p>Match each ESC output to Betaflight's motor number, or remap with <code>resource</code> so signal wires don't cross.</p></div></div>
+          <div class="flow-step"><div><strong>Set prop direction</strong><p>Diagonal motors spin the same way. Verify each motor's rotation in the Motors tab before mounting props.</p></div></div>
+          <div class="flow-step"><div><strong>Smoke test</strong><p>Power up through a <strong>smoke stopper</strong> (current-limiting bulb). A bright, steady bulb means a short — fix it before full power.</p></div></div>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Motor order (Quad X)</h3><p>Betaflight's default numbering, viewed from above with the nose away from you:</p><pre><code>1  rear-right   CW
+2  front-right  CCW
+3  rear-left    CCW
+4  front-left   CW</code></pre></article>
+          <article class="card"><h3>Solder checklist</h3><p>Clean joints are shiny and shaped like a tent; cold joints are dull and balled. Heat-shrink every joint, strain-relief with zip ties.</p><pre><code>✓ tin pads + wires   ✓ flux
+✓ no bridges         ✓ heat shrink
+✓ multimeter continuity check</code></pre></article>
+        </div>
+        <div class="command-index" style="margin-top:16px">
+          <div class="command-row"><code>resource MOTOR 1 B04</code><span>remap a motor signal to another pin.</span></div>
+          <div class="command-row"><code>set motor_pwm_protocol = DSHOT600</code><span>pick the ESC protocol.</span></div>
+          <div class="command-row"><code>set dshot_bidir = ON</code><span>enable RPM telemetry for filtering.</span></div>
+          <div class="command-row"><code>set motor_poles = 14</code><span>match the motor's magnet count.</span></div>
+          <div class="command-row"><code>diff all</code><span>save your full config as text.</span></div>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">✓</div><p><strong>Tip:</strong> build and configure the whole quad with <strong>no props installed</strong>. Props go on only after the motors spin correctly, the FC arms, and the smoke test passes.</p></div>
+      </section>
+
+      <section class="section searchable" id="tuning">
+        <div class="section-head">
+          <div><div class="section-kicker">07 / First flight</div><h2>First flight &amp; tuning</h2></div>
+          <p>Bench-test everything in Betaflight before the maiden, then tune rates and PIDs from a conservative baseline.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>Betaflight setup</h3><div class="command-index" style="margin-top:6px">
+            <div class="command-row"><code>flash firmware</code><span>match the board target (F405/F722/H743).</span></div>
+            <div class="command-row"><code>set protocol DSHOT600</code><span>ESC protocol in Motors tab.</span></div>
+            <div class="command-row"><code>CRSF on a UART</code><span>Ports → Serial RX + Telemetry.</span></div>
+            <div class="command-row"><code>gyro orientation</code><span>board arrow matches movement.</span></div>
+            <div class="command-row"><code>arm switch + modes</code><span>ARM, ANGLE, ACRO, and a beeper.</span></div>
+            <div class="command-row"><code>failsafe = DROP</code><span>disarm on link loss.</span></div>
+          </div></article>
+          <article class="card"><h3>Rates</h3><p>Rates set max rotation speed and feel. Start with Betaflight defaults, then raise super rate for a snappier stick response.</p><pre><code>RC rate 1.00 · super 0.70 · expo 0.00
+→ ~667 °/s (default feel)</code></pre></article>
+        </div>
+        <div class="flow" style="margin-top:16px">
+          <div class="flow-step"><div><strong>Verify on the bench</strong><p>Props off. Arm, spin each motor, confirm direction and that the gyro trace reacts the right way when you tilt.</p></div></div>
+          <div class="flow-step"><div><strong>Maiden hover</strong><p>First real flight in <code>ANGLE</code> (self-leveling) over grass. It should hover with the sticks near center.</p></div></div>
+          <div class="flow-step"><div><strong>Switch to ACRO</strong><p>Acro/air mode has no self-leveling — hold small stick inputs and build feel low and slow.</p></div></div>
+          <div class="flow-step"><div><strong>Tune from baseline</strong><p>Change one thing at a time: rates first, then PIDs only if it oscillates, washes out, or bounces after flips.</p></div></div>
+        </div>
+        <div class="state-grid" style="margin-top:16px">
+          <div class="state-card working"><strong>ACRO</strong><p>No self-leveling — full manual control, the end goal for freestyle.</p></div>
+          <div class="state-card"><strong>ANGLE</strong><p>Self-levels and caps tilt angle — maiden flights and rescues.</p></div>
+          <div class="state-card"><strong>HORIZON</strong><p>Self-levels near stick center, full rates at the edges.</p></div>
+          <div class="state-card done"><strong>AIR MODE</strong><p>Keeps PID authority at zero throttle — always on for acro.</p></div>
+        </div>
+        <details style="margin-top:16px">
+          <summary>Common tuning symptoms</summary>
+          <div class="details-body grid two">
+            <div><h4>Oscillates / shakes</h4><p>Too much P or D gain. Drop the master multiplier or the affected axis.</p></div>
+            <div><h4>Washes out in dives</h4><p>Raise D, or add a touch of I on the affected axis.</p></div>
+            <div><h4>Bounces after flips</h4><p>Raise D slightly to damp the stop; too much D makes motors run hot.</p></div>
+            <div><h4>Feels sluggish</h4><p>Raise super rate before touching PIDs — usually a feel problem, not a tune problem.</p></div>
+          </div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="gotchas">
+        <div class="section-head">
+          <div><div class="section-kicker">08 / Gotchas</div><h2>Pitfalls</h2></div>
+          <p>Five mistakes wreck more quads than crashes do. Check these before every first arm.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>Wrong prop direction</h3><p>A backwards prop (or one mounted on the wrong motor) makes the quad flip instantly on arm. CW and CCW are printed on the hub — match them to the motor.</p><pre><code>flip on arm → check prop CW/CCW</code></pre></article>
+          <article class="card"><h3>Motor order mismatch</h3><p>If the FC thinks motor 1 is front-left but it's wired rear-right, the quad flips. Verify each output in the Motors tab.</p><pre><code>Motors tab → spin #1 → front-left spins?</code></pre></article>
+          <article class="card"><h3>Short circuits</h3><p>A solder bridge between power and ground, or a cold joint, can kill the ESC or FC on first power. Always first-power through a smoke stopper.</p><pre><code>bright bulb = short → desolder, re-check</code></pre></article>
+          <article class="card"><h3>VTX without antenna</h3><p>Powering a VTX with no antenna loads the power amplifier and burns it out within seconds. The antenna goes on before the battery, every time.</p><pre><code>power VTX with antenna attached ONLY</code></pre></article>
+          <article class="card"><h3>Battery sag</h3><p>Voltage dips hard under load — old, low-C, or cold packs sag more and can brown out the FC. Land at ~3.5 V/cell under load.</p><pre><code>resting 3.7 V/cell after flight = healthy</code></pre></article>
+          <article class="card"><h3>Arming indoors</h3><p>Never arm a quad with props on indoors or near people. Props off for bench tests; maiden outside, away from yourself and others.</p><pre><code>bench = props OFF · maiden = outside</code></pre></article>
+        </div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">⚠</div><p><strong>Props cut deep.</strong> Treat an armed quad as live: remove props for any bench work, set a pre-arm switch, and stand clear when arming.</p></div>
+      </section>
+
+      <footer class="footer searchable">
+        <strong>Source of truth</strong>
+        <p>This guide covers FPV build and setup essentials. For part-specific wiring, exact targets, and tuning, defer to the manufacturers and these references.</p>
+        <div class="footer-links">
+          <a href="https://oscarliang.com/" target="_blank" rel="noreferrer">Oscar Liang</a>
+          <a href="https://betaflight.com/" target="_blank" rel="noreferrer">Betaflight</a>
+          <a href="https://www.fpvknowitall.com/" target="_blank" rel="noreferrer">FPV Know-It-All</a>
+          <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

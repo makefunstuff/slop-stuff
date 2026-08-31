@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-guide="hamradio">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Ham radio: bands, propagation, antennas, and the math, physics, and embedded side of RF.">
+  <title>Radio Amateur — Visual Cheatsheet</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../" aria-label="Back to slop-stuff">
+      <span class="brand-mark">ham_</span>
+      <span>Ham Radio Guide</span>
+      <span class="version">RF · embedded</span>
+    </a>
+    <label class="search-wrap">
+      <span class="sr-only" hidden>Search guide</span>
+      <input id="search" type="search" aria-label="Search guide" placeholder="Search band, wavelength, antenna, propagation, SWR, decibel…" autocomplete="off">
+    </label>
+    <div class="top-actions">
+      <button class="icon-button" id="themeToggle" type="button" title="Toggle theme" aria-label="Toggle light and dark theme">◐</button>
+      <button class="icon-button" id="printGuide" type="button" title="Print guide" aria-label="Print this guide">Print</button>
+    </div>
+  </header>
+
+  <div class="shell" id="top">
+    <aside class="sidebar" aria-label="Guide sections">
+      <p class="side-label">On this page</p>
+      <nav>
+        <a href="#start"><span class="nav-number">01</span>Start here</a>
+        <a href="#math"><span class="nav-number">02</span>Math</a>
+        <a href="#physics"><span class="nav-number">03</span>Physics</a>
+        <a href="#antennas"><span class="nav-number">04</span>Antennas</a>
+        <a href="#bands"><span class="nav-number">05</span>Bands &amp; modes</a>
+        <a href="#embedded"><span class="nav-number">06</span>Embedded &amp; SDR</a>
+        <a href="#setup"><span class="nav-number">07</span>Station setup</a>
+        <a href="#gotchas"><span class="nav-number">08</span>Gotchas</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section class="hero searchable" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="eyebrow">Visual cheatsheet + usage guide</div>
+          <h1 id="hero-title">The airwaves <span>and the math.</span></h1>
+          <p>Amateur radio is the licensed hobby of building and using radios: from world-wide HF voice to local VHF repeaters, digital modes, and home-built SDR receivers. This page is the field manual — the bands, the antennas, and the physics that tie them together.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#start">Start here →</a>
+            <a class="button" href="#math">The math</a>
+            <a class="button" href="#antennas">Antennas</a>
+          </div>
+        </div>
+        <div class="terminal" aria-label="Stylized radio calculations">
+          <div class="terminal-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="terminal-title">radio</span></div>
+          <div class="terminal-body">
+            <div class="mock-side">
+              <p class="mock-label">On the bench</p>
+              <div class="mock-row active">λ = c / f</div>
+              <div class="mock-row">dB power ratio</div>
+              <div class="mock-row">SWR match</div>
+              <div class="mock-row">dipole cut</div>
+            </div>
+            <div class="mock-pane">
+              <div><span class="prompt">❯</span> <span class="cmd">λ = c / f</span></div>
+              <div class="dim">14.2 MHz → λ = 300 / 14.2 ≈ 21.1 m</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cmd">dB = 10·log10(P1/P0)</span></div>
+              <div class="dim">+3 dB ≈ double power, −3 dB ≈ half</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cmd">SWR = (1+|Γ|)/(1-|Γ|)</span></div>
+              <div class="dim">1.0 : 1 = perfect match</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cmd">dipole L = 143 / f(MHz)</span></div>
+              <div class="dim">≈ half-wavelength total, center-fed</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cursor"></span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “band”, “dipole”, “SWR”, “dB”, or “ionosphere”.</div>
+
+      <section class="section searchable" id="start">
+        <div class="section-head">
+          <div><div class="section-kicker">01 / Start here</div><h2>What ham radio is</h2></div>
+          <p>Amateur radio is the licensed art of building and using radios to talk across town or around the world — with rules, bands, and a lot of physics.</p>
+        </div>
+        <div class="grid four">
+          <article class="card"><div class="card-number">1</div><h3>Bands</h3><p><strong>HF</strong> (1.8–30 MHz) reaches worldwide via skywave. <strong>VHF</strong> (30–300 MHz) is line-of-sight and repeater country. <strong>UHF</strong> (300 MHz–3 GHz) is short range and local.</p></article>
+          <article class="card"><div class="card-number">2</div><h3>Licensing</h3><p>You need a license and a <strong>callsign</strong> to transmit. US classes: <strong>Technician</strong> (VHF/UHF entry), <strong>General</strong> (most HF), <strong>Extra</strong> (all privileges). Most countries use similar tiers.</p></article>
+          <article class="card"><div class="card-number">3</div><h3>Modes</h3><p><strong>SSB</strong> (voice, HF), <strong>FM</strong> (voice, VHF/UHF repeaters), <strong>CW</strong> (Morse), and digital — <strong>FT8</strong>, <strong>RTTY</strong>, <strong>PSK31</strong>. Bandwidth and etiquette differ per mode.</p></article>
+          <article class="card"><div class="card-number">4</div><h3>Calling CQ</h3><p><code>CQ CQ CQ, this is &lt;callsign&gt;, &lt;callsign&gt;, listening.</code> Reply once with your call, then swap signal report, name, and QTH.</p></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">KEY</div><p><strong>A QSO is a contact.</strong> Listen first, identify with your callsign, and stay inside your license's bands, modes, and power limits. Identify every 10 minutes and at the end of the contact.</p></div>
+        <div class="command-index" style="margin-top:16px">
+          <div class="command-row"><code>QSL</code><span>I confirm / please confirm; also a confirmation card.</span></div>
+          <div class="command-row"><code>QTH</code><span>My location is…</span></div>
+          <div class="command-row"><code>QRM</code><span>Man-made interference from other stations.</span></div>
+          <div class="command-row"><code>QRN</code><span>Natural/atmospheric noise (static, lightning).</span></div>
+          <div class="command-row"><code>QRP</code><span>Reduce power / low-power operation (≤ 5 W).</span></div>
+          <div class="command-row"><code>QSO</code><span>A contact, a conversation.</span></div>
+          <div class="command-row"><code>QRZ</code><span>Who is calling me?</span></div>
+          <div class="command-row"><code>QSY</code><span>Change frequency to…</span></div>
+          <div class="command-row"><code>QSB</code><span>Your signal is fading.</span></div>
+        </div>
+      </section>
+
+      <section class="section searchable" id="math">
+        <div class="section-head">
+          <div><div class="section-kicker">02 / Math</div><h2>The math</h2></div>
+          <p>Four numbers govern everything in RF: wavelength, power, impedance, and the ratio between them.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Formula</th><th>Meaning</th><th>Worked example</th></tr></thead><tbody>
+          <tr><td><code>λ = c / f</code></td><td>Wavelength = speed of light ÷ frequency (c ≈ 3·10⁸ m/s).</td><td><code>300 / 14.2 MHz ≈ 21.1 m</code></td></tr>
+          <tr><td><code>dB = 10·log10(P1/P0)</code></td><td>Power ratio in decibels.</td><td><code>+3 dB ≈ ×2, −3 dB ≈ ÷2</code></td></tr>
+          <tr><td><code>dBm = 10·log10(P / 1 mW)</code></td><td>Absolute power referenced to 1 mW.</td><td><code>1 W = +30 dBm</code></td></tr>
+          <tr><td><code>V = I · R</code></td><td>Ohm's law, RF form.</td><td><code>100 W into 50 Ω → 70.7 V</code></td></tr>
+          <tr><td><code>P = V² / R = I² · R</code></td><td>Power from voltage or current.</td><td><code>70.7 V / 50 Ω → 100 W</code></td></tr>
+          <tr><td><code>Z = R + jX</code></td><td>Impedance = resistance + reactance.</td><td><code>resonance: X ≈ 0, Z ≈ R</code></td></tr>
+          <tr><td><code>SWR = (1 + |Γ|) / (1 - |Γ|)</code></td><td>Standing wave ratio from reflection.</td><td><code>1.0 = perfect, 3.0 = poor</code></td></tr>
+          <tr><td><code>|Γ| = |(Z - Z0) / (Z + Z0)|</code></td><td>Reflection coefficient vs the 50 Ω line.</td><td><code>Z = 50 Ω → Γ = 0</code></td></tr>
+        </tbody></table></div>
+        <div class="prefix-demo">
+          <kbd>1 W</kbd> = <kbd>1000 mW</kbd> = <kbd>+30 dBm</kbd>
+          <kbd>100 W</kbd> = <kbd>+50 dBm</kbd>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>The dB ladder</h3><p>Every 10 dB is a factor of 10 in power; 3 dB is a factor of 2. Memorize these four.</p><pre><code>+3 dB   ≈ ×2 power
++6 dB   ≈ ×4 power
++10 dB  ≈ ×10 power
+-3 dB   ≈ ÷2 power
+-10 dB  ≈ ÷10 power</code></pre></article>
+          <article class="card"><h3>SWR → reflected power</h3><p>High SWR means power bounces back to the rig instead of radiating. The jump from 2:1 to 3:1 is costly.</p><pre><code>SWR 1.0 → 0% reflected
+SWR 1.5 → ~4% reflected
+SWR 2.0 → ~11% reflected
+SWR 3.0 → ~25% reflected</code></pre></article>
+        </div>
+      </section>
+
+      <section class="section searchable" id="physics">
+        <div class="section-head">
+          <div><div class="section-kicker">03 / Physics</div><h2>The physics</h2></div>
+          <p>A radio wave is an electromagnetic field travelling at the speed of light; how far it goes depends on frequency and the ionosphere.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>Electromagnetic waves</h3><p>A radio wave is an EM field: electric (<strong>E</strong>) and magnetic (<strong>H</strong>) at right angles, travelling at <code>c ≈ 3·10⁸ m/s</code>. Frequency and wavelength lock together through <code>λ = c / f</code>.</p><pre><code>14.2 MHz  → 21.1 m   (20 m band)
+146 MHz   →  2.05 m  (2 m band)
+440 MHz   →  0.68 m  (70 cm band)</code></pre></article>
+          <article class="card"><h3>Polarization</h3><p>A vertical antenna radiates a vertical E-field; a horizontal dipole radiates horizontally. Cross-polarized antennas lose ~20 dB. Circular (left/right-hand) polarization is used for satellites to beat Faraday rotation.</p><pre><code>vertical   → vertical E-field
+horizontal → horizontal E-field
+circular   → LHCP / RHCP (satellites)</code></pre></article>
+        </div>
+        <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Mode</th><th>Path</th><th>Bands</th><th>Range</th></tr></thead><tbody>
+          <tr><td><strong>Ground wave</strong></td><td>follows the earth's surface</td><td>MF and low HF (below ~3 MHz)</td><td>local, tens of km</td></tr>
+          <tr><td><strong>Sky wave</strong></td><td>refracted off the ionosphere</td><td>HF 3–30 MHz</td><td>thousands of km (DX)</td></tr>
+          <tr><td><strong>Line of sight</strong></td><td>direct wave, no reflection</td><td>VHF / UHF and up</td><td>to the radio horizon</td></tr>
+          <tr><td><strong>Skip</strong></td><td>sky wave returning far from TX</td><td>HF</td><td>beyond ground wave; silent "skip zone" between</td></tr>
+        </tbody></table></div>
+        <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Layer</th><th>Height</th><th>Effect</th></tr></thead><tbody>
+          <tr><td><strong>D</strong></td><td>50–90 km</td><td>absorbs MF/low HF by day; vanishes at night.</td></tr>
+          <tr><td><strong>E</strong></td><td>90–120 km</td><td>sporadic-E can carry 6 m and 2 m DX.</td></tr>
+          <tr><td><strong>F1</strong></td><td>150–220 km</td><td>daytime only; merges into F2 at night.</td></tr>
+          <tr><td><strong>F2</strong></td><td>250–400 km</td><td>the main HF reflector; sets the MUF.</td></tr>
+        </tbody></table></div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">⌁</div><p><strong>Skip zone &amp; MUF.</strong> The skip zone is the silent ring between where the ground wave dies and the first sky-wave hop lands. The <strong>MUF</strong> (maximum usable frequency) is the highest frequency the F layer will reflect — operate below it, or the signal punches through into space.</p></div>
+      </section>
+
+      <section class="section searchable" id="antennas">
+        <div class="section-head">
+          <div><div class="section-kicker">04 / Antennas</div><h2>Antennas</h2></div>
+          <p>The antenna turns RF current into a radiated field (and back). Shape, size, and height decide where the signal goes.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>Half-wave dipole</h3><p>Center-fed and balanced, ~<strong>73 Ω</strong> in free space, with a broadside figure-8 pattern. The classic first antenna — cut it for your band.</p><pre><code>L = 143 / f(MHz)   metres, total
+L = 468 / f(MHz)   feet, total
+# 14.2 MHz → ~10.1 m / ~33 ft</code></pre></article>
+          <article class="card"><h3>Quarter-wave vertical</h3><p>A quarter-wave radiator over a ground plane, ~<strong>36 Ω</strong>, omnidirectional with a low take-off angle — the workhorse for DX and mobile.</p><pre><code>L = 71.5 / f(MHz)  metres
+L = 234 / f(MHz)   feet
+# needs radials / ground plane</code></pre></article>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Yagi-Uda</h3><p>A driven element plus a reflector and directors focus energy into one direction. <strong>Gain</strong> climbs with element count: a 3-element Yagi gives ~7–8 dBi, a long boom 12–15 dBi. Point it where the station is.</p><pre><code>reflector ← driven → directors
+gain ≈ 7 dBi (3 el) … 15 dBi (long)</code></pre></article>
+          <article class="card"><h3>Feedline</h3><p><strong>50 Ω coax</strong> (RG-58, RG-213, LMR-400) is standard; loss climbs with frequency, so keep 2 m/70 cm runs short and low-loss. <strong>450 Ω ladder line</strong> is lower-loss but balanced — feed a dipole through a <strong>balun</strong>.</p><pre><code>short run   → RG-58 (lossy, cheap)
+long / VHF  → LMR-400 (low loss)
+balanced    → ladder line + balun</code></pre></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">Z</div><p><strong>Matching ≠ radiating.</strong> A tuner (ATU) matches whatever impedance your antenna actually presents back to 50 Ω so the radio sees a low SWR and the finals stay cool. Low SWR means power gets out; it does <em>not</em> mean the antenna radiates well — a dummy load has SWR 1.0 and radiates almost nothing.</p></div>
+        <details style="margin-top:16px">
+          <summary>Dipole lengths per band</summary>
+          <div class="details-body">
+            <p>Total length <code>143 / f(MHz)</code> metres — trim to resonance, then check SWR.</p>
+            <div class="table-wrap"><table><thead><tr><th>Band</th><th>Frequency</th><th>Total length</th><th>Feet</th></tr></thead><tbody>
+              <tr><td>40 m</td><td>7.10 MHz</td><td>~20.1 m</td><td>~66 ft</td></tr>
+              <tr><td>20 m</td><td>14.2 MHz</td><td>~10.1 m</td><td>~33 ft</td></tr>
+              <tr><td>15 m</td><td>21.2 MHz</td><td>~6.7 m</td><td>~22 ft</td></tr>
+              <tr><td>10 m</td><td>28.4 MHz</td><td>~5.0 m</td><td>~16.5 ft</td></tr>
+              <tr><td>6 m</td><td>50.1 MHz</td><td>~2.9 m</td><td>~9.3 ft</td></tr>
+              <tr><td>2 m</td><td>146 MHz</td><td>~0.98 m</td><td>~3.2 ft</td></tr>
+            </tbody></table></div>
+          </div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="bands">
+        <div class="section-head">
+          <div><div class="section-kicker">05 / Bands &amp; modes</div><h2>Bands &amp; modes</h2></div>
+          <p>Amateur bands are allocated slices of spectrum; each has its own frequency, propagation, and customary modes.</p>
+        </div>
+        <div class="prefix-demo">
+          <kbd>160 m</kbd> ≈ <kbd>1.8 MHz</kbd>
+          <kbd>20 m</kbd> ≈ <kbd>14 MHz</kbd>
+          <kbd>6 m</kbd> ≈ <kbd>50 MHz</kbd>
+          <kbd>2 m</kbd> ≈ <kbd>146 MHz</kbd>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Band</th><th>Frequency</th><th>Propagation</th><th>Typical use</th></tr></thead><tbody>
+          <tr><td>160 m</td><td>1.8–2.0 MHz</td><td>ground wave + night sky wave</td><td>regional, "top band"</td></tr>
+          <tr><td>80 m</td><td>3.5–4.0 MHz</td><td>night, regional</td><td>ragchews, nets</td></tr>
+          <tr><td>40 m</td><td>7.0–7.3 MHz</td><td>night, long haul</td><td>DX, evening workhorse</td></tr>
+          <tr><td>30 m</td><td>10.1–10.15 MHz</td><td>all-day (WARC)</td><td>CW / digital only</td></tr>
+          <tr><td>20 m</td><td>14.0–14.35 MHz</td><td>daytime DX</td><td>the DX workhorse</td></tr>
+          <tr><td>17 m</td><td>18.068–18.168 MHz</td><td>daytime (WARC)</td><td>DX, no contests</td></tr>
+          <tr><td>15 m</td><td>21.0–21.45 MHz</td><td>daytime, sunspot-driven</td><td>DX openings</td></tr>
+          <tr><td>10 m</td><td>28.0–29.7 MHz</td><td>sunspot peak</td><td>DX + local FM repeaters</td></tr>
+          <tr><td>6 m</td><td>50–54 MHz</td><td>sporadic-E</td><td>the "magic band"</td></tr>
+          <tr><td>2 m</td><td>144–148 MHz</td><td>line of sight</td><td>FM repeaters, SSB weak signal</td></tr>
+          <tr><td>70 cm</td><td>420–450 MHz</td><td>line of sight</td><td>repeaters, DMR / Fusion</td></tr>
+        </tbody></table></div>
+        <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Mode</th><th>Keying</th><th>Bandwidth</th><th>Note</th></tr></thead><tbody>
+          <tr><td><strong>FT8</strong></td><td>8-FSK, 15 s cycles</td><td>~50 Hz</td><td>weak-signal DX; run with WSJT-X</td></tr>
+          <tr><td><strong>RTTY</strong></td><td>2-FSK, 45.45 baud</td><td>~270 Hz</td><td>contest and data classic</td></tr>
+          <tr><td><strong>PSK31</strong></td><td>BPSK/QPSK, 31.25 baud</td><td>~60 Hz</td><td>narrow keyboard chat</td></tr>
+          <tr><td><strong>WSPR</strong></td><td>FSK beacon</td><td>~6 Hz</td><td>propagation probes</td></tr>
+          <tr><td><strong>JS8Call</strong></td><td>FT8-derived</td><td>~50 Hz</td><td>keyboard chat via FT8</td></tr>
+        </tbody></table></div>
+        <div class="tags" style="margin-top:16px">
+          <span class="tag">FT8</span>
+          <span class="tag">RTTY</span>
+          <span class="tag">PSK31</span>
+          <span class="tag">WSPR</span>
+          <span class="tag">WSJT-X</span>
+          <span class="tag">fldigi</span>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">▦</div><p><strong>Band plan first.</strong> Each band is split by mode (CW, data, SSB, FM) and by region. Check your national band plan before transmitting — 30 m is CW/digital only worldwide, and repeater sub-bands differ by country.</p></div>
+      </section>
+
+      <section class="section searchable" id="embedded">
+        <div class="section-head">
+          <div><div class="section-kicker">06 / Embedded &amp; SDR</div><h2>Embedded &amp; SDR</h2></div>
+          <p>Modern ham gear is software-defined: a mixer and an ADC followed by DSP. Cheap SDR dongles make the whole RF chain hackable.</p>
+        </div>
+        <div class="model" aria-label="Superheterodyne receive chain">
+          <div class="model-node"><strong>Antenna</strong><small>RF in</small></div>
+          <div class="arrow">→</div>
+          <div class="model-node agent"><strong>Mixer</strong><small>RF × LO</small></div>
+          <div class="arrow">→</div>
+          <div class="model-node"><strong>IF filter</strong><small>band-select</small></div>
+          <div class="arrow">→</div>
+          <div class="model-node"><strong>Demod</strong><small>SSB · FM · CW</small></div>
+          <div class="arrow">→</div>
+          <div class="model-node agent"><strong>Audio / DSP</strong><small>speaker · decode</small></div>
+        </div>
+        <div class="flow" style="margin-top:16px">
+          <div class="flow-step"><div><h4>Antenna</h4><p>Captures the EM field; match it to the band for real signal.</p></div></div>
+          <div class="flow-step"><div><h4>LNA</h4><p>A low-noise amplifier sets the noise figure — the first stage dominates.</p></div></div>
+          <div class="flow-step"><div><h4>Mixer</h4><p>Multiply RF by a local oscillator (LO) to shift the band to IF or baseband.</p></div></div>
+          <div class="flow-step"><div><h4>Filter</h4><p>Band-select and anti-alias before the ADC; reject images and out-of-band junk.</p></div></div>
+          <div class="flow-step"><div><h4>ADC</h4><p>Sample the band (SDR) or detect it (analog receiver).</p></div></div>
+          <div class="flow-step"><div><h4>DSP</h4><p>Demodulate FT8 / SSB / FM and decode in software.</p></div></div>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>RTL-SDR dongle</h3><p>A ~$25 USB stick is a full receiver: <strong>24 MHz–1.7 GHz</strong>, ~2.4 MS/s, receive-only. Pair it with GQRX, SDR#, or GNU Radio and the whole spectrum is yours to explore.</p><pre><code>rtl_sdr -f 146e6 -s 2.4e6 capture.bin
+rtl_fm -f 146.52e6 -M fm -s 200k -r 48k - | \
+  aplay -r 48k -f S16_LE</code></pre></article>
+          <article class="card"><h3>Building blocks</h3><p>An <strong>Si5351</strong> clock generator or <strong>AD9850</strong> DDS makes a tunable LO; add a diode-ring mixer, some filters, and an audio amp and you have a working receiver or QRP transceiver.</p><pre><code>LO = Si5351 / AD9850 (DDS)
+mixer = diode ring (SBL-1)
+filter = LC band-pass / crystal
+audio = op-amp → speaker / sound card</code></pre></article>
+        </div>
+        <div class="command-index" style="margin-top:16px">
+          <div class="command-row"><code>rtl_sdr</code><span>Raw IQ capture from an RTL-SDR dongle.</span></div>
+          <div class="command-row"><code>rtl_fm</code><span>Narrowband/WFM demod to audio.</span></div>
+          <div class="command-row"><code>gqrx</code><span>GUI receiver: waterfall, demod, audio.</span></div>
+          <div class="command-row"><code>GNU Radio</code><span>Flowgraph DSP framework.</span></div>
+          <div class="command-row"><code>WSJT-X</code><span>FT8 / FT4 / WSPR / JT65 modes.</span></div>
+          <div class="command-row"><code>fldigi</code><span>RTTY, PSK31, and other sound-card modes.</span></div>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">SDR</div><p><strong>Go deeper.</strong> The full SDR story — IQ, sampling, FFT, and GNU Radio blocks — lives on the <a href="../sdr/">SDR guide</a>. This page is the radio-side complement: bands, antennas, and the signals you'll tune to.</p></div>
+      </section>
+
+      <section class="section searchable" id="setup">
+        <div class="section-head">
+          <div><div class="section-kicker">07 / Station setup</div><h2>Station setup</h2></div>
+          <p>A working station is transceiver → tuner → feedline → antenna, all bonded to a single ground — in that order.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>Transceiver</h3><p>One box does TX and RX: ~100 W typical on HF, 5 W handhelds on VHF/UHF. Controls to know: <strong>power</strong>, mic gain, VFO, band, mode, and <strong>PTT</strong>. The finals run hot into a mismatch — mind the SWR.</p><pre><code>HF   → 100 W, SSB / CW / data
+VHF  → 50 W mobile, 5 W handheld
+UHF  → 5 W handheld, FM / DMR</code></pre></article>
+          <article class="card"><h3>Antenna tuner (ATU)</h3><p>An impedance matcher between radio and feedline. It presents 50 Ω to the rig so the finals stay cool. It matches what's there — it doesn't improve the antenna itself.</p><pre><code>rig ── ATU ── feedline ── antenna
+       50 Ω  (any Z)    (any Z)</code></pre></article>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Feedline</h3><p>RG-58 is fine for short runs; RG-213 / LMR-400 for longer runs or higher bands. Loss climbs with frequency, so 2 m/70 cm runs should be short and low-loss. Weather-seal all outdoor connectors.</p><pre><code>RG-58      → cheap, lossy, short runs
+LMR-400    → low loss, VHF/UHF
+ladder line→ very low loss, balanced</code></pre></article>
+          <article class="card"><h3>Grounding</h3><p>One <strong>single-point</strong> RF/safety ground: rig, tuner, and antenna feedline all bond to one earth rod. Add a lightning arrestor where the feedline enters the building, and disconnect antennas in storms.</p><pre><code>rig ── tuner ── arrestor ── earth rod
+      (all bonded at one point)</code></pre></article>
+        </div>
+        <div class="flow" style="margin-top:16px">
+          <div class="flow-step"><div><h4>Ground first</h4><p>Single-point earth and bond all gear before applying power.</p></div></div>
+          <div class="flow-step"><div><h4>Transceiver</h4><p>Position it, connect power supply, key, mic, and PTT.</p></div></div>
+          <div class="flow-step"><div><h4>Tuner</h4><p>Insert between rig and feedline when the antenna is off-resonance.</p></div></div>
+          <div class="flow-step"><div><h4>Feedline</h4><p>Shortest low-loss run; seal connectors against weather.</p></div></div>
+          <div class="flow-step"><div><h4>Antenna</h4><p>High, in the clear, away from power lines and metal.</p></div></div>
+          <div class="flow-step"><div><h4>Test SWR</h4><p>Key up at low power, check SWR on each band before full power.</p></div></div>
+        </div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">⚠</div><p><strong>Safety.</strong> Never touch an antenna or feedline while transmitting — RF burns are real. Disconnect antennas during lightning, and keep them far from power lines: contact can be fatal, not just damaging.</p></div>
+      </section>
+
+      <section class="section searchable" id="gotchas">
+        <div class="section-head">
+          <div><div class="section-kicker">08 / Gotchas</div><h2>Pitfalls</h2></div>
+          <p>The mistakes that cook finals, shock fingers, and make signals vanish.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>High SWR</h3><p>Above ~3:1, power reflects back to the rig; finals overheat and fold back. Fix the antenna, add a tuner, or check connectors — don't just crank the power.</p><pre><code>SWR &gt; 3:1  → investigate
+SWR &lt; 1.5:1 → good to go</code></pre></article>
+          <article class="card"><h3>Ground loops</h3><p>Two ground paths at different potentials put hum and RF in the shack. Bond everything to <strong>one</strong> point and one earth rod — no daisy chains.</p><pre><code>rig + tuner + arrestor → ONE earth rod</code></pre></article>
+          <article class="card"><h3>RF burns</h3><p>Live RF heats tissue at the contact point. Never transmit with the antenna disconnected, and never touch a radiating element while keying.</p><pre><code># always have a matched load attached
+# before you key the transmitter</code></pre></article>
+          <article class="card"><h3>Licensing &amp; legal</h3><p>Transmitting without a license is illegal. Stay inside your class's bands, modes, and power; identify with your callsign every 10 minutes and at the end.</p><pre><code># receiving: usually fine
+# transmitting: requires a license — always</code></pre></article>
+          <article class="card"><h3>Antenna placement</h3><p>Near power lines = fatal; near metal = detuning and a skewed pattern. Height and clear space beat more power almost every time.</p><pre><code>higher + in the clear &gt; more watts</code></pre></article>
+          <article class="card"><h3>No antenna, no TX</h3><p>Keying up into an open or shorted output can destroy finals. Confirm a matched load is attached before every transmission.</p><pre><code># open / shorted output → dead finals</code></pre></article>
+        </div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">⚠</div><p><strong>Know the law.</strong> Amateur licensing is personal and non-commercial. Rules vary by country; your national regulator and the exam material are authoritative — not forum posts. When in doubt, don't transmit.</p></div>
+      </section>
+
+      <footer class="footer searchable">
+        <strong>Source of truth</strong>
+        <p>This guide covers amateur radio essentials. The ARRL Handbook, your national regulator's rules, and the license exam materials remain authoritative for frequencies, privileges, and operating practice.</p>
+        <div class="footer-links">
+          <a href="https://www.arrl.org/" target="_blank" rel="noreferrer">ARRL</a>
+          <a href="https://en.wikipedia.org/wiki/Amateur_radio" target="_blank" rel="noreferrer">Amateur radio (Wikipedia)</a>
+          <a href="https://www.eham.net/" target="_blank" rel="noreferrer">eHam.net</a>
+          <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

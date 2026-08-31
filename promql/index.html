@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-guide="promql">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Selectors, rates, aggregation, functions, operators, and recording rules in PromQL.">
+  <title>PromQL — Visual Cheatsheet &amp; Usage Guide</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../" aria-label="Back to slop-stuff">
+      <span class="brand-mark">pq_</span>
+      <span>PromQL Guide</span>
+      <span class="version">Prometheus</span>
+    </a>
+    <label class="search-wrap">
+      <span class="sr-only" hidden>Search guide</span>
+      <input id="search" type="search" aria-label="Search guide" placeholder="Search rate, sum by, histogram_quantile, topk, label, counter…" autocomplete="off">
+    </label>
+    <div class="top-actions">
+      <button class="icon-button" id="themeToggle" type="button" title="Toggle theme" aria-label="Toggle light and dark theme">◐</button>
+      <button class="icon-button" id="printGuide" type="button" title="Print guide" aria-label="Print this guide">Print</button>
+    </div>
+  </header>
+
+  <div class="shell" id="top">
+    <aside class="sidebar" aria-label="Guide sections">
+      <p class="side-label">On this page</p>
+      <nav>
+        <a href="#start"><span class="nav-number">01</span>Start here</a>
+        <a href="#selectors"><span class="nav-number">02</span>Selectors</a>
+        <a href="#rates"><span class="nav-number">03</span>Rates</a>
+        <a href="#aggregation"><span class="nav-number">04</span>Aggregation</a>
+        <a href="#functions"><span class="nav-number">05</span>Functions</a>
+        <a href="#operators"><span class="nav-number">06</span>Operators</a>
+        <a href="#recording"><span class="nav-number">07</span>Recording rules</a>
+        <a href="#gotchas"><span class="nav-number">08</span>Gotchas</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section class="hero searchable" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="eyebrow">Visual cheatsheet + usage guide</div>
+          <h1 id="hero-title">Query metrics <span>like a pro.</span></h1>
+          <p>PromQL is Prometheus' query language: pick a time series by name and labels, transform it with functions, and aggregate across the whole fleet. Here's every query you'll actually write.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#start">Start here →</a>
+            <a class="button" href="#rates">See rates</a>
+            <a class="button" href="#aggregation">Browse aggregation</a>
+          </div>
+        </div>
+        <div class="terminal" aria-label="Stylized PromQL session">
+          <div class="terminal-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="terminal-title">promql</span></div>
+          <div class="terminal-body">
+            <div class="mock-side">
+              <p class="mock-label">Time series</p>
+              <div class="mock-row active">http_requests_total{status="200"}</div>
+              <div class="mock-row">http_requests_total{status="500"}</div>
+              <div class="mock-row">node_cpu_seconds_total{cpu="0"}</div>
+            </div>
+            <div class="mock-pane">
+              <div><span class="prompt">❯</span> <span class="cmd">rate(http_requests_total[5m])</span></div>
+              <div class="dim">{status="200"} 11.9 /s</div>
+              <div class="dim">{status="500"} 0.5 /s</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cmd">sum by (status) (rate(http_requests_total[5m]))</span></div>
+              <div class="dim">{status="200"} 11.9</div>
+              <div class="dim">{status="500"} 0.5</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cmd">histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))</span></div>
+              <div class="dim">{} 0.83</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cursor"></span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “rate”, “sum”, “histogram_quantile”, “label”, or “counter”.</div>
+
+      <section class="section searchable" id="start">
+        <div class="section-head">
+          <div><div class="section-kicker">01 / Start here</div><h2>Metric model</h2></div>
+          <p>Every metric is a name plus a set of labels. A time series is that combination sampled over time.</p>
+        </div>
+        <div class="model" aria-label="Prometheus data model">
+          <div class="model-node"><strong>Metric name</strong><small>http_requests_total</small></div><div class="arrow">→</div>
+          <div class="model-node"><strong>Labels</strong><small>{job="api", status="200"}</small></div><div class="arrow">→</div>
+          <div class="model-node"><strong>Time series</strong><small>name + label set</small></div><div class="arrow">→</div>
+          <div class="model-node"><strong>Sample</strong><small>value @ timestamp</small></div><div class="arrow">→</div>
+          <div class="model-node agent"><strong>Vector</strong><small>instant vs range</small></div>
+        </div>
+        <div class="grid four" style="margin-top:16px">
+          <article class="card"><div class="card-number">1</div><h3>Name</h3><p>All series with that metric name.</p><pre><code>http_requests_total</code></pre></article>
+          <article class="card"><div class="card-number">2</div><h3>Filter</h3><p>Narrow to a label set.</p><pre><code>http_requests_total{job="api"}</code></pre></article>
+          <article class="card"><div class="card-number">3</div><h3>Window</h3><p>Turn it into a range vector.</p><pre><code>http_requests_total[5m]</code></pre></article>
+          <article class="card"><div class="card-number">4</div><h3>Rate</h3><p>Compute per-second change.</p><pre><code>rate(http_requests_total[5m])</code></pre></article>
+        </div>
+        <div class="grid three" style="margin-top:16px">
+          <article class="card"><h3>A sample</h3><p>The atomic unit: a <code>float64</code> value plus a millisecond timestamp.</p><pre><code>http_requests_total{job="api"} 10421 1700000000000</code></pre></article>
+          <article class="card"><h3>Instant vector</h3><p>One sample per series at a single point in time — what most expressions return.</p><pre><code>http_requests_total
+{job="api"}</code></pre></article>
+          <article class="card"><h3>Range vector</h3><p>Many samples per series across a window — what <code>rate()</code> and friends consume.</p><pre><code>http_requests_total[5m]
+node_cpu_seconds_total[1h]</code></pre></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">KEY</div><p><strong>Labels define identity.</strong> Every unique label set — <code>http_requests_total{job="api", status="200"}</code> — is its own time series. Adding a label multiplies the number of series, so keep cardinality low.</p></div>
+      </section>
+
+      <section class="section searchable" id="selectors">
+        <div class="section-head">
+          <div><div class="section-kicker">02 / Selectors</div><h2>Selectors &amp; matchers</h2></div>
+          <p>Select a subset of series by matching on label values. The metric name is itself a label.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Matcher</th><th>Meaning</th><th>Example</th></tr></thead><tbody>
+          <tr><td><code>=</code></td><td>label equals string</td><td><code>up{job="api"}</code></td></tr>
+          <tr><td><code>!=</code></td><td>label does not equal</td><td><code>up{job!="api"}</code></td></tr>
+          <tr><td><code>=~</code></td><td>label matches regex (anchored)</td><td><code>up{job=~"api|web"}</code></td></tr>
+          <tr><td><code>!~</code></td><td>label does not match regex</td><td><code>up{job!~"test.*"}</code></td></tr>
+          <tr><td><code>__name__</code></td><td>internal label holding the metric name</td><td><code>{__name__=~"http_.*"}</code></td></tr>
+        </tbody></table></div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Metric name is a selector</h3><p>The name is just a label. <code>http_requests_total</code> is shorthand for <code>{__name__="http_requests_total"}</code>.</p><pre><code>http_requests_total
+{__name__="http_requests_total"}</code></pre></article>
+          <article class="card"><h3>Regex is fully anchored</h3><p><code>=~</code> matches the whole value, so <code>job=~"api"</code> matches only <code>api</code> — not <code>apiserver</code>. Add <code>.*</code> to widen.</p><pre><code>up{job=~"api.*"}
+up{env!~"dev|staging"}</code></pre></article>
+        </div>
+        <details style="margin-top:16px">
+          <summary>Label matching recipes</summary>
+          <div class="details-body grid two">
+            <div><h4>Prefix / suffix</h4><pre><code>up{job=~"api.*"}
+up{job=~".*prod"}</code></pre></div>
+            <div><h4>Exclude environments</h4><pre><code>up{env!~"dev|staging|test"}</code></pre></div>
+            <div><h4>All metrics matching a pattern</h4><pre><code>{__name__=~"http_.*_total"}</code></pre></div>
+            <div><h4>Everything but one label</h4><pre><code>up{job!=""}</code></pre></div>
+          </div>
+        </details>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">KEY</div><p><strong>Commas AND, braces OR.</strong> Multiple matchers inside one <code>{…}</code> must all hold; separate selectors separated by commas are independent series.</p></div>
+      </section>
+
+      <section class="section searchable" id="rates">
+        <div class="section-head">
+          <div><div class="section-kicker">03 / Rates</div><h2>Rates &amp; counters</h2></div>
+          <p>Counters only ever go up (until a reset), so query their rate of change — never their raw value.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><div class="card-number">1</div><h3>rate()</h3><p>Per-second average over the window. Extrapolates the edges and handles counter resets. Best for dashboards.</p><pre><code>rate(http_requests_total[5m])</code></pre></article>
+          <article class="card"><div class="card-number">2</div><h3>irate()</h3><p>Per-second rate from the last two samples only. Reacts faster but is noisier. Best for alerting.</p><pre><code>irate(http_requests_total[5m])</code></pre></article>
+          <article class="card"><div class="card-number">3</div><h3>increase()</h3><p>Total increase over the window, reset-aware. Use when you want a count, not a rate.</p><pre><code>increase(http_requests_total[1h])</code></pre></article>
+          <article class="card"><div class="card-number">4</div><h3>delta()</h3><p>Difference over the window for gauges. Does <em>not</em> handle counter resets.</p><pre><code>delta(node_memory_available_bytes[1h])</code></pre></article>
+        </div>
+        <details style="margin-top:16px">
+          <summary>rate() vs irate()</summary>
+          <div class="details-body">
+            <p><code>rate()</code> averages over the full window for a smooth, stable line. <code>irate()</code> uses only the last two samples, so it catches spikes faster but is jittery — prefer it in alerting expressions.</p>
+            <pre><code>rate(http_requests_total[5m])   # dashboards
+irate(http_requests_total[5m])  # alerts</code></pre>
+          </div>
+        </details>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">KEY</div><p><strong>Rate first, then sum.</strong> Apply <code>rate()</code> to each counter series <em>before</em> aggregating: <code>sum(rate(http_requests_total[5m]))</code>. Summing raw counters first hides resets and double-counts when series churn.</p></div>
+      </section>
+
+      <section class="section searchable" id="aggregation">
+        <div class="section-head">
+          <div><div class="section-kicker">04 / Aggregation</div><h2>Aggregation</h2></div>
+          <p>Aggregation operators collapse many series into fewer by grouping on a chosen label set.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Operator</th><th>Purpose</th><th>Example</th></tr></thead><tbody>
+          <tr><td><code>sum</code></td><td>Add values together</td><td><code>sum by (job) (rate(x[5m]))</code></td></tr>
+          <tr><td><code>avg</code></td><td>Arithmetic mean</td><td><code>avg(node_load1)</code></td></tr>
+          <tr><td><code>min</code> / <code>max</code></td><td>Extremes across series</td><td><code>max(node_filesystem_avail_bytes)</code></td></tr>
+          <tr><td><code>count</code></td><td>Number of series</td><td><code>count(up == 0)</code></td></tr>
+          <tr><td><code>count_values</code></td><td>Frequency per value</td><td><code>count_values("version", build_info)</code></td></tr>
+          <tr><td><code>stddev</code> / <code>stdvar</code></td><td>Spread of values</td><td><code>stddev(node_load1)</code></td></tr>
+          <tr><td><code>topk</code> / <code>bottomk</code></td><td>Largest / smallest k series</td><td><code>topk(5, rate(x[5m]))</code></td></tr>
+          <tr><td><code>quantile</code></td><td>φ-quantile across series</td><td><code>quantile(0.9, node_load1)</code></td></tr>
+          <tr><td><code>group</code></td><td>Drop labels, keep 1 per group</td><td><code>group by (job) (up)</code></td></tr>
+        </tbody></table></div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>by vs without</h3><p><code>by (…)</code> keeps only the listed labels; <code>without (…)</code> drops the listed labels and keeps everything else.</p><pre><code>sum by (job, status) (rate(x[5m]))
+sum without (instance) (rate(x[5m]))</code></pre></article>
+          <article class="card"><h3>topk &amp; bottomk</h3><p><code>topk(k, v)</code> returns the k series with the largest values in <code>v</code>; <code>bottomk</code> the smallest.</p><pre><code>topk(3, rate(x[5m]))
+bottomk(3, node_load1)</code></pre></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">⚠</div><p><strong>Aggregation <code>quantile</code> is across series,</strong> not a histogram percentile. For latency percentiles use <code>histogram_quantile()</code> with bucket series.</p></div>
+        <details style="margin-top:16px">
+          <summary>count_values &amp; group</summary>
+          <div class="details-body">
+            <p><code>count_values(label, v)</code> counts how many series share each value and stores the count in a new label. <code>group</code> collapses every group to a single series with value 1 — handy for checking which label sets exist.</p>
+            <pre><code>count_values("version", build_info)
+count by (app) (up)     # instances per app
+group by (job) (up)     # one series per job</code></pre>
+          </div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="functions">
+        <div class="section-head">
+          <div><div class="section-kicker">05 / Functions</div><h2>Functions</h2></div>
+          <p>The workhorses beyond rate and aggregation — histograms, sorting, prediction, and label surgery.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>histogram_quantile(0.99, rate(bucket[5m]))</code><span>99th-percentile latency from histogram buckets.</span></div>
+          <div class="command-row"><code>sort(v) / sort_desc(v)</code><span>Sort series by value ascending / descending.</span></div>
+          <div class="command-row"><code>predict_linear(v[1h], 4*3600)</code><span>Linear forecast 4h ahead (disk-full alerts).</span></div>
+          <div class="command-row"><code>absent(v)</code><span>1 if v has no series, empty otherwise.</span></div>
+          <div class="command-row"><code>absent_over_time(v[5m])</code><span>1 if v had no samples in the window.</span></div>
+          <div class="command-row"><code>time()</code><span>Current Unix timestamp in seconds.</span></div>
+          <div class="command-row"><code>v offset 1h</code><span>Shift the query one hour into the past.</span></div>
+          <div class="command-row"><code>label_replace(v, "dst", "$1", "src", "(.*)")</code><span>Rewrite a label using a regex capture.</span></div>
+          <div class="command-row"><code>clamp(v, 0, 100)</code><span>Clamp every value into [0, 100].</span></div>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Histogram quantiles</h3><p>Always pass the bucket series through <code>rate()</code> first and keep the <code>le</code> label intact.</p><pre><code>histogram_quantile(0.99,
+  rate(http_request_duration_seconds_bucket[5m]))</code></pre></article>
+          <article class="card"><h3>offset for comparisons</h3><p><code>offset</code> shifts a query back in time so you can compare now against then.</p><pre><code>(rate(x[5m]) - rate(x[5m] offset 1h))
+  / rate(x[5m] offset 1h)</code></pre></article>
+        </div>
+        <div class="tags" style="margin-top:16px">
+          <span class="tag">histogram</span><span class="tag">sorting</span><span class="tag">prediction</span><span class="tag">absence</span><span class="tag">labels</span><span class="tag">time</span>
+        </div>
+        <details style="margin-top:16px">
+          <summary>label_replace in depth</summary>
+          <div class="details-body grid two">
+            <div><h4>Syntax</h4><pre><code>label_replace(v, dst, replacement, src, regex)</code></pre><p>For each series where <code>src</code> matches <code>regex</code>, set label <code>dst</code> to <code>replacement</code> (with <code>$1</code> capture groups).</p></div>
+            <div><h4>Strip a port suffix</h4><pre><code>label_replace(up, "instance", "$1",
+  "instance", "(.*):9100")</code></pre><p>Rewrites <code>instance="10.0.0.5:9100"</code> to <code>instance="10.0.0.5"</code>.</p></div>
+          </div>
+        </details>
+        <details>
+          <summary>absent vs absent_over_time</summary>
+          <div class="details-body grid two">
+            <div><h4>absent</h4><pre><code>absent(nonexistent_metric)</code></pre><p>Returns <code>1</code> if the metric has no series at all right now — useful for "is anything emitting this?" checks.</p></div>
+            <div><h4>absent_over_time</h4><pre><code>absent_over_time(up[5m])</code></pre><p>Returns <code>1</code> if the series had no samples in the window, catching scrape gaps and stale targets.</p></div>
+          </div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="operators">
+        <div class="section-head">
+          <div><div class="section-kicker">06 / Operators</div><h2>Operators &amp; vector matching</h2></div>
+          <p>Arithmetic and comparison work element-wise across series; set operators combine whole vectors.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Operator</th><th>Kind</th><th>Example</th></tr></thead><tbody>
+          <tr><td><code>+ - * / % ^</code></td><td>Arithmetic</td><td><code>node_memory_used / node_memory_total</code></td></tr>
+          <tr><td><code>== != &gt; &lt; &gt;= &lt;=</code></td><td>Comparison</td><td><code>up == 0</code></td></tr>
+          <tr><td><code>and</code></td><td>Set intersection</td><td><code>up == 1 and rate(x[5m]) &gt; 10</code></td></tr>
+          <tr><td><code>or</code></td><td>Set union</td><td><code>up or vector(0)</code></td></tr>
+          <tr><td><code>unless</code></td><td>Set difference</td><td><code>up unless up == 1</code></td></tr>
+        </tbody></table></div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>on / ignoring</h3><p>Control which labels must match when joining two vectors. <code>on</code> lists labels to join on; <code>ignoring</code> lists labels to ignore.</p><pre><code>a / on (instance) b
+a / ignoring (job) b</code></pre></article>
+          <article class="card"><h3>group_left / group_right</h3><p>Many-to-one joins. <code>group_left</code> keeps the extra labels on the left-hand side.</p><pre><code>rate(http_errors_total[5m])
+  / ignoring (code) group_left
+    rate(http_requests_total[5m])</code></pre></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">KEY</div><p><strong>No matching labels → empty result.</strong> Two vectors only pair up on series with identical label sets (modulo <code>on</code>/<code>ignoring</code>). If nothing matches, you get no output — silently, not an error.</p></div>
+        <details style="margin-top:16px">
+          <summary>and / or / unless semantics</summary>
+          <div class="details-body">
+            <p><code>and</code> keeps left series only where the right side also has a matching series; <code>or</code> keeps the left and fills gaps with the right; <code>unless</code> keeps left series that have no match on the right. Operands are treated as booleans (non-zero is true) and the result keeps the left side's values.</p>
+            <pre><code>up == 1 and rate(http_requests_total[5m]) &gt; 0  # up AND receiving traffic
+rate(node_errors_total[5m]) or vector(0)          # never empty
+up unless up{job="ignored"}                       # drop one job</code></pre>
+          </div>
+        </details>
+        <details>
+          <summary>Comparison with bool</summary>
+          <div class="details-body">
+            <p>Normally a comparison keeps only the series where it holds, dropping the rest. Add <code>bool</code> to keep every series and return <code>0</code> or <code>1</code> instead.</p>
+            <pre><code>up == 1            # only the up series
+up == bool 1       # every series as 0/1
+rate(x[5m]) &gt; bool 0.5</code></pre>
+          </div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="recording">
+        <div class="section-head">
+          <div><div class="section-kicker">07 / Recording rules</div><h2>Recording rules &amp; alerts</h2></div>
+          <p>Recording rules precompute expressions into new metrics; alerting rules evaluate a condition and fire.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>Recording rule</h3><p>Store an expensive expression under a new metric name, updated every evaluation interval.</p><pre><code>- record: job:http_requests:rate5m
+  expr: sum by (job) (rate(http_requests_total[5m]))</code></pre></article>
+          <article class="card"><h3>Alerting rule</h3><p>Fires after <code>expr</code> holds true continuously for the <code>for</code> duration.</p><pre><code>- alert: HighErrorRate
+  expr: rate(http_requests_total{status=~"5.."}[5m]) &gt; 0.1
+  for: 5m
+  labels:
+    severity: page
+  annotations:
+    summary: "errors on {{ $labels.job }}"</code></pre></article>
+        </div>
+        <div class="flow" style="margin-top:16px">
+          <div class="flow-step"><div><strong>Evaluate expr</strong><p>The server evaluates each rule's <code>expr</code> on the rule group's <code>interval</code> (default <code>evaluation_interval</code>).</p></div></div>
+          <div class="flow-step"><div><strong>Hold for</strong><p>An alerting rule must stay true for the whole <code>for</code> duration before it transitions to <code>pending</code>.</p></div></div>
+          <div class="flow-step"><div><strong>Fire</strong><p>The alert enters <code>firing</code> state and is sent to Alertmanager.</p></div></div>
+          <div class="flow-step"><div><strong>Route &amp; notify</strong><p>Alertmanager deduplicates, groups, routes, and sends notifications.</p></div></div>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">KEY</div><p><strong>Name recording rules <code>level:metric:operation</code></strong> — e.g. <code>job:http_requests:rate5m</code>. Rules are evaluated by the server (default <code>evaluation_interval</code> = 1m), so don't record a raw metric you can already query directly.</p></div>
+        <details style="margin-top:16px">
+          <summary>Complete rules.yml</summary>
+          <div class="details-body"><pre><code>groups:
+  - name: http.rules
+    rules:
+      - record: job:http_requests:rate5m
+        expr: sum by (job) (rate(http_requests_total[5m]))
+      - alert: HighErrorRate
+        expr: sum by (job) (rate(http_requests_total{status=~"5.."}[5m])) / sum by (job) (rate(http_requests_total[5m])) &gt; 0.1
+        for: 5m
+        labels:
+          severity: page
+        annotations:
+          summary: "{{ $labels.job }} error rate above 10%"</code></pre></div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="gotchas">
+        <div class="section-head">
+          <div><div class="section-kicker">08 / Gotchas</div><h2>Pitfalls</h2></div>
+          <p>Small behaviors that silently change what a query returns.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>Counter resets</h3><p>A counter resets to 0 on restart. <code>rate()</code>, <code>irate()</code>, and <code>increase()</code> detect and handle resets; <code>delta()</code> does not.</p><pre><code>rate(restarts_total[5m])  # safe
+delta(restarts_total[5m]) # wrong</code></pre></article>
+          <article class="card"><h3>Window ≥ 2× scrape</h3><p>Use a range at least twice the scrape interval so <code>rate()</code> has ≥2 samples. Too short a window extrapolates wildly.</p><pre><code># scrape_interval: 15s → window ≥ 30s
+rate(http_requests_total[1m])</code></pre></article>
+          <article class="card"><h3>Label cardinality</h3><p>Every unique label set is a separate time series. Never put user IDs, request paths, or other unbounded values in labels — use a histogram or log instead.</p><pre><code>http_requests_total{path="/users/123"}  # bad
+http_requests_total{route="/users/:id"}  # good</code></pre></article>
+          <article class="card"><h3>Staleness</h3><p>A series that stops scraping goes stale after ~5m and its last sample is ignored by queries, so graphs drop to empty instead of flat-lining.</p><pre><code>up == 0    # target is down
+absent(up) # target vanished entirely</code></pre></article>
+        </div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">⚠</div><p><strong>Sum after rate, never before.</strong> <code>sum(rate(http_requests_total[5m]))</code> is correct. <code>rate(sum(http_requests_total)[5m])</code> merges reset boundaries and yields a meaningless rate.</p></div>
+      </section>
+
+      <footer class="footer searchable">
+        <strong>Source of truth</strong>
+        <p>This guide covers PromQL essentials. The official Prometheus docs — querying basics and the functions reference — remain authoritative for edge cases and the full function list.</p>
+        <div class="footer-links">
+          <a href="https://prometheus.io/docs/prometheus/latest/querying/basics/" target="_blank" rel="noreferrer">Querying basics</a>
+          <a href="https://prometheus.io/docs/prometheus/latest/querying/functions/" target="_blank" rel="noreferrer">Functions reference</a>
+          <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

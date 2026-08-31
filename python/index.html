@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-guide="python">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="The daily Python surface: types, comprehensions, functions, classes, the standard library, and tooling.">
+  <title>Python — Visual Cheatsheet &amp; Usage Guide</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../" aria-label="Back to slop-stuff">
+      <span class="brand-mark">py_</span>
+      <span>Python Guide</span>
+      <span class="version">3.11+</span>
+    </a>
+    <label class="search-wrap">
+      <span class="sr-only" hidden>Search guide</span>
+      <input id="search" type="search" aria-label="Search guide" placeholder="Search comprehension, decorator, f-string, pathlib, dataclass, venv…" autocomplete="off">
+    </label>
+    <div class="top-actions">
+      <button class="icon-button" id="themeToggle" type="button" title="Toggle theme" aria-label="Toggle light and dark theme">◐</button>
+      <button class="icon-button" id="printGuide" type="button" title="Print guide" aria-label="Print this guide">Print</button>
+    </div>
+  </header>
+
+  <div class="shell" id="top">
+    <aside class="sidebar" aria-label="Guide sections">
+      <p class="side-label">On this page</p>
+      <nav>
+        <a href="#start"><span class="nav-number">01</span>Start here</a>
+        <a href="#types"><span class="nav-number">02</span>Types</a>
+        <a href="#control"><span class="nav-number">03</span>Control flow</a>
+        <a href="#functions"><span class="nav-number">04</span>Functions</a>
+        <a href="#classes"><span class="nav-number">05</span>Classes</a>
+        <a href="#stdlib"><span class="nav-number">06</span>Standard library</a>
+        <a href="#patterns"><span class="nav-number">07</span>Patterns</a>
+        <a href="#tooling"><span class="nav-number">08</span>Tooling</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section class="hero searchable" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="eyebrow">Visual cheatsheet + usage guide</div>
+          <h1 id="hero-title">Readable, <span>batteries included.</span></h1>
+          <p>Python is a readable, general-purpose language whose standard library ships the batteries. This is the daily surface: types, comprehensions, functions, classes, and the tooling that keeps code clean.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#start">Start in 5 minutes →</a>
+            <a class="button" href="#control">See comprehensions</a>
+            <a class="button" href="#stdlib">Browse stdlib</a>
+          </div>
+        </div>
+        <div class="terminal" aria-label="Stylized Python session">
+          <div class="terminal-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="terminal-title">python</span></div>
+          <div class="terminal-body">
+            <div class="mock-side">
+              <p class="mock-label">setup</p>
+              <div class="mock-row active">venv</div>
+              <div class="mock-row">pip</div>
+            </div>
+            <div class="mock-pane">
+              <div><span class="prompt">❯</span> <span class="cmd">python -m venv .venv</span></div>
+              <div class="dim">Created virtual environment at .venv</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cmd">source .venv/bin/activate</span></div>
+              <div class="dim">(.venv) ❯</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cmd">pip install requests</span></div>
+              <div class="dim">Successfully installed requests</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cursor"></span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “venv”, “comprehension”, “decorator”, “pathlib”, or “dataclass”.</div>
+
+      <section class="section searchable" id="start">
+        <div class="section-head">
+          <div><div class="section-kicker">01 / Start here</div><h2>Run, venv &amp; pip</h2></div>
+          <p>The four commands that get any project off the ground — and the fast path with uv.</p>
+        </div>
+        <div class="grid four">
+          <article class="card"><div class="card-number">1</div><h3>Run code</h3><pre><code>python app.py             # run a script
+python -c 'print(2**10)'  # one-liner
+python -i app.py          # run, then REPL</code></pre></article>
+          <article class="card"><div class="card-number">2</div><h3>Virtual environment</h3><pre><code>python -m venv .venv
+source .venv/bin/activate   # macOS / Linux
+.venv\Scripts\activate      # Windows
+deactivate                  # leave it</code></pre></article>
+          <article class="card"><div class="card-number">3</div><h3>Install packages</h3><pre><code>pip install requests
+pip install -r requirements.txt
+pip freeze &gt; requirements.txt</code></pre></article>
+          <article class="card"><div class="card-number">4</div><h3>uv (fast, modern)</h3><pre><code>uv venv                  # create a venv
+uv pip install requests
+uv run app.py            # run in project env</code></pre></article>
+        </div>
+        <br>
+        <div class="flow">
+          <div class="flow-step"><div><strong>Create the venv</strong><p><code>python -m venv .venv</code> — an isolated, project-local Python.</p></div></div>
+          <div class="flow-step"><div><strong>Activate it</strong><p><code>source .venv/bin/activate</code> — Windows: <code>.venv\Scripts\activate</code>.</p></div></div>
+          <div class="flow-step"><div><strong>Install dependencies</strong><p><code>pip install -r requirements.txt</code> — or add one package at a time.</p></div></div>
+          <div class="flow-step"><div><strong>Run your code</strong><p><code>python app.py</code> — repeat after every change.</p></div></div>
+        </div>
+      </section>
+
+      <section class="section searchable" id="types">
+        <div class="section-head">
+          <div><div class="section-kicker">02 / Types</div><h2>Built-in types</h2></div>
+          <p>Every value has a type; knowing which are mutable is half the language.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Type</th><th>Example</th><th>Mutable</th><th>Notes</th></tr></thead><tbody>
+          <tr><td><code>int</code></td><td><code>42</code></td><td>no</td><td>arbitrary precision; <code>10 // 3</code> floors</td></tr>
+          <tr><td><code>float</code></td><td><code>3.14</code></td><td>no</td><td>IEEE-754 double; <code>1e3</code> == 1000</td></tr>
+          <tr><td><code>str</code></td><td><code>"py"</code></td><td>no</td><td>immutable; <code>.split()</code>, <code>.join()</code></td></tr>
+          <tr><td><code>bool</code></td><td><code>True</code> / <code>False</code></td><td>no</td><td>a subclass of <code>int</code></td></tr>
+          <tr><td><code>list</code></td><td><code>[1, 2]</code></td><td>yes</td><td>ordered, dynamic; <code>.append()</code></td></tr>
+          <tr><td><code>tuple</code></td><td><code>(1, 2)</code></td><td>no</td><td>immutable, hashable (usable as dict key)</td></tr>
+          <tr><td><code>set</code></td><td><code>{1, 2}</code></td><td>yes</td><td>unique, unordered; <code>a &amp; b</code> intersects</td></tr>
+          <tr><td><code>dict</code></td><td><code>{"k": 1}</code></td><td>yes</td><td>key → value, insertion-ordered</td></tr>
+          <tr><td><code>NoneType</code></td><td><code>None</code></td><td>—</td><td>the “no value” singleton</td></tr>
+        </tbody></table></div>
+        <br>
+        <div class="tags">
+          <span class="tag">immutable: int · float · str · bool · tuple</span>
+          <span class="tag">mutable: list · set · dict</span>
+        </div>
+        <br>
+        <div class="grid two">
+          <article class="card"><h3>Slicing — seq[start:stop:step]</h3><pre><code>s = "python"
+s[0]      # 'p'   first
+s[-1]     # 'n'   last
+s[1:4]    # 'yth'
+s[::2]    # 'pto' every other
+s[::-1]   # 'nohtyp' reversed</code></pre></article>
+          <article class="card"><h3>Membership &amp; type checks</h3><pre><code>"py" in "python"         # True
+3 in [1, 2, 3]           # True
+"k" in {"k": 1}          # True (keys)
+type(x) is int           # exact type
+isinstance(x, (int, float))</code></pre></article>
+        </div>
+        <br>
+        <div class="callout warning"><div class="callout-mark">!</div><p><strong>Mutability gotcha:</strong> <code>b = a</code> does not copy — both names point to the same object. Copy with <code>b = a.copy()</code> or <code>b = a[:]</code>. Only pass a mutable object to a function if you mean for it to be changed.</p></div>
+      </section>
+
+      <section class="section searchable" id="control">
+        <div class="section-head">
+          <div><div class="section-kicker">03 / Control flow</div><h2>Control flow &amp; comprehensions</h2></div>
+          <p>Loops and conditions, then the concise comprehension forms that replace them.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>if / elif / else</h3><pre><code>if score &gt;= 90:
+    grade = "A"
+elif score &gt;= 80:
+    grade = "B"
+else:
+    grade = "C"
+
+grade = "A" if score &gt;= 90 else "B"   # ternary</code></pre></article>
+          <article class="card"><h3>for / while / break / continue</h3><pre><code>for item in items:
+    print(item)
+
+while x &lt; 10:
+    x += 1
+    if x == 5:
+        break       # exit loop
+    continue        # next iteration</code></pre></article>
+          <article class="card"><h3>Comprehensions</h3><pre><code>[n * 2 for n in range(5)]       # [0, 2, 4, 6, 8]
+[n for n in nums if n &gt; 0]      # filter
+{x: x**2 for x in range(3)}     # {0: 0, 1: 1, 2: 4}
+{x % 3 for x in range(10)}      # {0, 1, 2}</code></pre></article>
+          <article class="card"><h3>Generators &amp; context managers</h3><pre><code>sum(n * n for n in nums)         # lazy, no list
+",".join(str(n) for n in nums)
+
+with open("data.txt") as f:      # auto-closes
+    text = f.read()</code></pre></article>
+        </div>
+        <br>
+        <div class="callout"><div class="callout-mark">KEY</div><p><strong>Comprehension anatomy:</strong> <code>[expression for item in iterable if condition]</code>. Drop the brackets — <code>(n*2 for n in nums)</code> — to get a lazy generator expression when you only iterate once.</p></div>
+      </section>
+
+      <section class="section searchable" id="functions">
+        <div class="section-head">
+          <div><div class="section-kicker">04 / Functions</div><h2>Functions &amp; decorators</h2></div>
+          <p>Define once, reuse everywhere — and decorate, generate, or inline them.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>def &amp; default arguments</h3><pre><code>def greet(name, greeting="hi"):
+    return f"{greeting}, {name}"
+
+greet("Ada")              # 'hi, Ada'
+greet("Ada", "yo")        # 'yo, Ada'
+greet(greeting="hey", name="Bo")</code></pre></article>
+          <article class="card"><h3>*args &amp; **kwargs</h3><pre><code>def fn(*args, **kwargs):
+    print(args)      # tuple of positional
+    print(kwargs)    # dict of keyword
+
+fn(1, 2, x=3)        # (1, 2) {'x': 3}
+
+def f(a, b, *, c):   # c is keyword-only
+    ...</code></pre></article>
+          <article class="card"><h3>lambda</h3><pre><code>sq = lambda x: x * x
+sq(4)                       # 16
+
+sorted(items, key=lambda x: x.price)
+pairs = [(p, q) for p, q in zip(a, b) if p]</code></pre></article>
+          <article class="card"><h3>Decorators</h3><pre><code>def timer(fn):
+    def wrapper(*a, **kw):
+        t = time.time()
+        r = fn(*a, **kw)
+        print(f"{fn.__name__}: {time.time() - t:.3f}s")
+        return r
+    return wrapper
+
+@timer
+def work():
+    ...</code></pre></article>
+          <article class="card"><h3>Generators (yield)</h3><pre><code>def fib(n):
+    a, b = 0, 1
+    for _ in range(n):
+        yield a        # lazy: one at a time
+        a, b = b, a + b
+
+list(fib(6))           # [0, 1, 1, 2, 3, 5]</code></pre></article>
+          <article class="card"><h3>Walrus operator :=</h3><pre><code>if (n := len(items)) &gt; 10:
+    print(f"{n} is a lot")
+
+while (line := f.readline()):
+    process(line)
+
+if (m := re.search(r"\d+", s)):
+    print(m.group())</code></pre></article>
+        </div>
+        <br>
+        <div class="callout warning"><div class="callout-mark">!</div><p><strong>Never use a mutable default:</strong> <code>def f(x, seen=[])</code> shares one list across every call. Write <code>def f(x, seen=None):</code> and inside <code>seen = seen or []</code>.</p></div>
+      </section>
+
+      <section class="section searchable" id="classes">
+        <div class="section-head">
+          <div><div class="section-kicker">05 / Classes</div><h2>Classes &amp; dataclasses</h2></div>
+          <p>Objects are dictionaries with behavior; dataclasses remove the boilerplate.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>class, __init__, self</h3><pre><code>class Point:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def move(self, dx, dy):
+        self.x += dx
+        self.y += dy
+
+p = Point(3, 4)
+p.move(1, -2)     # p.x == 4, p.y == 2</code></pre></article>
+          <article class="card"><h3>@dataclass</h3><pre><code>from dataclasses import dataclass
+
+@dataclass
+class Point:
+    x: int
+    y: int
+
+p = Point(3, 4)       # auto __init__
+p == Point(3, 4)      # auto __eq__ → True
+repr(p)               # 'Point(x=3, y=4)'</code></pre></article>
+          <article class="card"><h3>@property</h3><pre><code>class Circle:
+    def __init__(self, r):
+        self._r = r
+
+    @property
+    def area(self):          # call without ()
+        return 3.14159 * self._r ** 2
+
+c = Circle(2)
+c.area                     # 12.566…</code></pre></article>
+        </div>
+        <br>
+        <div class="table-wrap"><table><thead><tr><th>Dunder method</th><th>Triggered by</th><th>Purpose</th></tr></thead><tbody>
+          <tr><td><code>__init__</code></td><td><code>C(...)</code></td><td>constructor — set up state</td></tr>
+          <tr><td><code>__repr__</code></td><td><code>repr(obj)</code></td><td>unambiguous, for debugging</td></tr>
+          <tr><td><code>__str__</code></td><td><code>str(obj)</code>, <code>print</code></td><td>human-readable</td></tr>
+          <tr><td><code>__eq__</code></td><td><code>==</code></td><td>equality between instances</td></tr>
+          <tr><td><code>__len__</code></td><td><code>len(obj)</code></td><td>size / length</td></tr>
+          <tr><td><code>__getitem__</code></td><td><code>obj[k]</code></td><td>indexing / slicing</td></tr>
+          <tr><td><code>__iter__</code></td><td><code>for x in obj</code></td><td>iteration</td></tr>
+          <tr><td><code>__enter__</code>/<code>__exit__</code></td><td><code>with</code></td><td>context manager</td></tr>
+        </tbody></table></div>
+        <br>
+        <div class="callout"><div class="callout-mark">KEY</div><p>For plain data containers, prefer <code>@dataclass</code> — it writes <code>__init__</code>, <code>__repr__</code>, and <code>__eq__</code> for you. Add <code>frozen=True</code> for an immutable record.</p></div>
+      </section>
+
+      <section class="section searchable" id="stdlib">
+        <div class="section-head">
+          <div><div class="section-kicker">06 / Standard library</div><h2>stdlib</h2></div>
+          <p>The batteries included: paths, JSON, dates, regex, and the itertools/functools toolkit.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>from pathlib import Path</code><span>Modern paths; replaces most of os.path.</span></div>
+          <div class="command-row"><code>Path("a/b.txt").read_text()</code><span>Read a whole file as a string.</span></div>
+          <div class="command-row"><code>Path("out.txt").write_text(s)</code><span>Write a string to a file.</span></div>
+          <div class="command-row"><code>Path("src").glob("*.py")</code><span>Iterate files matching a glob.</span></div>
+          <div class="command-row"><code>json.loads(s)</code><span>Parse a JSON string into objects.</span></div>
+          <div class="command-row"><code>json.dumps(obj, indent=2)</code><span>Serialize an object to a JSON string.</span></div>
+          <div class="command-row"><code>datetime.now().isoformat()</code><span>Sortable timestamp string.</span></div>
+          <div class="command-row"><code>datetime.fromisoformat(s)</code><span>Parse an ISO timestamp back.</span></div>
+          <div class="command-row"><code>re.search(r"\d+", s)</code><span>First match; read it with .group().</span></div>
+          <div class="command-row"><code>re.findall(r"\w+", s)</code><span>All matches as a list.</span></div>
+          <div class="command-row"><code>re.sub(r"\s+", " ", s)</code><span>Replace matches (collapse whitespace).</span></div>
+          <div class="command-row"><code>Counter("abracadabra")</code><span>Count items; .most_common(3) ranks them.</span></div>
+          <div class="command-row"><code>defaultdict(list)</code><span>Dict with a default factory — append without setup.</span></div>
+          <div class="command-row"><code>namedtuple("P", "x y")</code><span>Lightweight immutable record with named fields.</span></div>
+          <div class="command-row"><code>itertools.chain(a, b)</code><span>Iterate a then b.</span></div>
+          <div class="command-row"><code>itertools.groupby(xs, key=fn)</code><span>Group consecutive items by key.</span></div>
+          <div class="command-row"><code>itertools.product(a, b)</code><span>Cartesian product of iterables.</span></div>
+          <div class="command-row"><code>functools.lru_cache</code><span>Memoize a pure function — decorate with @lru_cache.</span></div>
+          <div class="command-row"><code>functools.reduce(fn, xs)</code><span>Fold an iterable left-to-right.</span></div>
+          <div class="command-row"><code>os.environ["HOME"]</code><span>Read an environment variable.</span></div>
+        </div>
+        <br>
+        <details>
+          <summary>More stdlib worth knowing</summary>
+          <div class="details-body grid two">
+            <div><h4>argparse</h4><pre><code>p = argparse.ArgumentParser()
+p.add_argument("name")
+args = p.parse_args()</code></pre></div>
+            <div><h4>random</h4><pre><code>random.choice(xs)
+random.randint(1, 6)</code></pre></div>
+            <div><h4>math / statistics</h4><pre><code>math.sqrt(2)
+statistics.median(xs)</code></pre></div>
+            <div><h4>sqlite3 / shutil</h4><pre><code>sqlite3.connect("app.db")
+shutil.copy(src, dst)</code></pre></div>
+          </div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="patterns">
+        <div class="section-head">
+          <div><div class="section-kicker">07 / Patterns</div><h2>Everyday patterns</h2></div>
+          <p>The idioms that appear in every codebase — f-strings, unpacking, sorting, and safe error handling.</p>
+        </div>
+        <div class="model">
+          <div class="model-node"><strong>input</strong><small>raw bytes</small></div>
+          <span class="arrow">→</span>
+          <div class="model-node agent"><strong>parse</strong><small>json.loads</small></div>
+          <span class="arrow">→</span>
+          <div class="model-node agent"><strong>transform</strong><small>comprehension</small></div>
+          <span class="arrow">→</span>
+          <div class="model-node agent"><strong>validate</strong><small>try/except</small></div>
+          <span class="arrow">→</span>
+          <div class="model-node"><strong>output</strong><small>result</small></div>
+        </div>
+        <br>
+        <div class="grid three">
+          <article class="card"><h3>f-strings</h3><pre><code>name, n = "Ada", 3
+f"{name} has {n} items"
+f"{n:&gt;4}"            # pad to width 4
+f"{price:.2f}"       # 2 decimal places
+f"{n=}"              # 'n=3' (debug)</code></pre></article>
+          <article class="card"><h3>Unpacking</h3><pre><code>a, b = b, a             # swap
+first, *rest = items    # head + tail
+*all, last = items
+merged = {**d1, **d2}   # merge dicts
+nums = [*a, *b]         # concat lists</code></pre></article>
+          <article class="card"><h3>dict.get &amp; defaults</h3><pre><code>d.get("k")                # None if missing
+d.get("k", 0)             # fallback
+d.setdefault("k", []).append(x)
+
+v = d.get("k") or 0       # {} and [] are falsy too</code></pre></article>
+          <article class="card"><h3>enumerate &amp; zip</h3><pre><code>for i, item in enumerate(items, start=1):
+    print(i, item)
+
+for name, score in zip(names, scores):
+    print(name, score)
+
+dict(zip(keys, values))   # build a dict</code></pre></article>
+          <article class="card"><h3>sorted(key=)</h3><pre><code>sorted(items)                 # natural order
+sorted(items, key=str.lower)
+sorted(users, key=lambda u: u.age)
+sorted(users, key=lambda u: u.age, reverse=True)
+
+items.sort(key=fn)            # in-place</code></pre></article>
+          <article class="card"><h3>try / except / else / finally</h3><pre><code>try:
+    n = int(raw)
+except ValueError as e:
+    print("bad input:", e)
+else:
+    print("parsed", n)    # no exception raised
+finally:
+    print("always runs")  # cleanup</code></pre></article>
+        </div>
+      </section>
+
+      <section class="section searchable" id="tooling">
+        <div class="section-head">
+          <div><div class="section-kicker">08 / Tooling</div><h2>Tooling &amp; types</h2></div>
+          <p>Type hints, linters, tests, and the debugger that keep a growing codebase honest.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>Type hints</h3><pre><code>def add(a: int, b: int) -&gt; int:
+    return a + b
+
+def first(items: list[str]) -&gt; str | None:
+    return items[0] if items else None
+
+def apply(fn: Callable[[int], int], x: int) -&gt; int:
+    return fn(x)</code></pre></article>
+          <article class="card"><h3>mypy &amp; ruff</h3><pre><code>mypy app.py          # static type check
+ruff check .         # lint
+ruff check --fix .   # auto-fix
+ruff format .        # formatter</code></pre></article>
+          <article class="card"><h3>pytest</h3><pre><code># test_math.py
+def test_add():
+    assert add(2, 3) == 5
+
+def test_raises():
+    with pytest.raises(ValueError):
+        parse("nope")
+
+pytest -q            # run tests</code></pre></article>
+        </div>
+        <br>
+        <div class="grid two">
+          <article class="card"><h3>__main__ guard</h3><pre><code>def main():
+    args = parse_args()
+    run(args)
+
+if __name__ == "__main__":
+    main()</code></pre></article>
+          <article class="card"><h3>pdb (debugger)</h3><pre><code>breakpoint()           # Python 3.7+; pauses here
+# older: import pdb; pdb.set_trace()
+
+# at the (Pdb) prompt:
+n   # next line      s   # step into
+c   # continue       q   # quit</code></pre></article>
+        </div>
+        <br>
+        <div class="shortcut-grid">
+          <div class="shortcut-group">
+            <h4>pdb — move</h4>
+            <div class="shortcut-list">
+              <div class="shortcut-row"><span>Next line</span><span class="keys"><kbd>n</kbd></span></div>
+              <div class="shortcut-row"><span>Step into</span><span class="keys"><kbd>s</kbd></span></div>
+              <div class="shortcut-row"><span>Return</span><span class="keys"><kbd>r</kbd></span></div>
+            </div>
+          </div>
+          <div class="shortcut-group">
+            <h4>pdb — inspect</h4>
+            <div class="shortcut-list">
+              <div class="shortcut-row"><span>Print expr</span><span class="keys"><kbd>p expr</kbd></span></div>
+              <div class="shortcut-row"><span>Pretty-print</span><span class="keys"><kbd>pp expr</kbd></span></div>
+              <div class="shortcut-row"><span>List source</span><span class="keys"><kbd>ll</kbd></span></div>
+            </div>
+          </div>
+          <div class="shortcut-group">
+            <h4>pdb — control</h4>
+            <div class="shortcut-list">
+              <div class="shortcut-row"><span>Continue</span><span class="keys"><kbd>c</kbd></span></div>
+              <div class="shortcut-row"><span>Quit</span><span class="keys"><kbd>q</kbd></span></div>
+              <div class="shortcut-row"><span>Help</span><span class="keys"><kbd>h</kbd></span></div>
+            </div>
+          </div>
+        </div>
+        <br>
+        <div class="callout warning"><div class="callout-mark">!</div><p><strong>Type hints are not enforced at runtime.</strong> They are documentation that <code>mypy</code> checks statically. Python will happily run <code>add("a", "b")</code> — mypy is what catches it.</p></div>
+      </section>
+
+      <footer class="footer searchable">
+        <strong>Source of truth</strong>
+        <p>This guide covers the daily Python surface. The official Python documentation and the uv docs remain authoritative for edge cases and version-specific behavior.</p>
+        <div class="footer-links">
+          <a href="https://docs.python.org/3/" target="_blank" rel="noreferrer">Python docs</a>
+          <a href="https://docs.python.org/3/library/index.html" target="_blank" rel="noreferrer">Standard library</a>
+          <a href="https://docs.astral.sh/uv/" target="_blank" rel="noreferrer">uv docs</a>
+          <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

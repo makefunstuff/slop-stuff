@@ -44,6 +44,13 @@
     .link-card:hover { translate: 0 -3px; border-color: color-mix(in srgb, var(--accent) 50%, var(--line)); }
     .link-card .meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
     .link-card .go { color: var(--accent); font: 700 12px var(--mono); margin-top: 14px; }
+    .cat {
+      margin: 34px 0 14px;
+      color: var(--faint);
+      font: 800 12px var(--mono);
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
     .ghost-card {
       display: grid; place-items: center; min-height: 200px;
       border: 1px dashed var(--line); border-radius: var(--radius);
@@ -71,7 +78,7 @@
         Cheatsheets, visual guides, little games, and random experiments — each in its own folder, all served from one GitHub Pages site.
       </p>
       <div class="stat-row">
-        <div class="stat"><strong>4</strong><span>cheatsheets &amp; guides</span></div>
+        <div class="stat"><strong>16</strong><span>cheatsheets &amp; guides</span></div>
         <div class="stat"><strong>1</strong><span>playable game</span></div>
         <div class="stat"><strong>∞</strong><span>slop to come</span></div>
       </div>
@@ -82,12 +89,21 @@
         <div><div class="section-kicker">Cheatsheets</div><h2>Visual guides &amp; references</h2></div>
         <p>Copy-paste friendly reference pages in the same style.</p>
       </div>
+
+      <div class="cat">Agent tools</div>
       <div class="grid two">
         <a class="card link-card" href="herdr-cheatsheet/">
           <span class="tag">workspace</span>
           <h3 style="margin-top:14px">Herdr — visual cheatsheet</h3>
           <p>Persistent terminal workspaces, panes, agent states, remote sessions, automation, and plugins.</p>
           <div class="meta"><span class="tag">panes</span><span class="tag">agents</span><span class="tag">CLI</span></div>
+          <div class="go">Open guide →</div>
+        </a>
+        <a class="card link-card" href="herdr-agentic/">
+          <span class="tag">patterns</span>
+          <h3 style="margin-top:14px">Agentic patterns with Herdr</h3>
+          <p>Orchestrator-worker, reviewer loops, parallel worktrees, and blocked-state handling for driving agents.</p>
+          <div class="meta"><span class="tag">orchestrator</span><span class="tag">reviewer</span><span class="tag">worktree</span></div>
           <div class="go">Open guide →</div>
         </a>
         <a class="card link-card" href="hermes-agent/">
@@ -100,15 +116,112 @@
         <a class="card link-card" href="omp/">
           <span class="tag">harness</span>
           <h3 style="margin-top:14px">omp harness — cheatsheet</h3>
-          <p>The coding agent with the IDE wired in: tools, subagents, LSP/DAP, hashline edits, and 40+ providers.</p>
+          <p>The coding agent with the IDE wired in: 32 tools, subagents, LSP/DAP, hashline edits, and 40+ providers.</p>
           <div class="meta"><span class="tag">tools</span><span class="tag">subagents</span><span class="tag">providers</span></div>
           <div class="go">Open guide →</div>
         </a>
+      </div>
+
+      <div class="cat">Languages</div>
+      <div class="grid two">
+        <a class="card link-card" href="rust/">
+          <span class="tag">language</span>
+          <h3 style="margin-top:14px">Rust — cheatsheet</h3>
+          <p>Ownership, cargo, match, Result, traits, and concurrency.</p>
+          <div class="meta"><span class="tag">ownership</span><span class="tag">cargo</span><span class="tag">traits</span></div>
+          <div class="go">Open guide →</div>
+        </a>
+        <a class="card link-card" href="c/">
+          <span class="tag">language</span>
+          <h3 style="margin-top:14px">C — cheatsheet</h3>
+          <p>Pointers, memory, structs, strings, and the preprocessor.</p>
+          <div class="meta"><span class="tag">pointers</span><span class="tag">malloc</span><span class="tag">struct</span></div>
+          <div class="go">Open guide →</div>
+        </a>
+        <a class="card link-card" href="cpp/">
+          <span class="tag">language</span>
+          <h3 style="margin-top:14px">C++ — cheatsheet</h3>
+          <p>STL, smart pointers, templates, and modern C++ syntax.</p>
+          <div class="meta"><span class="tag">STL</span><span class="tag">RAII</span><span class="tag">templates</span></div>
+          <div class="go">Open guide →</div>
+        </a>
+        <a class="card link-card" href="python/">
+          <span class="tag">language</span>
+          <h3 style="margin-top:14px">Python — cheatsheet</h3>
+          <p>Comprehensions, decorators, dataclasses, and the standard library.</p>
+          <div class="meta"><span class="tag">comprehension</span><span class="tag">stdlib</span><span class="tag">venv</span></div>
+          <div class="go">Open guide →</div>
+        </a>
+        <a class="card link-card" href="lua/">
+          <span class="tag">language</span>
+          <h3 style="margin-top:14px">Lua — cheatsheet</h3>
+          <p>Tables, metatables, patterns, modules, and embedding.</p>
+          <div class="meta"><span class="tag">tables</span><span class="tag">patterns</span><span class="tag">require</span></div>
+          <div class="go">Open guide →</div>
+        </a>
+      </div>
+
+      <div class="cat">Embedded</div>
+      <div class="grid two">
+        <a class="card link-card" href="esp32/">
+          <span class="tag">embedded</span>
+          <h3 style="margin-top:14px">ESP32 — cheatsheet</h3>
+          <p>GPIO, UART/I2C/SPI, Wi-Fi, storage, power, and OTA on the ESP32.</p>
+          <div class="meta"><span class="tag">GPIO</span><span class="tag">WiFi</span><span class="tag">OTA</span></div>
+          <div class="go">Open guide →</div>
+        </a>
+      </div>
+
+      <div class="cat">CLI &amp; data</div>
+      <div class="grid two">
         <a class="card link-card" href="jq/">
           <span class="tag">cli</span>
           <h3 style="margin-top:14px">jq — cheatsheet</h3>
           <p>The command-line JSON processor: filters, operators, recipes, and curl pipelines that actually work.</p>
           <div class="meta"><span class="tag">filters</span><span class="tag">recipes</span><span class="tag">JSON</span></div>
+          <div class="go">Open guide →</div>
+        </a>
+      </div>
+
+      <div class="cat">Cloud &amp; observability</div>
+      <div class="grid two">
+        <a class="card link-card" href="kubectl/">
+          <span class="tag">cloud</span>
+          <h3 style="margin-top:14px">kubectl — cheatsheet</h3>
+          <p>Inspect, run, edit, debug, and switch Kubernetes contexts from the shell.</p>
+          <div class="meta"><span class="tag">get</span><span class="tag">apply</span><span class="tag">rollout</span></div>
+          <div class="go">Open guide →</div>
+        </a>
+        <a class="card link-card" href="gcloud/">
+          <span class="tag">cloud</span>
+          <h3 style="margin-top:14px">gcloud — cheatsheet</h3>
+          <p>Compute Engine, Cloud Storage, GKE, IAM, Cloud SQL, and logging.</p>
+          <div class="meta"><span class="tag">compute</span><span class="tag">gke</span><span class="tag">iam</span></div>
+          <div class="go">Open guide →</div>
+        </a>
+        <a class="card link-card" href="grafana/">
+          <span class="tag">observability</span>
+          <h3 style="margin-top:14px">Grafana — cheatsheet</h3>
+          <p>Panels, variables, transforms, alerts, and provisioning as code.</p>
+          <div class="meta"><span class="tag">panels</span><span class="tag">alerts</span><span class="tag">provisioning</span></div>
+          <div class="go">Open guide →</div>
+        </a>
+        <a class="card link-card" href="promql/">
+          <span class="tag">observability</span>
+          <h3 style="margin-top:14px">PromQL — cheatsheet</h3>
+          <p>Selectors, rates, aggregation, and functions for Prometheus.</p>
+          <div class="meta"><span class="tag">rate</span><span class="tag">sum by</span><span class="tag">histogram</span></div>
+          <div class="go">Open guide →</div>
+        </a>
+      </div>
+
+      <div class="cat">Editors</div>
+      <div class="grid two">
+        <a class="card link-card" href="neovim/">
+          <span class="tag">editor</span>
+          <h3 style="margin-top:14px">Neovim — cheatsheet</h3>
+          <p>Modes, motions, operators, text objects, config, and LSP.</p>
+          <div class="meta"><span class="tag">motion</span><span class="tag">operators</span><span class="tag">lsp</span></div>
           <div class="go">Open guide →</div>
         </a>
       </div>

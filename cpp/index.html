@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-guide="cpp">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="The daily C++ surface: STL, classes, smart pointers, templates, modern syntax, and the standard library.">
+  <title>C++ — Visual Cheatsheet &amp; Usage Guide</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../" aria-label="Back to slop-stuff">
+      <span class="brand-mark">cxx_</span>
+      <span>C++ Guide</span>
+      <span class="version">C++17 · C++20</span>
+    </a>
+    <label class="search-wrap">
+      <span class="sr-only" hidden>Search guide</span>
+      <input id="search" type="search" aria-label="Search guide" placeholder="Search vector, unique_ptr, template, lambda, RAII, range-for…" autocomplete="off">
+    </label>
+    <div class="top-actions">
+      <button class="icon-button" id="themeToggle" type="button" title="Toggle theme" aria-label="Toggle light and dark theme">◐</button>
+      <button class="icon-button" id="printGuide" type="button" title="Print guide" aria-label="Print this guide">Print</button>
+    </div>
+  </header>
+
+  <div class="shell" id="top">
+    <aside class="sidebar" aria-label="Guide sections">
+      <p class="side-label">On this page</p>
+      <nav>
+        <a href="#start"><span class="nav-number">01</span>Start here</a>
+        <a href="#stl"><span class="nav-number">02</span>STL</a>
+        <a href="#classes"><span class="nav-number">03</span>Classes</a>
+        <a href="#memory"><span class="nav-number">04</span>Memory</a>
+        <a href="#templates"><span class="nav-number">05</span>Templates</a>
+        <a href="#modern"><span class="nav-number">06</span>Modern C++</a>
+        <a href="#stdlib"><span class="nav-number">07</span>Standard library</a>
+        <a href="#gotchas"><span class="nav-number">08</span>Gotchas</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section class="hero searchable" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="eyebrow">Visual cheatsheet + usage guide</div>
+          <h1 id="hero-title">Zero-cost abstractions, <span>safely.</span></h1>
+          <p>C++ gives you C's speed with zero-cost abstractions: <code>RAII</code>, smart pointers, templates, and the STL. This is the daily surface — from <code>g++</code> flags to the gotchas that bite everyone once.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#start">Start here →</a>
+            <a class="button" href="#stl">See the STL</a>
+            <a class="button" href="#memory">Manage memory</a>
+          </div>
+        </div>
+        <div class="terminal" aria-label="Stylized compile session">
+          <div class="terminal-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="terminal-title">g++</span></div>
+          <div class="terminal-body">
+            <div class="mock-side">
+              <p class="mock-label">Build</p>
+              <div class="mock-row active">compile</div>
+              <div class="mock-row">link</div>
+              <div class="mock-row">run</div>
+            </div>
+            <div class="mock-pane">
+              <div><span class="prompt">❯</span> <span class="cmd">g++ -std=c++20 main.cpp -o main</span></div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cmd">./main</span></div>
+              <div class="dim">Hello, C++20</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cursor"></span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “vector”, “unique_ptr”, “template”, “lambda”, or “RAII”.</div>
+
+      <section class="section searchable" id="start">
+        <div class="section-head">
+          <div><div class="section-kicker">01 / Start here</div><h2>Compile &amp; basics</h2></div>
+          <p>Two compilers, one standard, and the tiny syntax you need before anything else. Every program starts in <code>main()</code>.</p>
+        </div>
+        <div class="grid four">
+          <article class="card"><div class="card-number">1</div><h3>Compile</h3><pre><code>g++ -std=c++20 main.cpp -o main
+clang++ -std=c++20 main.cpp -o main</code></pre></article>
+          <article class="card"><div class="card-number">2</div><h3>Useful flags</h3><pre><code>-Wall -Wextra   # warnings
+-Wpedantic      # strict ISO C++
+-O2             # optimize
+-g              # debug symbols</code></pre></article>
+          <article class="card"><div class="card-number">3</div><h3>Hello world</h3><pre><code>#include &lt;iostream&gt;
+int main() {
+  std::cout &lt;&lt; "hi\n";
+}</code></pre></article>
+          <article class="card"><div class="card-number">4</div><h3>auto &amp; namespaces</h3><pre><code>namespace app { int version = 1; }
+auto x = 42;              // int
+auto s = "text";          // const char*
+std::cout &lt;&lt; app::version;</code></pre></article>
+        </div>
+        <div class="prefix-demo">
+          <kbd>g++</kbd><span class="then">compile</span>
+          <kbd>-std=c++20</kbd><span class="then">standard</span>
+          <kbd>-Wall</kbd><span class="then">warnings</span>
+          <kbd>-o main</kbd><span class="then">output</span>
+        </div>
+        <div class="callout"><div class="callout-mark">KEY</div><p><strong>Prefer <code>std::</code>.</strong> Write <code>std::cout</code>, <code>std::vector</code>, <code>std::string</code>. A blanket <code>using namespace std;</code> is fine for tiny demos but pollutes the global namespace in real code.</p></div>
+      </section>
+
+      <section class="section searchable" id="stl">
+        <div class="section-head">
+          <div><div class="section-kicker">02 / STL</div><h2>STL containers &amp; algorithms</h2></div>
+          <p><code>vector</code>, <code>map</code>, <code>set</code>, <code>unordered_map</code>, <code>string</code> — plus the <code>&lt;algorithm&gt;</code> toolbox and iterators.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Container</th><th>Header</th><th>Behavior</th><th>Access</th></tr></thead><tbody>
+          <tr><td><code>std::vector&lt;T&gt;</code></td><td><code>&lt;vector&gt;</code></td><td>dynamic array, contiguous</td><td><code>v.push_back(x); v[i]</code></td></tr>
+          <tr><td><code>std::string</code></td><td><code>&lt;string&gt;</code></td><td>growable text buffer</td><td><code>s += "x"; s.size()</code></td></tr>
+          <tr><td><code>std::map&lt;K,V&gt;</code></td><td><code>&lt;map&gt;</code></td><td>sorted key → value</td><td><code>m["k"] = v;</code></td></tr>
+          <tr><td><code>std::set&lt;T&gt;</code></td><td><code>&lt;set&gt;</code></td><td>sorted, unique elements</td><td><code>s.insert(x);</code></td></tr>
+          <tr><td><code>std::unordered_map&lt;K,V&gt;</code></td><td><code>&lt;unordered_map&gt;</code></td><td>hash map, O(1) average</td><td><code>um.at("k")</code></td></tr>
+          <tr><td><code>std::array&lt;T,N&gt;</code></td><td><code>&lt;array&gt;</code></td><td>fixed size, no heap</td><td><code>a[0]; a.size()</code></td></tr>
+        </tbody></table></div>
+        <div class="grid two">
+          <article class="card"><h3>Common algorithms</h3><div class="command-index">
+            <div class="command-row"><code>std::sort(v.begin(), v.end())</code><span>ascending; pass a comparator for custom order.</span></div>
+            <div class="command-row"><code>std::find(v.begin(), v.end(), x)</code><span>iterator to x, or end().</span></div>
+            <div class="command-row"><code>std::count(v.begin(), v.end(), x)</code><span>number of matches.</span></div>
+            <div class="command-row"><code>std::min_element(b, e)</code><span>iterator to smallest.</span></div>
+            <div class="command-row"><code>std::max_element(b, e)</code><span>iterator to largest.</span></div>
+            <div class="command-row"><code>std::reverse(b, e)</code><span>reverse in place.</span></div>
+            <div class="command-row"><code>std::any_of(b, e, pred)</code><span>does any element satisfy pred?</span></div>
+            <div class="command-row"><code>std::accumulate(b, e, 0)</code><span>sum — from &lt;numeric&gt;.</span></div>
+          </div></article>
+          <article class="card"><h3>Iterators</h3><p>Iterators point into a container; <code>begin()</code>/<code>end()</code> bound a half-open range. Range-<code>for</code> is sugar over them.</p><pre><code>std::vector&lt;int&gt; v{3, 1, 2};
+for (auto it = v.begin(); it != v.end(); ++it)
+  std::cout &lt;&lt; *it &lt;&lt; ' ';
+for (int x : v)          // same thing
+  std::cout &lt;&lt; x &lt;&lt; ' ';</code></pre></article>
+        </div>
+        <details>
+          <summary>Erase–remove idiom</summary>
+          <div class="details-body"><p>Erasing while iterating invalidates iterators. Remove first, then erase once.</p><pre><code>// remove all 2s from v
+v.erase(std::remove(v.begin(), v.end(), 2), v.end());</code></pre></div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="classes">
+        <div class="section-head">
+          <div><div class="section-kicker">03 / Classes</div><h2>Classes &amp; inheritance</h2></div>
+          <p><code>class</code> vs <code>struct</code>, constructors and destructors, member init lists, inheritance, and <code>virtual</code>.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>class vs struct</h3><pre><code>class Dog {          // private by default
+  int age;
+ public:
+  void bark() { /* … */ }
+};
+struct Point {       // public by default
+  int x, y;
+};</code></pre></article>
+          <article class="card"><h3>Constructors &amp; destructors</h3><pre><code>class Foo {
+ public:
+  Foo(int n) : value(n) {}     // member init list
+  Foo(const Foo&amp;) = default;   // copy ctor
+  ~Foo() = default;            // destructor
+ private:
+  int value;
+};</code></pre></article>
+          <article class="card"><h3>Inheritance</h3><pre><code>class Shape {
+ public:
+  virtual double area() const = 0;  // pure virtual
+};
+class Circle : public Shape {
+ public:
+  double area() const override;     // implement
+};</code></pre></article>
+          <article class="card"><h3>virtual / override / final</h3><pre><code>class Base { public: virtual void f() const; };
+class Mid : public Base { void f() const override; };
+class Leaf final : public Mid { void f() const final; };</code></pre></article>
+        </div>
+        <div class="callout"><div class="callout-mark">KEY</div><p><strong>Access specifiers:</strong> <code>public</code> (anyone), <code>protected</code> (this class + derived), <code>private</code> (this class only). <code>virtual</code> enables dispatch through a base pointer; <code>override</code> catches typos, <code>final</code> blocks further overriding.</p></div>
+      </section>
+
+      <section class="section searchable" id="memory">
+        <div class="section-head">
+          <div><div class="section-kicker">04 / Memory</div><h2>Memory &amp; smart pointers</h2></div>
+          <p><code>new</code>/<code>delete</code>, <code>unique_ptr</code>, <code>shared_ptr</code>/<code>weak_ptr</code>, and RAII — the rule of 3/5/0.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>new / delete (raw)</h3><pre><code>int* p = new int(5);      // allocate
+delete p;                 // free
+int* arr = new int[10];
+delete[] arr;             // array form</code></pre></article>
+          <article class="card"><h3>std::unique_ptr</h3><pre><code>auto p = std::make_unique&lt;Widget&gt;(a, b);
+p-&gt;draw();               // sole owner
+// no delete — freed at scope exit
+auto q = std::move(p);    // transfer ownership</code></pre></article>
+          <article class="card"><h3>std::shared_ptr / weak_ptr</h3><pre><code>auto sp = std::make_shared&lt;Widget&gt;();
+std::weak_ptr&lt;Widget&gt; wp = sp;   // no ownership
+if (auto lock = wp.lock()) {     // promote
+  lock-&gt;draw();
+}</code></pre></article>
+          <article class="card"><h3>RAII</h3><pre><code>class File {
+  FILE* f_;
+ public:
+  File(const char* path) : f_(fopen(path, "r")) {}
+  ~File() { if (f_) fclose(f_); }  // always runs
+};</code></pre></article>
+        </div>
+        <div class="model">
+          <div class="model-node agent"><strong>new / delete</strong><small>manual, error-prone</small></div>
+          <div class="arrow">→</div>
+          <div class="model-node agent"><strong>unique_ptr</strong><small>exclusive owner</small></div>
+          <div class="arrow">→</div>
+          <div class="model-node agent"><strong>shared_ptr</strong><small>reference-counted</small></div>
+        </div>
+        <div class="flow">
+          <div class="flow-step"><div><strong>Acquire</strong><p>Open the resource in the constructor.</p></div></div>
+          <div class="flow-step"><div><strong>Use</strong><p>Work with the object normally.</p></div></div>
+          <div class="flow-step"><div><strong>Release</strong><p>The destructor frees it — even when an exception unwinds.</p></div></div>
+        </div>
+        <div class="callout warning"><div class="callout-mark">!</div><p><strong>Rule of three / five / zero.</strong> If a class owns a resource and you hand-write a destructor, copy constructor, or copy assignment, you probably need all five (plus move). If it owns nothing, write none — that's the rule of zero.</p></div>
+      </section>
+
+      <section class="section searchable" id="templates">
+        <div class="section-head">
+          <div><div class="section-kicker">05 / Templates</div><h2>Templates, lambdas &amp; auto</h2></div>
+          <p>Function and class templates, lambdas with captures, <code>auto</code>, <code>decltype</code>, and <code>constexpr</code>.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>Function template</h3><pre><code>template &lt;typename T&gt;
+T add(T a, T b) { return a + b; }
+
+add(1, 2);        // int
+add(1.5, 2.5);    // double</code></pre></article>
+          <article class="card"><h3>Class template</h3><pre><code>template &lt;typename T&gt;
+struct Box { T value; };
+
+Box&lt;int&gt; b{42};
+Box&lt;std::string&gt; s{"hi"};</code></pre></article>
+          <article class="card"><h3>Lambdas</h3><pre><code>auto twice = [](int x) { return x * 2; };
+auto sum = [](auto a, auto b) { return a + b; };
+
+// captures: [=] copy · [&amp;] ref · [this]
+int n = 10;
+auto plus_n = [=](int x) { return x + n; };</code></pre></article>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>auto &amp; decltype</h3><pre><code>auto x = compute();              // deduced type
+decltype(x) y = x;               // "type of x"
+auto f(int a, int b) -&gt; int;     // trailing return</code></pre></article>
+          <article class="card"><h3>constexpr</h3><pre><code>constexpr int sq(int n) { return n * n; }
+static_assert(sq(4) == 16);      // compile-time
+constexpr auto v = sq(3);        // a constant</code></pre></article>
+        </div>
+        <details>
+          <summary>Lambda captures at a glance</summary>
+          <div class="details-body"><div class="table-wrap"><table><thead><tr><th>Capture</th><th>Meaning</th></tr></thead><tbody>
+            <tr><td><code>[=]</code></td><td>capture everything used, by value</td></tr>
+            <tr><td><code>[&amp;]</code></td><td>capture everything used, by reference</td></tr>
+            <tr><td><code>[this]</code></td><td>capture the enclosing object</td></tr>
+            <tr><td><code>[n]</code></td><td>capture <code>n</code> by value</td></tr>
+            <tr><td><code>[&amp;n]</code></td><td>capture <code>n</code> by reference</td></tr>
+          </tbody></table></div></div>
+        </details>
+        <div class="tags">
+          <span class="tag">template</span>
+          <span class="tag">typename</span>
+          <span class="tag">auto</span>
+          <span class="tag">constexpr</span>
+          <span class="tag">lambda</span>
+          <span class="tag">decltype</span>
+        </div>
+      </section>
+
+      <section class="section searchable" id="modern">
+        <div class="section-head">
+          <div><div class="section-kicker">06 / Modern C++</div><h2>Modern features</h2></div>
+          <p>Range-<code>for</code>, structured bindings, move semantics, initializer lists, <code>enum class</code>, <code>nullptr</code>, and <code>optional</code>/<code>variant</code>.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>Range-for &amp; structured bindings</h3><pre><code>for (int x : v) { … }
+for (const auto&amp; x : v) { … }   // no copy
+
+auto [name, age] = person;      // structured binding
+auto&amp; [a, b] = pair;</code></pre></article>
+          <article class="card"><h3>Move semantics</h3><pre><code>std::vector&lt;int&gt; a = build();    // move elision
+std::vector&lt;int&gt; b = std::move(a); // a is moved-from
+
+void sink(Widget&amp;&amp; w);          // rvalue reference</code></pre></article>
+          <article class="card"><h3>Init lists, enum class, nullptr</h3><pre><code>std::vector&lt;int&gt; v{1, 2, 3};    // init list
+
+enum class Color { Red, Green };
+Color c = Color::Red;           // scoped
+
+int* p = nullptr;               // not 0 / NULL</code></pre></article>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>std::optional</h3><pre><code>std::optional&lt;int&gt; find(int k) {
+  if (k &lt; 0) return std::nullopt;
+  return k * 2;
+}
+if (auto r = find(3)) use(*r);</code></pre></article>
+          <article class="card"><h3>std::variant</h3><pre><code>std::variant&lt;int, std::string&gt; v = "hi";
+if (auto* s = std::get_if&lt;std::string&gt;(&amp;v))
+  use(*s);
+std::visit([](auto&amp;&amp; x){ … }, v);</code></pre></article>
+        </div>
+        <div class="state-grid">
+          <div class="state-card done"><strong>lvalue</strong><p>Named, addressable — a variable.</p></div>
+          <div class="state-card working"><strong>prvalue</strong><p>Pure temporary — a call result.</p></div>
+          <div class="state-card blocked"><strong>xvalue</strong><p>eXpiring — result of <code>std::move</code>.</p></div>
+          <div class="state-card unknown"><strong>glvalue</strong><p>lvalue or xvalue.</p></div>
+        </div>
+      </section>
+
+      <section class="section searchable" id="stdlib">
+        <div class="section-head">
+          <div><div class="section-kicker">07 / Standard library</div><h2>stdlib bits</h2></div>
+          <p><code>filesystem</code>, <code>chrono</code>, <code>thread</code>, <code>optional</code>, <code>variant</code>, <code>any</code> — the utilities you reach for.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>std::filesystem</h3><pre><code>namespace fs = std::filesystem;
+fs::path p{"data/out.txt"};
+if (fs::exists(p)) fs::remove(p);
+for (auto&amp; e : fs::directory_iterator("data"))
+  std::cout &lt;&lt; e.path() &lt;&lt; '\n';</code></pre></article>
+          <article class="card"><h3>std::chrono</h3><pre><code>using namespace std::chrono;
+auto t0 = steady_clock::now();
+work();
+auto ms = duration_cast&lt;milliseconds&gt;(
+            steady_clock::now() - t0).count();</code></pre></article>
+          <article class="card"><h3>std::thread / std::any</h3><pre><code>std::thread t([]{ std::cout &lt;&lt; "bg\n"; });
+t.join();                    // wait
+
+std::any a = 42;             // hold any type
+int n = std::any_cast&lt;int&gt;(a);</code></pre></article>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>std::optional&lt;T&gt;</code><span>a value or std::nullopt.</span></div>
+          <div class="command-row"><code>std::variant&lt;A,B&gt;</code><span>one of several types.</span></div>
+          <div class="command-row"><code>std::any</code><span>any copyable type.</span></div>
+          <div class="command-row"><code>std::filesystem::path</code><span>filesystem paths and traversal.</span></div>
+          <div class="command-row"><code>std::chrono::steady_clock</code><span>monotonic timing.</span></div>
+          <div class="command-row"><code>std::thread / std::jthread</code><span>concurrency.</span></div>
+          <div class="command-row"><code>std::async → std::future</code><span>background result.</span></div>
+          <div class="command-row"><code>std::to_string / std::stoi</code><span>string ⇄ number.</span></div>
+        </div>
+      </section>
+
+      <section class="section searchable" id="gotchas">
+        <div class="section-head">
+          <div><div class="section-kicker">08 / Gotchas</div><h2>Pitfalls</h2></div>
+          <p>Dangling references, object slicing, iterator invalidation, const correctness, shadowing, and the rule of 3/5.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>Dangling references</h3><pre><code>const std::string&amp; bad() {
+  std::string s = "temp";
+  return s;                 // s dies at return
+}                           // → dangling
+std::string good() { return "temp"; } // return by value</code></pre></article>
+          <article class="card"><h3>Object slicing</h3><pre><code>Derived d;
+Base b = d;        // slices off Derived members
+// store by pointer/reference instead:
+Base&amp; r = d;
+auto p = std::make_unique&lt;Derived&gt;();</code></pre></article>
+          <article class="card"><h3>Iterator invalidation</h3><pre><code>for (auto it = v.begin(); it != v.end(); ++it)
+  if (*it == 2) v.erase(it);   // it is invalidated
+// safe: erase–remove, rebuild, or index loop</code></pre></article>
+          <article class="card"><h3>Const correctness</h3><pre><code>void f(const std::vector&lt;int&gt;&amp; v); // no copy, no mutation
+const int* p;     // pointer to const
+int* const q;     // const pointer
+const int&amp; r = x; // const reference</code></pre></article>
+          <article class="card"><h3>Rule of three / five / zero</h3><p>If a class owns a resource and you hand-write a destructor, copy constructor, or copy assignment, you almost always need all five (copy + move + destructor). If it owns nothing, write none.</p><pre><code>// Rule of five: = default or = delete
+Foo(const Foo&amp;) = default;
+Foo(Foo&amp;&amp;) = default;</code></pre></article>
+          <article class="card"><h3>Shadowing</h3><pre><code>int x = 1;
+{ int x = 2; }   // shadows outer x — confusing
+// rename inner variables; compile with -Wshadow</code></pre></article>
+        </div>
+        <div class="callout warning"><div class="callout-mark">!</div><p><strong>Enable warnings.</strong> <code>-Wall -Wextra -Wshadow -Wpedantic</code> catch most of these at compile time. Add sanitizers (<code>-fsanitize=address,undefined</code>) to catch dangling pointers and undefined behavior at runtime.</p></div>
+      </section>
+
+      <footer class="footer searchable">
+        <strong>Source of truth</strong>
+        <p>This guide covers the daily C++ surface. The C++ standard and cppreference remain authoritative for the details — especially undefined behavior and library edge cases.</p>
+        <div class="footer-links">
+          <a href="https://en.cppreference.com/w/" target="_blank" rel="noreferrer">cppreference</a>
+          <a href="https://isocpp.github.io/CppCoreGuidelines/" target="_blank" rel="noreferrer">C++ Core Guidelines</a>
+          <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

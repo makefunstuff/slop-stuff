@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-guide="neovim">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Modes, motions, operators, text objects, search, buffers, config, and LSP in Neovim.">
+  <title>Neovim — Visual Cheatsheet &amp; Usage Guide</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../" aria-label="Back to slop-stuff">
+      <span class="brand-mark">nv_</span>
+      <span>Neovim Guide</span>
+      <span class="version">0.10+</span>
+    </a>
+    <label class="search-wrap">
+      <span class="sr-only" hidden>Search guide</span>
+      <input id="search" type="search" aria-label="Search guide" placeholder="Search motion, operator, text object, split, lsp, init.lua…" autocomplete="off">
+    </label>
+    <div class="top-actions">
+      <button class="icon-button" id="themeToggle" type="button" title="Toggle theme" aria-label="Toggle light and dark theme">◐</button>
+      <button class="icon-button" id="printGuide" type="button" title="Print guide" aria-label="Print this guide">Print</button>
+    </div>
+  </header>
+
+  <div class="shell" id="top">
+    <aside class="sidebar" aria-label="Guide sections">
+      <p class="side-label">On this page</p>
+      <nav>
+        <a href="#start"><span class="nav-number">01</span>Start here</a>
+        <a href="#motion"><span class="nav-number">02</span>Motion</a>
+        <a href="#editing"><span class="nav-number">03</span>Editing</a>
+        <a href="#search"><span class="nav-number">04</span>Search</a>
+        <a href="#buffers"><span class="nav-number">05</span>Buffers</a>
+        <a href="#config"><span class="nav-number">06</span>Config</a>
+        <a href="#lsp"><span class="nav-number">07</span>LSP</a>
+        <a href="#gotchas"><span class="nav-number">08</span>Gotchas</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section class="hero searchable" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="eyebrow">Visual cheatsheet + usage guide</div>
+          <h1 id="hero-title">Edit at the <span>speed of thought.</span></h1>
+          <p>Neovim is a modal editor: every keypress is a command, not a character. Learn the modes and motions once, and your hands never leave the home row again.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#start">Start in 5 minutes →</a>
+            <a class="button" href="#motion">Learn motions</a>
+            <a class="button" href="#config">init.lua</a>
+          </div>
+        </div>
+        <div class="terminal" aria-label="Stylized Neovim session">
+          <div class="terminal-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="terminal-title">nvim</span></div>
+          <div class="terminal-body">
+            <div class="mock-side">
+              <p class="mock-label">Mode</p>
+              <div class="mock-row active">NORMAL</div>
+              <div class="mock-row">INSERT</div>
+              <div class="mock-row">VISUAL</div>
+              <div class="mock-row">COMMAND</div>
+            </div>
+            <div class="mock-pane">
+              <div><span class="prompt">$</span> <span class="cmd">nvim main.rs</span></div>
+              <div class="dim">-- NORMAL --</div>
+              <br>
+              <div><span class="prompt">:</span> <span class="cmd">w</span></div>
+              <div class="dim">"main.rs" 42L, 1201B written</div>
+              <br>
+              <div><span class="prompt">:</span> <span class="cmd">q</span></div>
+              <div class="dim">Bye.</div>
+              <br>
+              <div><span class="prompt">:</span> <span class="cursor"></span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “motion”, “operator”, “text object”, “split”, or “lsp”.</div>
+
+      <section class="section searchable" id="start">
+        <div class="section-head">
+          <div><div class="section-kicker">01 / Start here</div><h2>Modes &amp; help</h2></div>
+          <p>Neovim is modal. You read and move in <code>Normal</code>, type in <code>Insert</code>, select in <code>Visual</code>, and run commands from the <code>:</code> command line.</p>
+        </div>
+        <div class="grid four">
+          <article class="card"><div class="card-number">1</div><h3>Modes</h3><pre><code>Esc            " back to Normal (always works)
+i  a  o        " insert before / after / new line
+v  V  Ctrl-v   " visual: char / line / block
+:              " command-line mode</code></pre></article>
+          <article class="card"><div class="card-number">2</div><h3>Open &amp; quit</h3><pre><code>nvim main.rs   " open a file
+:w             " save (write)
+:q             " quit
+:wq            " save and quit (:x too)
+:q!            " quit, discard changes</code></pre></article>
+          <article class="card"><div class="card-number">3</div><h3>Help</h3><pre><code>:help           " open the manual
+:help :w        " help for the :w command
+:help quickref  " one-page quick reference
+:help user-manual</code></pre></article>
+          <article class="card"><div class="card-number">4</div><h3>Shell</h3><pre><code>:!ls -la        " run a command, return
+:terminal       " open a real shell
+:term           " ...in a split</code></pre></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">KEY</div><p><strong>Neovim is modal.</strong> In Normal mode every key is a command, and most commands combine a <code>count</code>, an <code>operator</code>, and a <code>motion</code> — <code>d3w</code> means “delete 3 words”. <code>Esc</code> always returns you to Normal mode.</p></div>
+      </section>
+
+      <section class="section searchable" id="motion">
+        <div class="section-head">
+          <div><div class="section-kicker">02 / Motion</div><h2>Motions</h2></div>
+          <p>Motions move the cursor. Prefix any of them with a count to repeat: <code>5j</code>, <code>3w</code>, <code>12G</code>.</p>
+        </div>
+        <div class="shortcut-grid">
+          <div class="shortcut-group"><h3>Cursor</h3><div class="shortcut-list">
+            <div class="shortcut-row"><span>Left / down / up / right</span><div class="keys"><kbd>h</kbd><kbd>j</kbd><kbd>k</kbd><kbd>l</kbd></div></div>
+            <div class="shortcut-row"><span>Next word / back / end</span><div class="keys"><kbd>w</kbd><kbd>b</kbd><kbd>e</kbd></div></div>
+            <div class="shortcut-row"><span>WORD (ignore punctuation)</span><div class="keys"><kbd>W</kbd><kbd>B</kbd><kbd>E</kbd></div></div>
+            <div class="shortcut-row"><span>Beginning of line (0) / end ($)</span><div class="keys"><kbd>0</kbd><kbd>$</kbd></div></div>
+            <div class="shortcut-row"><span>First non-blank character</span><div class="keys"><kbd>^</kbd></div></div>
+          </div></div>
+          <div class="shortcut-group"><h3>Line &amp; find</h3><div class="shortcut-list">
+            <div class="shortcut-row"><span>Find char (forward)</span><div class="keys"><kbd>f</kbd><kbd>char</kbd></div></div>
+            <div class="shortcut-row"><span>Until char (forward)</span><div class="keys"><kbd>t</kbd><kbd>char</kbd></div></div>
+            <div class="shortcut-row"><span>Find / until (backward)</span><div class="keys"><kbd>F</kbd><kbd>T</kbd></div></div>
+            <div class="shortcut-row"><span>Repeat last f/t forward</span><div class="keys"><kbd>;</kbd></div></div>
+            <div class="shortcut-row"><span>Repeat last f/t backward</span><div class="keys"><kbd>,</kbd></div></div>
+          </div></div>
+          <div class="shortcut-group"><h3>File jumps</h3><div class="shortcut-list">
+            <div class="shortcut-row"><span>Top of file / bottom</span><div class="keys"><kbd>gg</kbd><kbd>G</kbd></div></div>
+            <div class="shortcut-row"><span>Jump to line N</span><div class="keys"><kbd>N</kbd><kbd>G</kbd></div></div>
+            <div class="shortcut-row"><span>Match bracket / paren</span><div class="keys"><kbd>%</kbd></div></div>
+            <div class="shortcut-row"><span>Previous / next paragraph</span><div class="keys"><kbd>{</kbd><kbd>}</kbd></div></div>
+            <div class="shortcut-row"><span>Page down / up</span><div class="keys"><kbd>Ctrl-f</kbd><kbd>Ctrl-b</kbd></div></div>
+          </div></div>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">3×</div><p><strong>Counts multiply anything.</strong> <code>5j</code> moves down five lines, <code>3w</code> advances three words, <code>12G</code> jumps to line 12. <code>f</code> and <code>t</code> land on a character in the current line; repeat them with <code>;</code> (forward) and <code>,</code> (backward).</p></div>
+      </section>
+
+      <section class="section searchable" id="editing">
+        <div class="section-head">
+          <div><div class="section-kicker">03 / Editing</div><h2>Operators &amp; text objects</h2></div>
+          <p>An operator is a verb, a text object is a noun. Pair <code>d</code>, <code>c</code>, or <code>y</code> with a motion or a text object: <code>dw</code>, <code>ciw</code>, <code>yap</code>.</p>
+        </div>
+        <div class="shortcut-grid">
+          <div class="shortcut-group"><h3>Operators</h3><div class="shortcut-list">
+            <div class="shortcut-row"><span>Delete</span><div class="keys"><kbd>d</kbd><kbd>motion</kbd></div></div>
+            <div class="shortcut-row"><span>Change (delete + insert)</span><div class="keys"><kbd>c</kbd><kbd>motion</kbd></div></div>
+            <div class="shortcut-row"><span>Yank (copy)</span><div class="keys"><kbd>y</kbd><kbd>motion</kbd></div></div>
+            <div class="shortcut-row"><span>Delete character</span><div class="keys"><kbd>x</kbd></div></div>
+            <div class="shortcut-row"><span>Put after / before cursor</span><div class="keys"><kbd>p</kbd><kbd>P</kbd></div></div>
+          </div></div>
+          <div class="shortcut-group"><h3>Lines &amp; repeat</h3><div class="shortcut-list">
+            <div class="shortcut-row"><span>Delete / change / yank line</span><div class="keys"><kbd>dd</kbd><kbd>cc</kbd><kbd>yy</kbd></div></div>
+            <div class="shortcut-row"><span>Delete / change to end of line</span><div class="keys"><kbd>D</kbd><kbd>C</kbd></div></div>
+            <div class="shortcut-row"><span>Undo / redo</span><div class="keys"><kbd>u</kbd><kbd>Ctrl-r</kbd></div></div>
+            <div class="shortcut-row"><span>Repeat last change</span><div class="keys"><kbd>.</kbd></div></div>
+            <div class="shortcut-row"><span>Delete 3 words</span><div class="keys"><kbd>3</kbd><kbd>d</kbd><kbd>w</kbd></div></div>
+          </div></div>
+          <div class="shortcut-group"><h3>Registers</h3><div class="shortcut-list">
+            <div class="shortcut-row"><span>Yank into register a</span><div class="keys"><kbd>"</kbd><kbd>a</kbd><kbd>y</kbd></div></div>
+            <div class="shortcut-row"><span>Paste from register a</span><div class="keys"><kbd>"</kbd><kbd>a</kbd><kbd>p</kbd></div></div>
+            <div class="shortcut-row"><span>System clipboard</span><div class="keys"><kbd>"</kbd><kbd>+</kbd><kbd>y</kbd></div></div>
+            <div class="shortcut-row"><span>List all registers</span><div class="keys"><kbd>:</kbd><kbd>reg</kbd></div></div>
+            <div class="shortcut-row"><span>Last yank / delete</span><div class="keys"><kbd>"</kbd><kbd>0</kbd><kbd>p</kbd></div></div>
+          </div></div>
+        </div>
+        <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Text object</th><th>Selects</th><th>Example</th></tr></thead><tbody>
+          <tr><td><code>iw</code> / <code>aw</code></td><td>inner / a word</td><td><code>ciw</code> retype the word</td></tr>
+          <tr><td><code>ip</code> / <code>ap</code></td><td>inner / a paragraph</td><td><code>dip</code> delete paragraph</td></tr>
+          <tr><td><code>i"</code> / <code>a"</code></td><td>inside / around quotes</td><td><code>ci"</code> replace a string</td></tr>
+          <tr><td><code>i)</code> / <code>a)</code></td><td>inside / around parens</td><td><code>di(</code> clear the contents</td></tr>
+          <tr><td><code>it</code> / <code>at</code></td><td>inner / around HTML tag</td><td><code>cit</code> change the tag body</td></tr>
+        </tbody></table></div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">.</div><p><strong>The dot command repeats the last change</strong> — not the last motion. <code>ciw foo</code> then <code>j.</code> rewrites each word as you walk down. Registers named <code>"a</code>–<code>"z</code> persist between edits; <code>"+</code> is your system clipboard.</p></div>
+      </section>
+
+      <section class="section searchable" id="search">
+        <div class="section-head">
+          <div><div class="section-kicker">04 / Search</div><h2>Search &amp; replace</h2></div>
+          <p>Search with <code>/</code>, jump between hits with <code>n</code> / <code>N</code>, then rewrite with <code>:s</code> when you need a change across the file.</p>
+        </div>
+        <div class="shortcut-grid">
+          <div class="shortcut-group"><h3>Find</h3><div class="shortcut-list">
+            <div class="shortcut-row"><span>Search forward / backward</span><div class="keys"><kbd>/</kbd><kbd>pattern</kbd><span>/</span><kbd>?</kbd></div></div>
+            <div class="shortcut-row"><span>Next / previous match</span><div class="keys"><kbd>n</kbd><kbd>N</kbd></div></div>
+            <div class="shortcut-row"><span>Clear highlight</span><div class="keys"><kbd>:</kbd><kbd>noh</kbd></div></div>
+            <div class="shortcut-row"><span>Find next occurrence of word</span><div class="keys"><kbd>*</kbd><kbd>#</kbd></div></div>
+            <div class="shortcut-row"><span>Partial word (forward/back)</span><div class="keys"><kbd>g</kbd><kbd>*</kbd><span>/</span><kbd>g</kbd><kbd>#</kbd></div></div>
+          </div></div>
+          <div class="shortcut-group"><h3>Pattern flags</h3><div class="shortcut-list">
+            <div class="shortcut-row"><span>Ignore case</span><div class="keys"><kbd>\</kbd><kbd>c</kbd></div></div>
+            <div class="shortcut-row"><span>Match case</span><div class="keys"><kbd>\</kbd><kbd>C</kbd></div></div>
+            <div class="shortcut-row"><span>Very magic (regex)</span><div class="keys"><kbd>\</kbd><kbd>v</kbd></div></div>
+            <div class="shortcut-row"><span>Very nomagic (literal)</span><div class="keys"><kbd>\</kbd><kbd>V</kbd></div></div>
+            <div class="shortcut-row"><span>Word boundary</span><div class="keys"><kbd>\</kbd><kbd>&lt;</kbd><kbd>\</kbd><kbd>&gt;</kbd></div></div>
+          </div></div>
+          <div class="shortcut-group"><h3>Replace</h3><div class="shortcut-list">
+            <div class="shortcut-row"><span>Replace in line</span><div class="keys"><kbd>:</kbd><kbd>s/old/new/</kbd></div></div>
+            <div class="shortcut-row"><span>Replace all in line</span><div class="keys"><kbd>:</kbd><kbd>s/old/new/g</kbd></div></div>
+            <div class="shortcut-row"><span>Replace all in file</span><div class="keys"><kbd>:</kbd><kbd>%s/old/new/g</kbd></div></div>
+            <div class="shortcut-row"><span>Confirm each match</span><div class="keys"><kbd>:</kbd><kbd>%s/old/new/gc</kbd></div></div>
+            <div class="shortcut-row"><span>Delete matching lines</span><div class="keys"><kbd>:</kbd><kbd>g/pattern/d</kbd></div></div>
+          </div></div>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">\/</div><p><strong>Slash inside a pattern?</strong> Use any delimiter — <code>:s#/usr/bin#/usr/local/bin#g</code> — or escape it as <code>\/</code>. The <code>c</code> flag confirms each replacement; <code>n</code> just counts matches.</p></div>
+      </section>
+
+      <section class="section searchable" id="buffers">
+        <div class="section-head">
+          <div><div class="section-kicker">05 / Buffers</div><h2>Buffers, windows &amp; tabs</h2></div>
+          <p>A <em>buffer</em> holds a file, a <em>window</em> shows a buffer, and a <em>tab</em> groups windows. One buffer can appear in many windows.</p>
+        </div>
+        <div class="shortcut-grid">
+          <div class="shortcut-group"><h3>Buffers</h3><div class="shortcut-list">
+            <div class="shortcut-row"><span>Edit / open a file</span><div class="keys"><kbd>:</kbd><kbd>e</kbd><kbd>file</kbd></div></div>
+            <div class="shortcut-row"><span>Next / previous buffer</span><div class="keys"><kbd>:</kbd><kbd>bn</kbd><span>/</span><kbd>:</kbd><kbd>bp</kbd></div></div>
+            <div class="shortcut-row"><span>List buffers</span><div class="keys"><kbd>:</kbd><kbd>ls</kbd></div></div>
+            <div class="shortcut-row"><span>Delete buffer</span><div class="keys"><kbd>:</kbd><kbd>bd</kbd></div></div>
+            <div class="shortcut-row"><span>Delete buffer, discard changes</span><div class="keys"><kbd>:</kbd><kbd>bd!</kbd></div></div>
+          </div></div>
+          <div class="shortcut-group"><h3>Windows</h3><div class="shortcut-list">
+            <div class="shortcut-row"><span>Split horizontal / vertical</span><div class="keys"><kbd>:</kbd><kbd>sp</kbd><span>/</span><kbd>:</kbd><kbd>vsp</kbd></div></div>
+            <div class="shortcut-row"><span>Move focus</span><div class="keys"><kbd>Ctrl-w</kbd><kbd>h j k l</kbd></div></div>
+            <div class="shortcut-row"><span>Close / only window</span><div class="keys"><kbd>Ctrl-w</kbd><kbd>q</kbd><span>/</span><kbd>o</kbd></div></div>
+            <div class="shortcut-row"><span>Equalize sizes</span><div class="keys"><kbd>Ctrl-w</kbd><kbd>=</kbd></div></div>
+            <div class="shortcut-row"><span>Rotate / swap windows</span><div class="keys"><kbd>Ctrl-w</kbd><kbd>r</kbd></div></div>
+          </div></div>
+          <div class="shortcut-group"><h3>Tabs &amp; marks</h3><div class="shortcut-list">
+            <div class="shortcut-row"><span>New tab</span><div class="keys"><kbd>:</kbd><kbd>tabnew</kbd></div></div>
+            <div class="shortcut-row"><span>Next / previous tab</span><div class="keys"><kbd>g</kbd><kbd>t</kbd><span>/</span><kbd>g</kbd><kbd>T</kbd></div></div>
+            <div class="shortcut-row"><span>Set mark a</span><div class="keys"><kbd>m</kbd><kbd>a</kbd></div></div>
+            <div class="shortcut-row"><span>Jump to mark a</span><div class="keys"><kbd>`</kbd><kbd>a</kbd></div></div>
+            <div class="shortcut-row"><span>Jump to mark's line</span><div class="keys"><kbd>'</kbd><kbd>a</kbd></div></div>
+          </div></div>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">m</div><p><strong>Marks are bookmarks.</strong> <code>m</code><em>a</em> drops mark <em>a</em> at the cursor, <code>`a</code> returns to its exact position, <code>'a</code> to its line. <code>``</code> jumps back to your previous jump, lowercase marks stay with the buffer, and uppercase <code>mA</code> work across files.</p></div>
+      </section>
+
+      <section class="section searchable" id="config">
+        <div class="section-head">
+          <div><div class="section-kicker">06 / Config</div><h2>init.lua config</h2></div>
+          <p>Neovim is configured in Lua. Start at <code>~/.config/nvim/init.lua</code>, set options with <code>vim.opt</code>, and bind keys with <code>vim.keymap.set</code>.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>vim.opt</h3><p>Options are Lua table fields. Reload with <code>:source %</code>.</p><pre><code>vim.opt.number = true          -- line numbers
+vim.opt.relativenumber = true  -- relative jumps
+vim.opt.shiftwidth = 2         -- indent width
+vim.opt.tabstop = 2
+vim.opt.expandtab = true       -- spaces, not tabs
+vim.opt.smartindent = true
+vim.opt.ignorecase = true      -- search…
+vim.opt.smartcase = true       -- …unless uppercase</code></pre></article>
+          <article class="card"><h3>vim.keymap.set</h3><p>Signature: <code>vim.keymap.set(mode, lhs, rhs, opts)</code>.</p><pre><code>vim.keymap.set("n", "&lt;leader&gt;w", ":w&lt;CR&gt;", { desc = "Save" })
+vim.keymap.set("n", "&lt;leader&gt;q", ":q&lt;CR&gt;", { desc = "Quit" })
+vim.keymap.set("n", "Y", "y$", { desc = "Yank to EOL" })
+vim.keymap.set("v", "J", ":m '&gt;+1&lt;CR&gt;gv=gv",
+  { desc = "Move line down" })</code></pre></article>
+          <article class="card"><h3>Leader key</h3><p>A leader gives every custom map a namespace. <code>&lt;leader&gt;</code> expands to your chosen key.</p><div class="prefix-demo"><kbd>Space</kbd><span class="then">then</span><kbd>w</kbd><span class="then">saves</span></div><pre><code>vim.g.mapleader = " "
+vim.g.maplocalleader = "\\"
+-- &lt;leader&gt;w means: space, then w
+vim.keymap.set("n", "&lt;leader&gt;e", vim.cmd.Ex,
+  { desc = "File explorer" })</code></pre></article>
+          <article class="card"><h3>lazy.nvim</h3><p>Plugin manager. Bootstrap once, then declare plugins in <code>~/.config/nvim/lua/plugins/</code>.</p><pre><code>local lazypath = vim.fn.stdpath("data")
+  .. "/lazy/lazy.nvim"
+if not (vim.uv or vim.loop).fs_stat(lazypath) then
+  vim.fn.system({ "git", "clone",
+    "--filter=blob:none",
+    "https://github.com/folke/lazy.nvim.git",
+    "--branch=stable", lazypath })
+end
+vim.opt.rtp:prepend(lazypath)
+require("lazy").setup("plugins")</code></pre></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">lua</div><p><strong>Where does config live?</strong> <code>~/.config/nvim/init.lua</code> is the entry point; <code>require("plugins")</code> pulls from <code>lua/plugins/</code>. After edits, <code>:source %</code> reloads the current file — or restart Neovim and run <code>:checkhealth</code> to catch mistakes.</p></div>
+      </section>
+
+      <section class="section searchable" id="lsp">
+        <div class="section-head">
+          <div><div class="section-kicker">07 / LSP</div><h2>LSP, treesitter &amp; completion</h2></div>
+          <p>Language servers give you go-to-definition, references, rename, and diagnostics; treesitter adds real syntax parsing; nvim-cmp ties it into completion.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>mason + lspconfig</h3><p>Install servers with <code>:LspInstall</code>, then attach them per buffer.</p><pre><code>require("mason").setup()
+require("mason-lspconfig").setup({
+  ensure_installed = { "lua_ls", "rust_analyzer" },
+})
+require("lspconfig").lua_ls.setup({})
+require("lspconfig").rust_analyzer.setup({})</code></pre></article>
+          <article class="card"><h3>treesitter</h3><p>Install parsers with <code>:TSInstall lua</code>, enable highlighting and indentation.</p><pre><code>require("nvim-treesitter.configs").setup({
+  ensure_installed = { "lua", "rust" },
+  highlight = { enable = true },
+  indent = { enable = true },
+})</code></pre></article>
+          <article class="card"><h3>nvim-cmp</h3><p>Completion engine fed by LSP, buffer words, and paths.</p><pre><code>local cmp = require("cmp")
+cmp.setup({
+  sources = {
+    { name = "nvim_lsp" },
+    { name = "buffer" },
+    { name = "path" },
+  },
+})</code></pre></article>
+        </div>
+        <div class="shortcut-grid" style="margin-top:16px">
+          <div class="shortcut-group"><h3>Go to</h3><div class="shortcut-list">
+            <div class="shortcut-row"><span>Go to definition</span><div class="keys"><kbd>g</kbd><kbd>d</kbd></div></div>
+            <div class="shortcut-row"><span>Go to references</span><div class="keys"><kbd>g</kbd><kbd>r</kbd></div></div>
+            <div class="shortcut-row"><span>Go to declaration</span><div class="keys"><kbd>g</kbd><kbd>D</kbd></div></div>
+            <div class="shortcut-row"><span>Go to type definition</span><div class="keys"><kbd>g</kbd><kbd>y</kbd></div></div>
+            <div class="shortcut-row"><span>Go to implementation</span><div class="keys"><kbd>g</kbd><kbd>i</kbd></div></div>
+          </div></div>
+          <div class="shortcut-group"><h3>Hover &amp; actions</h3><div class="shortcut-list">
+            <div class="shortcut-row"><span>Hover documentation</span><div class="keys"><kbd>K</kbd></div></div>
+            <div class="shortcut-row"><span>Rename symbol</span><div class="keys"><kbd>leader</kbd><kbd>r</kbd><kbd>n</kbd></div></div>
+            <div class="shortcut-row"><span>Code action</span><div class="keys"><kbd>leader</kbd><kbd>c</kbd><kbd>a</kbd></div></div>
+            <div class="shortcut-row"><span>Signature help</span><div class="keys"><kbd>Ctrl-k</kbd></div></div>
+            <div class="shortcut-row"><span>List LSP servers</span><div class="keys"><kbd>:</kbd><kbd>LspInfo</kbd></div></div>
+          </div></div>
+          <div class="shortcut-group"><h3>Diagnostics</h3><div class="shortcut-list">
+            <div class="shortcut-row"><span>Next / previous diagnostic</span><div class="keys"><kbd>]</kbd><kbd>d</kbd><span>/</span><kbd>[</kbd><kbd>d</kbd></div></div>
+            <div class="shortcut-row"><span>Open diagnostics list</span><div class="keys"><kbd>leader</kbd><kbd>d</kbd></div></div>
+            <div class="shortcut-row"><span>Format buffer</span><div class="keys"><kbd>leader</kbd><kbd>f</kbd></div></div>
+            <div class="shortcut-row"><span>Open LSP log</span><div class="keys"><kbd>:</kbd><kbd>LspLog</kbd></div></div>
+            <div class="shortcut-row"><span>Restart LSP client</span><div class="keys"><kbd>:</kbd><kbd>LspRestart</kbd></div></div>
+          </div></div>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">LSP</div><p><strong>Zero-config setup:</strong> <code>:LspInstall rust_analyzer</code> installs a server, <code>:TSInstall rust</code> adds treesitter parsing, and <code>:LspInfo</code> shows what's attached to the current buffer. <code>:LspLog</code> reveals errors when a server won't start.</p></div>
+      </section>
+
+      <section class="section searchable" id="gotchas">
+        <div class="section-head">
+          <div><div class="section-kicker">08 / Gotchas</div><h2>Pitfalls</h2></div>
+          <p>Small behaviors that bite everyone once — usually right after a destructive command.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>:q! vs :qa!</h3><p><code>:q!</code> discards changes and quits the <em>current window</em>. With splits or tabs open, the others stay behind. <code>:qa!</code> quits every window and buffer without saving.</p><pre><code>:q!   " quit this window, discard
+:qa!  " quit everything, discard
+:qa   " quit everything (only if saved)</code></pre></article>
+          <article class="card"><h3>Stuck in insert mode</h3><p>If typing does nothing, you're probably in Normal mode; if keys appear as text, you're in Insert. Double-tap <code>Esc</code> or use <code>Ctrl-[</code> to get back. <code>:set showmode</code> shows the mode in the status line.</p><pre><code>Esc Esc   " always returns to Normal
+Ctrl-[    " same as Esc
+Ctrl-c    " also exits insert mode</code></pre></article>
+          <article class="card"><h3>Undo is a tree</h3><p>Undo isn't a linear stack — it branches. If you undo then edit again, the old path still exists. Time-travel with <code>:earlier</code> / <code>:later</code>.</p><pre><code>:undolist      " every undo state
+:earlier 10m   " back ten minutes
+:later 5s      " forward five seconds
+u  Ctrl-r      " undo / redo</code></pre></article>
+          <article class="card"><h3>Registers &amp; dot</h3><p><code>.</code> repeats only the last <em>change</em> — motions don't count, and undo doesn't count either. Pasted text lands in <code>"+</code> only if your build has clipboard support; check with <code>:checkhealth</code>.</p><pre><code>"ap      " paste register a
+:reg     " list all registers
+.        " repeat the last change only</code></pre></article>
+        </div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">!</div><p><strong>Lost your way?</strong> <code>:q!</code> discards only the current window's changes. If <code>Ctrl-c</code> won't leave insert mode you may be in <code>-- TERMINAL --</code>; press <code>Ctrl-\ Ctrl-n</code> to escape a terminal back to Normal mode.</p></div>
+      </section>
+
+      <footer class="footer searchable">
+        <strong>Source of truth</strong>
+        <p>This guide summarizes Neovim's defaults and common Lua configuration. The built-in manual — <code>:help</code> — and the official documentation remain authoritative for your installed version.</p>
+        <div class="footer-links">
+          <a href="https://neovim.io/doc/" target="_blank" rel="noreferrer">Neovim docs</a>
+          <a href="https://neovim.io/doc/user/lua.html" target="_blank" rel="noreferrer">Lua guide</a>
+          <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

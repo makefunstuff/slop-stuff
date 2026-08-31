@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-guide="gcloud">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Auth, config, Compute Engine, Cloud Storage, GKE, IAM, Cloud SQL, and logging with gcloud.">
+  <title>gcloud — Visual Cheatsheet &amp; Usage Guide</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../" aria-label="Back to slop-stuff">
+      <span class="brand-mark">gcp_</span>
+      <span>gcloud Guide</span>
+      <span class="version">Google Cloud CLI</span>
+    </a>
+    <label class="search-wrap">
+      <span class="sr-only" hidden>Search guide</span>
+      <input id="search" type="search" aria-label="Search guide" placeholder="Search compute, storage, gke, iam, sql, logging, config…" autocomplete="off">
+    </label>
+    <div class="top-actions">
+      <button class="icon-button" id="themeToggle" type="button" title="Toggle theme" aria-label="Toggle light and dark theme">◐</button>
+      <button class="icon-button" id="printGuide" type="button" title="Print guide" aria-label="Print this guide">Print</button>
+    </div>
+  </header>
+
+  <div class="shell" id="top">
+    <aside class="sidebar" aria-label="Guide sections">
+      <p class="side-label">On this page</p>
+      <nav>
+        <a href="#start"><span class="nav-number">01</span>Start here</a>
+        <a href="#config"><span class="nav-number">02</span>Config</a>
+        <a href="#compute"><span class="nav-number">03</span>Compute</a>
+        <a href="#storage"><span class="nav-number">04</span>Storage</a>
+        <a href="#gke"><span class="nav-number">05</span>GKE</a>
+        <a href="#iam"><span class="nav-number">06</span>IAM</a>
+        <a href="#sql"><span class="nav-number">07</span>Other services</a>
+        <a href="#logs"><span class="nav-number">08</span>Logging</a>
+        <a href="#gotchas"><span class="nav-number">09</span>Gotchas</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section class="hero searchable" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="eyebrow">Visual cheatsheet + usage guide</div>
+          <h1 id="hero-title">One CLI for <span>all of GCP.</span></h1>
+          <p>gcloud is the single command for Google Cloud: authenticate once, then drive Compute Engine, Cloud Storage, GKE, IAM, Cloud SQL, and logs — all from your terminal.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#start">Start in 5 minutes →</a>
+            <a class="button" href="#compute">Compute Engine</a>
+            <a class="button" href="#gke">GKE</a>
+          </div>
+        </div>
+        <div class="terminal" aria-label="Stylized gcloud session">
+          <div class="terminal-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="terminal-title">gcloud</span></div>
+          <div class="terminal-body">
+            <div class="mock-side">
+              <p class="mock-label">Setup</p>
+              <div class="mock-row active">auth</div>
+              <div class="mock-row">project</div>
+              <div class="mock-row">config</div>
+            </div>
+            <div class="mock-pane">
+              <div><span class="prompt">❯</span> <span class="cmd">gcloud auth login</span></div>
+              <div class="dim">Your browser has been opened to visit:</div>
+              <div class="dim">https://accounts.google.com/o/oauth2/...</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cmd">gcloud config set project my-project</span></div>
+              <div class="dim">Updated property [core/project].</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cmd">gcloud config list</span></div>
+              <div class="dim">[core]</div>
+              <div class="dim">project = my-project</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cursor"></span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try "compute", "storage", "gke", "iam", "sql", "logging", or "config".</div>
+
+      <section class="section searchable" id="start">
+        <div class="section-head">
+          <div><div class="section-kicker">01 / Start here</div><h2>Install &amp; auth</h2></div>
+          <p>Get the CLI installed, sign in, and pick a default project. Four commands take you from nothing to working.</p>
+        </div>
+        <div class="grid four">
+          <article class="card"><div class="card-number">1</div><h3>Initialize</h3><pre><code>gcloud init</code></pre><p>Interactive: login, pick a project, set compute defaults.</p></article>
+          <article class="card"><div class="card-number">2</div><h3>Log in</h3><pre><code>gcloud auth login</code></pre><p>Browser OAuth for your user account.</p></article>
+          <article class="card"><div class="card-number">3</div><h3>ADC login</h3><pre><code>gcloud auth application-default login</code></pre><p>Credentials for local SDKs and libraries, not the CLI itself.</p></article>
+          <article class="card"><div class="card-number">4</div><h3>Update</h3><pre><code>gcloud components update</code></pre><p>Upgrade the CLI and its installed components.</p></article>
+        </div>
+        <br>
+        <div class="callout"><div class="callout-mark">KEY</div><p><strong>Two logins, two jobs.</strong> <code>gcloud auth login</code> authenticates the CLI. <code>gcloud auth application-default login</code> writes Application Default Credentials so your Python/Go/Node code finds credentials automatically. Run both only when you need both.</p></div>
+      </section>
+
+      <section class="section searchable" id="config">
+        <div class="section-head">
+          <div><div class="section-kicker">02 / Config</div><h2>Config &amp; projects</h2></div>
+          <p>gcloud remembers your defaults as properties. List them, set them, and override per-command when you need a different project.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>gcloud config list</code><span>Show all active properties.</span></div>
+          <div class="command-row"><code>gcloud config set project my-project</code><span>Set the default project.</span></div>
+          <div class="command-row"><code>gcloud config set compute/zone us-central1-a</code><span>Set the default zone.</span></div>
+          <div class="command-row"><code>gcloud config unset project</code><span>Clear a property.</span></div>
+          <div class="command-row"><code>gcloud config get-value project</code><span>Read a single value.</span></div>
+          <div class="command-row"><code>gcloud auth list</code><span>Accounts with stored credentials.</span></div>
+          <div class="command-row"><code>gcloud config set account user@example.com</code><span>Set the active account.</span></div>
+          <div class="command-row"><code>gcloud projects list</code><span>Projects you can access.</span></div>
+          <div class="command-row"><code>gcloud config configurations list</code><span>Named config sets.</span></div>
+          <div class="command-row"><code>gcloud config configurations activate work</code><span>Switch to a named config.</span></div>
+        </div>
+        <br>
+        <div class="grid two">
+          <article class="card"><h3>Per-command override</h3><p>The <code>--project</code> flag beats the config, for one command only.</p><pre><code>gcloud compute instances list \
+  --project=other-project</code></pre></article>
+          <article class="card"><h3>Inspect your setup</h3><p><code>gcloud info</code> dumps every property, credential source, and the active account and project in one shot.</p><pre><code>gcloud info
+gcloud config list --all</code></pre></article>
+        </div>
+        <br>
+        <div class="callout"><div class="callout-mark">⌁</div><p>Config is scoped per user by default. Keep entirely separate identities and projects with named configurations: create them with <code>gcloud config configurations create &lt;name&gt;</code> and jump between them with <code>activate</code>.</p></div>
+      </section>
+
+      <section class="section searchable" id="compute">
+        <div class="section-head">
+          <div><div class="section-kicker">03 / Compute</div><h2>Compute Engine</h2></div>
+          <p>Spin up VMs, reach them over SSH, and control their lifecycle. Zone and region are first-class flags almost everywhere.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>gcloud compute instances list</code><span>All VMs in the current project/zone.</span></div>
+          <div class="command-row"><code>gcloud compute instances create web-1 --zone=us-central1-a --machine-type=e2-medium --image-family=debian-11 --image-project=debian-cloud</code><span>Create a VM.</span></div>
+          <div class="command-row"><code>gcloud compute ssh web-1 --zone=us-central1-a</code><span>SSH in (adds keys automatically).</span></div>
+          <div class="command-row"><code>gcloud compute instances start web-1</code><span>Start a stopped VM.</span></div>
+          <div class="command-row"><code>gcloud compute instances stop web-1</code><span>Stop a running VM.</span></div>
+          <div class="command-row"><code>gcloud compute instances delete web-1</code><span>Delete a VM (add <code>--quiet</code> to skip the prompt).</span></div>
+          <div class="command-row"><code>gcloud compute images list</code><span>Public images available to you.</span></div>
+          <div class="command-row"><code>gcloud compute machine-types list --zones=us-central1-a</code><span>Machine types in a zone.</span></div>
+          <div class="command-row"><code>gcloud compute disks list</code><span>Persistent disks.</span></div>
+          <div class="command-row"><code>gcloud compute snapshots list</code><span>Disk snapshots.</span></div>
+        </div>
+        <br>
+        <div class="grid two">
+          <article class="card"><h3>Zones &amp; regions</h3><p>Zonal resources need <code>--zone</code>; regional ones use <code>--region</code>. Set a default so you can drop the flag.</p><pre><code>gcloud compute zones list
+gcloud compute regions list
+gcloud config set compute/zone us-central1-a</code></pre></article>
+          <article class="card"><h3>Instance groups</h3><p>Managed instance groups scale a VM template behind a load balancer.</p><pre><code>gcloud compute instance-groups managed list
+gcloud compute instance-groups managed create web-group \
+  --base-instance-name web --template web-tmpl \
+  --size 3 --zone us-central1-a</code></pre></article>
+        </div>
+      </section>
+
+      <section class="section searchable" id="storage">
+        <div class="section-head">
+          <div><div class="section-kicker">04 / Storage</div><h2>Cloud Storage</h2></div>
+          <p>The unified <code>gcloud storage</code> commands are the modern path; the older <code>gsutil</code> still works. Both speak <code>gs://</code> URLs.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>gcloud storage ls gs://my-bucket</code><span>List objects in a bucket.</span></div>
+          <div class="command-row"><code>gcloud storage cp file.txt gs://my-bucket/</code><span>Upload a file.</span></div>
+          <div class="command-row"><code>gcloud storage cp gs://my-bucket/file.txt .</code><span>Download a file.</span></div>
+          <div class="command-row"><code>gcloud storage rsync -r ./build gs://my-bucket/site</code><span>Mirror a directory (sync).</span></div>
+          <div class="command-row"><code>gcloud storage buckets create gs://my-bucket</code><span>Create a bucket.</span></div>
+          <div class="command-row"><code>gcloud storage rm gs://my-bucket/file.txt</code><span>Delete an object.</span></div>
+          <div class="command-row"><code>gsutil mb gs://my-bucket</code><span>Make a bucket (legacy gsutil).</span></div>
+          <div class="command-row"><code>gsutil cp -r ./dir gs://my-bucket/</code><span>Recursive copy (legacy gsutil).</span></div>
+          <div class="command-row"><code>gcloud storage du gs://my-bucket</code><span>Total size of a bucket.</span></div>
+          <div class="command-row"><code>gcloud storage mv gs://my-bucket/a.txt gs://my-bucket/b.txt</code><span>Move or rename an object.</span></div>
+        </div>
+        <br>
+        <div class="grid two">
+          <article class="card"><h3>gsutil vs gcloud storage</h3><p><code>gcloud storage</code> is the newer, faster rewrite and the recommended path. <code>gsutil</code> remains for scripts that haven't migrated.</p><pre><code># same job, both tools
+gcloud storage cp app.zip gs://my-bucket/
+gsutil cp app.zip gs://my-bucket/</code></pre></article>
+          <article class="card"><h3>Bucket lifecycle</h3><p>Attach a lifecycle rule to auto-delete or downgrade old objects.</p><pre><code>gcloud storage buckets update gs://my-bucket \
+  --lifecycle-file=lifecycle.json
+
+# lifecycle.json
+{"rule": [{"action": {"type": "Delete"},
+  "condition": {"age": 30}}]}</code></pre></article>
+        </div>
+        <br>
+        <div class="callout"><div class="callout-mark">!</div><p><strong>Bucket names are globally unique</strong> and can never be changed after creation. Pick a globally unique name once, or you'll end up recreating the bucket and copying everything over.</p></div>
+      </section>
+
+      <section class="section searchable" id="gke">
+        <div class="section-head">
+          <div><div class="section-kicker">05 / GKE</div><h2>GKE &amp; containers</h2></div>
+          <p>Create a cluster, pull its kubeconfig with get-credentials, then drive it with <code>kubectl</code> as usual.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>gcloud container clusters create my-cluster --zone=us-central1-a --num-nodes=2</code><span>Create a zonal cluster.</span></div>
+          <div class="command-row"><code>gcloud container clusters get-credentials my-cluster --zone=us-central1-a</code><span>Write the kubeconfig entry.</span></div>
+          <div class="command-row"><code>gcloud container clusters list</code><span>List your clusters.</span></div>
+          <div class="command-row"><code>gcloud container clusters delete my-cluster --zone=us-central1-a</code><span>Delete a cluster.</span></div>
+          <div class="command-row"><code>gcloud container node-pools list --cluster=my-cluster --zone=us-central1-a</code><span>List node pools.</span></div>
+          <div class="command-row"><code>gcloud container node-pools create pool-2 --cluster=my-cluster --num-nodes=1 --zone=us-central1-a</code><span>Add a node pool.</span></div>
+          <div class="command-row"><code>gcloud container clusters resize my-cluster --num-nodes=4 --zone=us-central1-a</code><span>Resize the default node pool.</span></div>
+          <div class="command-row"><code>gcloud container clusters upgrade my-cluster --zone=us-central1-a</code><span>Upgrade the cluster master and nodes.</span></div>
+        </div>
+        <br>
+        <div class="grid two">
+          <article class="card"><h3>Then kubectl</h3><p>After <code>get-credentials</code>, your <code>~/.kube/config</code> points at the cluster.</p><pre><code>kubectl get nodes
+kubectl get pods -A
+kubectl config current-context</code></pre></article>
+          <article class="card"><h3>Region vs zone</h3><p>Regional clusters spread the control plane and nodes across zones for higher availability.</p><pre><code>gcloud container clusters create ha-cluster \
+  --region=us-central1 --num-nodes=1 \
+  --node-locations=us-central1-a,us-central1-b</code></pre></article>
+        </div>
+      </section>
+
+      <section class="section searchable" id="iam">
+        <div class="section-head">
+          <div><div class="section-kicker">06 / IAM</div><h2>IAM &amp; service accounts</h2></div>
+          <p>Grant roles to members with policy bindings, and mint service accounts for machines and CI.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>gcloud projects get-iam-policy my-project</code><span>Read the full policy.</span></div>
+          <div class="command-row"><code>gcloud projects add-iam-policy-binding my-project --member=user:ada@example.com --role=roles/viewer</code><span>Grant a role to a user.</span></div>
+          <div class="command-row"><code>gcloud projects remove-iam-policy-binding my-project --member=user:ada@example.com --role=roles/viewer</code><span>Revoke a role.</span></div>
+          <div class="command-row"><code>gcloud iam service-accounts create deployer --display-name="Deployer"</code><span>Create a service account.</span></div>
+          <div class="command-row"><code>gcloud iam service-accounts keys create key.json --iam-account=deployer@my-project.iam.gserviceaccount.com</code><span>Download a JSON key.</span></div>
+          <div class="command-row"><code>gcloud iam roles list</code><span>List predefined roles.</span></div>
+          <div class="command-row"><code>gcloud iam service-accounts list</code><span>Service accounts in the project.</span></div>
+          <div class="command-row"><code>gcloud iam service-accounts keys list --iam-account=deployer@my-project.iam.gserviceaccount.com</code><span>Keys for a service account.</span></div>
+        </div>
+        <br>
+        <div class="grid two">
+          <article class="card"><h3>Member types</h3><p>Bindings address members by a type prefix.</p><pre><code>user:ada@example.com
+serviceAccount:deployer@my-project.iam.gserviceaccount.com
+group:eng@example.com
+domain:example.com</code></pre></article>
+          <article class="card"><h3>Common roles</h3><p>Start with the basic trio, then narrow to service roles like <code>roles/storage.objectViewer</code>.</p><pre><code>roles/viewer   # read-only
+roles/editor   # read + write
+roles/owner    # full control + IAM</code></pre></article>
+        </div>
+        <br>
+        <div class="callout warning"><div class="callout-mark">⚠</div><p><strong>Service-account keys are long-lived secrets.</strong> Treat <code>key.json</code> like a password: never commit it, and prefer Workload Identity Federation or the instance metadata server over downloaded keys wherever you can.</p></div>
+      </section>
+
+      <section class="section searchable" id="sql">
+        <div class="section-head">
+          <div><div class="section-kicker">07 / Other services</div><h2>Cloud SQL &amp; more</h2></div>
+          <p>A few more services you'll reach for: managed databases, Pub/Sub messaging, and serverless deploys.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>gcloud sql instances list</code><span>List databases.</span></div>
+          <div class="command-row"><code>gcloud sql instances create my-db --tier=db-f1-micro --region=us-central1</code><span>Create an instance.</span></div>
+          <div class="command-row"><code>gcloud sql connect my-db --user=root</code><span>Connect via psql/mysql.</span></div>
+          <div class="command-row"><code>gcloud pubsub topics create my-topic</code><span>Create a topic.</span></div>
+          <div class="command-row"><code>gcloud pubsub topics publish my-topic --message="hello"</code><span>Publish a message.</span></div>
+          <div class="command-row"><code>gcloud pubsub subscriptions create my-sub --topic=my-topic</code><span>Create a subscription.</span></div>
+          <div class="command-row"><code>gcloud pubsub subscriptions pull my-sub --auto-ack</code><span>Pull messages.</span></div>
+          <div class="command-row"><code>gcloud functions deploy my-fn --runtime=python311 --trigger-http --entry-point=hello --region=us-central1</code><span>Deploy a Cloud Function.</span></div>
+          <div class="command-row"><code>gcloud run deploy my-svc --image=gcr.io/my-project/my-svc --region=us-central1 --allow-unauthenticated</code><span>Deploy to Cloud Run.</span></div>
+          <div class="command-row"><code>gcloud sql instances delete my-db</code><span>Delete a database instance.</span></div>
+          <div class="command-row"><code>gcloud pubsub topics list</code><span>List topics.</span></div>
+        </div>
+      </section>
+
+      <section class="section searchable" id="logs">
+        <div class="section-head">
+          <div><div class="section-kicker">08 / Logging</div><h2>Logging &amp; monitoring</h2></div>
+          <p>Read and write Cloud Logging entries, and shape every gcloud response with <code>--format</code>, <code>--filter</code>, and <code>--limit</code>.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>gcloud logging read "resource.type=gce_instance" --limit=5</code><span>Recent VM log entries.</span></div>
+          <div class="command-row"><code>gcloud logging read "severity&gt;=ERROR" --freshness=1h</code><span>Errors from the last hour.</span></div>
+          <div class="command-row"><code>gcloud logging write my-log "deploy complete" --severity=INFO</code><span>Write a structured entry.</span></div>
+          <div class="command-row"><code>gcloud logging logs list</code><span>List log names.</span></div>
+          <div class="command-row"><code>gcloud logging sinks list</code><span>List export sinks.</span></div>
+          <div class="command-row"><code>gcloud logging read "textPayload:FAILED" --format="value(textPayload)"</code><span>Extract one field.</span></div>
+        </div>
+        <br>
+        <div class="grid two">
+          <article class="card"><h3>Formatting</h3><p><code>--format</code> reshapes output without jq. It works on every gcloud command.</p><pre><code>--format=json
+--format=yaml
+--format="table(name,status)"
+--format="value(name)"</code></pre></article>
+          <article class="card"><h3>Filtering &amp; limits</h3><p><code>--filter</code> narrows server-side; <code>--limit</code> caps rows.</p><pre><code>--filter="status:RUNNING"
+--filter="name:web-*"
+--limit=10
+--sort-by=~creationTimestamp</code></pre></article>
+        </div>
+        <br>
+        <details>
+          <summary>More log recipes</summary>
+          <div class="details-body grid two">
+            <div><h4>Tail recent errors</h4><pre><code>gcloud logging read "severity&gt;=ERROR" \
+  --freshness=15m --limit=20</code></pre></div>
+            <div><h4>Read one instance</h4><pre><code>gcloud logging read \
+  "resource.type=gce_instance AND \
+   resource.labels.instance_id=12345"</code></pre></div>
+            <div><h4>Count by severity</h4><pre><code>gcloud logging read "severity&gt;=ERROR" \
+  --format="value(severity)" \
+  | sort | uniq -c</code></pre></div>
+            <div><h4>Export to a sink</h4><pre><code>gcloud logging sinks create my-sink \
+  storage.googleapis.com/gs://my-bucket \
+  --log-filter="severity&gt;=ERROR"</code></pre></div>
+          </div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="gotchas">
+        <div class="section-head">
+          <div><div class="section-kicker">09 / Gotchas</div><h2>Flags &amp; gotchas</h2></div>
+          <p>The flags that change behavior everywhere, and the small traps that bite everyone once.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Flag</th><th>Effect</th><th>Use when</th></tr></thead><tbody>
+          <tr><td><code>--project</code></td><td>Override the active project for one command</td><td>One-off work in a different project.</td></tr>
+          <tr><td><code>--format</code></td><td>Shape output (<code>json</code>, <code>yaml</code>, <code>table</code>, <code>value</code>)</td><td>Scripting and readable reports.</td></tr>
+          <tr><td><code>--filter</code></td><td>Server-side expression filter</td><td>Narrow a list before it downloads.</td></tr>
+          <tr><td><code>--quiet</code> / <code>-q</code></td><td>Skip all confirmation prompts</td><td>Scripts — but deletes become instant.</td></tr>
+          <tr><td><code>--zone</code> / <code>--region</code></td><td>Target a zone or region explicitly</td><td>Zonal resources without a configured default.</td></tr>
+          <tr><td><code>--async</code></td><td>Return immediately, poll later</td><td>Long create/delete operations.</td></tr>
+          <tr><td><code>--limit</code></td><td>Cap the number of results</td><td>Keep large lists small.</td></tr>
+          <tr><td><code>--account</code></td><td>Run as a different authenticated account</td><td>Multiple identities in one shell.</td></tr>
+        </tbody></table></div>
+        <br>
+        <div class="grid two">
+          <article class="card"><h3>--quiet is a loaded gun</h3><p>It auto-answers "yes" to every prompt, including deletes. Pair it only with commands you've already reviewed.</p><pre><code>gcloud compute instances delete web-1 \
+  --zone=us-central1-a --quiet</code></pre></article>
+          <article class="card"><h3>Operations are async</h3><p>Many commands kick off a long-running operation. Watch its progress with the returned operation ID.</p><pre><code>gcloud compute operations list
+gcloud compute operations describe \
+  operation-123 --zone=us-central1-a</code></pre></article>
+        </div>
+        <br>
+        <details>
+          <summary>Command discovery &amp; help</summary>
+          <div class="details-body grid two">
+            <div><h4>Built-in help</h4><pre><code>gcloud --help
+gcloud compute instances --help
+gcloud help config</code></pre></div>
+            <div><h4>Version &amp; components</h4><pre><code>gcloud version
+gcloud components list
+gcloud components update</code></pre></div>
+          </div>
+        </details>
+      </section>
+
+      <footer class="footer searchable">
+        <strong>Source of truth</strong>
+        <p>This guide covers the gcloud essentials. The official documentation and the full <code>gcloud</code> reference remain authoritative for every flag, edge case, and per-service nuance.</p>
+        <div class="footer-links">
+          <a href="https://cloud.google.com/sdk/docs" target="_blank" rel="noreferrer">SDK docs</a>
+          <a href="https://cloud.google.com/sdk/gcloud/reference" target="_blank" rel="noreferrer">gcloud reference</a>
+          <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

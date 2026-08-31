@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-guide="grafana">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Data sources, panels, variables, transforms, alerts, and provisioning in Grafana.">
+  <title>Grafana — Visual Cheatsheet &amp; Usage Guide</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../" aria-label="Back to slop-stuff">
+      <span class="brand-mark">gf_</span>
+      <span>Grafana Guide</span>
+      <span class="version">dashboards</span>
+    </a>
+    <label class="search-wrap">
+      <span class="sr-only" hidden>Search guide</span>
+      <input id="search" type="search" aria-label="Search guide" placeholder="Search panel, datasource, variable, transform, alert, provisioning…" autocomplete="off">
+    </label>
+    <div class="top-actions">
+      <button class="icon-button" id="themeToggle" type="button" title="Toggle theme" aria-label="Toggle light and dark theme">◐</button>
+      <button class="icon-button" id="printGuide" type="button" title="Print guide" aria-label="Print this guide">Print</button>
+    </div>
+  </header>
+
+  <div class="shell" id="top">
+    <aside class="sidebar" aria-label="Guide sections">
+      <p class="side-label">On this page</p>
+      <nav>
+        <a href="#start"><span class="nav-number">01</span>Start here</a>
+        <a href="#concepts"><span class="nav-number">02</span>Concepts</a>
+        <a href="#panels"><span class="nav-number">03</span>Panels</a>
+        <a href="#variables"><span class="nav-number">04</span>Variables</a>
+        <a href="#transforms"><span class="nav-number">05</span>Transforms</a>
+        <a href="#alerts"><span class="nav-number">06</span>Alerts</a>
+        <a href="#provisioning"><span class="nav-number">07</span>Provisioning</a>
+        <a href="#gotchas"><span class="nav-number">08</span>Gotchas</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section class="hero searchable" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="eyebrow">Visual cheatsheet + usage guide</div>
+          <h1 id="hero-title">Visualize <span>everything.</span></h1>
+          <p>Grafana turns metrics, logs, and traces into dashboards you can read at a glance — then alerts on them. Query any data source, shape the result, and ship it.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#start">Start in 5 minutes →</a>
+            <a class="button" href="#panels">See panels</a>
+            <a class="button" href="#alerts">Set up alerts</a>
+          </div>
+        </div>
+        <div class="terminal" aria-label="Stylized Grafana setup">
+          <div class="terminal-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="terminal-title">grafana</span></div>
+          <div class="terminal-body">
+            <div class="mock-side">
+              <p class="mock-label">Boot</p>
+              <div class="mock-row active">docker</div>
+              <div class="mock-row">:3000</div>
+              <div class="mock-row">admin/admin</div>
+            </div>
+            <div class="mock-pane">
+              <div><span class="prompt">❯</span> <span class="cmd">docker run -p 3000:3000 grafana/grafana</span></div>
+              <div class="dim">✔ listening on :3000 · data in /var/lib/grafana</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cmd">open http://localhost:3000</span></div>
+              <div class="dim">user: admin · pass: admin (change on first login)</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cursor"></span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “panel”, “datasource”, “variable”, “transform”, “alert”, or “provisioning”.</div>
+
+      <section class="section searchable" id="start">
+        <div class="section-head">
+          <div><div class="section-kicker">01 / Start here</div><h2>Run &amp; first dashboard</h2></div>
+          <p>Five minutes from an empty server to a live panel: run it, sign in, wire a data source, add a panel.</p>
+        </div>
+        <div class="grid four">
+          <article class="card"><div class="card-number">1</div><h3>Run</h3><pre><code>docker run -d -p 3000:3000 \
+  grafana/grafana</code></pre></article>
+          <article class="card"><div class="card-number">2</div><h3>Sign in</h3><p>Open <code>http://localhost:3000</code> and log in as <code>admin</code> / <code>admin</code>.</p><pre><code># change the password
+# when prompted</code></pre></article>
+          <article class="card"><div class="card-number">3</div><h3>Add a data source</h3><p>Connections → Data sources → Prometheus, Loki, or Postgres.</p><pre><code>http://prometheus:9090</code></pre></article>
+          <article class="card"><div class="card-number">4</div><h3>New dashboard + panel</h3><p>Dashboards → New → Add visualization → pick a query and panel type.</p><pre><code>Dashboard → Add → Visualization</code></pre></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">KEY</div><p><strong>Queries live in panels.</strong> A dashboard is just a grid of panels; each panel runs its own query against a data source. Write the query in <strong>Explore</strong> first to iterate, then save it into a dashboard panel.</p></div>
+        <details style="margin-top:16px">
+          <summary>Persist data &amp; plugins</summary>
+          <div class="details-body grid two">
+            <div><h4>Keep dashboards across restarts</h4><pre><code>docker run -d -p 3000:3000 \
+  -v grafana-data:/var/lib/grafana \
+  grafana/grafana</code></pre></div>
+            <div><h4>Install plugins at boot</h4><pre><code>GF_INSTALL_PLUGINS=grafana-clock-panel,\
+grafana-piechart-panel</code></pre></div>
+          </div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="concepts">
+        <div class="section-head">
+          <div><div class="section-kicker">02 / Concepts</div><h2>Data sources &amp; queries</h2></div>
+          <p>Every panel queries a data source through its own query language, then plots the result over a time range.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>Prometheus</h3><p>Metrics via PromQL. Add <code>rate()</code> to counters and use <code>$__rate_interval</code>.</p><pre><code>rate(http_requests_total[$__rate_interval])
+sum by (job) (rate(http_requests_total[$__rate_interval]))</code></pre></article>
+          <article class="card"><h3>Loki</h3><p>Logs via LogQL. Filter with a stream selector, then pipe to parsers and aggregations.</p><pre><code>{job="api"} |= "error"
+sum by (level) (count_over_time({job="api"}[5m]))</code></pre></article>
+          <article class="card"><h3>PostgreSQL</h3><p>Tables via SQL. <code>$__timeFilter()</code> applies the dashboard time range to a timestamp column.</p><pre><code>SELECT time, value
+FROM metrics
+WHERE $__timeFilter(time)
+ORDER BY 1</code></pre></article>
+        </div>
+        <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Shape</th><th>Columns</th><th>Use when</th></tr></thead><tbody>
+          <tr><td><code>wide</code></td><td><code>time</code>, series A, series B, …</td><td>One column per series (pivoted).</td></tr>
+          <tr><td><code>long</code></td><td><code>time</code>, <code>value</code>, label</td><td>A value column plus a series-name column.</td></tr>
+        </tbody></table></div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">⌁</div><p><strong>Time &amp; units are panel-level.</strong> The dashboard time range picker applies to every panel. Set units in Panel → Standard options → Unit — common values: <code>bytes</code>, <code>percent (0-100)</code>, <code>percentunit (0.0-1.0)</code>, <code>s</code>, <code>ms</code>, <code>short</code>.</p></div>
+        <details style="margin-top:16px">
+          <summary>Iterate in Explore</summary>
+          <div class="details-body"><p>Explore runs a query against one data source with the time range and query inspector visible. When a query looks right, use <strong>Add to dashboard</strong> to drop it into a panel.</p><pre><code># Explore → pick data source → write query
+# → Add to dashboard → choose panel type</code></pre></div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="panels">
+        <div class="section-head">
+          <div><div class="section-kicker">03 / Panels</div><h2>Panel types</h2></div>
+          <p>Pick the visualization that matches the data shape, then tune thresholds, units, and the legend.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Panel</th><th>What it shows</th><th>Use for</th></tr></thead><tbody>
+          <tr><td><code>Time series</code></td><td>Lines over time</td><td>Metrics, rates, latencies.</td></tr>
+          <tr><td><code>Stat</code></td><td>One big number</td><td>Current value, e.g. uptime or errors.</td></tr>
+          <tr><td><code>Gauge</code></td><td>Value on an arc</td><td>Utilization against a max.</td></tr>
+          <tr><td><code>Bar gauge</code></td><td>Horizontal bars per series</td><td>Ranking several series at once.</td></tr>
+          <tr><td><code>Table</code></td><td>Tabular rows/columns</td><td>Logs, top-N lists, raw rows.</td></tr>
+          <tr><td><code>Text</code></td><td>Markdown / HTML</td><td>Docs, links, runbooks on a dashboard.</td></tr>
+        </tbody></table></div>
+        <div class="grid three" style="margin-top:16px">
+          <article class="card"><h3>Thresholds</h3><p>Color-code values by ranges. <code>base</code> is the default, <code>green</code>/<code>red</code> override it.</p><pre><code># Thresholds: 0 = green, 80 = base, 95 = red
+# value 70 → green</code></pre></article>
+          <article class="card"><h3>Units</h3><p>Format the raw value without changing the data.</p><pre><code>Panel → Standard options → Unit
+# bytes, percent, s, ms, short</code></pre></article>
+          <article class="card"><h3>Legend</h3><p>Control series names and visibility.</p><pre><code># Legend format with labels:
+{{job}} - {{instance}}
+# or per-series overrides</code></pre></article>
+        </div>
+        <details style="margin-top:16px">
+          <summary>More panel types</summary>
+          <div class="details-body"><div class="tags">
+            <span class="tag">logs</span><span class="tag">pie chart</span><span class="tag">histogram</span><span class="tag">state timeline</span><span class="tag">status history</span><span class="tag">geomap</span><span class="tag">candlestick</span><span class="tag">heatmap</span><span class="tag">node graph</span><span class="tag">flame graph</span>
+          </div><p style="margin-top:12px">Specialized panels for logs (Loki), distributions (histogram/heatmap), discrete state over time (state timeline/status history), and tracing (node graph, flame graph).</p></div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="variables">
+        <div class="section-head">
+          <div><div class="section-kicker">04 / Variables</div><h2>Template variables</h2></div>
+          <p>Make one dashboard reusable across hosts, jobs, and environments with <code>$var</code> placeholders.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Type</th><th>Options come from</th><th>Example</th></tr></thead><tbody>
+          <tr><td><code>query</code></td><td>A data source query</td><td><code>label_values(up, job)</code></td></tr>
+          <tr><td><code>custom</code></td><td>A comma-separated list</td><td><code>prod, staging, dev</code></td></tr>
+          <tr><td><code>interval</code></td><td>Auto time spans</td><td><code>1m, 5m, 15m, 1h</code></td></tr>
+          <tr><td><code>constant</code></td><td>A fixed hidden value</td><td><code>region=us-east-1</code></td></tr>
+          <tr><td><code>datasource</code></td><td>The data sources list</td><td>pick Prometheus or Loki</td></tr>
+          <tr><td><code>textbox</code></td><td>Free-text input</td><td>a hostname prefix</td></tr>
+        </tbody></table></div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Multi-value</h3><p>Enable <strong>Multi-value</strong> and <strong>Include All</strong>. The format changes interpolation: <code>=~</code> regex for multi-select in PromQL.</p><pre><code># Multi-select as regex:
+label=~"$jobs"
+# Single: label="$job"</code></pre></article>
+          <article class="card"><h3>Chained (dependent)</h3><p>Later variables read earlier ones: pick <code>$region</code> first, then <code>$cluster</code> narrows to it.</p><pre><code># $cluster query depends on $region:
+label_values(kube_node_labels{region="$region"}, cluster)</code></pre></article>
+        </div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">!</div><p><strong>Escaping.</strong> <code>$var</code> auto-escapes for the context; use <code>${var:raw}</code> to disable escaping and <code>${var:regex}</code> for a safe regex in label matchers. Chained variables refresh top-down when a parent changes.</p></div>
+        <details style="margin-top:16px">
+          <summary>Built-in variables &amp; ad hoc filters</summary>
+          <div class="details-body"><pre><code>$__from          # range start (epoch ms)
+$__to            # range end (epoch ms)
+$__interval      # auto step, e.g. 15s
+$__rate_interval # safe window for rate()</code></pre><p style="margin-top:12px"><strong>Ad hoc filters</strong> let viewers add key/value filters on the fly without editing the dashboard.</p></div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="transforms">
+        <div class="section-head">
+          <div><div class="section-kicker">05 / Transforms</div><h2>Transforms</h2></div>
+          <p>Reshape query results in the panel before they render — no need to change the query itself.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>Reduce</code><span>Aggregate rows into single values (sum, mean, min, max, last) per field.</span></div>
+          <div class="command-row"><code>Filter by name</code><span>Keep or remove fields matching a regex.</span></div>
+          <div class="command-row"><code>Merge</code><span>Combine several query results into one table by time.</span></div>
+          <div class="command-row"><code>Join by field</code><span>SQL-style join of two tables on a shared field value.</span></div>
+          <div class="command-row"><code>Group by</code><span>Bucket rows by field(s), then apply an aggregation.</span></div>
+          <div class="command-row"><code>Sort by</code><span>Order rows by a field ascending or descending.</span></div>
+          <div class="command-row"><code>Filter by value</code><span>Keep rows where a field passes a condition.</span></div>
+          <div class="command-row"><code>Rename by regex</code><span>Rewrite field/series names with capture groups.</span></div>
+          <div class="command-row"><code>Calculate field</code><span>Add a computed field from an expression.</span></div>
+          <div class="command-row"><code>Labels to fields</code><span>Turn label columns into data fields.</span></div>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">▦</div><p><strong>Order matters.</strong> Transforms run top-to-bottom and each sees the previous one's output. Put <code>Filter by name</code> before <code>Reduce</code> to slim the table before aggregating.</p></div>
+        <details style="margin-top:16px">
+          <summary>Organize &amp; convert</summary>
+          <div class="details-body grid two">
+            <div><h4>Organize fields</h4><pre><code># reorder, hide, or rename columns
+# before the panel renders them</code></pre></div>
+            <div><h4>Convert field type</h4><pre><code># string ↔ number ↔ boolean ↔ time
+# fixes "no data" from string numbers</code></pre></div>
+          </div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="alerts">
+        <div class="section-head">
+          <div><div class="section-kicker">06 / Alerts</div><h2>Alerts &amp; notifications</h2></div>
+          <p>Alert rules evaluate a query on a schedule, then route the result to contact points by label.</p>
+        </div>
+        <div class="state-grid">
+          <div class="state-card"><strong>Normal</strong><p>The condition is not met; the alert is quiet.</p></div>
+          <div class="state-card working"><strong>Pending</strong><p>Condition met, but not yet for the full evaluation window.</p></div>
+          <div class="state-card blocked"><strong>Alerting</strong><p>Condition has held; a notification is firing.</p></div>
+          <div class="state-card unknown"><strong>NoData</strong><p>The query returned no data during the window.</p></div>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Alert rule + condition</h3><p>Create from a panel (Edit → Alert) or standalone (Alerting → Alert rules).</p><pre><code># Reduce + threshold expression:
+when avg() of query(A, 5m, now)
+IS ABOVE 0.9</code></pre></article>
+          <article class="card"><h3>Contact points</h3><p>Where notifications go: email, Slack, PagerDuty, webhook, Telegram.</p><pre><code>Alerting → Contact points → New
+# pick an integration, fill secrets</code></pre></article>
+          <article class="card"><h3>Notification policies</h3><p>The routing tree matches alerts to contact points by label.</p><pre><code># default policy → email
+# severity=critical → pagerduty</code></pre></article>
+          <article class="card"><h3>Labels</h3><p>Key/value pairs attached to an alert; they drive routing and silence matching.</p><pre><code>severity: critical
+team: api</code></pre></article>
+        </div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">↺</div><p><strong>Routing is label-based.</strong> A notification policy matches on <code>label = value</code>. If an alert fires to the wrong place, check its labels against the routing tree before touching the contact point.</p></div>
+        <details style="margin-top:16px">
+          <summary>Evaluation timing</summary>
+          <div class="details-body"><p>Rules evaluate on an interval (default <code>1m</code>) over a <code>for</code> window. An alert stays <strong>Pending</strong> until the condition holds for the full <code>for</code>, then it becomes <strong>Alerting</strong>.</p><pre><code># Evaluate every 1m, fire after 5m:
+# Interval: 1m · For: 5m</code></pre></div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="provisioning">
+        <div class="section-head">
+          <div><div class="section-kicker">07 / Provisioning</div><h2>Provisioning as code</h2></div>
+          <p>Declare data sources and dashboards as YAML, and override any setting with <code>GF_</code>-prefixed env vars.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>Data sources</h3><pre><code>apiVersion: 1
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true</code></pre></article>
+          <article class="card"><h3>Dashboards</h3><pre><code>apiVersion: 1
+providers:
+  - name: 'default'
+    orgId: 1
+    folder: ''
+    type: file
+    options:
+      path: /etc/grafana/provisioning/dashboards</code></pre></article>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Env vars</h3><p>Every config key maps to <code>GF_SECTION_KEY</code> in the container.</p><pre><code>GF_SECURITY_ADMIN_PASSWORD=secret
+GF_SECURITY_ADMIN_USER=admin
+GF_SERVER_HTTP_PORT=3000
+GF_DATABASE_URL=postgres://…
+GF_INSTALL_PLUGINS=grafana-clock-panel</code></pre></article>
+          <article class="card"><h3>Config file</h3><p>Full config lives in <code>grafana.ini</code>; provisioned YAML is separate.</p><pre><code>/etc/grafana/grafana.ini
+# [server]
+# http_port = 3000
+# [security]
+# admin_password = …</code></pre></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">GF_</div><p><strong>Env wins.</strong> Any <code>grafana.ini</code> value can be overridden by its <code>GF_</code> env var at container start — no rebuild, no mounted config needed for most changes.</p></div>
+        <details style="margin-top:16px">
+          <summary>Secrets in datasources</summary>
+          <div class="details-body"><pre><code>datasources:
+  - name: Postgres
+    type: postgres
+    url: db:5432
+    jsonData:
+      database: metrics
+    secureJsonData:
+      user: grafana
+      password: secret</code></pre></div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="gotchas">
+        <div class="section-head">
+          <div><div class="section-kicker">08 / Gotchas</div><h2>Pitfalls</h2></div>
+          <p>Small behaviors that make a panel show nothing, wrong values, or the wrong series names.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>Time range picker</h3><p>Every panel is clipped to the dashboard time range. Use <code>$__rate_interval</code> in PromQL instead of a fixed <code>[5m]</code> so rates resize with the picker.</p><pre><code>rate(requests_total[$__rate_interval])</code></pre></article>
+          <article class="card"><h3>Unit formatting</h3><p>The unit changes the label, not the data. If values look wrong (e.g. bytes shown as a huge number), set the unit on the panel — not in the query.</p><pre><code>Standard options → Unit → bytes</code></pre></article>
+          <article class="card"><h3>Template var escaping</h3><p><code>$var</code> is auto-escaped; a multi-value PromQL matcher needs the regex form or you'll get a broken query.</p><pre><code>label=~"${jobs:regex}"
+# not: label="$jobs"</code></pre></article>
+          <article class="card"><h3>Series naming</h3><p>Multiple series with identical names collapse to one line. Disambiguate with a <code>Legend</code> format or a rename transform.</p><pre><code>Legend: {{job}} - {{instance}}</code></pre></article>
+        </div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">!</div><p><strong>Data source auth.</strong> Provisioned data sources with credentials need <code>secureJsonData</code> (e.g. <code>basicAuthPassword</code>, <code>token</code>) — plain <code>jsonData</code> holds only non-secret settings. If a panel shows <em>401 / no data</em>, check the source's auth before the query.</p></div>
+      </section>
+
+      <footer class="footer searchable">
+        <strong>Source of truth</strong>
+        <p>This guide covers the Grafana essentials for dashboards, data sources, variables, transforms, alerts, and provisioning. The official docs remain authoritative for version-specific behavior.</p>
+        <div class="footer-links">
+          <a href="https://grafana.com/docs/" target="_blank" rel="noreferrer">Grafana docs</a>
+          <a href="https://grafana.com/docs/grafana/latest/administration/provisioning/" target="_blank" rel="noreferrer">Provisioning</a>
+          <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-guide="jq">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A friendly, visual jq cheatsheet and usage guide for the command-line JSON processor: filters, operators, recipes, flags, and curl pipelines.">
+  <title>jq — Visual Cheatsheet &amp; Usage Guide</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../" aria-label="Back to slop-stuff">
+      <span class="brand-mark">{.}</span>
+      <span>jq Guide</span>
+      <span class="version">command-line JSON</span>
+    </a>
+    <label class="search-wrap">
+      <span class="sr-only" hidden>Search guide</span>
+      <input id="search" type="search" aria-label="Search guide" placeholder="Search filters, operators, recipes, flags, curl…" autocomplete="off">
+    </label>
+    <div class="top-actions">
+      <button class="icon-button" id="themeToggle" type="button" title="Toggle theme" aria-label="Toggle light and dark theme">◐</button>
+      <button class="icon-button" id="printGuide" type="button" title="Print guide" aria-label="Print this guide">Print</button>
+    </div>
+  </header>
+
+  <div class="shell" id="top">
+    <aside class="sidebar" aria-label="Guide sections">
+      <p class="side-label">On this page</p>
+      <nav>
+        <a href="#start"><span class="nav-number">01</span>Start here</a>
+        <a href="#filters"><span class="nav-number">02</span>Filters</a>
+        <a href="#recipes"><span class="nav-number">03</span>Recipes</a>
+        <a href="#operators"><span class="nav-number">04</span>Operators</a>
+        <a href="#build"><span class="nav-number">05</span>Building output</a>
+        <a href="#flags"><span class="nav-number">06</span>Flags</a>
+        <a href="#curl"><span class="nav-number">07</span>jq with curl</a>
+        <a href="#gotchas"><span class="nav-number">08</span>Gotchas</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section class="hero searchable" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="eyebrow">Visual cheatsheet + usage guide</div>
+          <h1 id="hero-title">Slice JSON <span>on the command line.</span></h1>
+          <p>jq is a tiny filter language for JSON: pipe structured data in, emit transformed JSON out. It's the missing half of every <code>curl</code> command.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#start">Start in 5 minutes →</a>
+            <a class="button" href="#recipes">See recipes</a>
+            <a class="button" href="#flags">Browse flags</a>
+          </div>
+        </div>
+        <div class="terminal" aria-label="Stylized jq session">
+          <div class="terminal-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="terminal-title">zsh — jq</span></div>
+          <div class="terminal-body">
+            <div class="mock-side">
+              <p class="mock-label">Input</p>
+              <div class="mock-row active">{ "name": … }</div>
+              <div class="mock-row">[1, 2, 3]</div>
+            </div>
+            <div class="mock-pane">
+              <div><span class="prompt">❯</span> <span class="cmd">echo '{"name":"Ada","age":36}' | jq '.name'</span></div>
+              <div class="dim">"Ada"</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cmd">echo '[{"n":"a"},{"n":"b"}]' | jq '.[] | .n'</span></div>
+              <div class="dim">"a"</div>
+              <div class="dim">"b"</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cmd">jq '.users | map(select(.admin)) | length' data.json</span></div>
+              <div class="dim">4</div>
+              <br>
+              <div><span class="prompt">❯</span> <span class="cursor"></span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “filter”, “map”, “select”, “flag”, or “curl”.</div>
+
+      <section class="section searchable" id="start">
+        <div class="section-head">
+          <div><div class="section-kicker">01 / Start here</div><h2>Pipe JSON in, get JSON out</h2></div>
+          <p>jq reads JSON from stdin (or a file), applies a filter, and writes the result. The identity filter <code>.</code> pretty-prints.</p>
+        </div>
+        <div class="grid four">
+          <article class="card"><div class="card-number">1</div><h3>Install</h3><pre><code>brew install jq      # macOS
+sudo apt install jq  # Debian/Ubuntu</code></pre></article>
+          <article class="card"><div class="card-number">2</div><h3>Pretty-print</h3><pre><code>jq '.' data.json
+curl -s URL | jq '.'</code></pre></article>
+          <article class="card"><div class="card-number">3</div><h3>Extract a field</h3><pre><code>jq '.name' data.json
+jq '.user.name'</code></pre></article>
+          <article class="card"><div class="card-number">4</div><h3>Iterate an array</h3><pre><code>jq '.[]' data.json
+jq '.users[]'</code></pre></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">KEY</div><p><strong>Read filters right-to-left.</strong> <code>.users[] | .name</code> means: take the <code>users</code> array, expand it (<code>[]</code>), then for each item grab <code>name</code>. The pipe <code>|</code> feeds one filter's output into the next.</p></div>
+      </section>
+
+      <section class="section searchable" id="filters">
+        <div class="section-head">
+          <div><div class="section-kicker">02 / Filters</div><h2>The five filters you'll use daily</h2></div>
+          <p>Most real jq is built from a handful of primitives chained with <code>|</code>.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Filter</th><th>Meaning</th><th>Example</th><th>Result</th></tr></thead><tbody>
+          <tr><td><code>.</code></td><td>Identity (whole input)</td><td><code>echo '{"a":1}' | jq '.'</code></td><td>pretty-printed <code>{"a":1}</code></td></tr>
+          <tr><td><code>.foo</code></td><td>Object field</td><td><code>jq '.name'</code></td><td><code>"Ada"</code></td></tr>
+          <tr><td><code>.foo.bar</code></td><td>Nested field</td><td><code>jq '.user.name'</code></td><td><code>"Ada"</code></td></tr>
+          <tr><td><code>.[0]</code></td><td>Array index</td><td><code>jq '.[0]'</code></td><td>first element</td></tr>
+          <tr><td><code>.[]</code></td><td>Expand array / object values</td><td><code>jq '.[]'</code></td><td>each element, one per line</td></tr>
+          <tr><td><code>.foo[]</code></td><td>Expand a field's array</td><td><code>jq '.users[]'</code></td><td>each user</td></tr>
+          <tr><td><code>|</code></td><td>Pipe into next filter</td><td><code>jq '.users[] | .name'</code></td><td>each user's name</td></tr>
+          <tr><td><code>,</code></td><td>Multiple outputs</td><td><code>jq '.a, .b'</code></td><td>both values</td></tr>
+        </tbody></table></div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Pipe vs comma</h3><p><code>|</code> feeds output forward; <code>,</code> produces parallel results.</p><pre><code>jq '.a | .b'     # a, then b of a
+jq '.a, .b'      # a and b side by side</code></pre></article>
+          <article class="card"><h3>Optional keys are safe</h3><p>Accessing a missing field returns <code>null</code> — never an error.</p><pre><code>jq '.missing'      # → null
+jq '.foo // "n/a"' # default value</code></pre></article>
+        </div>
+      </section>
+
+      <section class="section searchable" id="recipes">
+        <div class="section-head">
+          <div><div class="section-kicker">03 / Recipes</div><h2>Copy-paste answers to real questions</h2></div>
+          <p>Each shows the filter and what it answers about your data.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>jq '.users | length'</code><span>How many users?</span></div>
+          <div class="command-row"><code>jq '[.users[].name]'</code><span>All names as an array.</span></div>
+          <div class="command-row"><code>jq '.users | map(.name)'</code><span>Same, via map.</span></div>
+          <div class="command-row"><code>jq '.users[] | select(.age &gt; 30)'</code><span>Users older than 30.</span></div>
+          <div class="command-row"><code>jq '.users | map(select(.admin))'</code><span>Only admins.</span></div>
+          <div class="command-row"><code>jq '.users | sort_by(.age)'</code><span>Sort by age ascending.</span></div>
+          <div class="command-row"><code>jq '.users | sort_by(.age) | reverse'</code><span>Descending.</span></div>
+          <div class="command-row"><code>jq '.users | group_by(.role)'</code><span>Bucket users by role.</span></div>
+          <div class="command-row"><code>jq '.tags | unique'</code><span>De-duplicate an array.</span></div>
+          <div class="command-row"><code>jq '[.items[].price] | add'</code><span>Sum of prices.</span></div>
+          <div class="command-row"><code>jq '.users | max_by(.score).name'</code><span>Name of top scorer.</span></div>
+          <div class="command-row"><code>jq 'del(.users[].password)'</code><span>Strip a sensitive field.</span></div>
+          <div class="command-row"><code>jq 'with_entries(select(.value != null))'</code><span>Drop null values.</span></div>
+          <div class="command-row"><code>jq 'flatten'</code><span>Flatten nested arrays one level.</span></div>
+        </div>
+        <details style="margin-top:16px">
+          <summary>Shape-shifting recipes</summary>
+          <div class="details-body grid two">
+            <div><h4>Rename a field</h4><pre><code>jq '{first: .name}'</code></pre></div>
+            <div><h4>Pick several fields</h4><pre><code>jq '{id: .id, name: .name}'</code></pre></div>
+            <div><h4>key → value pairs</h4><pre><code>jq 'to_entries'</code></pre></div>
+            <div><h4>and back</h4><pre><code>jq 'from_entries'</code></pre></div>
+            <div><h4>Index by key</h4><pre><code>jq '.users | map({key: .id, value: .}) | from_entries'</code></pre></div>
+            <div><h4>Merge objects</h4><pre><code>jq -s 'add' a.json b.json</code></pre></div>
+          </div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="operators">
+        <div class="section-head">
+          <div><div class="section-kicker">04 / Operators</div><h2>The builtins that do the heavy lifting</h2></div>
+          <p>Higher-order functions take a filter as an argument and apply it to every element.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>Transforming</h3><div class="command-index" style="margin-top:6px">
+            <div class="command-row"><code>map(f)</code><span>apply f to each element → array.</span></div>
+            <div class="command-row"><code>map_values(f)</code><span>map over object values.</span></div>
+            <div class="command-row"><code>select(f)</code><span>keep elements where f is truthy.</span></div>
+            <div class="command-row"><code>unique</code><span>dedupe sorted array.</span></div>
+            <div class="command-row"><code>sort, sort_by(f)</code><span>sort values / by key f.</span></div>
+            <div class="command-row"><code>group_by(f)</code><span>bucket by key f.</span></div>
+            <div class="command-row"><code>flatten</code><span>flatten nested arrays.</span></div>
+            <div class="command-row"><code>add</code><span>sum array, or merge objects.</span></div>
+          </div></article>
+          <article class="card"><h3>Reducing</h3><div class="command-index" style="margin-top:6px">
+            <div class="command-row"><code>reduce .[] as $x (init; f)</code><span>fold.</span></div>
+            <div class="command-row"><code>length</code><span>length of string/array/object.</span></div>
+            <div class="command-row"><code>keys, keys_unsorted</code><span>object keys.</span></div>
+            <div class="command-row"><code>has("k")</code><span>does key exist?</span></div>
+            <div class="command-row"><code>del(.k)</code><span>delete key / element.</span></div>
+            <div class="command-row"><code>min, max, min_by(f)</code><span>extremes.</span></div>
+            <div class="command-row"><code>join(str)</code><span>join array with string.</span></div>
+            <div class="command-row"><code>split(str)</code><span>split string.</span></div>
+          </div></article>
+          <article class="card"><h3>Conditionals &amp; defaults</h3><div class="command-index" style="margin-top:6px">
+            <div class="command-row"><code>//</code><span>alternative (default) operator.</span></div>
+            <div class="command-row"><code>if c then a else b end</code><span>conditional.</span></div>
+            <div class="command-row"><code>and, or, not</code><span>boolean logic.</span></div>
+            <div class="command-row"><code>==, !=, &lt;, &gt;=</code><span>comparisons.</span></div>
+            <div class="command-row"><code>+ - * /</code><span>arithmetic.</span></div>
+            <div class="command-row"><code>any, all</code><span>array quantifiers.</span></div>
+            <div class="command-row"><code>contains(x)</code><span>substring / subset test.</span></div>
+            <div class="command-row"><code>startswith, endswith</code><span>string prefix/suffix.</span></div>
+          </div></article>
+        </div>
+      </section>
+
+      <section class="section searchable" id="build">
+        <div class="section-head">
+          <div><div class="section-kicker">05 / Building output</div><h2>Construct the JSON you actually want</h2></div>
+          <p>Object and array constructors reshape input; string interpolation formats it.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>New objects</h3><pre><code>{name: .user.name,
+ age: .user.age}
+# shorthand: {name, age}
+# (when fields are already .name, .age)</code></pre></article>
+          <article class="card"><h3>New arrays</h3><pre><code>[.a, .b, .c]
+[.users[].name]
+[range(0; 10)]</code></pre></article>
+          <article class="card"><h3>String interpolation</h3><pre><code>"Hello \(.name)!"
+# → "Hello Ada!"
+
+[.a, .b] | @csv    # CSV line
+[.a, .b] | @tsv    # TSV line
+[.a, .b] | @json   # JSON-encode</code></pre></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">⌁</div><p>Remember to pair <code>@csv</code> / <code>@tsv</code> with the <code>-r</code> flag so quotes aren't escaped in the final output.</p></div>
+      </section>
+
+      <section class="section searchable" id="flags">
+        <div class="section-head">
+          <div><div class="section-kicker">06 / Flags</div><h2>The command-line switches</h2></div>
+          <p>A handful of flags change everything about how jq reads and writes.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Flag</th><th>Effect</th><th>Use when</th></tr></thead><tbody>
+          <tr><td><code>-r</code></td><td>Raw output (strip quotes)</td><td>You want plain strings, not JSON.</td></tr>
+          <tr><td><code>-c</code></td><td>Compact, single-line JSON</td><td>Logs, pipes, one-object-per-line.</td></tr>
+          <tr><td><code>-s</code></td><td>Slurp input into one array</td><td>Aggregate across multiple objects.</td></tr>
+          <tr><td><code>-S</code></td><td>Sort object keys</td><td>Deterministic diffs / output.</td></tr>
+          <tr><td><code>-n</code></td><td>Null input (ignore stdin)</td><td>Build values from <code>--arg</code>.</td></tr>
+          <tr><td><code>-R</code></td><td>Read raw strings, not JSON</td><td>Process line-oriented text.</td></tr>
+          <tr><td><code>-e</code></td><td>Set exit status from output</td><td>Scripts that need success/failure.</td></tr>
+          <tr><td><code>--arg n v</code></td><td>Pass a string variable</td><td>Inject shell values safely.</td></tr>
+          <tr><td><code>--argjson n v</code></td><td>Pass a JSON variable</td><td>Inject structured values.</td></tr>
+          <tr><td><code>--slurpfile n f</code></td><td>Load file into an array var</td><td>Join data from two files.</td></tr>
+        </tbody></table></div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Variables with --arg</h3><pre><code>jq --arg name "Ada" '.greeting = "hi \($name)"'</code></pre></article>
+          <article class="card"><h3>Slurp for aggregation</h3><pre><code>jq -s '.[0] + .[1]' a.json b.json
+jq -s 'sort_by(.ts)' events*.json</code></pre></article>
+        </div>
+      </section>
+
+      <section class="section searchable" id="curl">
+        <div class="section-head">
+          <div><div class="section-kicker">07 / jq with curl</div><h2>The other half of every API call</h2></div>
+          <p>Pipe an API response straight into a filter and read the answer inline.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>Typical pipelines</h3><pre><code>curl -s https://api.github.com/repos/jqlang/jq | \
+  jq '.stargazers_count'
+
+curl -s URL | jq '.items[] | {name, version}'
+
+curl -s URL | jq -r '.items[].html_url'</code></pre></article>
+          <article class="card"><h3>In a script</h3><pre><code>resp=$(curl -s URL)
+count=$(echo "$resp" | jq '.total')
+if [ "$count" -gt 0 ]; then
+  echo "$resp" | jq -r '.items[].name'
+fi</code></pre></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">✓</div><p><strong>Tip:</strong> <code>curl -sS</code> shows errors but hides progress. Add <code>jq -e</code> to get a non-zero exit when the last output is <code>false</code> or <code>null</code>.</p></div>
+      </section>
+
+      <section class="section searchable" id="gotchas">
+        <div class="section-head">
+          <div><div class="section-kicker">08 / Gotchas</div><h2>Things that bite everyone once</h2></div>
+          <p>Small behaviors that change what your pipeline returns.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>Missing keys → null</h3><p>Accessing <code>.foo</code> on an object without it returns <code>null</code>, not an error. Use <code>//</code> for defaults and <code>has()</code> to test existence.</p><pre><code>jq '.foo // "n/a"'
+jq 'has("foo")'</code></pre></article>
+          <article class="card"><h3>.[] on null → nothing</h3><p>Expanding <code>null</code> produces no output, so a missing array silently yields zero lines.</p><pre><code>jq '.items[]?'   # tolerate missing</code></pre></article>
+          <article class="card"><h3>Quotes vs raw</h3><p>Without <code>-r</code>, strings come back JSON-quoted. With <code>@csv</code> and <code>-r</code> together you get clean columns.</p><pre><code>jq '.name'      # "Ada"
+jq -r '.name'   # Ada</code></pre></article>
+          <article class="card"><h3>Multiple objects need -s</h3><p>Two separate JSON objects on stdin aren't an array unless you slurp.</p><pre><code>jq -s '.' a.json b.json</code></pre></article>
+        </div>
+      </section>
+
+      <footer class="footer searchable">
+        <strong>Source of truth</strong>
+        <p>This guide covers the jq filter language essentials. The <code>jq(1)</code> man page and the official manual remain authoritative for edge cases.</p>
+        <div class="footer-links">
+          <a href="https://jqlang.github.io/jq/manual/" target="_blank" rel="noreferrer">jq manual</a>
+          <a href="https://github.com/jqlang/jq" target="_blank" rel="noreferrer">GitHub</a>
+          <a href="https://jqlang.github.io/jq/tutorial/" target="_blank" rel="noreferrer">Tutorial</a>
+          <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

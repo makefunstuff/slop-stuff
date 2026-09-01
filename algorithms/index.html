@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#sorting"><span class="nav-number">02</span>Sorting</a>
         <a href="#search"><span class="nav-number">03</span>Searching</a>
@@ -72,6 +73,23 @@
               <div><span class="prompt">❯</span> <span class="cmd">O(2ⁿ)</span> <span class="dim">subsets, naive fib</span></div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The eight items you'll reach for most — scan this before anything else.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>O(1) &lt; O(log n) &lt; O(n) &lt; O(n log n) &lt; O(n²) &lt; O(2ⁿ)</code><span><strong>Big-O ladder.</strong> Constant → logarithmic → linear → linearithmic → quadratic → exponential: how cost scales with <code>n</code>.</span></div>
+          <div class="command-row"><code>O(n log n)</code><span><strong>Sorting.</strong> Quicksort: in-place, <code>O(n log n)</code> avg / <code>O(n²)</code> worst, unstable. Mergesort: <code>O(n log n)</code> always, stable, <code>O(n)</code> space.</span></div>
+          <div class="command-row"><code>mid = lo + (hi - lo) // 2</code><span><strong>Binary search.</strong> <code>O(log n)</code> on a sorted array — the <code>lo + (hi - lo)</code> midpoint form avoids integer overflow.</span></div>
+          <div class="command-row"><code>dict / set</code><span><strong>Hash table.</strong> <code>O(1)</code> avg insert, lookup, delete — <code>O(n)</code> worst under collisions. No ordering.</span></div>
+          <div class="command-row"><code>BFS = queue · DFS = stack</code><span><strong>Graph traversal.</strong> Both <code>O(V + E)</code>. BFS gives shortest unweighted paths; DFS handles reachability, cycles, topological sort.</span></div>
+          <div class="command-row"><code>pq = [(0, start)]</code><span><strong>Dijkstra.</strong> <code>O((V + E) log V)</code> shortest paths with non-negative weights — use Bellman-Ford when edges go negative.</span></div>
+          <div class="command-row"><code>memo[n] = fib(n-1) + fib(n-2)</code><span><strong>DP / memoization.</strong> Cache overlapping subproblems to go from exponential to polynomial: naive fib <code>O(2ⁿ)</code> → memoized <code>O(n)</code>.</span></div>
+          <div class="command-row"><code>Ω(n log n)</code><span><strong>Sorting floor.</strong> Comparison sorts can't beat <code>Ω(n log n)</code>; beat it with counting/radix sort, or skip sorting and hash instead.</span></div>
         </div>
       </section>
 
@@ -350,6 +368,8 @@ return lo   # largest feasible value</code></pre></article>
           <article class="card"><h3>Constant factors</h3><p>Big-O hides constants: a tight <code>O(n²)</code> can beat <code>O(n log n)</code> on small <code>n</code>. Profile real data before "optimizing" to a worse practical choice.</p></article>
           <article class="card"><h3>Caching / locality</h3><p>Sequential array access is far faster than pointer-chasing a linked list — locality often beats asymptotics on modern CPUs. Arrays are the default for a reason.</p></article>
           <article class="card"><h3>Recursion depth</h3><p>Deep recursion overflows the call stack. Convert to an explicit stack or loop, or use iterative bottom-up DP for linear/quadratic space.</p></article>
+          <article class="card"><h3>Stability assumed</h3><p>Not every sort is stable: quicksort and heapsort reorder equal keys. Sorting by a secondary key after a primary sort silently scrambles the first ordering unless the sort is stable.</p></article>
+          <article class="card"><h3>Floating-point comparisons</h3><p>Comparing floats with <code>==</code> — or using them as binary-search bounds — can loop forever or miss the target. Prefer integer arithmetic, or compare against a tolerance <code>abs(a - b) &lt; eps</code>.</p></article>
         </div>
         <div class="callout warning" style="margin-top:16px"><div class="callout-mark">!</div><p><strong>Premature optimization is the trap.</strong> Get the algorithm right first, then measure. Big-O picks the strategy; a profiler picks the implementation.</p></div>
       </section>
@@ -362,6 +382,12 @@ return lo   # largest feasible value</code></pre></article>
           <a href="https://en.wikipedia.org/wiki/Sorting_algorithm" target="_blank" rel="noreferrer">Sorting algorithms</a>
           <a href="https://en.wikipedia.org/wiki/List_of_algorithms" target="_blank" rel="noreferrer">List of algorithms</a>
           <a href="../">slop-stuff home</a>
+        </div>
+        <strong style="display:block;margin-top:22px">Related</strong>
+        <div class="footer-links">
+          <a href="../allocators/">Allocators</a>
+          <a href="../math/">Mathematics</a>
+          <a href="../dop/">Data-Oriented Design</a>
         </div>
       </footer>
     </main>

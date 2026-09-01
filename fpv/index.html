@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#power"><span class="nav-number">02</span>Motors &amp; ESCs</a>
         <a href="#video"><span class="nav-number">03</span>Video &amp; VTX</a>
@@ -81,6 +82,24 @@
       </section>
 
       <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “motor”, “ESC”, “VTX”, “ELRS”, “LiPo”, or “Betaflight”.</div>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The parts and numbers you reach for before every build — each item expands in its section below.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>Frame</code><span>Size = prop diameter: <code>3"</code> micro, <code>5"</code> freestyle, <code>7"</code> long range. Carbon plate + standoffs.</span></div>
+          <div class="command-row"><code>FC + RX</code><span>FC runs <code>Betaflight</code> / <code>INAV</code>; the ELRS/Crossfire RX feeds stick positions over <code>CRSF</code> on a UART.</span></div>
+          <div class="command-row"><code>ESC</code><span><code>4-in-1</code> 40–60 A board on <code>DShot600</code>; <code>dshot_bidir = ON</code> adds RPM telemetry for filtering.</span></div>
+          <div class="command-row"><code>Motors + KV</code><span><code>2207 1750KV</code> on 6S, <code>2450KV</code> on 4S (5"). KV = unloaded RPM per volt; lower KV swings bigger props.</span></div>
+          <div class="command-row"><code>Props</code><span><code>5.1"</code> × 3-blade; more pitch = more grip and amp draw. Match hub to shaft (1.5 vs 5 mm).</span></div>
+          <div class="command-row"><code>Battery</code><span>LiPo cells in series — <code>4S</code> = 14.8 V, <code>6S</code> = 22.2 V. Max amps = capacity(A) × C-rating.</span></div>
+          <div class="command-row"><code>VTX power</code><span><code>25 mW</code> race, <code>200–400 mW</code> general, <code>800 mW+</code> long range. Antenna goes on before the battery.</span></div>
+          <div class="command-row"><code>ELRS binding</code><span>One shared <strong>binding phrase</strong> on module + RX pairs forever (WiFi / Lua). 2.4 GHz = 50–500 Hz, 900 MHz = up to 200 Hz.</span></div>
+        </div>
+        <div class="callout"><div class="callout-mark">⚡</div><p><strong>Props off, smoke stopper on.</strong> Build and bench-test with no props, first-power through a smoke stopper, and never store a LiPo full or below <code>3.0 V/cell</code>.</p></div>
+      </section>
 
       <section class="section searchable" id="start">
         <div class="section-head">
@@ -146,7 +165,7 @@ set motor_poles = 14</code></pre></article>
         </div>
         <div class="table-wrap"><table><thead><tr><th>System</th><th>Latency</th><th>Image</th><th>Notes</th></tr></thead><tbody>
           <tr><td><code>Analog</code></td><td>~20 ms</td><td>700 TVL</td><td>Cheapest, degrades to snow instead of dropping out.</td></tr>
-          <tr><td><code>DJI O3 / O4</code></td><td>~28–40 ms</td><td>4K / 1080p</td><td>Closed ecosystem, best image quality.</td></tr>
+          <tr><td><code>DJI O3 / O4 / O4 Pro</code></td><td>~28–40 ms</td><td>4K / 1080p</td><td>Closed ecosystem; O4 Pro adds 4K/120 and better dynamic range.</td></tr>
           <tr><td><code>Walksnail</code></td><td>~22–32 ms</td><td>1080p</td><td>Open, compatible goggles, good night mode.</td></tr>
           <tr><td><code>HDZero</code></td><td>~14 ms fixed</td><td>720p / 1080p</td><td>Lowest, fixed-latency digital; race standard.</td></tr>
         </tbody></table></div>
@@ -174,16 +193,16 @@ IRC Tramp        — TBS / others</code></pre></article>
           <p>The control link is a serial stream from your radio to the flight controller. ExpressLRS is the modern default; Crossfire owns the long-range niche.</p>
         </div>
         <div class="table-wrap"><table><thead><tr><th>Link</th><th>Band</th><th>Packet rate</th><th>Notes</th></tr></thead><tbody>
-          <tr><td><code>ExpressLRS (ELRS)</code></td><td>2.4 GHz / 900 MHz</td><td>50–500 Hz</td><td>Open-source, cheap, high refresh, LBT-free firmware.</td></tr>
+          <tr><td><code>ExpressLRS (ELRS)</code></td><td>2.4 GHz / 900 MHz</td><td>50–500 Hz (2.4G)</td><td>Open-source, cheap; 3.x firmware, 500 Hz max on 2.4 GHz, 200 Hz on 900 MHz.</td></tr>
           <tr><td><code>TBS Crossfire</code></td><td>900 MHz</td><td>50–150 Hz</td><td>Proven long range, up to 2 W, paid hardware.</td></tr>
           <tr><td><code>FrSky ACCST / ACCESS</code></td><td>2.4 GHz</td><td>~9 ms</td><td>Legacy; being replaced by ELRS.</td></tr>
         </tbody></table></div>
         <div class="grid two" style="margin-top:16px">
           <article class="card"><h3>Protocols to the FC</h3><p>The receiver talks to the FC over a serial protocol. <code>CRSF</code> (ELRS/Crossfire) is the one you want; <code>SBUS</code> and <code>PPM</code> are older and slower.</p><pre><code>CRSF  — full telemetry, native
 SBUS  — inverted serial, no telemetry</code></pre></article>
-          <article class="card"><h3>Binding ELRS</h3><p>Set a <strong>binding phrase</strong> on both the module and receiver once; they pair automatically forever. Traditional bind is the fallback.</p><pre><code># shared passphrase, e.g.
-MyFpvQuad-2024
-# then: wifi / lua → Bind</code></pre></article>
+          <article class="card"><h3>Binding ELRS</h3><p>Set one <strong>binding phrase</strong> on the module and receiver — they pair automatically on every boot. Flash over WiFi, the ELRS Configurator, or Betaflight passthrough.</p><pre><code># shared passphrase (ELRS 3.x), e.g.
+my-fpv-quad-01
+# update: WiFi / Configurator / Lua</code></pre></article>
           <article class="card"><h3>Failsafe</h3><p>Configure what the FC does when the link dies. <code>Drop</code> disarms immediately; <code>Land</code> glides down. Stage 1 holds last input, stage 2 enacts the action.</p><pre><code>failsafe = DROP
 guard time ≈ 1.0 s (stage 1)</code></pre></article>
           <article class="card"><h3>Link quality</h3><p>Watch <code>LQ</code> (0–100) and <code>RSSI dBm</code> in the OSD, not just RSSI percent. 2.4 GHz is low latency; 900 MHz penetrates walls and range better.</p><pre><code>LQ ≥ 80  — solid
@@ -311,7 +330,7 @@ never below: 3.0 V/cell (damage)</code></pre></article>
       <section class="section searchable" id="gotchas">
         <div class="section-head">
           <div><div class="section-kicker">08 / Gotchas</div><h2>Pitfalls</h2></div>
-          <p>Five mistakes wreck more quads than crashes do. Check these before every first arm.</p>
+          <p>Eight mistakes wreck more quads than crashes do. Check these before every first arm.</p>
         </div>
         <div class="grid two">
           <article class="card"><h3>Wrong prop direction</h3><p>A backwards prop (or one mounted on the wrong motor) makes the quad flip instantly on arm. CW and CCW are printed on the hub — match them to the motor.</p><pre><code>flip on arm → check prop CW/CCW</code></pre></article>
@@ -320,6 +339,8 @@ never below: 3.0 V/cell (damage)</code></pre></article>
           <article class="card"><h3>VTX without antenna</h3><p>Powering a VTX with no antenna loads the power amplifier and burns it out within seconds. The antenna goes on before the battery, every time.</p><pre><code>power VTX with antenna attached ONLY</code></pre></article>
           <article class="card"><h3>Battery sag</h3><p>Voltage dips hard under load — old, low-C, or cold packs sag more and can brown out the FC. Land at ~3.5 V/cell under load.</p><pre><code>resting 3.7 V/cell after flight = healthy</code></pre></article>
           <article class="card"><h3>Arming indoors</h3><p>Never arm a quad with props on indoors or near people. Props off for bench tests; maiden outside, away from yourself and others.</p><pre><code>bench = props OFF · maiden = outside</code></pre></article>
+          <article class="card"><h3>Gyro orientation wrong</h3><p>If the board arrow isn't forward (or the FC is mounted rotated), the gyro feeds the wrong axes and the quad flips or drifts. Set Board &amp; Sensor Alignment, then confirm the 3D model mirrors the quad.</p><pre><code>tilt quad → model mirrors it, arrow forward</code></pre></article>
+          <article class="card"><h3>Wrong KV for voltage</h3><p>Running a high-KV (4S) motor on 6S draws far more current and can smoke motors or ESCs; a low-KV (6S) motor on 4S flies sluggish with hot batteries. Match KV to cell count.</p><pre><code>6S ↔ ~1750KV · 4S ↔ ~2450KV (5")</code></pre></article>
         </div>
         <div class="callout warning" style="margin-top:16px"><div class="callout-mark">⚠</div><p><strong>Props cut deep.</strong> Treat an armed quad as live: remove props for any bench work, set a pre-arm switch, and stand clear when arming.</p></div>
       </section>
@@ -332,6 +353,12 @@ never below: 3.0 V/cell (damage)</code></pre></article>
           <a href="https://betaflight.com/" target="_blank" rel="noreferrer">Betaflight</a>
           <a href="https://www.fpvknowitall.com/" target="_blank" rel="noreferrer">FPV Know-It-All</a>
           <a href="../">slop-stuff home</a>
+        </div>
+        <div class="footer-links">
+          <strong>Related</strong>
+          <a href="../betaflight/">Betaflight</a>
+          <a href="../pid-tuning/">PID tuning</a>
+          <a href="../ardupilot/">ArduPilot</a>
         </div>
       </footer>
     </main>

@@ -12,7 +12,7 @@
     <a class="brand" href="../" aria-label="Back to slop-stuff">
       <span class="brand-mark">gl_</span>
       <span>OpenGL Guide</span>
-      <span class="version">core profile</span>
+      <span class="version">4.6 · final</span>
     </a>
     <label class="search-wrap">
       <span class="sr-only" hidden>Search guide</span>
@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#buffers"><span class="nav-number">02</span>Buffers</a>
         <a href="#shaders"><span class="nav-number">03</span>Shaders</a>
@@ -44,7 +45,7 @@
         <div class="hero-copy">
           <div class="eyebrow">Visual cheatsheet + usage guide</div>
           <h1 id="hero-title">The graphics API that <span>started it all.</span></h1>
-          <p>OpenGL is the cross-platform graphics API that shaped two decades of games and GPUs. The modern <code>core</code> profile throws away fixed-function state — you manage buffers, shaders, and pipeline state yourself.</p>
+          <p>OpenGL is the cross-platform graphics API that shaped two decades of games and GPUs. The modern <code>core</code> profile throws away fixed-function state — you manage buffers, shaders, and pipeline state yourself. Spec work froze at <strong>OpenGL 4.6</strong> (2017); for new projects Khronos points to <strong>Vulkan</strong>, with <strong>WebGPU</strong> on the web.</p>
           <div class="hero-actions">
             <a class="button primary" href="#start">Start here →</a>
             <a class="button" href="#buffers">Buffers &amp; VAOs</a>
@@ -70,6 +71,23 @@
               <div><span class="prompt">❯</span> <span class="cursor"></span></div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The calls that carry most OpenGL programs, in roughly the order you use them. Everything below builds on these.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>glfwCreateWindow(…) · glfwMakeContextCurrent(win)</code><span>open a window and make its GL context current for the calling thread</span></div>
+          <div class="command-row"><code>glGenBuffers · glBindBuffer · glBufferData</code><span>create a VBO and upload vertex data to <code>GL_ARRAY_BUFFER</code></span></div>
+          <div class="command-row"><code>glGenVertexArrays · glVertexAttribPointer</code><span>bind a VAO and map attributes onto shader locations</span></div>
+          <div class="command-row"><code>glCreateShader · glCompileShader · glLinkProgram</code><span>build a shader program from GLSL sources, then <code>glUseProgram</code></span></div>
+          <div class="command-row"><code>glGenTextures · glTexImage2D · glActiveTexture</code><span>create a texture, upload pixels, and bind it to a unit</span></div>
+          <div class="command-row"><code>glGenFramebuffers · glBindFramebuffer</code><span>render off-screen; binding <code>0</code> targets the window again</span></div>
+          <div class="command-row"><code>glClearColor · glClear(GL_COLOR_BUFFER_BIT | …)</code><span>clear the color / depth / stencil buffers each frame</span></div>
+          <div class="command-row"><code>glDrawArrays(…) · glDrawElements(…)</code><span>issue a draw from a bound VAO — non-indexed vs indexed</span></div>
         </div>
       </section>
 
@@ -117,6 +135,7 @@ glfwPollEvents();
 SDL_GL_SwapWindow(w);</code></pre></div>
           </div>
         </details>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">4.6</div><p><strong>OpenGL 4.6 is the final version.</strong> Spec work froze in 2017 — <code>#version 460 core</code> is the newest GLSL, though <code>#version 330 core</code> below remains the common teaching baseline. Windows and Linux drivers expose 4.6, but macOS caps at <strong>4.1 core</strong> (deprecated since 10.14). Khronos's successor is <strong>Vulkan</strong>.</p></div>
       </section>
 
       <section class="section searchable" id="buffers">
@@ -357,18 +376,29 @@ glUniform1i(uTex, 0);  // unit, not tex</code></pre></article>
 glVertexAttribPointer(0, 3, ...); // index 0</code></pre></article>
           <article class="card"><h3>Bottom-left origin</h3><p>GL's NDC and texture coordinate origin is bottom-left; most image loaders produce top-left rows. Flip UVs or the image, or models appear upside down.</p><pre><code>// top-left → bottom-left: v = 1.0f - v</code></pre></article>
           <article class="card"><h3>Shader errors are silent</h3><p>Compile and link failures never throw. Always check <code>GL_COMPILE_STATUS</code> / <code>GL_LINK_STATUS</code> and print the info log, or you'll stare at a blank screen.</p><pre><code>glGetShaderiv(vs, GL_COMPILE_STATUS, &amp;ok);</code></pre></article>
+          <article class="card"><h3>Mipmap completeness → black</h3><p>If the min filter requests mipmaps but you never call <code>glGenerateMipmap</code>, the texture is <em>incomplete</em> and every sample comes back black. Any mipmap filter mode requires the full chain to exist.</p><pre><code>glGenerateMipmap(GL_TEXTURE_2D); // required</code></pre></article>
+          <article class="card"><h3>macOS is frozen at 4.1</h3><p>Apple deprecated OpenGL in macOS 10.14 (Mojave); the last supported version is <strong>4.1 core</strong>, so 4.2+ features like compute shaders and DSA never arrive there. Target Metal, MoltenVK, or WebGPU instead.</p><pre><code>glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1); // macOS</code></pre></article>
+          <article class="card"><h3>Framebuffer ≠ window size</h3><p>On Retina/high-DPI displays the framebuffer is larger than the window. Size the viewport from <code>glfwGetFramebufferSize</code>, not <code>glfwGetWindowSize</code>, or the scene renders into a blurry corner.</p><pre><code>int fbw, fbh; glfwGetFramebufferSize(win, &amp;fbw, &amp;fbh);
+glViewport(0, 0, fbw, fbh);</code></pre></article>
         </div>
         <div class="callout warning" style="margin-top:16px"><div class="callout-mark">!</div><p><strong>Validate during development.</strong> A missing <code>glBindVertexArray</code> is valid state but produces nothing. Use <a href="https://renderdoc.org/" rel="noreferrer" target="_blank">RenderDoc</a> or <code>GL_KHR_debug</code> to catch invalid operations early.</p></div>
       </section>
 
       <footer class="footer searchable">
         <strong>Source of truth</strong>
-        <p>This guide covers the modern OpenGL core-profile essentials. The official spec, the wiki, and LearnOpenGL remain authoritative for exact behavior and edge cases.</p>
+        <p>This guide covers the modern OpenGL core-profile essentials. OpenGL development froze at <strong>4.6</strong> (2017) — Vulkan is its Khronos successor and WebGPU the web path. The official spec, the wiki, and LearnOpenGL remain authoritative for exact behavior and edge cases.</p>
         <div class="footer-links">
           <a href="https://learnopengl.com/" target="_blank" rel="noreferrer">LearnOpenGL</a>
           <a href="https://docs.gl/" target="_blank" rel="noreferrer">docs.GL</a>
           <a href="https://www.khronos.org/opengl/wiki/" target="_blank" rel="noreferrer">OpenGL Wiki</a>
+          <a href="https://www.khronos.org/vulkan/" target="_blank" rel="noreferrer">Vulkan</a>
           <a href="../">slop-stuff home</a>
+        </div>
+        <strong style="display:block; margin-top:24px">Related guides</strong>
+        <div class="footer-links">
+          <a href="../shaders/">Shaders</a>
+          <a href="../webgpu/">WebGPU</a>
+          <a href="../sdl/">SDL</a>
         </div>
       </footer>
     </main>

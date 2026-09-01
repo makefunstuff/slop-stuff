@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#loop"><span class="nav-number">02</span>Game loop</a>
         <a href="#component"><span class="nav-number">03</span>Components</a>
@@ -78,6 +79,25 @@
               <div><span class="prompt">❯</span> <span class="cursor"></span></div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The ten patterns you reach for most — the loop, the step, the state, the pool, the message. Copy any line straight in.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>while (running) { input(); update(); render(); }</code><span>one loop runs the game; everything else hangs off it.</span></div>
+          <div class="command-row"><code>dt = (now - last) / 1000.0; last = now;</code><span>delta time — multiply movement by <code>dt</code> so speed is framerate-independent.</span></div>
+          <div class="command-row"><code>while (lag &gt;= STEP) { update(STEP); lag -= STEP; }</code><span>fixed timestep — constant <code>dt</code>, deterministic physics.</span></div>
+          <div class="command-row"><code>render(lag / STEP);</code><span>interpolate between the last two states — decouple update from render.</span></div>
+          <div class="command-row"><code>entity = id; component = data; system = behavior;</code><span>ECS — compose objects from plain data, systems iterate it.</span></div>
+          <div class="command-row"><code>state_-&gt;enter(); state_-&gt;update(dt); state_-&gt;exit();</code><span>state machine — one current state, explicit transitions.</span></div>
+          <div class="command-row"><code>p = pool.obtain(); ... pool.release(p);</code><span>object pool — recycle dead objects; reset on release.</span></div>
+          <div class="command-row"><code>for (auto* o : observers_) o-&gt;onEvent(e);</code><span>observer / event queue — decouple raising an event from handling it.</span></div>
+          <div class="command-row"><code>input.bind(KEY_SPACE, &amp;jumpCommand);</code><span>command — wrap actions to remap, queue, or undo.</span></div>
+          <div class="command-row"><code>for (auto&amp; e : entities) e.update(dt);</code><span>update method + spatial partition — update each entity, test only neighbors.</span></div>
         </div>
       </section>
 
@@ -341,6 +361,8 @@ for (auto* other : bucket)
           <article class="card"><h3>Cache locality</h3><p>Jumping between heap-allocated objects thrashes the cache. Prefer contiguous arrays and struct-of-arrays for hot paths like physics and rendering.</p></article>
           <article class="card"><h3>Object lifetime</h3><p>Who owns an entity, and when does it die? Dangling pointers to freed entities are the #1 crash source. Pool, defer deletion, or use IDs instead of raw pointers.</p></article>
           <article class="card"><h3>Deep inheritance (diamond of death)</h3><p><code>A → B → C → D</code> class ladders collapse under change. Every level couples you to everything above it; prefer composition.</p></article>
+          <article class="card"><h3>Update order coupling</h3><p>Systems run in a fixed order, so one reading another’s output sees <em>last</em> frame’s value — a one-frame lag that breeds hard-to-reproduce bugs. Keep systems independent, or make the dependency explicit.</p></article>
+          <article class="card"><h3>Dangling observers &amp; stale events</h3><p>A destroyed listener still registered is a guaranteed crash, and a queue that is never drained holds dead, stale events. Unregister on teardown, cap the queue, and drop or merge old events.</p></article>
         </div>
         <div class="callout warning" style="margin-top:16px"><div class="callout-mark">⚠</div><p><strong>Over-engineering vs simple code.</strong> The best pattern is the simplest code that ships. A 40-line <code>switch</code> state machine often beats a 400-line state framework — until you have six states and twenty transitions.</p></div>
       </section>
@@ -353,6 +375,16 @@ for (auto* other : bucket)
           <a href="https://www.dataorienteddesign.com/dodbook/" target="_blank" rel="noreferrer">Data-Oriented Design</a>
           <a href="https://en.wikipedia.org/wiki/Entity_component_system" target="_blank" rel="noreferrer">Entity component system</a>
           <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+
+      <footer class="footer searchable" style="margin-top:24px">
+        <strong>Related guides</strong>
+        <p>Keep going — the engine under the patterns, the data behind the objects, and the pixels on screen:</p>
+        <div class="footer-links">
+          <a href="../sdl/">SDL</a>
+          <a href="../dop/">Data-Oriented Design</a>
+          <a href="../shaders/">Shaders</a>
         </div>
       </footer>
     </main>

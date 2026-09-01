@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#loop"><span class="nav-number">02</span>Game loop</a>
         <a href="#render"><span class="nav-number">03</span>Rendering</a>
@@ -44,7 +45,7 @@
         <div class="hero-copy">
           <div class="eyebrow">Visual cheatsheet + usage guide</div>
           <h1 id="hero-title">Multimedia, <span>cross-platform.</span></h1>
-          <p>SDL is the C library behind countless games: one thin, portable layer over windowing, rendering, input, audio, and timing. Two major versions exist — <code>SDL2</code> and <code>SDL3</code> — and this guide covers both.</p>
+          <p>SDL is the C library behind countless games: one thin, portable layer over windowing, rendering, input, audio, and timing. Two major versions exist — <code>SDL2</code> and <code>SDL3</code> — and this guide covers both. SDL3 is the actively developed stable line (the 3.4.x series at the time of writing).</p>
           <div class="hero-actions">
             <a class="button primary" href="#start">Start here →</a>
             <a class="button" href="#loop">The game loop</a>
@@ -87,6 +88,51 @@
               <div><span class="cursor"></span></div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The handful of calls every SDL program touches — init, window, renderer, the loop, textures, audio, and time. SDL3 forms shown; SDL2 noted where it differs.</p>
+        </div>
+        <div class="grid four">
+          <article class="card"><h3>Init</h3><pre><code>SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
+// SDL3: returns bool; SDL2: &lt; 0 = error</code></pre></article>
+          <article class="card"><h3>Window &amp; renderer</h3><pre><code>SDL_Window *w =
+    SDL_CreateWindow("game", 800, 600, 0);
+SDL_Renderer *r =
+    SDL_CreateRenderer(w, NULL);   // SDL3
+// SDL2: SDL_CreateRenderer(w, -1,
+//   SDL_RENDERER_ACCELERATED);</code></pre></article>
+          <article class="card"><h3>Game loop</h3><pre><code>while (running) {
+    poll_events();
+    update(dt);
+    draw();   // clear, copy, present
+}</code></pre></article>
+          <article class="card"><h3>Poll events</h3><pre><code>SDL_Event e;
+while (SDL_PollEvent(&amp;e))
+    if (e.type == SDL_EVENT_QUIT) // SDL2: SDL_QUIT
+        running = false;</code></pre></article>
+          <article class="card"><h3>Textures</h3><pre><code>SDL_Texture *t =
+    SDL_CreateTextureFromSurface(r, s);
+SDL_RenderTexture(r, t, NULL, NULL);
+// SDL2: SDL_RenderCopy(r, t, NULL, NULL)</code></pre></article>
+          <article class="card"><h3>Audio (SDL3)</h3><pre><code>const SDL_AudioSpec spec =
+    { SDL_AUDIO_S16, 2, 44100 };
+SDL_AudioStream *st = SDL_OpenAudioDeviceStream(
+    SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK,
+    &amp;spec, NULL, NULL);
+SDL_ResumeAudioDevice(
+    SDL_GetAudioStreamDevice(st));
+SDL_PutAudioStreamData(st, buf, len);</code></pre></article>
+          <article class="card"><h3>Ticks</h3><pre><code>Uint64 now = SDL_GetTicks();   // SDL2: SDL_GetTicks64()
+Uint64 ns  = SDL_GetTicksNS();
+Uint64 c   = SDL_GetPerformanceCounter();</code></pre></article>
+          <article class="card"><h3>Teardown</h3><pre><code>SDL_DestroyTexture(tex);
+SDL_DestroyRenderer(r);
+SDL_DestroyWindow(w);
+SDL_Quit();   // last</code></pre></article>
         </div>
       </section>
 
@@ -147,7 +193,7 @@ position += velocity * dt;
 last = now;</code></pre></div></div>
           <div class="flow-step"><div><strong>Render</strong><p>Clear the backbuffer, draw your textures, then present once per frame.</p><pre><code>SDL_SetRenderDrawColor(r, 12, 12, 16, 255);
 SDL_RenderClear(r);
-SDL_RenderCopy(r, tex, NULL, NULL);
+SDL_RenderCopy(r, tex, NULL, NULL);   // SDL3: SDL_RenderTexture
 SDL_RenderPresent(r);</code></pre></div></div>
           <div class="flow-step"><div><strong>Sync</strong><p>Present blocks when vsync is enabled; otherwise cap the rate yourself with <code>SDL_Delay</code>.</p><pre><code>SDL_RenderPresent(r);   // blocks when vsync is on
 SDL_Delay(16);          // or cap to ~60 FPS manually</code></pre></div></div>
@@ -162,7 +208,7 @@ SDL_Delay(16);          // or cap to ~60 FPS manually</code></pre></div></div>
         <div class="grid three">
           <article class="card"><h3>Clear, copy &amp; present</h3><pre><code>SDL_SetRenderDrawColor(r, 0, 0, 0, 255);
 SDL_RenderClear(r);              // wipe the backbuffer
-SDL_RenderCopy(r, tex, NULL, NULL);
+SDL_RenderCopy(r, tex, NULL, NULL);  // SDL3: SDL_RenderTexture
 SDL_RenderPresent(r);            // swap to screen</code></pre></article>
           <article class="card"><h3>Making textures</h3><pre><code>SDL_Surface *s = SDL_LoadBMP("sprite.bmp");
 SDL_Texture *t = SDL_CreateTextureFromSurface(r, s);
@@ -338,21 +384,37 @@ SDL_Quit();                // last</code></pre></article>
             <div class="command-row"><code>SDL_QUIT</code><span>SDL_EVENT_QUIT</span></div>
             <div class="command-row"><code>SDL_CreateRGBSurface</code><span>SDL_CreateSurface</span></div>
             <div class="command-row"><code>SDL_FreeSurface</code><span>SDL_DestroySurface</span></div>
+            <div class="command-row"><code>SDL_RenderCopy</code><span>SDL_RenderTexture</span></div>
+            <div class="command-row"><code>SDL_RenderCopyEx</code><span>SDL_RenderTextureRotated</span></div>
+            <div class="command-row"><code>SDL_GetTicks64</code><span>SDL_GetTicks</span></div>
+            <div class="command-row"><code>SDL_RenderSetVSync</code><span>SDL_SetRenderVSync</span></div>
             <div class="command-row"><code>SDL_GameController</code><span>SDL_Gamepad</span></div>
             <div class="command-row"><code>SDL_QueueAudio</code><span>SDL_PutAudioStreamData</span></div>
+            <div class="command-row"><code>AUDIO_S16</code><span>SDL_AUDIO_S16</span></div>
             <div class="command-row"><code>SDL_FreeWAV</code><span>SDL_free</span></div>
           </div></article>
+          <article class="card"><h3>Vsync: property, not a flag</h3><p><code>SDL_RENDERER_PRESENTVSYNC</code> is gone in SDL3. Ask for vsync with a renderer property at creation, or toggle it at runtime with <code>SDL_SetRenderVSync</code>.</p><pre><code>SDL_SetRenderVSync(r, 1);   // on; SDL2: SDL_RenderSetVSync(r, 1)
+SDL_SetRenderVSync(r, 0);   // off
+// SDL2: SDL_RENDERER_PRESENTVSYNC flag</code></pre></article>
+          <article class="card"><h3>Don't free memory SDL owns</h3><p>In SDL3 the <code>SDL_EVENT_DROP_FILE</code> path and the surface from <code>SDL_GetWindowSurface</code> belong to SDL — copy them if you need to keep them, but never <code>SDL_free</code>/<code>SDL_DestroySurface</code> them yourself.</p><pre><code>// SDL_GetWindowSurface returns a surface owned
+// by the window — freed when the window dies</code></pre></article>
         </div>
       </section>
 
       <footer class="footer searchable">
         <strong>Source of truth</strong>
-        <p>This guide is a condensed field reference for SDL2 and SDL3. The SDL wiki and the official SDL3 migration guide remain authoritative for exact signatures and edge cases.</p>
+        <p>This guide is a condensed field reference for SDL2 and SDL3. SDL3 stable is the 3.4.x series (3.2.0 was the first stable SDL3); the SDL wiki and the official SDL3 migration guide remain authoritative for exact signatures and edge cases.</p>
         <div class="footer-links">
           <a href="https://wiki.libsdl.org/" target="_blank" rel="noreferrer">SDL wiki</a>
           <a href="https://wiki.libsdl.org/SDL3/FrontPage" target="_blank" rel="noreferrer">SDL3 FrontPage</a>
           <a href="https://wiki.libsdl.org/SDL3/README/migration" target="_blank" rel="noreferrer">SDL3 migration guide</a>
           <a href="../">slop-stuff home</a>
+        </div>
+        <strong>Related guides</strong>
+        <div class="footer-links">
+          <a href="../opengl/">OpenGL</a>
+          <a href="../gamedev/">GameDev patterns</a>
+          <a href="../shaders/">Shaders</a>
         </div>
       </footer>
     </main>

@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#bump"><span class="nav-number">02</span>Bump allocator</a>
         <a href="#freelist"><span class="nav-number">03</span>Free lists</a>
@@ -77,6 +78,49 @@
             </div>
           </div>
         </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>The 20-second version</h2></div>
+          <p>The strategies, the two costs, and the allocators you'll actually reach for — in one screen.</p>
+        </div>
+        <div class="grid four">
+          <article class="card"><h3>malloc / free</h3><pre><code>int *p = malloc(n * sizeof *p);
+if (!p) { /* out of memory */ }
+free(p);        // once, exactly once
+p = NULL;       // avoid use-after-free</code></pre></article>
+          <article class="card"><h3>Bump / arena</h3><pre><code>// one lifetime, many objects
+Arena a = arena_new(1 &lt;&lt; 20);
+for (...) push(&amp;a, sizeof T);
+arena_reset(&amp;a);  // all gone at once
+// O(1) alloc, no per-object free</code></pre></article>
+          <article class="card"><h3>Free list</h3><pre><code>free(p)   → block → free list
+malloc(n) → first-fit / best-fit
+split the big, coalesce adjacent
+header sits before the payload</code></pre></article>
+          <article class="card"><h3>Slab / pool</h3><pre><code>// one hot size, O(1) push/pop
+pop()  → head of the free list
+push() → link it back in
+no search, no split, no frag</code></pre></article>
+          <article class="card"><h3>Buddy</h3><pre><code>round up to a power of two
+split halves until it fits
+free → merge if buddy is free
+buddy = addr ^ size   // O(1)</code></pre></article>
+          <article class="card"><h3>Fragmentation</h3><pre><code>internal → padding + headers
+external → scattered free holes
+fix: coalesce, size classes,
+     pools, arenas</code></pre></article>
+          <article class="card"><h3>Alignment</h3><pre><code>malloc → 16-byte aligned (x86-64)
+aligned_alloc(64, n)     // over-align
+posix_memalign(&amp;p, 64, n)
+misaligned = slow or fault</code></pre></article>
+          <article class="card"><h3>Modern allocators</h3><pre><code>mimalloc  → sharded free lists
+jemalloc  → threads, low frag
+tcmalloc  → per-thread caches
+swap via LD_PRELOAD or link</code></pre></article>
+        </div>
+        <div class="callout"><div class="callout-mark">TIP</div><p>Pick the allocator that matches the <strong>lifetime</strong>, not the speed: bump/arena for batch work, a free list for mixed sizes, a slab for one hot size, and <code>malloc</code> for everything else.</p></div>
       </section>
 
       <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “bump”, “free list”, “arena”, “buddy”, or “gc”.</div>
@@ -306,14 +350,25 @@ sweep()                   // free unmarked</code></pre></article>
           <article class="card"><h3>Alignment</h3><p><code>malloc</code> returns memory aligned for any type (16 bytes on x86-64). Over-aligned types need <code>aligned_alloc</code> or <code>posix_memalign</code>; misaligned access is slow or a hard fault.</p><pre><code>void *p = aligned_alloc(64, 256); // 64-byte aligned</code></pre></article>
           <article class="card"><h3>Cache locality</h3><p>Objects allocated together are usually used together. A bump arena or pool keeps them contiguous, so one cache line holds several — scattered <code>malloc</code> calls put each object on its own line.</p></article>
           <article class="card"><h3>Leaks &amp; double-free</h3><p>Forgetting <code>free</code> grows the heap forever; freeing twice corrupts the free list. Use ASan and Valgrind during development, and a pool or arena where lifetimes are well-defined.</p><pre><code>gcc -fsanitize=address prog.c &amp;&amp; ./a.out</code></pre></article>
-          <article class="card"><h3>Contention</h3><p>Every thread hitting one <code>malloc</code> lock serializes on it. Modern allocators (jemalloc, tcmalloc, mimalloc) keep per-thread caches so most allocations never touch a shared lock.</p></article>
+          <article class="card"><h3>Contention</h3><p>Every thread hitting one <code>malloc</code> lock serializes on it. glibc mitigates this with <strong>per-thread arenas</strong>, but they still pile up under load. Modern allocators (jemalloc, tcmalloc, mimalloc) keep per-thread or per-CPU caches so most allocations never touch a shared lock — the trade-off is that <code>free</code> may land on another thread's cache, keeping memory resident longer.</p></article>
         </div>
         <div class="table-wrap"><table><thead><tr><th>Allocator</th><th>Focus</th><th>Best for</th></tr></thead><tbody>
-          <tr><td>dlmalloc</td><td>classic general-purpose</td><td>baseline <code>malloc</code> (glibc ptmalloc2)</td></tr>
-          <tr><td>jemalloc</td><td>fragmentation + threads</td><td>servers, high core counts</td></tr>
-          <tr><td>tcmalloc</td><td>speed + per-thread caches</td><td>low-latency services</td></tr>
-          <tr><td>mimalloc</td><td>low pause, secure</td><td>apps that churn allocations</td></tr>
+          <tr><td>glibc ptmalloc2</td><td>fork of dlmalloc, per-thread arenas</td><td>Linux default <code>malloc</code></td></tr>
+          <tr><td>jemalloc</td><td>fragmentation + threads</td><td>Firefox, Redis, high core counts</td></tr>
+          <tr><td>tcmalloc</td><td>speed + per-thread caches</td><td>Chrome, low-latency services</td></tr>
+          <tr><td>mimalloc</td><td>free-list sharding, secure</td><td>apps that churn allocations</td></tr>
+          <tr><td>snmalloc</td><td>message passing, memory-safe</td><td>CHERI, many-core systems</td></tr>
         </tbody></table></div>
+        <details>
+          <summary>Swapping in a modern allocator without recompiling</summary>
+          <div class="details-body">
+            <p>On Linux you can test jemalloc, tcmalloc, or mimalloc by preloading it — the allocator's <code>malloc</code>/<code>free</code> then override the libc versions for the whole process:</p>
+            <pre><code>LD_PRELOAD=/usr/lib/libmimalloc.so  ./myapp   # mimalloc
+LD_PRELOAD=/usr/lib/libtcmalloc.so ./myapp   # tcmalloc
+LD_PRELOAD=/usr/lib/libjemalloc.so ./myapp   # jemalloc</code></pre>
+            <p>Or link it directly at build time. Profile with <code>LD_PRELOAD</code> first, then commit to one allocator for the entire process — mixing allocators in one address space is asking for corruption.</p>
+          </div>
+        </details>
         <div class="prefix-demo">
           <code>bump arena</code> <span class="then">same-lifetime batch</span>
           <code>free list</code> <span class="then">varied sizes, long-lived</span>
@@ -325,12 +380,19 @@ sweep()                   // free unmarked</code></pre></article>
 
       <footer class="footer searchable">
         <strong>Source of truth</strong>
-        <p>This guide covers allocator strategies and the trade-offs behind <code>malloc</code>/<code>free</code>. The glibc wiki, jemalloc, and tcmalloc documentation remain authoritative for implementation detail.</p>
+        <p>This guide covers allocator strategies and the trade-offs behind <code>malloc</code>/<code>free</code>. The glibc wiki and the jemalloc, tcmalloc, mimalloc, and snmalloc documentation remain authoritative for implementation detail.</p>
         <div class="footer-links">
           <a href="https://sourceware.org/glibc/wiki/MallocInternals" target="_blank" rel="noreferrer">glibc malloc internals</a>
           <a href="https://jemalloc.net/" target="_blank" rel="noreferrer">jemalloc</a>
           <a href="https://github.com/google/tcmalloc" target="_blank" rel="noreferrer">tcmalloc</a>
+          <a href="https://github.com/microsoft/mimalloc" target="_blank" rel="noreferrer">mimalloc</a>
           <a href="../">slop-stuff home</a>
+        </div>
+        <strong style="display:block;margin-top:22px">Related</strong>
+        <div class="footer-links">
+          <a href="../dop/">Data-Oriented Design</a>
+          <a href="../osdev/">OS dev</a>
+          <a href="../c/">C</a>
         </div>
       </footer>
     </main>

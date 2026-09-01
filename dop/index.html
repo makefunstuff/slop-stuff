@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#soa"><span class="nav-number">02</span>SoA vs AoS</a>
         <a href="#locality"><span class="nav-number">03</span>Locality</a>
@@ -68,6 +69,23 @@
               <div class="dim">strided → pulls unused fields into cache</div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The moves you reach for most — the layout decision, the cache line, and the swaps that matter. One line each.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>SoA vs AoS</code><span>split by <em>field</em> (SoA) when a loop reads a subset; keep whole records together (AoS) when each is consumed entirely.</span></div>
+          <div class="command-row"><code>cache line</code><span>64 B on x86/ARM, 128 B on Apple Silicon — touching one byte pulls the whole line.</span></div>
+          <div class="command-row"><code>locality</code><span>walk arrays forward (stride-1) so the hardware prefetcher runs ahead; avoid pointer chasing in hot loops.</span></div>
+          <div class="command-row"><code>hot / cold split</code><span><code>struct UnitHot { x,y,hp };</code> + <code>struct UnitCold { name[32] };</code> — keep cold fields out of the hot loop.</span></div>
+          <div class="command-row"><code>ECS</code><span>Entity = id, Component = plain data in arrays, System = loop over those arrays.</span></div>
+          <div class="command-row"><code>indices &gt; pointers</code><span><code>uint32_t index</code> (or id + generation) instead of <code>Node*</code> — dense arrays, no dangling handles.</span></div>
+          <div class="command-row"><code>false sharing</code><span>pad per-thread counters to their own line with <code>alignas(64)</code>.</span></div>
+          <div class="command-row"><code>measure first</code><span><code>perf stat -e cache-misses,cache-references ./prog</code> — restructure the one hot loop, not the other 99%.</span></div>
         </div>
       </section>
 
@@ -150,10 +168,10 @@ UnitCold cold[N];       // touched only when needed</code></pre></div>
       <section class="section searchable" id="locality">
         <div class="section-head">
           <div><div class="section-kicker">03 / Locality</div><h2>Cache &amp; locality</h2></div>
-          <p>The CPU moves memory in fixed-size <strong>cache lines</strong> (64 bytes on x86/ARM). Sequential access is cheap because hardware prefetchers run ahead; pointer chasing defeats them.</p>
+          <p>The CPU moves memory in fixed-size <strong>cache lines</strong> — 64 bytes on x86 and most ARM cores, 128 bytes on Apple Silicon (M-series). Sequential access is cheap because hardware prefetchers run ahead; pointer chasing defeats them.</p>
         </div>
         <div class="table-wrap"><table><thead><tr><th>Concept</th><th>Rule of thumb</th></tr></thead><tbody>
-          <tr><td><code>cache line</code></td><td>64 bytes — touching one byte pulls the whole line into cache.</td></tr>
+          <tr><td><code>cache line</code></td><td>64 bytes (x86/ARM), 128 on Apple Silicon — touching one byte pulls the whole line.</td></tr>
           <tr><td><code>sequential</code></td><td>Walk arrays forward (stride-1); the prefetcher reads ahead.</td></tr>
           <tr><td><code>prefetch</code></td><td><code>__builtin_prefetch(p)</code> hides latency for data you'll need soon.</td></tr>
           <tr><td><code>pointer chasing</code></td><td>Linked lists / trees jump to a new cache line every hop.</td></tr>
@@ -311,10 +329,14 @@ for (int i = 0; i &lt; N; ++i)
 #   → investigate your layout</code></pre></article>
           <article class="card"><h3>Pointer chasing</h3><p>Linked lists, trees, and graphs hop to a new cache line per step. In hot paths, replace them with arrays + indices.</p><pre><code>// slow: Node* next, one miss per hop
 // fast: uint32_t next[MAX_N];  // index</code></pre></article>
-          <article class="card"><h3>False sharing</h3><p>Two cores writing different variables in the same 64-byte line ping-pong the line between their caches.</p><pre><code>// fix: pad each to its own line
-alignas(64) int a;
-alignas(64) int b;
-// thread 1: a++   thread 2: b++</code></pre></article>
+          <article class="card"><h3>False sharing</h3><p>Two cores writing different variables in the same cache line ping-pong the line between their caches — it reads as contention but is just bad placement.</p><pre><code>// fix: pad each to its own line (C++17 portable)
+alignas(std::hardware_destructive_interference_size) int a;
+alignas(std::hardware_destructive_interference_size) int b;
+// thread 1: a++   thread 2: b++
+// line = 64 B on x86, 128 B on Apple Silicon</code></pre></article>
+          <article class="card"><h3>Pointer instability</h3><p>Pointers/references into a <code>std::vector</code> dangle the moment it reallocates (or swap-removes). Indices and id+generation handles stay valid across growth.</p><pre><code>// bad: T* p = &amp;v[i];  // invalid after push_back
+// good: uint32_t id = i;  // index survives growth
+//       v[id]  — re-resolve each use</code></pre></article>
           <article class="card"><h3>Over-engineering</h3><p>A flat packed array usually beats a clever hierarchy of interfaces. Don't build an ECS for ten objects — a <code>std::vector&lt;T&gt;</code> is the right call until profiling says otherwise.</p></article>
           <article class="card"><h3>Readability vs speed</h3><p>Write the simple, readable version first. Measure, then optimize only the loop that shows up. Keep the optimized part small and documented.</p><pre><code>// clear code that's 90% as fast
 // beats unreadable code that's 100%
@@ -334,6 +356,16 @@ for (auto&amp; p : particles) p.move(dt);</code></pre></article>
           <a href="https://en.wikipedia.org/wiki/Data-oriented_design" target="_blank" rel="noreferrer">Wikipedia</a>
           <a href="https://gameprogrammingpatterns.com/data-locality.html" target="_blank" rel="noreferrer">Data Locality (GPP)</a>
           <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+
+      <footer class="footer searchable">
+        <strong>Related guides</strong>
+        <p>Keep going — memory and machine-code neighbors:</p>
+        <div class="footer-links">
+          <a href="../allocators/">Allocators</a>
+          <a href="../gamedev/">GameDev patterns</a>
+          <a href="../asm/">Assembly</a>
         </div>
       </footer>
     </main>

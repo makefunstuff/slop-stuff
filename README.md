@@ -29,7 +29,7 @@ Each guide is a subfolder, served under `https://makefunstuff.github.io/slop-stu
 
 - **[jq](./jq/)** — JSON filters, recipes, operators, flags, curl pipelines
 - **[bash](./bash/)** — variables, quoting, loops, conditionals, functions, expansion
-- **[linux-cli](./linux-cli/)** — sed, awk, grep, find, xargs, sort, tar, and friends
+- **[linux-cli](./linux-cli/)** — sed, awk, grep, find, xargs, sort, tar, git, and networking
 
 ### Cloud, DevOps & observability
 
@@ -37,19 +37,19 @@ Each guide is a subfolder, served under `https://makefunstuff.github.io/slop-stu
 - **[gcloud](./gcloud/)** — compute, storage, GKE, IAM, SQL, logging
 - **[grafana](./grafana/)** — panels, variables, transforms, alerts, provisioning
 - **[promql](./promql/)** — selectors, rates, aggregation, functions
-- **[devops](./devops/)** — CI/CD, containers, orchestration, IaC, observability, deployment
+- **[devops](./devops/)** — CI/CD, Docker, containers, orchestration, IaC, observability, deployment
 
 ### Data & databases
 
 - **[postgres](./postgres/)** — psql, users/permissions, backups, replication, tuning, monitoring
 - **[kafka](./kafka/)** — topics, partitions, producers, consumers, offsets, operations
-- **[db-optimization](./db-optimization/)** — indexes, query plans, normalization vs denormalization, tuning
+- **[db-optimization](./db-optimization/)** — indexes, query plans, normalization vs denormalization, Redis, tuning
 - **[excel](./excel/)** — formulas, functions, pivot tables, lookups, shortcuts
 
 ### Embedded & hardware
 
 - **[esp32](./esp32/)** — GPIO, UART/I2C/SPI, Wi-Fi, storage, power, OTA
-- **[embedded](./embedded/)** — bare-metal/RTOS: registers, interrupts, timers, memory, boot, debugging
+- **[embedded](./embedded/)** — bare-metal/RTOS: registers, interrupts, timers, memory, boot, FreeRTOS, RP2040/Pico, debugging
 - **[electrical](./electrical/)** — Ohm's law, logic levels, pull-ups, dividers, power for firmware devs
 - **[sdr](./sdr/)** — IQ, sampling, DSP, GNU Radio, common signals
 - **[hamradio](./hamradio/)** — bands, propagation, antennas, and the math/physics/embedded side of RF

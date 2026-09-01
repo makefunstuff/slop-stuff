@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Indexes, query plans, normalization vs denormalization, and performance tuning.">
+  <meta name="description" content="Indexes, query plans, normalization vs denormalization, Redis caching, and performance tuning.">
   <title>Database Optimization — Visual Cheatsheet</title>
   <link rel="stylesheet" href="../assets/style.css">
 </head>
@@ -16,7 +16,7 @@
     </a>
     <label class="search-wrap">
       <span class="sr-only" hidden>Search guide</span>
-      <input id="search" type="search" aria-label="Search guide" placeholder="Search index, EXPLAIN, query plan, join, normalization, cache…" autocomplete="off">
+      <input id="search" type="search" aria-label="Search guide" placeholder="Search index, EXPLAIN, query plan, join, normalization, cache, Redis…" autocomplete="off">
     </label>
     <div class="top-actions">
       <button class="icon-button" id="themeToggle" type="button" title="Toggle theme" aria-label="Toggle light and dark theme">◐</button>
@@ -35,7 +35,8 @@
         <a href="#joins"><span class="nav-number">05</span>Joins &amp; subqueries</a>
         <a href="#schema"><span class="nav-number">06</span>Schema design</a>
         <a href="#caching"><span class="nav-number">07</span>Caching &amp; connections</a>
-        <a href="#gotchas"><span class="nav-number">08</span>Gotchas</a>
+        <a href="#redis"><span class="nav-number">08</span>Redis</a>
+        <a href="#gotchas"><span class="nav-number">09</span>Gotchas</a>
       </nav>
     </aside>
 
@@ -77,7 +78,7 @@
         </div>
       </section>
 
-      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “index”, “EXPLAIN”, “plan”, “join”, “normalization”, or “cache”.</div>
+      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “index”, “EXPLAIN”, “plan”, “join”, “normalization”, “cache”, or “Redis”.</div>
 
       <section class="section searchable" id="start">
         <div class="section-head">
@@ -298,9 +299,44 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY mv_sales;</code></pre></article>
         <div class="callout" style="margin-top:16px"><div class="callout-mark">KEY</div><p><strong>Cache invalidation is the hard part.</strong> Every cache needs a TTL and a path to rebuild. Cache the final result only if the query is genuinely slow and reads vastly outnumber writes — and always know how you'll invalidate it.</p></div>
       </section>
 
+      <section class="section searchable" id="redis">
+        <div class="section-head">
+          <div><div class="section-kicker">08 / Redis</div><h2>Redis as a cache &amp; store</h2></div>
+          <p>In-memory data structures on a key-value model — the default answer for caching, rate limits, queues, and fast counters in front of a SQL database.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Type</th><th>What it stores</th><th>Core commands</th></tr></thead><tbody>
+          <tr><td><code>STRING</code></td><td>One value per key</td><td><code>SET / GET / INCR / EXPIRE</code></td></tr>
+          <tr><td><code>HASH</code></td><td>Field/value pairs</td><td><code>HSET / HGET / HGETALL</code></td></tr>
+          <tr><td><code>LIST</code></td><td>Ordered list (queue/stack)</td><td><code>LPUSH / RPUSH / LPOP / BRPOP</code></td></tr>
+          <tr><td><code>SET</code></td><td>Unique members</td><td><code>SADD / SMEMBERS / SISMEMBER</code></td></tr>
+          <tr><td><code>ZSET</code></td><td>Scored, sorted members</td><td><code>ZADD / ZRANGE / ZRANK</code></td></tr>
+          <tr><td><code>STREAM</code></td><td>Append-only event log</td><td><code>XADD / XREAD / XRANGE</code></td></tr>
+        </tbody></table></div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Cache-aside (the usual)</h3><p>Read through to the DB on a miss, write the result back with a TTL. Invalidate on write.</p><pre><code>val = redis.get(key)
+if val is None:
+    val = db.query(...)
+    redis.set(key, val, ex=300)
+return val</code></pre></article>
+          <article class="card"><h3>Common patterns</h3><pre><code>INCR counter              # fast counter
+SETEX rate:u1 60 1        # rate-limit TTL
+LPUSH queue job
+BRPOP queue 0             # blocking queue
+SADD online:room1 user42  # membership
+ZADD lb 42 "player"       # leaderboard</code></pre></article>
+        </div>
+        <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Setting</th><th>What it controls</th></tr></thead><tbody>
+          <tr><td><code>RDB</code></td><td>Point-in-time snapshot; fast recovery, can lose recent writes.</td></tr>
+          <tr><td><code>AOF</code></td><td>Append-only log of every write; safer, larger, slower restart.</td></tr>
+          <tr><td><code>maxmemory-policy</code></td><td>Eviction: <code>allkeys-lru</code>, <code>volatile-lru</code>, <code>noeviction</code>.</td></tr>
+          <tr><td><code>EXPIRE</code></td><td>TTL in seconds; <code>TTL key</code> shows what's left.</td></tr>
+        </tbody></table></div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">!</div><p><strong>Redis is not a durable system of record.</strong> It's in-memory and, under <code>noeviction</code> with full memory, new writes fail. Treat it as a cache or a queue with an acknowledgment path — keep the source of truth in Postgres/Kafka, and know your eviction policy before you hit maxmemory.</p></div>
+      </section>
+
       <section class="section searchable" id="gotchas">
         <div class="section-head">
-          <div><div class="section-kicker">08 / Gotchas</div><h2>Pitfalls</h2></div>
+          <div><div class="section-kicker">09 / Gotchas</div><h2>Pitfalls</h2></div>
           <p>The bugs that survive to production are the quiet ones: an N+1 here, a type coercion there. Here's what to watch for.</p>
         </div>
         <div class="grid two">

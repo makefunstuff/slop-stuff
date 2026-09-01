@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Everyday Linux command-line tools: sed, awk, grep, find, xargs, sort, and friends.">
+  <meta name="description" content="Everyday Linux command-line tools: sed, awk, grep, find, xargs, sort, git, networking, and friends.">
   <title>Linux CLI Essentials — Visual Cheatsheet</title>
   <link rel="stylesheet" href="../assets/style.css">
 </head>
@@ -16,7 +16,7 @@
     </a>
     <label class="search-wrap">
       <span class="sr-only" hidden>Search guide</span>
-      <input id="search" type="search" aria-label="Search guide" placeholder="Search sed, awk, grep, find, xargs, sort, cut, tar…" autocomplete="off">
+      <input id="search" type="search" aria-label="Search guide" placeholder="Search sed, awk, grep, find, xargs, sort, git, ss, tcpdump…" autocomplete="off">
     </label>
     <div class="top-actions">
       <button class="icon-button" id="themeToggle" type="button" title="Toggle theme" aria-label="Toggle light and dark theme">◐</button>
@@ -36,7 +36,9 @@
         <a href="#text"><span class="nav-number">06</span>Text tools</a>
         <a href="#archiving"><span class="nav-number">07</span>Files &amp; archives</a>
         <a href="#processes"><span class="nav-number">08</span>Processes</a>
-        <a href="#gotchas"><span class="nav-number">09</span>Gotchas</a>
+        <a href="#git"><span class="nav-number">09</span>Git &amp; version control</a>
+        <a href="#networking"><span class="nav-number">10</span>Networking</a>
+        <a href="#gotchas"><span class="nav-number">11</span>Gotchas</a>
       </nav>
     </aside>
 
@@ -45,7 +47,7 @@
         <div class="hero-copy">
           <div class="eyebrow">Visual cheatsheet + usage guide</div>
           <h1 id="hero-title">The toolbox for <span>text &amp; files.</span></h1>
-          <p>Everyday Linux command-line tools — sed, awk, grep, find, sort, and friends — in one copy-paste reference. Pipe text in, transform it, ship it out.</p>
+          <p>Everyday Linux command-line tools — sed, awk, grep, find, sort, git, and networking — in one copy-paste reference. Pipe text in, transform it, ship it out.</p>
           <div class="hero-actions">
             <a class="button primary" href="#start">Start in 5 minutes →</a>
             <a class="button" href="#sed">sed</a>
@@ -68,7 +70,7 @@
         </div>
       </section>
 
-      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “sed”, “awk”, “grep”, “find”, “sort”, or “tar”.</div>
+      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “sed”, “awk”, “grep”, “find”, “sort”, “git”, or “tcpdump”.</div>
 
       <section class="section searchable" id="start">
         <div class="section-head">
@@ -315,9 +317,87 @@ which python3; type ls</code></pre></article>
         <div class="callout"><div class="callout-mark">15</div><p><strong>Signals: SIGTERM first, SIGKILL last.</strong> <code>kill 1234</code> sends SIGTERM (a polite request the process may handle); <code>kill -9 1234</code> sends SIGKILL, which nothing can catch — use it only when a process ignores SIGTERM.</p></div>
       </section>
 
+      <section class="section searchable" id="git">
+        <div class="section-head">
+          <div><div class="section-kicker">09 / Git &amp; version control</div><h2>Git &amp; version control</h2></div>
+          <p>Track every change, branch without fear, and rewind any mistake. The daily commands, plus the safe ways out.</p>
+        </div>
+        <div class="grid four">
+          <article class="card"><div class="card-number">1</div><h3>Start a repo</h3><pre><code>git init
+git clone git@github.com:user/repo.git
+git remote add origin URL</code></pre></article>
+          <article class="card"><div class="card-number">2</div><h3>See what changed</h3><pre><code>git status -s
+git diff            # unstaged
+git diff --staged   # staged
+git log --oneline --graph</code></pre></article>
+          <article class="card"><div class="card-number">3</div><h3>Stage &amp; commit</h3><pre><code>git add file     # one file
+git add -p       # pick hunks
+git commit -m "msg"
+git commit --amend</code></pre></article>
+          <article class="card"><div class="card-number">4</div><h3>Share</h3><pre><code>git push origin main
+git pull --rebase
+git fetch --all
+git remote -v</code></pre></article>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Branch &amp; switch</h3><pre><code>git branch feature
+git switch feature       # or: git checkout
+git switch -c fix        # create + switch
+git merge feature
+git rebase main
+git branch -d feature</code></pre></article>
+          <article class="card"><h3>Undo</h3><pre><code>git restore file         # discard changes
+git restore --staged f   # unstage
+git reset --soft HEAD~1  # undo commit, keep staged
+git reset --hard HEAD~1  # undo commit + changes
+git revert abc123        # new commit that undoes</code></pre></article>
+        </div>
+        <div class="command-index" style="margin-top:16px">
+          <div class="command-row"><code>git log --oneline --all --graph</code><span>the whole history as a graph.</span></div>
+          <div class="command-row"><code>git reflog</code><span>everything HEAD has done — your undo safety net.</span></div>
+          <div class="command-row"><code>git stash</code><span>park changes; <code>git stash pop</code> brings them back.</span></div>
+          <div class="command-row"><code>git cherry-pick abc123</code><span>copy one commit onto this branch.</span></div>
+          <div class="command-row"><code>git tag -a v1.0 -m "release"</code><span>mark a release point.</span></div>
+          <div class="command-row"><code>git blame file</code><span>who changed each line.</span></div>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">KEY</div><p><strong>reflog saves you.</strong> Almost anything you "lose" is still in <code>git reflog</code> for ~90 days. <code>git reset --hard</code> before checking reflog is the only truly destructive move.</p></div>
+      </section>
+
+      <section class="section searchable" id="networking">
+        <div class="section-head">
+          <div><div class="section-kicker">10 / Networking</div><h2>Networking &amp; TCP/IP</h2></div>
+          <p>From sockets and ports to DNS and packet captures — the CLI tools that answer "why can't this talk to that?"</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Tool</th><th>What it answers</th><th>Example</th></tr></thead><tbody>
+          <tr><td><code>ss</code></td><td>Listening sockets &amp; connections</td><td><code>ss -tulpn</code></td></tr>
+          <tr><td><code>ip</code></td><td>Interfaces, addresses, routes</td><td><code>ip a; ip route</code></td></tr>
+          <tr><td><code>ping</code></td><td>Reachability &amp; latency</td><td><code>ping -c 4 1.1.1.1</code></td></tr>
+          <tr><td><code>dig</code></td><td>DNS resolution</td><td><code>dig +short example.com</code></td></tr>
+          <tr><td><code>curl</code></td><td>HTTP requests</td><td><code>curl -sS -I https://example.com</code></td></tr>
+          <tr><td><code>nc</code></td><td>Raw TCP/UDP poke</td><td><code>nc -zv host 443</code></td></tr>
+          <tr><td><code>traceroute</code></td><td>Path across hops</td><td><code>traceroute 8.8.8.8</code></td></tr>
+          <tr><td><code>tcpdump</code></td><td>Packets on the wire</td><td><code>tcpdump -ni eth0 port 443</code></td></tr>
+        </tbody></table></div>
+        <div class="grid three" style="margin-top:16px">
+          <article class="card"><h3>TCP/IP layers</h3><pre><code>Application  HTTP, DNS, SSH
+Transport    TCP, UDP (+ ports)
+Network      IP (routing)
+Link         Ethernet, Wi-Fi (MAC)</code></pre></article>
+          <article class="card"><h3>Handy checks</h3><pre><code>curl -v https://host   # full handshake
+nc -zv host 22         # is the port open?
+ss -tn state established
+dig MX example.com     # mail server</code></pre></article>
+          <article class="card"><h3>Common ports</h3><pre><code>22  SSH      53  DNS
+80  HTTP    443 HTTPS
+5432 Postgres  6379 Redis
+3306 MySQL  27017 MongoDB</code></pre></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">KEY</div><p><strong>Test in layers.</strong> Can you resolve the name (<code>dig</code>)? Can you reach the host (<code>ping</code> / <code>nc</code>)? Is the port open (<code>ss</code> / <code>nc -z</code>)? Is the app responding (<code>curl -v</code>)? Walk the stack and the culprit shows itself.</p></div>
+      </section>
+
       <section class="section searchable" id="gotchas">
         <div class="section-head">
-          <div><div class="section-kicker">09 / Gotchas</div><h2>Gotchas</h2></div>
+          <div><div class="section-kicker">11 / Gotchas</div><h2>Gotchas</h2></div>
           <p>Behaviors that silently change results — quoting, shell expansion, portability, and spaces in filenames.</p>
         </div>
         <div class="grid three">
@@ -341,6 +421,8 @@ brew install coreutils</code></pre></article>
           <a href="https://www.gnu.org/software/sed/manual/sed.html" target="_blank" rel="noreferrer">sed manual</a>
           <a href="https://www.gnu.org/software/gawk/manual/gawk.html" target="_blank" rel="noreferrer">gawk manual</a>
           <a href="https://www.man7.org/linux/man-pages/" target="_blank" rel="noreferrer">Linux man pages</a>
+          <a href="https://git-scm.com/doc" target="_blank" rel="noreferrer">Git docs</a>
+          <a href="https://www.tcpdump.org/manpages/tcpdump.1.html" target="_blank" rel="noreferrer">tcpdump man page</a>
           <a href="../">slop-stuff home</a>
         </div>
       </footer>

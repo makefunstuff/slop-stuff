@@ -196,6 +196,11 @@ volumes:
           <div class="command-row"><code>docker exec -it NAME sh</code><span>Open a shell inside a running container.</span></div>
           <div class="command-row"><code>docker compose up -d</code><span>Start the whole stack, detached.</span></div>
           <div class="command-row"><code>docker compose down -v</code><span>Stop and remove volumes too.</span></div>
+          <div class="command-row"><code>docker system prune -a</code><span>Remove stopped containers, unused images, and networks.</span></div>
+          <div class="command-row"><code>docker inspect NAME</code><span>Full config as JSON; <code>--format '{{.NetworkSettings.IPAddress}}'</code> picks a field.</span></div>
+          <div class="command-row"><code>docker cp NAME:/path ./</code><span>Copy files out of (or into) a container.</span></div>
+          <div class="command-row"><code>docker history IMAGE</code><span>See every layer and its size.</span></div>
+          <div class="command-row"><code>docker network ls</code><span>List networks; <code>docker volume ls</code> for volumes.</span></div>
         </div>
         <div class="tags" style="margin-top:16px">
           <span class="tag">Docker Hub</span>
@@ -204,6 +209,28 @@ volumes:
           <span class="tag">Google Artifact Registry</span>
           <span class="tag">Quay</span>
         </div>
+        <details style="margin-top:16px">
+          <summary>Docker deep dive</summary>
+          <div class="details-body grid two">
+            <div><h4>Multi-stage builds</h4><p>Build in a heavy image, copy only the artifact into a slim runtime — no build tools in the final image.</p><pre><code>FROM golang:1.22 AS build
+WORKDIR /src
+COPY . .
+RUN go build -o /app/server .
+
+FROM gcr.io/distroless/base
+COPY --from=build /app/server /server
+ENTRYPOINT ["/server"]</code></pre></div>
+            <div><h4>Layer caching</h4><p>Each instruction is a layer. Copy deps first, install, then code last so code edits don't rebuild dependencies.</p><pre><code>COPY requirements.txt .   # deps first
+RUN pip install -r requirements.txt
+COPY . .                  # code last</code></pre></div>
+            <div><h4>Healthchecks</h4><p>Tell Docker (and the orchestrator) whether the container is alive, so it can restart or drain it.</p><pre><code>HEALTHCHECK --interval=30s --timeout=3s \
+  CMD curl -f http://localhost/health || exit 1</code></pre></div>
+            <div><h4>Networks &amp; volumes</h4><p>Volumes persist data across restarts; networks let containers reach each other by name in Compose.</p><pre><code>docker volume create pgdata
+docker run -v pgdata:/var/lib/postgresql/data ...
+docker network create appnet
+docker run --network appnet --name web ...</code></pre></div>
+          </div>
+        </details>
         <div class="callout" style="margin-top:16px"><div class="callout-mark">KEY</div><p><strong>Image ≠ container.</strong> An image is immutable and versioned; a container is its writable runtime layer. Kill the container and the image is untouched — that's what makes rollback cheap.</p></div>
       </section>
 

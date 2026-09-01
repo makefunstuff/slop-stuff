@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Bare-metal and RTOS development: registers, interrupts, timers, memory layout, boot, and debugging.">
+  <meta name="description" content="Bare-metal and RTOS development: registers, interrupts, timers, memory layout, boot, FreeRTOS, RP2040/Pico, and debugging.">
   <title>Embedded Dev — Visual Cheatsheet</title>
   <link rel="stylesheet" href="../assets/style.css">
 </head>
@@ -16,7 +16,7 @@
     </a>
     <label class="search-wrap">
       <span class="sr-only" hidden>Search guide</span>
-      <input id="search" type="search" aria-label="Search guide" placeholder="Search interrupt, register, DMA, timer, linker, boot, RTOS…" autocomplete="off">
+      <input id="search" type="search" aria-label="Search guide" placeholder="Search interrupt, register, DMA, timer, linker, boot, FreeRTOS, PIO…" autocomplete="off">
     </label>
     <div class="top-actions">
       <button class="icon-button" id="themeToggle" type="button" title="Toggle theme" aria-label="Toggle light and dark theme">◐</button>
@@ -35,7 +35,8 @@
         <a href="#memory"><span class="nav-number">05</span>Memory</a>
         <a href="#rtos"><span class="nav-number">06</span>RTOS</a>
         <a href="#debug"><span class="nav-number">07</span>Debug</a>
-        <a href="#gotchas"><span class="nav-number">08</span>Gotchas</a>
+        <a href="#rp2040"><span class="nav-number">08</span>RP2040 &amp; Pico</a>
+        <a href="#gotchas"><span class="nav-number">09</span>Gotchas</a>
       </nav>
     </aside>
 
@@ -76,7 +77,7 @@
         </div>
       </section>
 
-      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “interrupt”, “register”, “DMA”, “timer”, “linker”, “boot”, or “RTOS”.</div>
+      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “interrupt”, “register”, “DMA”, “timer”, “linker”, “boot”, “FreeRTOS”, or “PIO”.</div>
 
       <section class="section searchable" id="start">
         <div class="section-head">
@@ -334,6 +335,23 @@ xQueueReceive(q, &amp;val, portMAX_DELAY);</code></pre></article>
           <div class="command-row"><code>taskENTER_CRITICAL / taskEXIT_CRITICAL</code><span>disable scheduler preemption.</span></div>
           <div class="command-row"><code>vTaskStartScheduler()</code><span>start the tick and scheduler.</span></div>
         </div>
+        <details style="margin-top:16px">
+          <summary>More FreeRTOS</summary>
+          <div class="details-body grid two">
+            <div><h4>Software timers</h4><p>One-shot or periodic callbacks that run in the timer task, not yours.</p><pre><code>xTimerCreate("t", pdMS_TO_TICKS(1000), pdTRUE,
+             NULL, onTick);
+xTimerStart(t, 0);</code></pre></div>
+            <div><h4>Event groups &amp; task notifications</h4><p>Wait for a set of flags, or wake one task directly without a queue.</p><pre><code>xEventGroupWaitBits(g, BIT_READY, pdFALSE,
+                    pdTRUE, portMAX_DELAY);
+xTaskNotifyGive(task);           // signal
+ulTaskNotifyTake(pdTRUE, portMAX_DELAY);</code></pre></div>
+            <div><h4>ISR-safe calls</h4><p>From an ISR, only the <code>…FromISR</code> variants are legal — they never block.</p><pre><code>xSemaphoreGiveFromISR(m, &amp;woken);
+xQueueSendFromISR(q, &amp;v, &amp;woken);
+portYIELD_FROM_ISR(woken);</code></pre></div>
+            <div><h4>Binary semaphore vs mutex</h4><p>A mutex has ownership + priority inheritance; a binary semaphore is just a signal. Never use a semaphore as a mutex.</p><pre><code>xSemaphoreCreateBinary();  // signal
+xSemaphoreCreateMutex();   // lock</code></pre></div>
+          </div>
+        </details>
         <div class="callout warning" style="margin-top:16px"><div class="callout-mark">!</div><p><strong>Priority inversion:</strong> a low-priority task holding a mutex blocks a high-priority task, which then waits behind the medium tasks. Fix it by using a <strong>mutex with priority inheritance</strong> — never a binary semaphore — for resources shared across priority levels.</p></div>
       </section>
 
@@ -381,9 +399,50 @@ arm-none-eabi-gdb firmware.elf
         <div class="callout" style="margin-top:16px"><div class="callout-mark">SWD</div><p><strong>SWD beats JTAG on modern parts:</strong> two pins (<code>SWDIO</code> + <code>SWCLK</code>) plus power and ground, versus four or five for JTAG (<code>TMS/TCK/TDI/TDO</code>). Both expose the same debug access; SWD is the default on Cortex-M.</p></div>
       </section>
 
+      <section class="section searchable" id="rp2040">
+        <div class="section-head">
+          <div><div class="section-kicker">08 / RP2040 &amp; Pico</div><h2>RP2040 &amp; Raspberry Pi Pico</h2></div>
+          <p>The RP2040 is a dual-core Cortex-M0+ with a standout trick: PIO — tiny programmable state machines that bit-bang any protocol without touching the CPU.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>Pico SDK setup</h3><pre><code>cmake_minimum_required(VERSION 3.13)
+include(pico_sdk_import.cmake)
+pico_sdk_init()
+add_executable(blink blink.c)
+target_link_libraries(blink pico_stdlib)
+pico_add_extra_outputs(blink)</code></pre></article>
+          <article class="card"><h3>GPIO</h3><pre><code>gpio_init(25);
+gpio_set_dir(25, GPIO_OUT);
+gpio_put(25, 1);
+gpio_pull_up(2);
+gpio_set_irq_enabled_with_callback(
+  2, GPIO_IRQ_EDGE_FALL, true, &amp;cb);</code></pre></article>
+          <article class="card"><h3>PWM &amp; ADC</h3><pre><code>pwm_set_wrap(slice, 65535);
+pwm_set_gpio_level(25, 32768);
+pwm_set_enabled(slice, true);
+adc_select_input(0);
+uint16_t v = adc_read();</code></pre></article>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>PIO — bit-bang anything</h3><p>8 state machines, each a tiny program that toggles pins with deterministic timing, independent of the cores. Perfect for WS2812, DPI, or custom one-wire protocols.</p><pre><code># PIO asm: square wave
+set pindirs, 1
+.wrap_target
+  set pins, 1
+  set pins, 0
+.wrap</code></pre></article>
+          <article class="card"><h3>UART / I2C / SPI / DMA</h3><pre><code>uart_init(uart0, 115200);
+uart_puts(uart0, "hi\n");
+i2c_init(i2c0, 100 * 1000);
+spi_init(spi0, 1 * 1000 * 1000);
+// DMA moves memory ↔ peripheral
+dma_channel_configure(...)</code></pre></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">KEY</div><p><strong>PIO is the RP2040's superpower.</strong> Two modest M0+ cores, but eight PIO state machines with deterministic timing. When a protocol is too fast or too weird for the CPU — WS2812 LEDs, VGA, DVI, odd one-wire buses — throw it at PIO.</p></div>
+      </section>
+
       <section class="section searchable" id="gotchas">
         <div class="section-head">
-          <div><div class="section-kicker">08 / Gotchas</div><h2>Pitfalls</h2></div>
+          <div><div class="section-kicker">09 / Gotchas</div><h2>Pitfalls</h2></div>
           <p>Six failures that look like hardware problems but are almost always software.</p>
         </div>
         <details>

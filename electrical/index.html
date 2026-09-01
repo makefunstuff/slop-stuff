@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#levels"><span class="nav-number">02</span>Logic levels</a>
         <a href="#pull"><span class="nav-number">03</span>Pull-ups</a>
@@ -74,6 +75,38 @@
               <div><span class="prompt">➜</span> <span class="cursor"></span></div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The formulas and defaults you reach for most often, at a glance. Full explanations live in the numbered sections below.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>Ohm's law</h3><pre><code>V = I × R
+I = V / R
+R = V / I</code></pre></article>
+          <article class="card"><h3>Power</h3><pre><code>P = V × I
+P = I² × R
+P = V² / R</code></pre></article>
+          <article class="card"><h3>3.3 V vs 5 V</h3><p>A 3.3 V output drives a 5 V <em>TTL</em> input; 5 V into a 3.3 V pin over-voltages it — shift it down.</p><pre><code>3.3 V:   VIH 2.0 V · VIL 0.8 V
+5 V TTL: VIH 2.0 V · VIL 0.8 V
+5 V CMOS: VIH 3.5 V · VIL 1.5 V</code></pre></article>
+          <article class="card"><h3>Pull-up</h3><p>10 kΩ is the universal default; use 4.7 kΩ on I²C.</p><pre><code>Buttons:     10k
+GPIO idle:   10k – 100k
+I²C SDA/SCL: 4.7k</code></pre></article>
+          <article class="card"><h3>Voltage divider</h3><pre><code>Vout = Vin × R2 / (R1 + R2)
+# 12 V → 3.3 V: R1=2.7k, R2=1k</code></pre></article>
+          <article class="card"><h3>Decoupling</h3><p>Small caps at every IC power pin.</p><pre><code>100 nF → each VCC pin
+10 µF  → regulator bulk</code></pre></article>
+          <article class="card"><h3>LED resistor</h3><pre><code>R = (Vcc − Vf) / If
+# 5 V, red LED ≈ 150 Ω</code></pre></article>
+          <article class="card"><h3>Buses</h3><p>UART = 2 wires, I²C = 2 + pull-ups, SPI = 4.</p><pre><code>UART: TX↔RX, 115200 8N1
+I²C:  SDA + SCL (pull-ups)
+SPI:  SCK, MOSI, MISO, CS</code></pre></article>
+          <article class="card"><h3>ADC</h3><pre><code>count = Vin / Vref × (2^N − 1)
+# 12-bit, 3.3 V → ~0.8 mV/step</code></pre></article>
         </div>
       </section>
 
@@ -337,6 +370,15 @@ MISO ── MISO</code></pre></article>
               C
               │
              GND   # fc = 1/(2πRC)</code></pre></article>
+          <article class="card"><h3>GPIO current limits</h3><p>An MCU pin sources/sinks only ~10–20 mA (some 3.3 V parts just 4–8 mA). Driving a relay, motor, or LED string directly can damage the pin — buffer with a transistor.</p><pre><code># per-pin: 10–20 mA max
+# per-port: ~100–200 mA total
+# → use a MOSFET/BJT for loads</code></pre></article>
+          <article class="card"><h3>Capacitor polarity</h3><p>Electrolytic and tantalum caps are polarized. Reverse one and it vents, pops, or shorts. The stripe marks the cathode (−) — point it at the more-negative node.</p><pre><code>+ ──[ 100µF ]── GND
+# stripe = −, goes to the
+# lower-voltage side</code></pre></article>
+          <article class="card"><h3>Cable voltage drop</h3><p>Thin or long wires drop <code>V = I × R_wire</code> at the far end. A USB cable carrying 1–2 A can sag a 5 V rail enough to brown out a device — measure at the load.</p><pre><code>V_drop = I × R_wire
+# 28 AWG ≈ 0.2 Ω/m per wire
+# VCC and GND both count</code></pre></article>
         </div>
       </section>
 
@@ -348,6 +390,16 @@ MISO ── MISO</code></pre></article>
           <a href="https://www.adafruit.com/learn" target="_blank" rel="noreferrer">Adafruit Learn</a>
           <a href="https://en.wikipedia.org/wiki/Ohm%27s_law" target="_blank" rel="noreferrer">Ohm's law (Wikipedia)</a>
           <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+
+      <footer class="footer searchable" style="margin-top:16px">
+        <strong>Related guides</strong>
+        <p>More from the slop-stuff library for the firmware and hardware around these circuits.</p>
+        <div class="footer-links">
+          <a href="../embedded/">Embedded development</a>
+          <a href="../electronics/">Electronics</a>
+          <a href="../esp32/">ESP32</a>
         </div>
       </footer>
     </main>

@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#functions"><span class="nav-number">02</span>Functions</a>
         <a href="#lookup"><span class="nav-number">03</span>Lookups</a>
@@ -76,7 +77,25 @@
         </div>
       </section>
 
-      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “XLOOKUP”, “pivot”, “SUMIFS”, “F4”, or “chart”.</div>
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The daily surface on one screen — each formula is expanded in the sections below.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>=SUM(A2:A10)</code><span>Add a range — <code>AVERAGE</code> and <code>COUNT</code> take the same shape.</span></div>
+          <div class="command-row"><code>=IF(B2&gt;1000, "High", "Low")</code><span>Branch on a condition; use <code>=IFS(t1, v1, t2, v2)</code> for several cases.</span></div>
+          <div class="command-row"><code>=SUMIFS(B:B, A:A, "West", C:C, "&gt;0.2")</code><span>Sum where criteria match — <code>COUNTIFS</code>/<code>AVERAGEIFS</code> work the same.</span></div>
+          <div class="command-row"><code>=XLOOKUP(E2, A2:A10, B2:B10, "Not found")</code><span>Modern lookup: exact by default, looks in any direction.</span></div>
+          <div class="command-row"><code>=UNIQUE(A2:A10) · =SORT(B2:B10) · =FILTER(A2:B10, C2:C10&gt;100)</code><span>Dynamic arrays: dedupe, sort, and filter — results spill down.</span></div>
+          <div class="command-row"><code>$A$1</code><span>Absolute reference (locked) vs relative <code>A1</code> — press <kbd>F4</kbd> to cycle.</span></div>
+          <div class="command-row"><code>=TEXTJOIN(", ", TRUE, A2:A10) · =TEXTSPLIT(A2, ",")</code><span>Join with a delimiter, then split it back apart.</span></div>
+          <div class="command-row"><code>Insert → PivotTable</code><span>Summarize rows by dragging fields into Rows and Values.</span></div>
+          <div class="command-row"><code>Ctrl+Shift+L · F2 · F4 · Ctrl+T</code><span>Filters · edit cell · cycle refs · make a Table.</span></div>
+        </div>
+      </section>
+
+      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “XLOOKUP”, “pivot”, “SUMIFS”, “UNIQUE”, “FILTER”, or “F4”.</div>
 
       <section class="section searchable" id="start">
         <div class="section-head">
@@ -132,6 +151,10 @@ Esc            cancels</code></pre></article>
             <div class="command-row"><code>=SUMPRODUCT(A2:A10, B2:B10)</code><span>Weighted sum without an array formula.</span></div>
             <div class="command-row"><code>=YEAR(A2) / MONTH(A2) / DAY(A2)</code><span>Pull date parts apart.</span></div>
             <div class="command-row"><code>=EDATE(A2, 3)</code><span>Shift a date by N months.</span></div>
+            <div class="command-row"><code>=UNIQUE(A2:A10)</code><span>Distinct values, spilled down.</span></div>
+            <div class="command-row"><code>=FILTER(A2:B10, C2:C10&gt;100)</code><span>Rows that meet a condition.</span></div>
+            <div class="command-row"><code>=XMATCH(E2, A2:A10)</code><span>Position of a match — INDEX's modern partner.</span></div>
+            <div class="command-row"><code>=TAKE(A2:A100, 5) / =DROP(A2:A100, 1)</code><span>Keep or remove the first/last N rows.</span></div>
           </div>
         </details>
         <div class="callout"><div class="callout-mark">✓</div><p><strong>Tip:</strong> <code>COUNT</code> ignores text and blanks; use <code>COUNTA</code> to count any non-empty cell and <code>COUNTBLANK</code> for the empties.</p></div>
@@ -208,6 +231,7 @@ Esc            cancels</code></pre></article>
           <tr><td><code>CONCAT</code></td><td>Join text with no separator</td><td><code>=CONCAT(A2,B2)</code></td></tr>
           <tr><td><code>TEXTJOIN</code></td><td>Join with a delimiter, skip blanks</td><td><code>=TEXTJOIN(", ",TRUE,A2:A10)</code></td></tr>
           <tr><td><code>TEXTSPLIT</code></td><td>Split text by a delimiter</td><td><code>=TEXTSPLIT(A2,",")</code></td></tr>
+          <tr><td><code>TEXTBEFORE</code> / <code>TEXTAFTER</code></td><td>Text before / after a delimiter — no FIND needed</td><td><code>=TEXTBEFORE(A2,",")</code></td></tr>
           <tr><td><code>TRIM</code></td><td>Strip leading, trailing, and double spaces</td><td><code>=TRIM(A2)</code></td></tr>
           <tr><td><code>SUBSTITUTE</code></td><td>Replace exact text occurrences</td><td><code>=SUBSTITUTE(A2,"-","")</code></td></tr>
           <tr><td><code>LEN</code></td><td>Character count</td><td><code>=LEN(A2)</code></td></tr>
@@ -217,8 +241,8 @@ Esc            cancels</code></pre></article>
         <details>
           <summary>Handy cleaning recipes</summary>
           <div class="details-body grid two">
-            <div><h4>Split “Last, First”</h4><pre><code>=LEFT(A2, FIND(",", A2)-1)</code></pre></div>
-            <div><h4>Extract the domain</h4><pre><code>=MID(A2, FIND("@", A2)+1, 99)</code></pre></div>
+            <div><h4>Split “Last, First”</h4><pre><code>=TEXTBEFORE(A2, ",")</code></pre></div>
+            <div><h4>Extract the domain</h4><pre><code>=TEXTAFTER(A2, "@")</code></pre></div>
             <div><h4>First word of a cell</h4><pre><code>=LEFT(A2, FIND(" ", A2)-1)</code></pre></div>
             <div><h4>Clean then split</h4><pre><code>=TEXTSPLIT(TRIM(A2), ",")</code></pre></div>
           </div>
@@ -273,6 +297,8 @@ Esc            cancels</code></pre></article>
         </div>
         <div class="grid three">
           <article class="card"><h3>Array formulas</h3><p>Modern Excel spills results into adjacent cells; reference the whole spill with <code>#</code>.</p><pre><code>=SORT(A2:A10)
+=UNIQUE(A2:A10)
+=FILTER(A2:B10, C2:C10&gt;100)
 =A2#</code></pre></article>
           <article class="card"><h3>LET</h3><p>Name intermediate values so a formula reads top-to-bottom and calculates once.</p><pre><code>=LET(x, A2:A10,
      y, x*1.2,
@@ -282,6 +308,7 @@ Esc            cancels</code></pre></article>
           <article class="card"><h3>Tables</h3><p>Press <kbd>Ctrl</kbd><kbd>T</kbd> to make a Table; structured references use column names.</p><pre><code>=[@Sales]*[@Qty]</code></pre></article>
           <article class="card"><h3>Power Query</h3><p>Data → Get Data imports and shapes data repeatably — each recorded step reruns on refresh.</p></article>
         </div>
+        <div class="callout"><div class="callout-mark">⌁</div><p><strong>Formula aggregates (2024):</strong> <code>GROUPBY</code> and <code>PIVOTBY</code> roll rows into a summary table with one formula — no pivot table required. <code>=GROUPBY(A2:A100, B2:B100, SUM)</code>.</p></div>
         <div class="callout warning"><div class="callout-mark">!</div><p><strong>Spill errors.</strong> Dynamic array formulas fill adjacent cells automatically; if anything is in the way you get <code>#SPILL!</code>. Clear the blocking cells to let the array spill.</p></div>
       </section>
 
@@ -295,6 +322,10 @@ Esc            cancels</code></pre></article>
           <article class="card"><h3>Text vs number</h3><p><code>"123"</code> is not <code>123</code>. Numbers stored as text break <code>SUM</code> and sorting. Fix with <code>=VALUE(A2)</code> or Text to Columns.</p></article>
           <article class="card"><h3>Forgotten $ locks</h3><p>Copying <code>=A1*B1</code> down becomes <code>=A2*B2</code> — usually right, but a tax rate in <code>B1</code> should be <code>$B$1</code>.</p></article>
           <article class="card"><h3>Volatile functions</h3><p><code>NOW()</code>, <code>TODAY()</code>, <code>RAND()</code>, <code>OFFSET()</code>, and <code>INDIRECT()</code> recalculate on every change and slow large workbooks.</p></article>
+          <article class="card"><h3>VLOOKUP's hidden approximate mode</h3><p>Omit the 4th argument and VLOOKUP defaults to <code>TRUE</code> — an approximate match that needs sorted data and silently returns the nearest value. Always pass <code>FALSE</code> for exact.</p></article>
+          <article class="card"><h3>Dates are serial numbers</h3><p>Excel stores dates as days since Jan 1, 1900 (<code>1</code> = that day). Subtract two date cells to get a day count, and check the format when a “number” should be a date.</p></article>
+          <article class="card"><h3>Floating-point drift</h3><p><code>=0.1+0.2</code> is not exactly <code>0.3</code> in binary. Sums and comparisons of decimals can drift — wrap money math in <code>=ROUND(…, 2)</code>.</p></article>
+          <article class="card"><h3>Leading zeros vanish</h3><p>Typing <code>00123</code> stores <code>123</code>. For ZIP codes, phone numbers, and IDs, set the column to Text <strong>before</strong> entering, or prefix with an apostrophe <code>'</code>.</p></article>
         </div>
         <div class="callout warning"><div class="callout-mark">!</div><p><strong>Merged cells</strong> break sorting, filtering, and range references. Prefer “Center Across Selection” (Format Cells → Alignment) for the same look with none of the pain.</p></div>
         <details>
@@ -322,6 +353,12 @@ Esc            cancels</code></pre></article>
           <a href="https://exceljet.net/" target="_blank" rel="noreferrer">Exceljet</a>
           <a href="https://www.contextures.com/" target="_blank" rel="noreferrer">Contextures</a>
           <a href="../">slop-stuff home</a>
+        </div>
+        <div class="footer-links">
+          <strong>Related</strong>
+          <a href="../db-optimization/">DB optimization</a>
+          <a href="../math/">Mathematics</a>
+          <a href="../finance/">Finance</a>
         </div>
       </footer>
     </main>

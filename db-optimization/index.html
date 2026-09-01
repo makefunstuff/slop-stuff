@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#indexes"><span class="nav-number">02</span>Indexes</a>
         <a href="#plans"><span class="nav-number">03</span>Query plans</a>
@@ -78,6 +79,23 @@
         </div>
       </section>
 
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The highest-leverage moves in one glance — measure, index, seek, and only then denormalize.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>EXPLAIN (ANALYZE, BUFFERS) SELECT …</code><span>Run the plan for real — actual rows, time, and page I/O. Trust actual, not cost.</span></div>
+          <div class="command-row"><code>CREATE INDEX ON t (a, b) INCLUDE (c);</code><span>B-tree is the default; composite order = filter order; INCLUDE makes it covering (index-only scan).</span></div>
+          <div class="command-row"><code>WHERE col = x</code><span>Sargable: keep the column bare — no function, arithmetic, or implicit cast, or the index is skipped.</span></div>
+          <div class="command-row"><code>WHERE id &gt; :last ORDER BY id LIMIT 50</code><span>Keyset pagination seeks straight to the page; OFFSET scans and discards every earlier row.</span></div>
+          <div class="command-row"><code>SELECT u.id, u.name FROM users u;</code><span>Name the columns you use — SELECT * drags data and defeats covering indexes.</span></div>
+          <div class="command-row"><code>JOIN … ON o.user_id = u.id</code><span>Index the join keys. Nested loop = small + indexed, hash = large, merge = both sorted.</span></div>
+          <div class="command-row"><code>Normalize writes · denormalize reads</code><span>Normalize to remove redundancy; denormalize hot read paths to drop joins.</span></div>
+          <div class="command-row"><code>ANALYZE table;</code><span>Refresh statistics when estimates drift — a bad plan usually means stale stats.</span></div>
+        </div>
+      </section>
+
       <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “index”, “EXPLAIN”, “plan”, “join”, “normalization”, “cache”, or “Redis”.</div>
 
       <section class="section searchable" id="start">
@@ -122,9 +140,9 @@ ANALYZE orders; -- refresh stats</code></pre></article>
         </div>
         <div class="table-wrap"><table><thead><tr><th>Index</th><th>Shines at</th><th>Example</th></tr></thead><tbody>
           <tr><td>B-tree</td><td>Equality, ranges, and sort — the default</td><td><code>CREATE INDEX idx ON users (email);</code></td></tr>
-          <tr><td>Hash</td><td>Equality only (<code>=</code>), no range or sort</td><td><code>CREATE INDEX idx ON users USING hash (email);</code></td></tr>
+          <tr><td>Hash</td><td>Equality only (<code>=</code>), no range or sort — crash-safe since PG&nbsp;10, but B-tree usually wins</td><td><code>CREATE INDEX idx ON users USING hash (email);</code></td></tr>
           <tr><td>Composite</td><td>Multi-column filters + sort</td><td><code>CREATE INDEX idx ON orders (user_id, created_at);</code></td></tr>
-          <tr><td>Covering</td><td>Reading a few columns with no table hop</td><td><code>CREATE INDEX idx ON orders (user_id) INCLUDE (total);</code></td></tr>
+          <tr><td>Covering</td><td>Reading a few columns with no table hop (<code>INCLUDE</code> is Postgres syntax; InnoDB auto-covers via the PK)</td><td><code>CREATE INDEX idx ON orders (user_id) INCLUDE (total);</code></td></tr>
           <tr><td>Partial</td><td>A hot subset of rows</td><td><code>CREATE INDEX idx ON users (email) WHERE deleted_at IS NULL;</code></td></tr>
           <tr><td>Unique</td><td>Uniqueness constraint + index in one</td><td><code>CREATE UNIQUE INDEX idx ON users (email);</code></td></tr>
         </tbody></table></div>
@@ -139,7 +157,7 @@ SELECT schemaname, relname, indexrelname
 FROM pg_stat_user_indexes
 WHERE idx_scan = 0;</code></pre></article>
         </div>
-        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">⚠</div><p><strong>Add an index for the queries you run, not the ones you might.</strong> One well-chosen composite index usually beats five single-column indexes — the planner can only use one per table per query anyway.</p></div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">⚠</div><p><strong>Add an index for the queries you run, not the ones you might.</strong> One well-chosen composite index usually beats five single-column indexes — combining several single-column indexes (BitmapAnd/BitmapOr) is costlier than one index that already matches.</p></div>
       </section>
 
       <section class="section searchable" id="plans">
@@ -361,6 +379,16 @@ SELECT * FROM orders WHERE code = '42';</code></pre></article>
 SELECT * FROM jobs WHERE id = 5 FOR UPDATE;
 UPDATE jobs SET status = 'done' WHERE id = 5;
 COMMIT;  -- release immediately</code></pre></article>
+          <article class="card"><h3>Dead tuples &amp; bloat</h3><p>In PostgreSQL, <code>UPDATE</code>/<code>DELETE</code> leave dead tuples that occupy space until <code>VACUUM</code> reaps them. Bloat slows scans, bloats indexes, and wastes cache.</p><pre><code>-- find tables with the most dead tuples
+SELECT relname, n_live_tup, n_dead_tup
+FROM pg_stat_user_tables
+ORDER BY n_dead_tup DESC;
+
+-- reclaim space
+VACUUM (VERBOSE) orders;</code></pre></article>
+          <article class="card"><h3>Stale statistics</h3><p>The planner picks a plan from table statistics. After bulk writes — or when a plan suddenly gets worse — the stats have drifted. Refresh them before changing anything else.</p><pre><code>ANALYZE orders;
+-- or just the columns a query filters
+ANALYZE orders (user_id, created_at);</code></pre></article>
         </div>
         <div class="callout warning" style="margin-top:16px"><div class="callout-mark">⚠</div><p><strong>Don't optimize until you've measured it being slow.</strong> Adding indexes and denormalizing on a hunch is how you get twelve-index tables and buggy caches. Profile first, fix the top offender, re-measure.</p></div>
       </section>
@@ -373,6 +401,12 @@ COMMIT;  -- release immediately</code></pre></article>
           <a href="https://www.postgresql.org/docs/current/using-explain.html" target="_blank" rel="noreferrer">PostgreSQL EXPLAIN</a>
           <a href="https://dev.mysql.com/doc/refman/8.0/en/optimization.html" target="_blank" rel="noreferrer">MySQL optimization</a>
           <a href="../">slop-stuff home</a>
+        </div>
+        <strong style="display:block;margin-top:20px">Related</strong>
+        <div class="footer-links">
+          <a href="../postgres/">PostgreSQL</a>
+          <a href="../kafka/">Kafka</a>
+          <a href="../excel/">Excel</a>
         </div>
       </footer>
     </main>

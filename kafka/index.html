@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#topics"><span class="nav-number">02</span>Topics &amp; partitions</a>
         <a href="#producers"><span class="nav-number">03</span>Producers</a>
@@ -80,6 +81,25 @@
         </div>
       </section>
 
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The daily surface on one screen — create, produce, consume, and watch lag. Every command takes <code>--bootstrap-server localhost:9092</code>; each is expanded below.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>kafka-topics --list</code><span>Every topic on the cluster.</span></div>
+          <div class="command-row"><code>kafka-topics --create --topic orders --partitions 6 --replication-factor 3</code><span>Create a topic — 6 partitions, 3 replicas.</span></div>
+          <div class="command-row"><code>kafka-topics --describe --topic orders</code><span>Leader, replicas, and ISR for each partition.</span></div>
+          <div class="command-row"><code>kafka-console-producer --topic orders</code><span>Type records on stdin, one per line.</span></div>
+          <div class="command-row"><code>kafka-console-consumer --topic orders --from-beginning</code><span>Replay every record from offset 0.</span></div>
+          <div class="command-row"><code>kafka-console-consumer --topic orders --group billing</code><span>Consume as a group — committed offsets persist.</span></div>
+          <div class="command-row"><code>kafka-consumer-groups --list</code><span>All consumer groups.</span></div>
+          <div class="command-row"><code>kafka-consumer-groups --describe --group billing</code><span>Current offset, log-end offset, and LAG.</span></div>
+          <div class="command-row"><code>kafka-consumer-groups --group billing --reset-offsets --to-earliest --execute --topic orders</code><span>Rewind a group to the oldest offset.</span></div>
+          <div class="command-row"><code>kafka-topics --alter --topic orders --partitions 12</code><span>Grow partitions — they can only increase.</span></div>
+        </div>
+      </section>
+
       <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “topic”, “partition”, “offset”, “consumer group”, or “rebalance”.</div>
 
       <section class="section searchable" id="start">
@@ -112,6 +132,7 @@ broker-3: p0 follower</code></pre></article>
 min.insync.replicas=2</code></pre></article>
         </div>
         <div class="callout"><div class="callout-mark">LOG</div><p><strong>Append-only.</strong> Records are never edited or deleted in place. The <code>offset</code> — a record's position in its partition — is how consumers track what they've read. Retention removes whole segments later, never individual records.</p></div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">KR</div><p><strong>KRaft, not ZooKeeper.</strong> Apache Kafka 4.0 (2025) made KRaft the only metadata mode — ZooKeeper was deprecated in 3.5 and removed in 4.0. Cluster metadata now lives in an internal <code>__cluster_metadata</code> topic managed by a quorum of controller nodes, so there is no separate ZK ensemble to run. Every command here uses <code>--bootstrap-server</code>; the legacy <code>--zookeeper</code> flags are gone.</p></div>
       </section>
 
       <section class="section searchable" id="topics">
@@ -329,18 +350,30 @@ min.insync.replicas=2
 acks=all</code></pre></article>
           <article class="card"><h3>Partitions are forever</h3><p>You can add partitions but not remove them. Re-keying or re-partitioning a live topic means migrating to a new one.</p><pre><code># plan partition count up front:
 partitions ≈ peak consumers</code></pre></article>
+          <article class="card"><h3>ZooKeeper is gone (KRaft)</h3><p>Kafka 4.0 removed ZooKeeper entirely. Brokers carrying the old <code>zookeeper.connect</code> won't start, and the <code>--zookeeper</code> CLI flags were dropped — migrate to KRaft before upgrading.</p><pre><code># 4.0: no zookeeper.connect
+process.roles=broker,controller
+controller.quorum.voters=1@h1:9093</code></pre></article>
+          <article class="card"><h3>Log compaction ≠ delete</h3><p><code>cleanup.policy=compact</code> keeps the latest record per key, not a time window. Every message needs a key, and deleting a key writes a tombstone (<code>null</code> value) held for <code>delete.retention.ms</code>.</p><pre><code>cleanup.policy=compact
+delete.retention.ms=86400000
+# null value = tombstone</code></pre></article>
         </div>
         <div class="callout warning"><div class="callout-mark">!</div><p><strong>Watch the ISR before the disk.</strong> Most "Kafka is down" incidents are really <code>min.insync.replicas</code> not being met because a follower fell out of the ISR — check <code>kafka-topics --describe</code> before restarting brokers.</p></div>
       </section>
 
       <footer class="footer searchable">
         <strong>Source of truth</strong>
-        <p>This guide covers Kafka's core model and the day-to-day commands. The official documentation and Confluent docs remain authoritative for versions and edge cases.</p>
+        <p>This guide targets <strong>Apache Kafka 4.0</strong> — KRaft is now the only metadata mode and <strong>ZooKeeper was removed in 4.0</strong> (deprecated since 3.5). The official documentation and Confluent docs remain authoritative for versions and edge cases.</p>
         <div class="footer-links">
           <a href="https://kafka.apache.org/documentation/" target="_blank" rel="noreferrer">Kafka docs</a>
           <a href="https://docs.confluent.io/" target="_blank" rel="noreferrer">Confluent docs</a>
           <a href="https://kafka.apache.org/quickstart" target="_blank" rel="noreferrer">Quickstart</a>
           <a href="../">slop-stuff home</a>
+        </div>
+        <div class="footer-links">
+          <strong>Related</strong>
+          <a href="../postgres/">PostgreSQL</a>
+          <a href="../devops/">DevOps</a>
+          <a href="../db-optimization/">DB optimization</a>
         </div>
       </footer>
     </main>

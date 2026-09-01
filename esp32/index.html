@@ -12,7 +12,7 @@
     <a class="brand" href="../" aria-label="Back to slop-stuff">
       <span class="brand-mark">32_</span>
       <span>ESP32 Guide</span>
-      <span class="version">esp-idf · arduino</span>
+      <span class="version">esp-idf 5.5 · arduino 3.x</span>
     </a>
     <label class="search-wrap">
       <span class="sr-only" hidden>Search guide</span>
@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#gpio"><span class="nav-number">02</span>GPIO</a>
         <a href="#peripherals"><span class="nav-number">03</span>Peripherals</a>
@@ -36,6 +37,7 @@
         <a href="#power"><span class="nav-number">06</span>Power</a>
         <a href="#ota"><span class="nav-number">07</span>OTA</a>
         <a href="#gotchas"><span class="nav-number">08</span>Gotchas</a>
+        <a href="#related"><span class="nav-number">09</span>Related</a>
       </nav>
     </aside>
 
@@ -75,6 +77,30 @@
             </div>
           </div>
         </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The commands and calls you'll reach for most — ESP-IDF and Arduino core side by side.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>Build · flash · monitor</h3><div class="command-index">
+            <div class="command-row"><code>idf.py build</code><span>compile the project</span></div>
+            <div class="command-row"><code>idf.py flash monitor</code><span>upload + open serial</span></div>
+            <div class="command-row"><code>arduino-cli compile -b esp32:esp32:esp32 blink</code><span>build a sketch</span></div>
+            <div class="command-row"><code>arduino-cli upload -p /dev/ttyUSB0 -b esp32:esp32:esp32</code><span>flash the sketch</span></div>
+          </div></article>
+          <article class="card"><h3>Arduino core essentials</h3><div class="command-index">
+            <div class="command-row"><code>Serial.begin(115200)</code><span>open UART0 debug</span></div>
+            <div class="command-row"><code>pinMode(2, OUTPUT)</code><span>set a pin direction</span></div>
+            <div class="command-row"><code>digitalWrite(2, HIGH)</code><span>drive a pin</span></div>
+            <div class="command-row"><code>WiFi.begin("ssid", "pass")</code><span>join a Wi-Fi network</span></div>
+            <div class="command-row"><code>esp_deep_sleep_start()</code><span>sleep — never returns</span></div>
+            <div class="command-row"><code>ArduinoOTA.handle()</code><span>serve OTA updates</span></div>
+          </div></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">⌁</div><p><strong>At a glance:</strong> serial log at <code>115200</code> · GPIOs are 3.3&nbsp;V, not 5&nbsp;V tolerant · hold <kbd>BOOT</kbd> + tap <kbd>EN</kbd> for download mode · <code>idf.py menuconfig</code> for settings · Arduino core 3.x replaced <code>ledcSetup()</code> with <code>ledcAttach(pin, freq, res)</code>.</p></div>
       </section>
 
       <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “GPIO”, “UART”, “I2C”, “WiFi”, “NVS”, or “deep sleep”.</div>
@@ -149,20 +175,20 @@ void loop() {
   }
 }</code></pre></article>
         </div>
-        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">!</div><p>There is no <code>analogWrite()</code> on ESP32 — use <code>ledcWrite()</code> for PWM. And <strong>ADC2 pins conflict with Wi-Fi</strong>: prefer ADC1 (<code>GPIO32–39</code>) when the radio is on.</p></div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">!</div><p><strong>Arduino core 3.x:</strong> <code>analogWrite()</code> now works (LEDC-backed), but <code>ledcSetup()</code>/<code>ledcAttachPin()</code> are removed — use <code>ledcAttach(pin, freq, res)</code> + <code>ledcWrite(pin, duty)</code>. And <strong>ADC2 pins conflict with Wi-Fi</strong>: prefer ADC1 (<code>GPIO32–39</code>) when the radio is on.</p></div>
       </section>
 
       <section class="section searchable" id="peripherals">
         <div class="section-head">
           <div><div class="section-kicker">03 / Peripherals</div><h2>UART · I2C · SPI · ADC · PWM</h2></div>
-          <p>The ESP32 exposes three UARTs, two I2C and four SPI buses, plus a 12-bit ADC and LEDC PWM. Default pins below are for the classic ESP32 (WROOM devkit).</p>
+          <p>The ESP32 exposes three UARTs, two I2C and four SPI buses, plus a 12-bit ADC and LEDC PWM. Default pins below are for the classic ESP32 (WROOM devkit); on Arduino core 3.x <code>Serial1</code> defaults to GPIO26/27 and <code>Serial2</code> to GPIO4/25.</p>
         </div>
         <div class="table-wrap"><table><thead><tr><th>Peripheral</th><th>Default pins</th><th>API</th></tr></thead><tbody>
           <tr><td>UART</td><td>TX0=1 · RX0=3 (debug)</td><td><code>Serial.begin(115200)</code>; <code>Serial2.begin(115200, SERIAL_8N1, RX2, TX2)</code></td></tr>
           <tr><td>I2C</td><td>SDA=21 · SCL=22</td><td><code>Wire.begin(21, 22)</code>; <code>Wire.beginTransmission(0x3C)</code></td></tr>
           <tr><td>SPI (VSPI)</td><td>SCK=18 · MISO=19 · MOSI=23 · SS=5</td><td><code>SPI.begin(18, 19, 23, 5)</code>; <code>SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE0))</code></td></tr>
-          <tr><td>ADC</td><td>12-bit → 0–4095</td><td><code>analogRead(34)</code>; <code>analogSetWidth(12)</code></td></tr>
-          <tr><td>PWM (LEDC)</td><td>any GPIO</td><td><code>ledcSetup(0, 5000, 8)</code>; <code>ledcAttachPin(2, 0)</code>; <code>ledcWrite(0, 128)</code></td></tr>
+          <tr><td>ADC</td><td>12-bit → 0–4095</td><td><code>analogRead(34)</code>; <code>analogReadResolution(12)</code></td></tr>
+          <tr><td>PWM (LEDC)</td><td>any GPIO</td><td><code>ledcAttach(2, 5000, 8)</code>; <code>ledcWrite(2, 128)</code></td></tr>
           <tr><td>DAC</td><td>25 (DAC1) · 26 (DAC2)</td><td><code>dacWrite(25, 128)</code> → 0–255</td></tr>
         </tbody></table></div>
         <div class="grid two" style="margin-top:16px">
@@ -176,10 +202,9 @@ void setup() {
       Serial.printf("Found 0x%02X\n", a);
   }
 }</code></pre></article>
-          <article class="card"><h3>PWM fade (LEDC)</h3><p><code>ledcSetup(channel, freq, resolution)</code> then write a duty value.</p><pre><code>ledcSetup(0, 5000, 8);   // ch0, 5 kHz, 8-bit
-ledcAttachPin(2, 0);
+          <article class="card"><h3>PWM fade (LEDC)</h3><p><code>ledcAttach(pin, freq, resolution)</code> then <code>ledcWrite(pin, duty)</code>.</p><pre><code>ledcAttach(2, 5000, 8);  // GPIO2, 5 kHz, 8-bit
 for (int d = 0; d &lt;= 255; d++) {
-  ledcWrite(0, d);
+  ledcWrite(2, d);
   delay(10);
 }</code></pre></article>
         </div>
@@ -305,7 +330,7 @@ if (Update.end() &amp;&amp; Update.isFinished())
       <section class="section searchable" id="gotchas">
         <div class="section-head">
           <div><div class="section-kicker">08 / Gotchas</div><h2>Pitfalls</h2></div>
-          <p>Six things that bite everyone once. Read the serial log at <code>115200</code> before guessing.</p>
+          <p>Eight things that bite everyone once. Read the serial log at <code>115200</code> before guessing.</p>
         </div>
         <details>
           <summary>Watchdog resets</summary>
@@ -332,6 +357,26 @@ idf.py flash   # or: arduino-cli upload …</code></pre></div>
           <summary>Boot strapping pins</summary>
           <div class="details-body"><p>These pins are sampled at reset — the wrong pull changes boot behavior. <code>GPIO0</code> low = download mode; <code>GPIO2</code> must be high; <code>GPIO12</code> selects flash voltage (keep low at boot); <code>GPIO15</code> high keeps the boot log on UART0. Avoid hard-wiring them to conflicting levels.</p></div>
         </details>
+        <details>
+          <summary>Arduino core 2.x → 3.x breaking changes</summary>
+          <div class="details-body"><p>The 3.x line (ESP-IDF 5.1+) removed several long-standing APIs: <code>ledcSetup()</code>/<code>ledcAttachPin()</code> (now <code>ledcAttach()</code> + <code>ledcWrite(pin, duty)</code>), <code>hallRead()</code> (hall sensor dropped), and <code>adcAttachPin()</code>. It also changed <code>Serial1</code>/<code>Serial2</code> default pins and added a proper <code>analogWrite()</code>. 2.x examples won't compile unmodified — pin the old core with <code>arduino-cli core install esp32:esp32@2.0.17</code> if you need to stay.</p></div>
+        </details>
+        <details>
+          <summary>OTA partition table</summary>
+          <div class="details-body"><p>OTA needs two app slots so the running firmware survives while the new image downloads: a partition table with <code>factory</code> + <code>ota_0</code> + <code>ota_1</code> (or the Arduino default <code>app0</code>/<code>app1</code>). With a single <code>factory</code> slot, <code>Update.writeStream()</code> fails with <code>Not enough space</code>. Budget ≥4 MB flash to hold two images.</p></div>
+        </details>
+      </section>
+
+      <section class="section searchable" id="related">
+        <div class="section-head">
+          <div><div class="section-kicker">09 / Related</div><h2>Keep exploring</h2></div>
+          <p>Neighboring cheatsheets for the same workbench.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>ESPHome</h3><p>Firmware-as-YAML on the same silicon — sensors, Wi-Fi, and Home Assistant discovery.</p><a class="button" href="../esphome/">ESPHome →</a></article>
+          <article class="card"><h3>Embedded dev</h3><p>Cross-platform embedded fundamentals, toolchains, and hardware workflows.</p><a class="button" href="../embedded/">Embedded dev →</a></article>
+          <article class="card"><h3>Electrical</h3><p>The physics behind the firmware — voltage, current, and power supplies.</p><a class="button" href="../electrical/">Electrical →</a></article>
+        </div>
       </section>
 
       <footer class="footer searchable">

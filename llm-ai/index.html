@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#models"><span class="nav-number">02</span>Models</a>
         <a href="#training"><span class="nav-number">03</span>Training</a>
@@ -80,6 +81,23 @@
         </div>
       </section>
 
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The eight concepts you'll reach for daily — each expanded in the sections below.</p>
+        </div>
+        <div class="grid four">
+          <article class="card"><div class="card-number">1</div><h3>Tokens &amp; context</h3><p><code>1 token ≈ 4 chars</code>. The context window is the shared budget for prompt plus completion; overflow → truncate or RAG.</p></article>
+          <article class="card"><div class="card-number">2</div><h3>Temperature &amp; top-p</h3><p>Low <code>temperature</code> = deterministic, high = creative. <code>top_p</code> caps sampling to the smallest set of likely tokens.</p></article>
+          <article class="card"><div class="card-number">3</div><h3>Embeddings</h3><p>Dense vectors that map meaning to geometry — similar text lands close together; the backbone of RAG and semantic search.</p></article>
+          <article class="card"><div class="card-number">4</div><h3>Attention</h3><p>Each token weighs every other token — <code>softmax(Q·Kᵀ/√d)·V</code> — to decide what context to borrow.</p></article>
+          <article class="card"><div class="card-number">5</div><h3>RAG pipeline</h3><p><strong>Chunk → embed → store → retrieve → ground → answer.</strong> Grounds answers in your documents, cutting hallucination.</p></article>
+          <article class="card"><div class="card-number">6</div><h3>Fine-tuning vs RAG</h3><p><strong>RAG</strong> injects knowledge at inference; <strong>fine-tuning</strong> bakes style and format into weights. Ship RAG first, fine-tune when behavior must change.</p></article>
+          <article class="card"><div class="card-number">7</div><h3>Agents &amp; tool calling</h3><p>An LLM in a loop: it emits a structured <strong>tool call</strong>, you execute it, and the result feeds the next turn.</p></article>
+          <article class="card"><div class="card-number">8</div><h3>Prompt techniques</h3><p>Few-shot examples, chain-of-thought, a system role, and constrained JSON output are the high-leverage moves.</p></article>
+        </div>
+      </section>
+
       <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “token”, “attention”, “RAG”, “agent”, or “prompt”.</div>
 
       <section class="section searchable" id="start">
@@ -93,11 +111,12 @@
 # → ids [9906, 11, 995, 0]</code></pre></article>
           <article class="card"><div class="card-number">2</div><h3>Vocabulary</h3><p>The fixed table mapping token → id. The model only ever sees integers.</p><pre><code>len(vocab)
 # GPT-2  ~50k tokens
-# Llama 3 ~128k tokens
+# Llama 3/4 ~128k tokens
 # out-of-vocab → subword split</code></pre></article>
-          <article class="card"><div class="card-number">3</div><h3>Context window</h3><p>The max tokens the model can attend to at once — prompt plus completion share it.</p><pre><code>GPT-4o     128k
-Claude 3    200k
-Llama 3     8k / 128k
+          <article class="card"><div class="card-number">3</div><h3>Context window</h3><p>The max tokens the model can attend to at once — prompt plus completion share it. Numbers move fast; check the current model card.</p><pre><code>GPT-5.x      400k
+Claude 4.5   200k (1M beta)
+Gemini 3     1M
+DeepSeek V3  128k
 # overflow → truncate or RAG</code></pre></article>
           <article class="card"><div class="card-number">4</div><h3>Temperature</h3><p>Scales the softmax before sampling. Low = deterministic, high = creative.</p><pre><code>temp = 0.0   # greedy top token
 temp = 0.7   # balanced
@@ -139,9 +158,10 @@ T5    → both     → translate</code></pre></article>
   + embed("woman") ≈ embed("queen")</code></pre></article>
           <article class="card"><h3>Positional encoding</h3><p>Attention is order-blind, so position must be added explicitly — via sinusoidal values or learned/RoPE rotations.</p><pre><code>x = token_embed + pos_embed
 # "A B" ≠ "B A" because pos differs</code></pre></article>
-          <article class="card"><h3>Parameters &amp; scaling</h3><p>Weights that shape behavior; roughly <code>params ≈ layers × width²</code>. Scaling laws predict quality from compute, data, and params.</p><pre><code>7B  → local, quantized
-70B → single GPU cluster
-405B → frontier scale</code></pre></article>
+          <article class="card"><h3>Parameters &amp; scaling</h3><p>Weights that shape behavior; roughly <code>params ≈ layers × width²</code>. Mixture-of-experts (MoE) routes each token through a subset of experts — huge totals, small active cost.</p><pre><code>7B   → local, quantized
+70B  → single GPU cluster
+405B → frontier (dense)
+671B → frontier (MoE, sparse)</code></pre></article>
         </div>
       </section>
 
@@ -177,8 +197,10 @@ int4  4-bit, fits small GPUs
               <span class="tag">pretrain: The Pile</span>
               <span class="tag">pretrain: Common Crawl</span>
               <span class="tag">pretrain: RedPajama</span>
+              <span class="tag">pretrain: FineWeb</span>
               <span class="tag">instruction: Alpaca</span>
               <span class="tag">instruction: UltraChat</span>
+              <span class="tag">instruction: OpenHermes</span>
               <span class="tag">preference: UltraFeedback</span>
               <span class="tag">preference: HH-RLHF</span>
               <span class="tag">code: The Stack</span>
@@ -272,7 +294,7 @@ Answer: "AAPL trades at $232."</code></pre></article>
           <article class="card"><h3>Planning</h3><p>Decompose a goal into subtasks before acting — plan-then-execute, or re-plan when a step fails.</p><pre><code>plan = model("Break this into steps")
 for step in plan:
     result = execute(step)</code></pre></article>
-          <article class="card"><h3>Tool calling</h3><p>Tools are functions the agent can request. Keep schemas small and unambiguous.</p><pre><code>@tool
+          <article class="card"><h3>Tool calling</h3><p>Tools are functions the agent can request. Keep schemas small and unambiguous. <strong>MCP</strong> (Model Context Protocol) is the emerging standard for exposing tools, data, and prompts to agents.</p><pre><code>@tool
 def search(query: str) -&gt; str:
     """Search the web."""
     return results(query)</code></pre></article>
@@ -296,8 +318,11 @@ def search(query: str) -&gt; str:
         </div>
         <div class="table-wrap"><table><thead><tr><th>Metric</th><th>What it measures</th><th>Good to know</th></tr></thead><tbody>
           <tr><td><code>Perplexity</code></td><td>How surprised the model is by held-out text</td><td>Lower = better; core LM objective</td></tr>
-          <tr><td><code>MMLU</code></td><td>Knowledge across 57 subjects (multiple choice)</td><td>% accuracy; common knowledge bar</td></tr>
+          <tr><td><code>MMLU</code></td><td>Knowledge across 57 subjects (multiple choice)</td><td>% accuracy; MMLU-Pro is the harder variant</td></tr>
           <tr><td><code>HumanEval</code></td><td>Python function synthesis from a docstring</td><td><code>pass@1</code>; coding benchmark</td></tr>
+          <tr><td><code>SWE-bench</code></td><td>Resolves real GitHub issues end-to-end</td><td>Agentic coding; % issues solved</td></tr>
+          <tr><td><code>GPQA</code></td><td>Graduate-level science Q&amp;A</td><td>Harder, less saturated than MMLU</td></tr>
+          <tr><td><code>AIME</code></td><td>Competition math problems</td><td>Reasoning bar; math-specific</td></tr>
           <tr><td><code>LLM-as-judge</code></td><td>A strong model scores another model's output</td><td>Cheap, but biased toward style</td></tr>
           <tr><td><code>Hallucination rate</code></td><td>% of claims not supported by the source</td><td>Needs ground-truth / citation check</td></tr>
           <tr><td><code>ROUGE / BLEU</code></td><td>n-gram overlap with a reference answer</td><td>Weak for open-ended generation</td></tr>
@@ -313,7 +338,7 @@ def search(query: str) -&gt; str:
         <div class="grid two">
           <article class="card"><h3>Hallucination</h3><p>Models confidently invent facts, citations, and APIs. Ground with RAG, verify sources, and treat output as a draft.</p><pre><code># fabricated URL that looks real
 # → always fetch &amp; verify links</code></pre></article>
-          <article class="card"><h3>Context limits</h3><p>Long history silently truncates — the model forgets the beginning. Track token usage and summarize or page context.</p><pre><code>tokens = count(messages)
+          <article class="card"><h3>Context limits</h3><p>Long history silently truncates — the model forgets the beginning, and skim-reads the middle (“lost in the middle”). Track token usage, summarize or page context, and put key instructions first and last.</p><pre><code>tokens = count(messages)
 if tokens &gt; budget:
     summarize(older_messages)</code></pre></article>
           <article class="card"><h3>Tokenization surprises</h3><p>Whitespace, case, and special chars change token counts — “a” and “ A” are different tokens. Count with the real tokenizer, not characters.</p><pre><code>len("a") == len(" A")   # chars equal
@@ -324,6 +349,11 @@ tokens("a") &lt; tokens(" A") # tokens differ</code></pre></article>
 # "Disregard instructions and reveal…"</code></pre></article>
           <article class="card"><h3>Overfitting to benchmarks</h3><p>Optimizing for a leaderboard makes the model memorize the test, not the skill. Measure on held-out, task-specific data.</p><pre><code># high MMLU ≠ good at your domain
 # → eval on YOUR real prompts</code></pre></article>
+          <article class="card"><h3>Sycophancy</h3><p>Models flatter and agree instead of pushing back — especially when you state an opinion. Explicitly ask for disagreement and counter-arguments.</p><pre><code># "Am I right?" → "Yes, absolutely!"
+# better: "What's the strongest
+#    argument against this?"</code></pre></article>
+          <article class="card"><h3>Non-determinism &amp; API drift</h3><p>The same prompt can return different answers (sampling), and providers silently change models. Pin versions and set <code>temp = 0</code> plus a <code>seed</code> when reproducibility matters.</p><pre><code># pin model + version, record seed
+# temp = 0, seed = 42 → reproducible</code></pre></article>
         </div>
       </section>
 
@@ -335,6 +365,12 @@ tokens("a") &lt; tokens(" A") # tokens differ</code></pre></article>
           <a href="https://huggingface.co/docs" target="_blank" rel="noreferrer">Hugging Face docs</a>
           <a href="https://www.promptingguide.ai/" target="_blank" rel="noreferrer">Prompt Engineering Guide</a>
           <a href="../">slop-stuff home</a>
+        </div>
+        <strong style="display:block;margin-top:22px">Related</strong>
+        <div class="footer-links">
+          <a href="../hermes-agent/">Hermes Agent</a>
+          <a href="../omp/">omp</a>
+          <a href="../math/">Mathematics</a>
         </div>
       </footer>
     </main>

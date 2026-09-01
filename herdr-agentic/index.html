@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#orchestrator"><span class="nav-number">02</span>Orchestrator</a>
         <a href="#reviewer"><span class="nav-number">03</span>Reviewer</a>
@@ -75,6 +76,33 @@
         </div>
       </section>
 
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>Eight commands cover most orchestration. Full recipes, wait semantics, and caveats live in the sections below.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>Create workspace</h3><pre><code>herdr workspace create \
+  --cwd . --label api --no-focus</code></pre><p>Reads <code>.result.root_pane.pane_id</code> — capture it with <code>jq</code>.</p></article>
+          <article class="card"><h3>Split a pane</h3><pre><code>herdr pane split --current \
+  --direction right --no-focus</code></pre><p>New pane ID is at <code>.result.pane.pane_id</code>.</p></article>
+          <article class="card"><h3>Start an agent</h3><pre><code>herdr agent start worker \
+  --kind codex --pane w1:p1</code></pre><p>Needs a free shell pane; 30s startup timeout. Args after <code>--</code> go to the agent.</p></article>
+          <article class="card"><h3>Prompt &amp; wait</h3><pre><code>herdr agent prompt worker "…" \
+  --wait --timeout 300000</code></pre><p><code>--wait</code> settles on <code>idle</code>/<code>done</code>/<code>blocked</code>; add <code>--until</code> to narrow.</p></article>
+          <article class="card"><h3>Wait for a state</h3><pre><code>herdr agent wait worker \
+  --until blocked --timeout 60000</code></pre><p>Use <code>--until</code> for one exact lifecycle state.</p></article>
+          <article class="card"><h3>Read transcript</h3><pre><code>herdr agent read worker \
+  --source recent-unwrapped --lines 120</code></pre><p>Unwrapped logs/transcripts; <code>--format ansi</code> keeps colors.</p></article>
+          <article class="card"><h3>Create worktree</h3><pre><code>herdr worktree create \
+  --cwd . --branch feat/x \
+  --base main --label feat/x</code></pre><p>Opens an isolated checkout; the branch survives <code>worktree remove</code>.</p></article>
+          <article class="card"><h3>Approve / dismiss</h3><pre><code>herdr agent send-keys worker enter
+herdr agent send-keys worker esc</code></pre><p><code>ctrl+c</code> cancels; <code>escape</code> is an alias for <code>esc</code>.</p></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">KEY</div><p><strong>Read IDs, don't guess them.</strong> Every create/split command prints JSON. Agent names must match <code>[a-z][a-z0-9_-]{0,31}</code> and stay unique among live agents — a bare kind label like <code>codex</code> is not a target.</p></div>
+      </section>
+
       <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “orchestrator”, “reviewer”, “parallel”, “blocked”, or “worktree”.</div>
 
       <section class="section searchable" id="start">
@@ -108,7 +136,7 @@
         <div class="flow">
           <div class="flow-step"><div><strong>Create topology</strong><p><code>workspace create</code> then <code>pane split</code>; capture <code>root_pane.pane_id</code> from JSON.</p></div></div>
           <div class="flow-step"><div><strong>Start named agents</strong><p><code>agent start</code> launches a supported kind into an available shell pane.</p></div></div>
-          <div class="flow-step"><div><strong>Prompt and wait</strong><p><code>agent prompt --wait --until done --until idle</code> blocks until a settled lifecycle state.</p></div></div>
+          <div class="flow-step"><div><strong>Prompt and wait</strong><p><code>agent prompt --wait</code> blocks until the agent settles on <code>idle</code>, <code>done</code>, or <code>blocked</code>.</p></div></div>
           <div class="flow-step"><div><strong>Read the result</strong><p><code>agent read --source recent-unwrapped</code> returns stable transcript text.</p></div></div>
         </div>
         <div class="grid two" style="margin-top:16px">
@@ -123,15 +151,14 @@ herdr agent start worker \
 
 herdr agent prompt worker \
   "Implement the ticket in TASK.md" \
-  --wait --until done --until idle \
-  --timeout 300000
+  --wait --timeout 300000
 
 herdr agent read worker \
   --source recent-unwrapped --lines 200</code></pre></article>
-          <article class="card"><h3>Wait semantics</h3><p><code>--wait</code> blocks until the agent reaches any <code>--until</code> state or the timeout fires. Repeat <code>--until</code> to accept several settled states.</p><div class="table-wrap"><table><thead><tr><th>Flag</th><th>Effect</th></tr></thead><tbody>
-            <tr><td><code>--wait</code></td><td>Block until a settled state or timeout.</td></tr>
-            <tr><td><code>--until done</code></td><td>Accept the <code>done</code> state.</td></tr>
-            <tr><td><code>--until idle</code></td><td>Also accept <code>idle</code>.</td></tr>
+          <article class="card"><h3>Wait semantics</h3><p><code>--wait</code> blocks until the agent reaches a settled state or the timeout fires. The default settled set is <code>idle</code>, <code>done</code>, and <code>blocked</code> — repeat <code>--until</code> to narrow to exact states (or add <code>unknown</code>). On <code>agent prompt</code>, <code>--until</code> requires <code>--wait</code>.</p><div class="table-wrap"><table><thead><tr><th>Flag</th><th>Effect</th></tr></thead><tbody>
+            <tr><td><code>--wait</code></td><td>Block until a settled state (<code>idle</code>/<code>done</code>/<code>blocked</code>) or timeout.</td></tr>
+            <tr><td><code>--until done</code></td><td>Accept only the <code>done</code> state (repeatable).</td></tr>
+            <tr><td><code>--until blocked</code></td><td>Wait specifically for an approval prompt.</td></tr>
             <tr><td><code>--timeout MS</code></td><td>Give up after MS milliseconds.</td></tr>
           </tbody></table></div></article>
         </div>
@@ -204,19 +231,21 @@ herdr agent prompt docs "…" --wait</code></pre></article>
         </div>
         <div class="flow" style="margin-top:16px">
           <div class="flow-step"><div><strong>Detect</strong><p><code>herdr agent list</code> reports <code>blocked</code> — an approval prompt or question needs you.</p></div></div>
-          <div class="flow-step"><div><strong>Approve</strong><p><code>herdr agent send-keys builder enter</code> accepts; <code>esc</code> dismisses.</p></div></div>
+          <div class="flow-step"><div><strong>Approve</strong><p><code>herdr agent send-keys builder enter</code> accepts; <code>esc</code> dismisses, <code>ctrl+c</code> cancels.</p></div></div>
           <div class="flow-step"><div><strong>Resume</strong><p><code>herdr agent prompt builder "Continue" --wait</code> sends the next turn.</p></div></div>
           <div class="flow-step"><div><strong>Verify</strong><p><code>herdr agent read builder --source recent-unwrapped</code> for context.</p></div></div>
         </div>
         <div class="grid two" style="margin-top:16px">
-          <article class="card"><h3>Approve or dismiss</h3><pre><code>herdr agent send-keys builder enter  # approve
-herdr agent send-keys builder esc    # dismiss</code></pre></article>
+          <article class="card"><h3>Approve or dismiss</h3><pre><code>herdr agent send-keys builder enter    # approve
+herdr agent send-keys builder esc      # dismiss
+herdr agent send-keys builder ctrl+c   # cancel</code></pre></article>
           <article class="card"><h3>Resume with context</h3><pre><code>herdr agent read builder \
   --source recent-unwrapped --lines 120
 
 herdr agent prompt builder \
   "Approved — continue." --wait</code></pre></article>
         </div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">!</div><p><strong>Prompting a blocked agent bounces.</strong> <code>agent prompt --wait</code> on an already-<code>blocked</code> agent returns <code>agent_blocked</code> without sending input. Inspect the dialog and respond deliberately with <code>agent send-keys</code>.</p></div>
       </section>
 
       <section class="section searchable" id="states">
@@ -232,9 +261,13 @@ herdr agent prompt builder \
         </div>
         <div class="callout warning" style="margin-top:14px"><div class="callout-mark">?</div><p><code>unknown</code> means an agent exists but Herdr cannot classify its state confidently — not success. Read the pane before acting.</p></div>
         <div class="grid two" style="margin-top:16px">
-          <article class="card"><h3>Wait for a state</h3><pre><code>herdr agent wait builder \
-  --until done --until idle \
-  --timeout 120000</code></pre></article>
+          <article class="card"><h3>Wait for a state</h3><pre><code># defaults to idle / done / blocked
+herdr agent wait builder \
+  --timeout 120000
+
+# or one exact state
+herdr agent wait builder \
+  --until blocked --timeout 60000</code></pre></article>
           <article class="card"><h3>Wait, then act</h3><pre><code>if herdr agent wait builder \
      --until blocked --timeout 60000; then
   herdr agent send-keys builder enter
@@ -273,8 +306,7 @@ herdr agent start worker \
   --kind codex --pane "$root_pane"
 
 herdr agent prompt worker "Implement TASK.md" \
-  --wait --until done --until idle \
-  --timeout 300000
+  --wait --timeout 300000
 
 herdr agent read worker \
   --source recent-unwrapped --lines 200</code></pre></div>
@@ -315,28 +347,37 @@ herdr worktree remove --workspace &lt;workspace_id&gt;</code></pre><p>Start one 
       <section class="section searchable" id="gotchas">
         <div class="section-head">
           <div><div class="section-kicker">08 / Gotchas</div><h2>Pitfalls</h2></div>
-          <p>Four behaviors that bite orchestrators once.</p>
+          <p>Six behaviors that bite orchestrators once.</p>
         </div>
         <div class="grid two">
-          <article class="card"><h3>Targets must be exact</h3><p>A target is a unique live agent name or the pane ID hosting it. A bare agent-kind label (like <code>codex</code>) is not a target.</p><pre><code>herdr agent prompt reviewer "…"   # name
+          <article class="card"><h3>Targets must be exact</h3><p>A target is a unique live agent name or the pane ID hosting it. A bare agent-kind label (like <code>codex</code>) is not a target, and names must match <code>[a-z][a-z0-9_-]{0,31}</code>.</p><pre><code>herdr agent prompt reviewer "…"   # name
 herdr agent prompt w1:p2 "…"       # pane ID</code></pre></article>
           <article class="card"><h3>Use explicit IDs in scripts</h3><p>Inside a pane, <code>--current</code> resolves via <code>HERDR_PANE_ID</code>; omitting a target can fall back to the UI-focused pane — fragile in automation.</p><pre><code>herdr pane split "$root_pane" \
   --direction right --no-focus</code></pre></article>
           <article class="card"><h3>Reading does not mark done</h3><p><code>agent read</code> returns transcript text but does not mark unseen background completion as seen. The state stays until you view it in the UI.</p><pre><code>herdr agent read worker \
   --source recent-unwrapped</code></pre></article>
-          <article class="card"><h3>--wait is not a turn ID</h3><p><code>agent prompt --wait</code> can be satisfied by in-flight work: if the agent is already working, that completion may end the wait early.</p><pre><code>herdr agent prompt worker "…" \
-  --wait --until idle</code></pre></article>
+          <article class="card"><h3>--wait is not a turn ID</h3><p><code>agent prompt --wait</code> can be satisfied by in-flight work: if the agent is already working, that completion may end the wait early. From another non-working state, Herdr must observe a lifecycle change within 5&nbsp;s or it returns <code>agent_prompt_stalled</code>.</p><pre><code>herdr agent prompt worker "…" \
+  --wait --timeout 300000</code></pre></article>
+          <article class="card"><h3>agent start needs a free pane</h3><p><code>agent start</code> never creates, splits, or moves layout. The pane must be sitting at its shell prompt, and startup detection times out after 30&nbsp;s by default (<code>agent_not_ready</code> if it reports <code>blocked</code>).</p><pre><code>herdr agent start worker \
+  --kind codex --pane w1:p1</code></pre></article>
+          <article class="card"><h3>Scrollback has limits</h3><p>Full-screen agents render history on the alternate screen, not host scrollback. <code>agent read --lines N</code> returns <code>agent_not_idle</code> while <code>working</code>/<code>blocked</code>/<code>unknown</code> — wait for idle and retry, or use <code>--source visible</code>.</p><pre><code>herdr agent read worker \
+  --source visible --lines 80</code></pre></article>
         </div>
       </section>
 
       <footer class="footer searchable">
         <strong>Source of truth</strong>
-        <p>These patterns wrap the official Herdr CLI. The running build's <code>herdr --help</code>, <code>herdr api schema</code>, and the docs below remain authoritative.</p>
+        <p>These patterns wrap the official Herdr CLI (verified against Herdr 0.8.2). The running build's <code>herdr --help</code>, <code>herdr api schema</code>, and the docs below remain authoritative.</p>
         <div class="footer-links">
           <a href="https://herdr.dev/docs/agent-automation/" target="_blank" rel="noreferrer">Agent automation</a>
           <a href="https://herdr.dev/docs/cli-reference/" target="_blank" rel="noreferrer">CLI reference</a>
-          <a href="../herdr-cheatsheet/">Full Herdr guide</a>
           <a href="../">slop-stuff home</a>
+        </div>
+        <strong>Related</strong>
+        <div class="footer-links">
+          <a href="../herdr-cheatsheet/">Herdr</a>
+          <a href="../omp/">omp</a>
+          <a href="../llm-ai/">LLM &amp; AI</a>
         </div>
       </footer>
     </main>

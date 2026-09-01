@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#registers"><span class="nav-number">02</span>Registers</a>
         <a href="#interrupts"><span class="nav-number">03</span>Interrupts</a>
@@ -75,6 +76,56 @@
             </div>
           </div>
         </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The commands and idioms you reach for most — the fast path into every section below.</p>
+        </div>
+        <div class="grid four">
+          <article class="card"><h3>Compile</h3><pre><code>arm-none-eabi-gcc -mcpu=cortex-m4 \
+  -mthumb -Os -ffreestanding \
+  -c main.c -o main.o</code></pre></article>
+          <article class="card"><h3>MMIO register</h3><pre><code>#define GPIOA_ODR \
+  (*(volatile uint32_t *)0x40020014UL)
+GPIOA_ODR |= (1UL &lt;&lt; 5);    // set pin
+GPIOA_ODR &amp;= ~(1UL &lt;&lt; 5);  // clear pin</code></pre></article>
+          <article class="card"><h3>Interrupt &amp; NVIC</h3><pre><code>void USART1_IRQHandler(void) {
+  if (USART1-&gt;SR &amp; USART_SR_RXNE)
+    rx_byte = USART1-&gt;DR;  // read clears
+}
+NVIC_EnableIRQ(USART1_IRQn);</code></pre></article>
+          <article class="card"><h3>Linker sections</h3><pre><code>MEMORY {
+  FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 512K
+  RAM  (rwx): ORIGIN = 0x20000000, LENGTH = 128K
+}
+SECTIONS {
+  .text : { *(.text*) } &gt; FLASH
+  .data : { *(.data*) } &gt; RAM AT&gt; FLASH
+  .bss  : { *(.bss*) }  &gt; RAM
+}</code></pre></article>
+          <article class="card"><h3>FreeRTOS task</h3><pre><code>xTaskCreate(task, "blink", 256, NULL, 1, NULL);
+vTaskStartScheduler();
+void task(void *arg) {
+  while (1) {
+    toggle_led();
+    vTaskDelay(pdMS_TO_TICKS(500));
+  }
+}</code></pre></article>
+          <article class="card"><h3>SWD + GDB</h3><pre><code>openocd -f interface/stlink.cfg \
+  -f target/stm32f4x.cfg
+arm-none-eabi-gdb firmware.elf
+(gdb) target remote :3333
+(gdb) monitor reset halt
+(gdb) load</code></pre></article>
+          <article class="card"><h3>Inspect binary</h3><pre><code>arm-none-eabi-size firmware.elf       # sizes
+arm-none-eabi-objdump -h firmware.elf # sections
+arm-none-eabi-nm firmware.elf         # symbols</code></pre></article>
+          <article class="card"><h3>SysTick 1 ms</h3><pre><code>SysTick_Config(SystemCoreClock / 1000);
+void SysTick_Handler(void) { ms_ticks++; }</code></pre></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">REF</div><p><strong>Everything here is expanded below.</strong> Compile flags in <a href="#start">Toolchain</a>, MMIO in <a href="#registers">Registers</a>, ISRs in <a href="#interrupts">Interrupts</a>, sections in <a href="#memory">Memory</a>, tasks in <a href="#rtos">RTOS</a>, and flashing in <a href="#debug">Debug</a>.</p></div>
       </section>
 
       <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “interrupt”, “register”, “DMA”, “timer”, “linker”, “boot”, “FreeRTOS”, or “PIO”.</div>
@@ -125,6 +176,7 @@ target_compile_options(firmware PRIVATE
 target_link_options(firmware PRIVATE
   -T ${CMAKE_SOURCE_DIR}/stm32f4.ld)</code></pre></article>
         </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">VER</div><p><strong>Current toolchain.</strong> <code>arm-none-eabi-gcc</code> tracks upstream GCC — the Arm GNU Toolchain ships 14.x (<code>14.2.rel1</code>) in 2025. Prefer <code>-mcpu=cortex-m4</code> over <code>-march</code> (it pulls the right multilib), keep <code>-ffreestanding</code>, and match <code>-mfloat-abi</code> to your core's FPU. The same targets build in Rust: <code>embedded-hal</code> 1.0 + <code>probe-rs</code> (see the <a href="../rust/">Rust guide</a>).</p></div>
       </section>
 
       <section class="section searchable" id="registers">
@@ -353,6 +405,7 @@ xSemaphoreCreateMutex();   // lock</code></pre></div>
           </div>
         </details>
         <div class="callout warning" style="margin-top:16px"><div class="callout-mark">!</div><p><strong>Priority inversion:</strong> a low-priority task holding a mutex blocks a high-priority task, which then waits behind the medium tasks. Fix it by using a <strong>mutex with priority inheritance</strong> — never a binary semaphore — for resources shared across priority levels.</p></div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">V11</div><p><strong>FreeRTOS Kernel is now V11.</strong> V11 added official <strong>SMP</strong> scheduling so the same <code>xTaskCreate</code> API runs tasks across cores (RP2040, ESP32). Recent releases use date-based tags (e.g. <code>v202411.00</code>). The single-core API above is unchanged and still the right starting point; SMP is opt-in via <code>configNUMBER_OF_CORES</code>.</p></div>
       </section>
 
       <section class="section searchable" id="debug">
@@ -443,7 +496,7 @@ dma_channel_configure(...)</code></pre></article>
       <section class="section searchable" id="gotchas">
         <div class="section-head">
           <div><div class="section-kicker">09 / Gotchas</div><h2>Pitfalls</h2></div>
-          <p>Six failures that look like hardware problems but are almost always software.</p>
+          <p>Nine failures that look like hardware problems but are almost always software.</p>
         </div>
         <details>
           <summary>Missing volatile</summary>
@@ -452,7 +505,9 @@ volatile int flag;   // shared with an ISR</code></pre></div>
         </details>
         <details>
           <summary>Non-atomic read-modify-write</summary>
-          <div class="details-body"><p><code>REG |= (1 &lt;&lt; 3)</code> reads, modifies, and writes. If an ISR writes the same register in between, its change is lost. Wrap shared RMW in a critical section (<code>__disable_irq()</code> / <code>__enable_irq()</code>).</p></div>
+          <div class="details-body"><p><code>REG |= (1 &lt;&lt; 3)</code> reads, modifies, and writes. If an ISR writes the same register in between, its change is lost. Wrap shared RMW in a critical section (<code>__disable_irq()</code> / <code>__enable_irq()</code>).</p><pre><code>__disable_irq();
+REG |= (1U &lt;&lt; 3);   // load-modify-store, now safe
+__enable_irq();</code></pre></div>
         </details>
         <details>
           <summary>Stack overflow</summary>
@@ -468,7 +523,20 @@ volatile int flag;   // shared with an ISR</code></pre></div>
         </details>
         <details>
           <summary>Uninitialized memory</summary>
-          <div class="details-body"><p><code>.bss</code> is zeroed at boot, but stack memory is not — a local variable holds whatever was there before. Initialize every variable before reading it, or make it <code>static</code> to get guaranteed zero-init.</p></div>
+          <div class="details-body"><p><code>.bss</code> is zeroed at boot, but stack memory is not — a local variable holds whatever was there before. Initialize every variable before reading it, or make it <code>static</code> to get guaranteed zero-init.</p><pre><code>uint32_t x;         // stack: garbage
+static uint32_t y;  // .bss: zeroed at boot</code></pre></div>
+        </details>
+        <details>
+          <summary>Volatile is not atomic or ordered</summary>
+          <div class="details-body"><p><code>volatile</code> stops the optimizer from caching or dropping that single access, but it does <strong>not</strong> make a read-modify-write atomic, and it gives no ordering guarantee across cores or against DMA. Guard shared RMW with a critical section, use <code>__DSB()</code>/<code>__DMB()</code> for ordering, or C11 atomics where the toolchain supports them.</p></div>
+        </details>
+        <details>
+          <summary>Unhandled IRQ = silent hang</summary>
+          <div class="details-body"><p>Enable an interrupt but forget its handler and the vector table points at a default handler that loops forever — the chip looks dead with no clue why. Every <code>IRQn</code> you enable needs a matching <code>IRQHandler</code>; make the default handler trap with <code>__asm volatile("bkpt #0")</code> instead of <code>while(1)</code>.</p></div>
+        </details>
+        <details>
+          <summary>Priority bits are shifted</summary>
+          <div class="details-body"><p>On Cortex-M, lower numeric priority is higher urgency, and the NVIC only reads the top <code>configPRIO_BITS</code> bits of the 8-bit priority field (often 4). Write an unshifted value and your “low” priority reads as 0 (highest). Stick to <code>NVIC_SetPriority()</code>, which shifts for you, and remember 0 = highest.</p></div>
         </details>
       </section>
 
@@ -480,6 +548,12 @@ volatile int flag;   // shared with an ISR</code></pre></div>
           <a href="https://www.freertos.org/Documentation/01-FreeRTOS-quick-start/" target="_blank" rel="noreferrer">FreeRTOS quick start</a>
           <a href="https://interrupt.memfault.com/" target="_blank" rel="noreferrer">Memfault Interrupt</a>
           <a href="../">slop-stuff home</a>
+        </div>
+        <strong style="display:block;margin-top:22px">Related</strong>
+        <div class="footer-links">
+          <a href="../esp32/">ESP32</a>
+          <a href="../electrical/">Electrical</a>
+          <a href="../osdev/">OS dev</a>
         </div>
       </footer>
     </main>

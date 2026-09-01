@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#ownership"><span class="nav-number">02</span>Ownership</a>
         <a href="#types"><span class="nav-number">03</span>Types</a>
@@ -36,6 +37,7 @@
         <a href="#traits"><span class="nav-number">06</span>Traits</a>
         <a href="#concurrency"><span class="nav-number">07</span>Concurrency</a>
         <a href="#tooling"><span class="nav-number">08</span>Tooling</a>
+        <a href="#gotchas"><span class="nav-number">09</span>Gotchas</a>
       </nav>
     </aside>
 
@@ -44,7 +46,7 @@
         <div class="hero-copy">
           <div class="eyebrow">Visual cheatsheet + usage guide</div>
           <h1 id="hero-title">Systems speed, <span>memory safety.</span></h1>
-          <p>Rust gives you C-level performance with memory safety enforced at compile time — no garbage collector, no null, no data races. This is the surface you'll touch every day.</p>
+          <p>Rust gives you C-level performance with memory safety enforced at compile time — no garbage collector, no null, no data races. This is the surface you'll touch every day. Current for the <strong>Rust 2024 Edition</strong>.</p>
           <div class="hero-actions">
             <a class="button primary" href="#start">Start in 5 minutes →</a>
             <a class="button" href="#ownership">Ownership</a>
@@ -77,7 +79,25 @@
         </div>
       </section>
 
-      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “ownership”, “match”, “Result”, “trait”, “async”, or “cargo”.</div>
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The nine things you reach for most often, in one glance — each is unpacked in the sections below.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>cargo new / build / run / test</code><span>Scaffold a package, compile, run, and test — the whole daily loop lives in one tool.</span></div>
+          <div class="command-row"><code>ownership</code><span>One owner per value; move vs <code>Copy</code>. The value is dropped when its owner leaves scope.</span></div>
+          <div class="command-row"><code>&amp; / &amp;mut</code><span>Many shared borrows <em>or</em> one mutable borrow — never both at once.</span></div>
+          <div class="command-row"><code>match</code><span>Exhaustive pattern matching over values, ranges, and enums.</span></div>
+          <div class="command-row"><code>Result&lt;T, E&gt; / ?</code><span>Return failures as values; <code>?</code> propagates <code>Err</code> up the stack.</span></div>
+          <div class="command-row"><code>Option&lt;T&gt;</code><span><code>Some(x)</code> / <code>None</code> — no null; handle with <code>unwrap_or</code> or <code>match</code>.</span></div>
+          <div class="command-row"><code>Vec&lt;T&gt; / HashMap&lt;K, V&gt;</code><span>The two collections you'll use daily; read with <code>.get()</code>, not indexing.</span></div>
+          <div class="command-row"><code>#[derive(...)]</code><span>Auto-implement <code>Debug</code>, <code>Clone</code>, <code>PartialEq</code>, and more.</span></div>
+          <div class="command-row"><code>trait / impl</code><span>Interfaces and shared behavior; pair with generics <code>&lt;T: Trait&gt;</code>.</span></div>
+        </div>
+      </section>
+
+      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “ownership”, “match”, “Result”, “trait”, “async”, “let else”, or “cargo”.</div>
 
       <section class="section searchable" id="start">
         <div class="section-head">
@@ -100,7 +120,7 @@ cargo add tokio \
   --features full</code></pre></article>
         </div>
         <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Path / flag</th><th>What it is</th></tr></thead><tbody>
-          <tr><td><code>Cargo.toml</code></td><td>Manifest: name, version, <code>[dependencies]</code>, profiles.</td></tr>
+          <tr><td><code>Cargo.toml</code></td><td>Manifest: name, version, <code>edition = "2024"</code>, <code>[dependencies]</code>, profiles.</td></tr>
           <tr><td><code>src/main.rs</code></td><td>Binary entry point (<code>fn main()</code>).</td></tr>
           <tr><td><code>src/lib.rs</code></td><td>Library root for reusable crates.</td></tr>
           <tr><td><code>target/</code></td><td>Build artifacts — add to <code>.gitignore</code>.</td></tr>
@@ -228,6 +248,18 @@ for x in [10, 20, 30] {
 
 while let Some(v) = it.next() {
     println!("{v}");
+}</code></pre></article>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3><code>let else</code></h3><p>Bind a pattern and bail out early if it doesn't match — the <code>else</code> block must diverge (<code>return</code>, <code>break</code>, <code>continue</code>).</p><pre><code>let Some(v) = maybe else {
+    return Err("missing");
+};
+println!("{v}");  // v is in scope here</code></pre></article>
+          <article class="card"><h3><code>let</code> chains</h3><p>Combine multiple <code>let</code> conditions with <code>&amp;&amp;</code> in one <code>if</code> (Rust 2024 Edition).</p><pre><code>if let Some(x) = a
+    &amp;&amp; let Some(y) = b
+    &amp;&amp; x == y
+{
+    println!("both match");
 }</code></pre></article>
         </div>
         <div class="grid two" style="margin-top:16px">
@@ -399,6 +431,36 @@ cargo test</code></pre><p>Run this trio before committing; wire the same command
         </div>
       </section>
 
+      <section class="section searchable" id="gotchas">
+        <div class="section-head">
+          <div><div class="section-kicker">09 / Gotchas</div><h2>Gotchas &amp; footguns</h2></div>
+          <p>The borrow checker turns most memory bugs into compile errors — but these six still bite newcomers and veterans alike.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>Use after move</h3><pre><code>let s = String::from("hi");
+let t = s;          // s moved into t
+println!("{s}");    // ✗ compile error</code></pre><p>Borrow with <code>&amp;s</code>, or copy with <code>s.clone()</code>.</p></article>
+          <article class="card"><h3>Iterators are lazy</h3><pre><code>let v = vec![1, 2, 3];
+v.iter().map(|x| x * 2);   // does nothing!
+
+let out: Vec&lt;_&gt; = v.iter()
+    .map(|x| x * 2).collect();</code></pre></article>
+          <article class="card"><h3>Ranges: <code>..</code> vs <code>..=</code></h3><pre><code>0..5    // 0, 1, 2, 3, 4  (exclusive)
+0..=5   // 0, 1, 2, 3, 4, 5 (inclusive)</code></pre></article>
+          <article class="card"><h3>Indexing panics</h3><pre><code>let v = vec![1, 2, 3];
+v[10]        // ✗ panics!
+v.get(10)    // → None (safe)</code></pre></article>
+          <article class="card"><h3><code>unwrap</code> in libraries</h3><pre><code>// tests/scripts: fine
+let n = maybe.unwrap();
+// libraries: propagate instead
+let n = maybe?;</code></pre></article>
+          <article class="card"><h3>Integer overflow</h3><pre><code>let n: u8 = 255;
+n + 1   // panics in debug
+        // wraps in release</code></pre></article>
+        </div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">!</div><p><strong>When in doubt, read the error.</strong> Rust's diagnostics usually tell you exactly what to fix — a missing <code>&amp;</code>, a moved value, or a trait bound — and suggest a fix. Lean on <code>cargo check</code> for a fast loop.</p></div>
+      </section>
+
       <footer class="footer searchable">
         <strong>Source of truth</strong>
         <p>This guide summarizes the daily Rust surface. The Rust Book, the standard library docs, and the Cargo Book remain authoritative for details and edge cases.</p>
@@ -407,6 +469,12 @@ cargo test</code></pre><p>Run this trio before committing; wire the same command
           <a href="https://doc.rust-lang.org/std/" target="_blank" rel="noreferrer">std docs</a>
           <a href="https://doc.rust-lang.org/cargo/" target="_blank" rel="noreferrer">The Cargo Book</a>
           <a href="../">slop-stuff home</a>
+        </div>
+        <div class="footer-links">
+          <strong>Related</strong>
+          <a href="../zig/">Zig</a>
+          <a href="../c/">C</a>
+          <a href="../asm/">Assembly</a>
         </div>
       </footer>
     </main>

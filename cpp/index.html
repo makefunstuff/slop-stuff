@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="The daily C++ surface: STL, classes, smart pointers, templates, modern syntax, and the standard library.">
+  <meta name="description" content="The daily C++ surface: STL, classes, smart pointers, templates, modern C++20/23/26 syntax, and the standard library.">
   <title>C++ — Visual Cheatsheet &amp; Usage Guide</title>
   <link rel="stylesheet" href="../assets/style.css">
 </head>
@@ -12,7 +12,7 @@
     <a class="brand" href="../" aria-label="Back to slop-stuff">
       <span class="brand-mark">cxx_</span>
       <span>C++ Guide</span>
-      <span class="version">C++17 · C++20</span>
+      <span class="version">C++20 · C++23 · C++26</span>
     </a>
     <label class="search-wrap">
       <span class="sr-only" hidden>Search guide</span>
@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#stl"><span class="nav-number">02</span>STL</a>
         <a href="#classes"><span class="nav-number">03</span>Classes</a>
@@ -72,6 +73,25 @@
         </div>
       </section>
 
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The 10 things you reach for most — compile, containers, pointers, syntax. Copy any line straight into your code.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>g++ -std=c++20 main.cpp -o main</code><span>compile with C++20; add <code>-Wall -Wextra</code>.</span></div>
+          <div class="command-row"><code>std::vector&lt;int&gt; v; v.push_back(x);</code><span>dynamic array — your default container.</span></div>
+          <div class="command-row"><code>std::map&lt;K,V&gt; m; m[k] = v;</code><span>sorted key → value; <code>unordered_map</code> for hashing.</span></div>
+          <div class="command-row"><code>auto p = std::make_unique&lt;T&gt;(…)</code><span>exclusive owner; freed at scope exit.</span></div>
+          <div class="command-row"><code>auto sp = std::make_shared&lt;T&gt;()</code><span>reference-counted; <code>weak_ptr</code> observes without owning.</span></div>
+          <div class="command-row"><code>auto x = 42;</code><span>type deduced at compile time.</span></div>
+          <div class="command-row"><code>for (const auto&amp; x : v)</code><span>iterate a range without copying.</span></div>
+          <div class="command-row"><code>auto f = [&amp;](int n){ return n * 2; };</code><span>lambda; <code>[=]</code> copies, <code>[&amp;]</code> captures by ref.</span></div>
+          <div class="command-row"><code>template &lt;typename T&gt; T add(T a, T b)</code><span>compile-time generic function.</span></div>
+          <div class="command-row"><code>class R { /* ctor acquires */ ~R(){ /* frees */ } }</code><span>RAII — resource lifetime = object lifetime.</span></div>
+        </div>
+      </section>
+
       <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “vector”, “unique_ptr”, “template”, “lambda”, or “RAII”.</div>
 
       <section class="section searchable" id="start">
@@ -80,8 +100,10 @@
           <p>Two compilers, one standard, and the tiny syntax you need before anything else. Every program starts in <code>main()</code>.</p>
         </div>
         <div class="grid four">
-          <article class="card"><div class="card-number">1</div><h3>Compile</h3><pre><code>g++ -std=c++20 main.cpp -o main
-clang++ -std=c++20 main.cpp -o main</code></pre></article>
+          <article class="card"><div class="card-number">1</div><h3>Compile</h3><pre><code>g++ -std=c++23 main.cpp -o main
+clang++ -std=c++23 main.cpp -o main
+g++ -std=c++20 main.cpp -o main  # pin older
+g++ -std=c++26 main.cpp -o main  # newest</code></pre></article>
           <article class="card"><div class="card-number">2</div><h3>Useful flags</h3><pre><code>-Wall -Wextra   # warnings
 -Wpedantic      # strict ISO C++
 -O2             # optimize
@@ -273,7 +295,7 @@ constexpr auto v = sq(3);        // a constant</code></pre></article>
       <section class="section searchable" id="modern">
         <div class="section-head">
           <div><div class="section-kicker">06 / Modern C++</div><h2>Modern features</h2></div>
-          <p>Range-<code>for</code>, structured bindings, move semantics, initializer lists, <code>enum class</code>, <code>nullptr</code>, and <code>optional</code>/<code>variant</code>.</p>
+          <p>Range-<code>for</code>, structured bindings, move semantics, initializer lists, <code>enum class</code>, <code>nullptr</code>, <code>optional</code>/<code>variant</code> — plus the C++20/23/26 highlights worth knowing.</p>
         </div>
         <div class="grid three">
           <article class="card"><h3>Range-for &amp; structured bindings</h3><pre><code>for (int x : v) { … }
@@ -309,6 +331,7 @@ std::visit([](auto&amp;&amp; x){ … }, v);</code></pre></article>
           <div class="state-card blocked"><strong>xvalue</strong><p>eXpiring — result of <code>std::move</code>.</p></div>
           <div class="state-card unknown"><strong>glvalue</strong><p>lvalue or xvalue.</p></div>
         </div>
+        <div class="callout"><div class="callout-mark">NEW</div><p><strong>C++23</strong> added <code>std::print</code>/<code>std::println</code>, <code>std::expected</code>, <code>std::mdspan</code>, <code>std::flat_map</code>, and <code>std::ranges::to</code>. <strong>C++26</strong> (ISO, finalized 2025) is the biggest upgrade since C++11 — reflection, contracts, and <code>std::execution</code>.</p></div>
       </section>
 
       <section class="section searchable" id="stdlib">
@@ -334,6 +357,11 @@ std::any a = 42;             // hold any type
 int n = std::any_cast&lt;int&gt;(a);</code></pre></article>
         </div>
         <div class="command-index">
+          <div class="command-row"><code>std::print / std::println</code><span>C++23 — format-aware printing; replaces <code>cout &lt;&lt;</code> chains.</span></div>
+          <div class="command-row"><code>std::format</code><span>C++20 — type-safe string formatting.</span></div>
+          <div class="command-row"><code>std::span&lt;T&gt;</code><span>C++20 — non-owning view over an array/vector.</span></div>
+          <div class="command-row"><code>std::expected&lt;T,E&gt;</code><span>C++23 — a value or an error (like <code>Result</code>).</span></div>
+          <div class="command-row"><code>std::ranges / std::views</code><span>C++20 — compose algorithms over ranges.</span></div>
           <div class="command-row"><code>std::optional&lt;T&gt;</code><span>a value or std::nullopt.</span></div>
           <div class="command-row"><code>std::variant&lt;A,B&gt;</code><span>one of several types.</span></div>
           <div class="command-row"><code>std::any</code><span>any copyable type.</span></div>
@@ -374,6 +402,12 @@ Foo(Foo&amp;&amp;) = default;</code></pre></article>
           <article class="card"><h3>Shadowing</h3><pre><code>int x = 1;
 { int x = 2; }   // shadows outer x — confusing
 // rename inner variables; compile with -Wshadow</code></pre></article>
+          <article class="card"><h3>Most vexing parse</h3><pre><code>Widget w();      // declares a FUNCTION, not an object
+Widget w;        // default-constructs
+Widget w{args};  // braces always construct</code></pre></article>
+          <article class="card"><h3>Signed/unsigned comparison</h3><pre><code>for (int i = 0; i &lt; v.size(); ++i)   // sign mismatch
+for (std::size_t i = 0; i &lt; v.size(); ++i)
+// v[i] is unchecked; v.at(i) throws out_of_range</code></pre></article>
         </div>
         <div class="callout warning"><div class="callout-mark">!</div><p><strong>Enable warnings.</strong> <code>-Wall -Wextra -Wshadow -Wpedantic</code> catch most of these at compile time. Add sanitizers (<code>-fsanitize=address,undefined</code>) to catch dangling pointers and undefined behavior at runtime.</p></div>
       </section>
@@ -385,6 +419,16 @@ Foo(Foo&amp;&amp;) = default;</code></pre></article>
           <a href="https://en.cppreference.com/w/" target="_blank" rel="noreferrer">cppreference</a>
           <a href="https://isocpp.github.io/CppCoreGuidelines/" target="_blank" rel="noreferrer">C++ Core Guidelines</a>
           <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+
+      <footer class="footer searchable">
+        <strong>Related guides</strong>
+        <p>Keep going — the languages around C++:</p>
+        <div class="footer-links">
+          <a href="../c/">C</a>
+          <a href="../rust/">Rust</a>
+          <a href="../asm/">Assembly</a>
         </div>
       </footer>
     </main>

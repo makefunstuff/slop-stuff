@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Compile, types, pointers, memory, strings, structs, I/O, and the preprocessor in C.">
+  <meta name="description" content="Compile, types, pointers, memory, strings, structs, I/O, and the preprocessor in C — C17 &amp; C23.">
   <title>C — Visual Cheatsheet &amp; Usage Guide</title>
   <link rel="stylesheet" href="../assets/style.css">
 </head>
@@ -12,7 +12,7 @@
     <a class="brand" href="../" aria-label="Back to slop-stuff">
       <span class="brand-mark">c_</span>
       <span>C Guide</span>
-      <span class="version">C11 · C17</span>
+      <span class="version">C17 · C23</span>
     </a>
     <label class="search-wrap">
       <span class="sr-only" hidden>Search guide</span>
@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#types"><span class="nav-number">02</span>Types</a>
         <a href="#pointers"><span class="nav-number">03</span>Pointers</a>
@@ -68,11 +69,64 @@
               <div><span class="prompt">$</span> <span class="cmd">./main</span></div>
               <div class="dim">Hello, world</div>
               <br>
-              <div><span class="prompt">$</span> <span class="cmd">gcc -std=c17 -g -fsanitize=address main.c -o main</span></div>
+              <div><span class="prompt">$</span> <span class="cmd">gcc -std=c23 -g -fsanitize=address main.c -o main</span></div>
               <div><span class="prompt">$</span> <span class="cursor"></span></div>
             </div>
           </div>
         </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>The 20-second version</h2></div>
+          <p>Compile, print, point, allocate, copy, define — the handful of idioms you type every session.</p>
+        </div>
+        <div class="grid four">
+          <article class="card"><h3>Compile</h3><pre><code>gcc -Wall -Wextra -std=c23 main.c -o main
+clang -Wall -Wextra main.c -o main
+# debug + sanitizers:
+gcc -g -fsanitize=address main.c -o main</code></pre></article>
+          <article class="card"><h3>printf format</h3><pre><code>%d  int        %f  double
+%u  unsigned   %c  char
+%x  hex        %s  char*
+%p  pointer    %zu size_t
+printf("%d %s\n", n, s);</code></pre></article>
+          <article class="card"><h3>Pointers</h3><pre><code>int x = 42;
+int *p = &amp;x;   // address-of
+*p = 7;        // dereference
+p + 1;         // next element
+int *a = arr;  // array → pointer</code></pre></article>
+          <article class="card"><h3>malloc / free</h3><pre><code>int *p = malloc(n * sizeof *p);
+if (!p) { perror("malloc"); exit(1); }
+/* ... use p ... */
+free(p);
+p = NULL;   // avoid use-after-free</code></pre></article>
+          <article class="card"><h3>Struct</h3><pre><code>typedef struct {
+  int x, y;
+} Point;
+Point p = {1, 2};
+p.x = 3;         // dot
+Point *pp = &amp;p;
+pp-&gt;y = 4;       // arrow</code></pre></article>
+          <article class="card"><h3>Strings</h3><pre><code>#include &lt;string.h&gt;
+strlen(s)     strcmp(a, b)
+strcpy(d, s)  strcat(d, s)
+strchr(s, c)  strstr(h, n)
+// every string ends in '\0'</code></pre></article>
+          <article class="card"><h3>Preprocessor</h3><pre><code>#include &lt;stdio.h&gt;
+#define MAX(a,b) ((a)&gt;(b)?(a):(b))
+#ifndef UTIL_H
+#define UTIL_H
+#endif</code></pre></article>
+          <article class="card"><h3>main()</h3><pre><code>int main(void) {
+  return 0;
+}
+int main(int argc, char *argv[]) {
+  // argv[1..argc-1] = args
+  return 0;
+}</code></pre></article>
+        </div>
+        <div class="callout"><div class="callout-mark">TIP</div><p>Build with <code>-Wall -Wextra</code> and treat warnings as errors (<code>-Werror</code>). For C23 use <code>-std=c23</code>; fall back to <code>-std=c17</code> on older compilers.</p></div>
       </section>
 
       <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “pointer”, “malloc”, “struct”, “printf”, or “FILE”.</div>
@@ -83,8 +137,8 @@
           <p>One <code>.c</code> file, one compiler invocation, one entry point. Everything else is commentary.</p>
         </div>
         <div class="grid four">
-          <article class="card"><div class="card-number">1</div><h3>Compile</h3><pre><code>gcc -Wall -Wextra -std=c17 main.c -o main
-clang -Wall -Wextra -std=c17 main.c -o main</code></pre></article>
+          <article class="card"><div class="card-number">1</div><h3>Compile</h3><pre><code>gcc -Wall -Wextra -std=c23 main.c -o main
+clang -Wall -Wextra -std=c23 main.c -o main</code></pre></article>
           <article class="card"><div class="card-number">2</div><h3>Include headers</h3><pre><code>#include &lt;stdio.h&gt;   // system
 #include &lt;stdlib.h&gt;  // malloc, exit
 #include "util.h"    // local</code></pre></article>
@@ -101,7 +155,8 @@ return EXIT_SUCCESS; // == 0
 return EXIT_FAILURE; // non-zero
 // check with: echo $?</code></pre></article>
         </div>
-        <div class="callout"><div class="callout-mark">KEY</div><p><strong>Warnings are bugs in disguise.</strong> Always build with <code>-Wall -Wextra</code>; add <code>-Werror</code> in CI so nothing slips through. Use <code>-std=c17</code> for the current ISO C standard.</p></div>
+        <div class="callout"><div class="callout-mark">KEY</div><p><strong>Warnings are bugs in disguise.</strong> Always build with <code>-Wall -Wextra</code>; add <code>-Werror</code> in CI so nothing slips through. C23 is the current ISO standard (published 2024) — use <code>-std=c23</code>, or <code>-std=c17</code> on older toolchains.</p></div>
+        <div class="callout"><div class="callout-mark">C23</div><p><strong>New in C23</strong> (ISO/IEC 9899:2024): <code>nullptr</code>/<code>nullptr_t</code>, <code>typeof</code> and <code>typeof_unqual</code>, <code>constexpr</code> objects, <code>auto</code> type inference, <code>#embed</code>, digit separators (<code>0xFF'FF</code>), and standard <code>strdup</code>/<code>strndup</code>/<code>memccpy</code>. <code>true</code>, <code>false</code>, <code>bool</code>, and <code>static_assert</code> are now keywords.</p></div>
       </section>
 
       <section class="section searchable" id="types">
@@ -401,6 +456,38 @@ strncpy(buf, "abc", 4);  // no '\0'
 printf("%s", buf);        // reads past the end
 // reserve one byte for '\0'</code></pre></div>
         </details>
+        <details>
+          <summary>Null pointer dereference</summary>
+          <div class="details-body"><pre><code>int *p = NULL;
+*p = 42;              // UB — segfault
+// malloc can return NULL:
+int *q = malloc(n * sizeof *q);
+if (!q) { /* handle it */ }</code></pre></div>
+        </details>
+        <details>
+          <summary>Dangling pointer (returned local)</summary>
+          <div class="details-body"><pre><code>int *bad(void) {
+  int x = 5;
+  return &amp;x;      // x dies on return!
+}
+// return malloc'd memory or pass a
+// buffer in — never &amp; a local</code></pre></div>
+        </details>
+        <details>
+          <summary>Signed/unsigned comparison</summary>
+          <div class="details-body"><pre><code>int n = -1;
+size_t m = 10;
+if (n &lt; m) { }   // n converts to unsigned!
+// -1 becomes a huge number — surprising
+// keep signs consistent</code></pre></div>
+        </details>
+        <details>
+          <summary>Integer division truncates</summary>
+          <div class="details-body"><pre><code>int a = 5 / 2;        // 2, not 2.5
+double d = 5.0 / 2;   // 2.5
+double e = (double)a / 2;
+// remainder: 5 % 2 == 1</code></pre></div>
+        </details>
       </section>
 
       <footer class="footer searchable">
@@ -408,8 +495,15 @@ printf("%s", buf);        // reads past the end
         <p>This guide covers the C essentials. The C standard, the cppreference wiki, and the glibc manual remain authoritative for edge cases and exact semantics.</p>
         <div class="footer-links">
           <a href="https://en.cppreference.com/w/c" target="_blank" rel="noreferrer">cppreference — C</a>
+          <a href="https://en.cppreference.com/w/c/23" target="_blank" rel="noreferrer">C23 changes</a>
           <a href="https://www.gnu.org/software/libc/manual/" target="_blank" rel="noreferrer">GNU libc manual</a>
           <a href="../">slop-stuff home</a>
+        </div>
+        <strong style="display:block;margin-top:22px">Related</strong>
+        <div class="footer-links">
+          <a href="../cpp/">C++</a>
+          <a href="../rust/">Rust</a>
+          <a href="../asm/">Assembly</a>
         </div>
       </footer>
     </main>

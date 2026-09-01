@@ -12,7 +12,7 @@
     <a class="brand" href="../" aria-label="Back to slop-stuff">
       <span class="brand-mark">{.}</span>
       <span>jq Guide</span>
-      <span class="version">command-line JSON</span>
+      <span class="version">1.8.x</span>
     </a>
     <label class="search-wrap">
       <span class="sr-only" hidden>Search guide</span>
@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#filters"><span class="nav-number">02</span>Filters</a>
         <a href="#recipes"><span class="nav-number">03</span>Recipes</a>
@@ -74,6 +75,25 @@
             </div>
           </div>
         </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>The ten things you'll type most</h2></div>
+          <p>If you remember nothing else, keep this table handy — it covers ~90% of everyday jq.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Command</th><th>What it does</th></tr></thead><tbody>
+          <tr><td><code>jq '.'</code></td><td>Identity — pretty-print JSON.</td></tr>
+          <tr><td><code>jq '.foo'</code></td><td>Extract a field; nest with <code>.a.b</code>.</td></tr>
+          <tr><td><code>jq '.[]'</code></td><td>Expand an array, one element per line.</td></tr>
+          <tr><td><code>jq '.users[] | select(.age &gt; 30)'</code></td><td>Keep elements that match a condition.</td></tr>
+          <tr><td><code>jq '.users | map(.name)'</code></td><td>Transform each element into a new array.</td></tr>
+          <tr><td><code>jq '.users | sort_by(.age)'</code></td><td>Sort an array by a key.</td></tr>
+          <tr><td><code>jq '.users | length'</code></td><td>Count items, string length, or object keys.</td></tr>
+          <tr><td><code>jq '[.items[].price] | add'</code></td><td>Sum an array (or merge objects).</td></tr>
+          <tr><td><code>jq -r '[.a, .b] | @csv'</code></td><td>CSV line — pair <code>@csv</code> with <code>-r</code>.</td></tr>
+          <tr><td><code>jq --arg name "Ada" '.name = $name'</code></td><td>Inject a shell variable safely.</td></tr>
+        </tbody></table></div>
       </section>
 
       <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “filter”, “map”, “select”, “flag”, or “curl”.</div>
@@ -149,6 +169,8 @@ jq '.foo // "n/a"' # default value</code></pre></article>
             <div><h4>and back</h4><pre><code>jq 'from_entries'</code></pre></div>
             <div><h4>Index by key</h4><pre><code>jq '.users | map({key: .id, value: .}) | from_entries'</code></pre></div>
             <div><h4>Merge objects</h4><pre><code>jq -s 'add' a.json b.json</code></pre></div>
+            <div><h4>Project with pick() (1.7+)</h4><pre><code>jq '.users[] | pick(.id, .name)'</code></pre></div>
+            <div><h4>Sum a generator (1.8+)</h4><pre><code>jq -c '.sum = add(.xs[])'</code></pre></div>
           </div>
         </details>
       </section>
@@ -190,6 +212,21 @@ jq '.foo // "n/a"' # default value</code></pre></article>
             <div class="command-row"><code>startswith, endswith</code><span>string prefix/suffix.</span></div>
           </div></article>
         </div>
+        <details style="margin-top:16px">
+          <summary>Newer builtins (jq 1.7 / 1.8)</summary>
+          <div class="details-body">
+            <div class="command-index">
+              <div class="command-row"><code>pick(.a, .b.c)</code><span>project object to these paths (1.7+).</span></div>
+              <div class="command-row"><code>abs</code><span>absolute value (1.7+).</span></div>
+              <div class="command-row"><code>scan(re; flags)</code><span>emit every regex match (1.7+).</span></div>
+              <div class="command-row"><code>debug(msgs)</code><span>debug a transformed value to stderr (1.7+).</span></div>
+              <div class="command-row"><code>trim, ltrim, rtrim</code><span>strip whitespace (1.8+).</span></div>
+              <div class="command-row"><code>skip(n; stream)</code><span>drop first n of a stream (1.8+).</span></div>
+              <div class="command-row"><code>toboolean</code><span>string → boolean (1.8+).</span></div>
+              <div class="command-row"><code>@urid</code><span>URI-decode, reverse of @uri (1.8+).</span></div>
+            </div>
+          </div>
+        </details>
       </section>
 
       <section class="section searchable" id="build">
@@ -222,11 +259,13 @@ jq '.foo // "n/a"' # default value</code></pre></article>
         </div>
         <div class="table-wrap"><table><thead><tr><th>Flag</th><th>Effect</th><th>Use when</th></tr></thead><tbody>
           <tr><td><code>-r</code></td><td>Raw output (strip quotes)</td><td>You want plain strings, not JSON.</td></tr>
+          <tr><td><code>--raw-output0</code></td><td>Raw output, NUL-separated (1.7+)</td><td>Safe filenames via <code>xargs -0</code>.</td></tr>
           <tr><td><code>-c</code></td><td>Compact, single-line JSON</td><td>Logs, pipes, one-object-per-line.</td></tr>
           <tr><td><code>-s</code></td><td>Slurp input into one array</td><td>Aggregate across multiple objects.</td></tr>
           <tr><td><code>-S</code></td><td>Sort object keys</td><td>Deterministic diffs / output.</td></tr>
           <tr><td><code>-n</code></td><td>Null input (ignore stdin)</td><td>Build values from <code>--arg</code>.</td></tr>
           <tr><td><code>-R</code></td><td>Read raw strings, not JSON</td><td>Process line-oriented text.</td></tr>
+          <tr><td><code>--stream</code></td><td>Parse input incrementally</td><td>Very large files / streaming APIs.</td></tr>
           <tr><td><code>-e</code></td><td>Set exit status from output</td><td>Scripts that need success/failure.</td></tr>
           <tr><td><code>--arg n v</code></td><td>Pass a string variable</td><td>Inject shell values safely.</td></tr>
           <tr><td><code>--argjson n v</code></td><td>Pass a JSON variable</td><td>Inject structured values.</td></tr>
@@ -272,17 +311,34 @@ jq 'has("foo")'</code></pre></article>
           <article class="card"><h3>Quotes vs raw</h3><p>Without <code>-r</code>, strings come back JSON-quoted. With <code>@csv</code> and <code>-r</code> together you get clean columns.</p><pre><code>jq '.name'      # "Ada"
 jq -r '.name'   # Ada</code></pre></article>
           <article class="card"><h3>Multiple objects need -s</h3><p>Two separate JSON objects on stdin aren't an array unless you slurp.</p><pre><code>jq -s '.' a.json b.json</code></pre></article>
+          <article class="card"><h3>tonumber is strict (1.8)</h3><p>Since 1.8, <code>tonumber</code> rejects leading/trailing whitespace — pipe through <code>trim</code> first. (1.7+ also lets you omit an <code>if</code>'s <code>else</code>.)</p><pre><code>echo ' 42 ' | jq -Rr 'tonumber'         # 1.8: error
+echo ' 42 ' | jq -Rr 'trim | tonumber'  # → 42
+jq -n '1,2 | if . == 1 then "one" end' # → "one", 2</code></pre></article>
+          <article class="card"><h3>New builtins need 1.7+</h3><p><code>pick</code>, <code>abs</code>, and <code>scan</code> landed in 1.7; <code>trim</code>, <code>skip</code>, <code>toboolean</code>, and <code>@urid</code> in 1.8. Older distro packages may still ship 1.6.</p><pre><code>jq --version          # want 1.8.x
+jq -n '{a:1,b:2,c:3} | pick(.a, .c)'   # 1.7+
+jq -n '" hi " | trim'                  # 1.8+</code></pre></article>
         </div>
       </section>
 
       <footer class="footer searchable">
         <strong>Source of truth</strong>
-        <p>This guide covers the jq filter language essentials. The <code>jq(1)</code> man page and the official manual remain authoritative for edge cases.</p>
+        <p>This guide targets jq 1.8.x (current stable). The <code>jq(1)</code> man page and the official manual remain authoritative for edge cases; recent releases added <code>pick</code>, <code>trim</code>, <code>skip</code>, <code>toboolean</code>, and <code>@urid</code>.</p>
         <div class="footer-links">
           <a href="https://jqlang.github.io/jq/manual/" target="_blank" rel="noreferrer">jq manual</a>
           <a href="https://github.com/jqlang/jq" target="_blank" rel="noreferrer">GitHub</a>
+          <a href="https://github.com/jqlang/jq/releases" target="_blank" rel="noreferrer">Release notes</a>
           <a href="https://jqlang.github.io/jq/tutorial/" target="_blank" rel="noreferrer">Tutorial</a>
           <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+
+      <footer class="footer searchable" style="margin-top:24px">
+        <strong>Related</strong>
+        <p>jq is the glue between your shell and every JSON API — pair it with these guides.</p>
+        <div class="footer-links">
+          <a href="../bash/">Bash</a>
+          <a href="../linux-cli/">Linux CLI</a>
+          <a href="../postgres/">PostgreSQL</a>
         </div>
       </footer>
     </main>

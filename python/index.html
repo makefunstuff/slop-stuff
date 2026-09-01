@@ -12,11 +12,11 @@
     <a class="brand" href="../" aria-label="Back to slop-stuff">
       <span class="brand-mark">py_</span>
       <span>Python Guide</span>
-      <span class="version">3.11+</span>
+      <span class="version">3.13+</span>
     </a>
     <label class="search-wrap">
       <span class="sr-only" hidden>Search guide</span>
-      <input id="search" type="search" aria-label="Search guide" placeholder="Search comprehension, decorator, f-string, pathlib, dataclass, venv…" autocomplete="off">
+      <input id="search" type="search" aria-label="Search guide" placeholder="Search uv, comprehension, decorator, f-string, pathlib, dataclass, venv…" autocomplete="off">
     </label>
     <div class="top-actions">
       <button class="icon-button" id="themeToggle" type="button" title="Toggle theme" aria-label="Toggle light and dark theme">◐</button>
@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#types"><span class="nav-number">02</span>Types</a>
         <a href="#control"><span class="nav-number">03</span>Control flow</a>
@@ -75,7 +76,25 @@
         </div>
       </section>
 
-      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “venv”, “comprehension”, “decorator”, “pathlib”, or “dataclass”.</div>
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The nine things you'll reach for daily — isolated envs, comprehensions, f-strings, decorators, dataclasses, paths, and resource cleanup.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>python -m venv .venv &amp;&amp; source .venv/bin/activate</code><span>venv — isolate a project's dependencies.</span></div>
+          <div class="command-row"><code>uv init &amp;&amp; uv add requests &amp;&amp; uv run app.py</code><span>uv — fast, modern env + dependency manager.</span></div>
+          <div class="command-row"><code>[n*2 for n in nums if n &gt; 0]</code><span>List comprehension — map + filter in one line.</span></div>
+          <div class="command-row"><code>{k: v for k, v in pairs}</code><span>Dict comprehension — build a mapping inline.</span></div>
+          <div class="command-row"><code>f"{name}: {price:.2f}"</code> <code>f"{n=}"</code><span>f-strings — interpolate, format, and debug.</span></div>
+          <div class="command-row"><code>@dataclass class P: x: int</code><span>Auto <code>__init__</code> / <code>__repr__</code> / <code>__eq__</code>.</span></div>
+          <div class="command-row"><code>@decorator</code><span>Decorators — wrap a function in reusable behavior.</span></div>
+          <div class="command-row"><code>Path("a.txt").read_text()</code><span>pathlib — read / write / glob without os.path.</span></div>
+          <div class="command-row"><code>with open("a.txt") as f:</code><span>Context manager — auto-closes, even on error.</span></div>
+        </div>
+      </section>
+
+      <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “uv”, “comprehension”, “decorator”, “pathlib”, or “dataclass”.</div>
 
       <section class="section searchable" id="start">
         <div class="section-head">
@@ -93,8 +112,9 @@ deactivate                  # leave it</code></pre></article>
           <article class="card"><div class="card-number">3</div><h3>Install packages</h3><pre><code>pip install requests
 pip install -r requirements.txt
 pip freeze &gt; requirements.txt</code></pre></article>
-          <article class="card"><div class="card-number">4</div><h3>uv (fast, modern)</h3><pre><code>uv venv                  # create a venv
-uv pip install requests
+          <article class="card"><div class="card-number">4</div><h3>uv (fast, modern)</h3><pre><code>uv init                  # pyproject.toml project
+uv add requests          # add a dependency
+uv sync                  # sync lockfile → .venv
 uv run app.py            # run in project env</code></pre></article>
         </div>
         <br>
@@ -104,6 +124,8 @@ uv run app.py            # run in project env</code></pre></article>
           <div class="flow-step"><div><strong>Install dependencies</strong><p><code>pip install -r requirements.txt</code> — or add one package at a time.</p></div></div>
           <div class="flow-step"><div><strong>Run your code</strong><p><code>python app.py</code> — repeat after every change.</p></div></div>
         </div>
+        <br>
+        <div class="callout"><div class="callout-mark">3.14</div><p><strong>Version currency:</strong> Python 3.14 (Oct 2025) is the current stable release — its headline addition is template strings (<code>t"…"</code>, PEP 750), while the opt-in free-threaded (no-GIL) build keeps maturing. This guide targets 3.13+; everything here runs on both.</p></div>
       </section>
 
       <section class="section searchable" id="types">
@@ -142,7 +164,7 @@ type(x) is int           # exact type
 isinstance(x, (int, float))</code></pre></article>
         </div>
         <br>
-        <div class="callout warning"><div class="callout-mark">!</div><p><strong>Mutability gotcha:</strong> <code>b = a</code> does not copy — both names point to the same object. Copy with <code>b = a.copy()</code> or <code>b = a[:]</code>. Only pass a mutable object to a function if you mean for it to be changed.</p></div>
+        <div class="callout warning"><div class="callout-mark">!</div><p><strong>Mutability gotcha:</strong> <code>b = a</code> does not copy — both names point to the same object, so <code>a = [1]; b = a; b.append(2)</code> changes <code>a</code> to <code>[1, 2]</code> too. Copy with <code>b = a.copy()</code> or <code>b = a[:]</code>. Only pass a mutable object to a function if you mean for it to be changed.</p></div>
       </section>
 
       <section class="section searchable" id="control">
@@ -235,6 +257,7 @@ if (m := re.search(r"\d+", s)):
         </div>
         <br>
         <div class="callout warning"><div class="callout-mark">!</div><p><strong>Never use a mutable default:</strong> <code>def f(x, seen=[])</code> shares one list across every call. Write <code>def f(x, seen=None):</code> and inside <code>seen = seen or []</code>.</p></div>
+        <div class="callout warning"><div class="callout-mark">!</div><p><strong>Late-binding closure gotcha:</strong> a loop variable captured by a <code>lambda</code> or inner function is read at call time, not definition time — <code>[lambda: i for i in range(3)]</code> returns three functions that all give <code>2</code>. Bind it as a default: <code>lambda i=i: i</code>.</p></div>
       </section>
 
       <section class="section searchable" id="classes">
@@ -389,6 +412,8 @@ else:
 finally:
     print("always runs")  # cleanup</code></pre></article>
         </div>
+        <br>
+        <div class="callout warning"><div class="callout-mark">!</div><p><strong>Truthiness gotcha:</strong> <code>""</code>, <code>[]</code>, <code>{}</code>, <code>0</code>, and <code>None</code> are all falsy — write <code>if x:</code>, not <code>if x == True:</code> (which only matches literal <code>True</code>/<code>1</code>, not other truthy values like <code>"yes"</code>).</p></div>
       </section>
 
       <section class="section searchable" id="tooling">
@@ -467,12 +492,18 @@ c   # continue       q   # quit</code></pre></article>
 
       <footer class="footer searchable">
         <strong>Source of truth</strong>
-        <p>This guide covers the daily Python surface. The official Python documentation and the uv docs remain authoritative for edge cases and version-specific behavior.</p>
+        <p>This guide covers the daily Python surface for 3.13+ — 3.14 is the current stable. The official Python documentation and the uv docs remain authoritative for edge cases and version-specific behavior.</p>
         <div class="footer-links">
           <a href="https://docs.python.org/3/" target="_blank" rel="noreferrer">Python docs</a>
           <a href="https://docs.python.org/3/library/index.html" target="_blank" rel="noreferrer">Standard library</a>
           <a href="https://docs.astral.sh/uv/" target="_blank" rel="noreferrer">uv docs</a>
           <a href="../">slop-stuff home</a>
+        </div>
+        <div class="footer-links">
+          <strong>Related</strong>
+          <a href="../jq/">jq</a>
+          <a href="../bash/">Bash</a>
+          <a href="../math/">Mathematics</a>
         </div>
       </footer>
     </main>

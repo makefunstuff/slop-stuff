@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="The daily Go surface: modules, types, control flow, structs, interfaces, goroutines, errors, and the standard library.">
+  <meta name="description" content="The daily Go surface: modules, types, generics, control flow, structs, interfaces, goroutines, iterators, errors, and the standard library.">
   <title>Go — Visual Cheatsheet &amp; Usage Guide</title>
   <link rel="stylesheet" href="../assets/style.css">
 </head>
@@ -12,11 +12,11 @@
     <a class="brand" href="../" aria-label="Back to slop-stuff">
       <span class="brand-mark">go_</span>
       <span>Go Guide</span>
-      <span class="version">1.22+</span>
+      <span class="version">1.27</span>
     </a>
     <label class="search-wrap">
       <span class="sr-only" hidden>Search guide</span>
-      <input id="search" type="search" aria-label="Search guide" placeholder="Search goroutine, interface, module, struct, channel, error, defer…" autocomplete="off">
+      <input id="search" type="search" aria-label="Search guide" placeholder="Search goroutine, interface, generic, iterator, module, struct, channel, error, defer…" autocomplete="off">
     </label>
     <div class="top-actions">
       <button class="icon-button" id="themeToggle" type="button" title="Toggle theme" aria-label="Toggle light and dark theme">◐</button>
@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#types"><span class="nav-number">02</span>Types</a>
         <a href="#control"><span class="nav-number">03</span>Control flow</a>
@@ -36,6 +37,7 @@
         <a href="#concurrency"><span class="nav-number">06</span>Concurrency</a>
         <a href="#errors"><span class="nav-number">07</span>Errors &amp; context</a>
         <a href="#stdlib"><span class="nav-number">08</span>Standard library</a>
+        <a href="#gotchas"><span class="nav-number">09</span>Gotchas</a>
       </nav>
     </aside>
 
@@ -74,6 +76,26 @@
             </div>
           </div>
         </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The ten commands and idioms you reach for every day. Each points at a full section below.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>go mod init example/app</code><span>Start a module — writes <code>go.mod</code>; <code>go mod tidy</code> prunes deps.</span></div>
+          <div class="command-row"><code>go build</code> · <code>go run .</code><span>Compile to a binary, or build + run in one. <code>go build -o bin/app</code> names output.</span></div>
+          <div class="command-row"><code>go test ./...</code><span>Run all tests; <code>go test -run TestX</code> filters by name.</span></div>
+          <div class="command-row"><code>go get pkg@v1.2.3</code> · <code>gofmt -w .</code><span>Add/upgrade a dependency; format every file.</span></div>
+          <div class="command-row"><code>go doWork()</code><span>Goroutine — runs concurrently; thousands are fine.</span></div>
+          <div class="command-row"><code>ch := make(chan T)</code><span>Channel: <code>ch &lt;- v</code> sends, <code>v := &lt;-ch</code> receives.</span></div>
+          <div class="command-row"><code>select { case v := &lt;-ch: … }</code><span>Multiplex channels; <code>default:</code> is non-blocking, <code>&lt;-time.After(d)</code> times out.</span></div>
+          <div class="command-row"><code>defer f.Close()</code><span>Run on return, LIFO order. Pair with every open.</span></div>
+          <div class="command-row"><code>type Greeter interface { Greet() string }</code><span>Interface — any type with <code>Greet() string</code> satisfies it implicitly.</span></div>
+          <div class="command-row"><code>if err != nil { return err }</code><span>Errors are values: wrap with <code>%w</code>, match with <code>errors.Is</code> / <code>errors.As</code>.</span></div>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">→</div><p><strong>Where to go next:</strong> Modules &amp; build covers the toolchain, Concurrency covers goroutines/channels/select, Structs &amp; interfaces covers methods, and Errors &amp; context covers <code>%w</code>, <code>errors.Is</code>, and <code>errors.As</code>.</p></div>
       </section>
 
       <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “goroutine”, “interface”, “module”, “struct”, “channel”, “error”, or “defer”.</div>
@@ -160,6 +182,36 @@ sl = append(sl, 4)
 sub := sl[1:3]      // [2, 3] — a view
 // slices are the everyday list type;
 // see Collections for make/copy</code></pre></article>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3>Generics <code>[T any]</code> — Go 1.18+</h3><pre><code>func First[T any](xs []T) T {
+    return xs[0]
+}
+n := First([]int{1, 2, 3})       // int
+s := First([]string{"a", "b"})   // string
+
+// constraint: ~int admits any
+// underlying-int type (aliases too)
+type Number interface {
+    ~int | ~float64
+}
+func Sum[T Number](xs []T) T {
+    var total T
+    for _, x := range xs { total += x }
+    return total
+}</code></pre></article>
+          <article class="card"><h3>Constraints: <code>any</code> &amp; <code>comparable</code></h3><pre><code>// any == interface{} (Go 1.18+)
+// comparable: usable with ==
+func Index[T comparable](xs []T, v T) int {
+    for i, x := range xs {
+        if x == v { return i }
+    }
+    return -1
+}
+
+// ~int matches int and its
+// defined types (type MyInt int)
+// Generic type aliases: Go 1.24+</code></pre></article>
         </div>
       </section>
 
@@ -339,6 +391,30 @@ s := strconv.Itoa(42)          // → "42"
 f, err := strconv.ParseFloat("3.14", 64)
 s = fmt.Sprintf("%d items", n)</code></pre></article>
         </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card"><h3><code>range</code> over int — Go 1.22+</h3><pre><code>for i := range 3 {       // 0, 1, 2
+    fmt.Println(i)
+}
+
+// range over a channel runs
+// until the channel is closed:
+for v := range ch {
+    fmt.Println(v)
+}</code></pre></article>
+          <article class="card"><h3>Iterators — <code>range</code> over func (1.23+)</h3><pre><code>// iter.Seq[int] yields ints one at a time
+func Count(n int) iter.Seq[int] {
+    return func(yield func(int) bool) {
+        for i := range n {
+            if !yield(i) { return }
+        }
+    }
+}
+for v := range Count(3) {
+    fmt.Println(v)      // 0 1 2
+}
+
+slices.Sorted(maps.Keys(m))  // 1.21+</code></pre></article>
+        </div>
         <div class="callout" style="margin-top:16px"><div class="callout-mark">KEY</div><p><strong>Ranging a string yields runes, indexing yields bytes.</strong> For multi-byte text use <code>[]rune(s)</code> to get a slice of code points, or range directly. Use <code>strings.Builder</code> to concatenate in a loop instead of <code>+=</code>.</p></div>
       </section>
 
@@ -410,7 +486,10 @@ func inc() {
 err := errors.New("boom")
 err2 := fmt.Errorf("open %s: %w", path, err)
 // %w wraps err so callers can
-// unwrap it with Is / As</code></pre></article>
+// unwrap it with Is / As
+
+// Go 1.20+: combine many errors
+err3 := errors.Join(e1, e2, e3)</code></pre></article>
           <article class="card"><h3><code>errors.Is</code> / <code>As</code></h3><pre><code>if errors.Is(err, fs.ErrNotExist) {
     // err, or anything it wraps, matches
 }
@@ -472,6 +551,9 @@ func main() {
           <div class="command-row"><code>strings</code><span>Text. <code>strings.Split</code>, <code>strings.Join</code>, <code>strings.Contains</code>, <code>strings.HasPrefix</code>, <code>strings.Builder</code>.</span></div>
           <div class="command-row"><code>log</code><span>Logging. <code>log.Println</code>, <code>log.Printf</code>, <code>log.Fatal</code> (exits), <code>log.SetPrefix</code>.</span></div>
           <div class="command-row"><code>sort</code><span>Sorting. <code>sort.Ints(xs)</code>, <code>sort.Strings</code>, <code>sort.Slice(xs, func(i, j int) bool)</code>.</span></div>
+          <div class="command-row"><code>slices</code><span>Slice helpers (1.21+). <code>slices.Sort</code>, <code>slices.Clone</code>, <code>slices.Contains</code>, <code>slices.Concat</code>.</span></div>
+          <div class="command-row"><code>maps</code><span>Map helpers (1.21+). <code>maps.Keys</code>, <code>maps.Values</code>, <code>maps.Clone</code>, <code>maps.Equal</code>.</span></div>
+          <div class="command-row"><code>iter</code><span>Iterators (1.23+). <code>iter.Seq[T]</code>, <code>iter.Seq2[K,V]</code>, <code>iter.Pull</code>.</span></div>
         </div>
         <div class="grid two" style="margin-top:16px">
           <article class="card"><h3>HTTP server</h3><pre><code>package main
@@ -500,6 +582,48 @@ json.Unmarshal(b, &amp;u)</code></pre></article>
         </div>
       </section>
 
+      <section class="section searchable" id="gotchas">
+        <div class="section-head">
+          <div><div class="section-kicker">09 / Gotchas</div><h2>Gotchas</h2></div>
+          <p>The traps that survive code review. Go compiles fast and trusts you to check errors — these are the rules it enforces at runtime instead.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>Nil map write panics</h3><pre><code>var m map[string]int
+m["a"] = 1   // panic: assignment to
+             // entry in nil map
+m = make(map[string]int)   // fix</code></pre></article>
+          <article class="card"><h3><code>defer</code> evaluates args now</h3><pre><code>i := 1
+defer fmt.Println(i)  // prints 1
+i = 2
+// to read at return time:
+defer func() { fmt.Println(i) }()</code></pre></article>
+          <article class="card"><h3>Loop capture in goroutines</h3><pre><code>// Go 1.22+: each iteration gets a
+// fresh variable, so this is safe:
+for _, u := range urls {
+    go func() { fetch(u) }()
+}
+// explicit param works everywhere:
+go func(u string) { fetch(u) }(u)</code></pre></article>
+          <article class="card"><h3>Slices share a backing array</h3><pre><code>s := []int{1, 2, 3, 4}
+sub := s[1:3]   // [2 3] — shares s
+sub[0] = 99     // s → [1 99 3 4]
+c := slices.Clone(s)   // independent</code></pre></article>
+          <article class="card"><h3><code>:=</code> shadows outer <code>err</code></h3><pre><code>var err error
+if err = doA(); err != nil {
+    return err
+}
+x, err := doB()  // new err, outer hidden
+// reuse outer with = when err exists:
+x, err = doB()</code></pre></article>
+          <article class="card"><h3>Send on closed channel panics</h3><pre><code>close(ch)
+ch &lt;- 1         // panic: send on closed
+v, ok := &lt;-ch   // ok == false, v is zero
+// only the sender closes; check ok,
+// or iterate with for v := range ch</code></pre></article>
+        </div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">!</div><p><strong>Know the rules, or debug the panic.</strong> Nil-map writes, closed-channel sends, and shadowed errors compile fine and blow up at runtime. <code>go vet ./...</code> and tests catch many — but a <code>defer func()</code> that reads a captured variable, and a <code>:=</code> that hides an outer <code>err</code>, need a human eye.</p></div>
+      </section>
+
       <footer class="footer searchable">
         <strong>Source of truth</strong>
         <p>This guide summarizes the daily Go surface. Effective Go, the language specification, and the standard library docs remain authoritative for details and edge cases.</p>
@@ -508,6 +632,12 @@ json.Unmarshal(b, &amp;u)</code></pre></article>
           <a href="https://pkg.go.dev/std" target="_blank" rel="noreferrer">Standard library</a>
           <a href="https://go.dev/ref/spec" target="_blank" rel="noreferrer">Language spec</a>
           <a href="../">slop-stuff home</a>
+        </div>
+        <div class="footer-links">
+          <strong>Related</strong>
+          <a href="../rust/">Rust</a>
+          <a href="../typescript/">TypeScript</a>
+          <a href="../devops/">DevOps</a>
         </div>
       </footer>
     </main>

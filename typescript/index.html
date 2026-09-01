@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#primitives"><span class="nav-number">02</span>Types</a>
         <a href="#interfaces"><span class="nav-number">03</span>Interfaces</a>
@@ -72,6 +73,25 @@
               <div><span class="prompt">❯</span> <span class="cursor"></span></div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The daily surface on one screen: the commands, type operators, and built-ins you reach for constantly. Everything here is expanded in the sections below.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>tsc --noEmit</code><span>type-check only — emit no JavaScript</span></div>
+          <div class="command-row"><code>interface User { name: string }</code><span>object shape (mergeable); <code>type</code> also covers unions &amp; tuples</span></div>
+          <div class="command-row"><code>function f&lt;T&gt;(x: T): T { return x }</code><span>generic — <code>T</code> is inferred from the call</span></div>
+          <div class="command-row"><code>type Id = string | number</code><span>union type; literals give <code>"on" | "off"</code></span></div>
+          <div class="command-row"><code>if (typeof x === "string") …</code><span>narrow a union — also <code>instanceof</code> and <code>"k" in obj</code></span></div>
+          <div class="command-row"><code>Partial&lt;T&gt; · Pick&lt;T, K&gt; · Omit&lt;T, K&gt;</code><span>built-in utility types for reshaping objects</span></div>
+          <div class="command-row"><code>const x = { a: 1 } as const</code><span>deep readonly + literal types preserved</span></div>
+          <div class="command-row"><code>const c = { … } satisfies Config</code><span>check against a type without widening</span></div>
+          <div class="command-row"><code>keyof T · T[K]</code><span>key union + indexed access — the mapped-type machinery</span></div>
+          <div class="command-row"><code>function id&lt;const T&gt;(x: T): T</code><span>const type parameter (TS 5.8) — keeps literal types</span></div>
         </div>
       </section>
 
@@ -249,6 +269,12 @@ longest([1], [1, 2, 3]);  // [1, 2, 3]
 function get&lt;T, K extends keyof T&gt;(obj: T, key: K): T[K] {
   return obj[key];
 }</code></pre></article>
+          <article class="card"><h3>const type params (5.8)</h3><pre><code>function id&lt;const T&gt;(x: T): T { return x; }
+const a = id("hi");    // "hi" — literal kept
+const b = id([1, 2]);  // readonly [1, 2]
+
+// before 5.8 you'd write: id("hi" as const)
+// the &lt;const&gt; saves the call-site cast</code></pre></article>
           <article class="card"><h3>Function overloads</h3><pre><code>function parse(x: string): number;
 function parse(x: number): string;
 function parse(x: string | number): number | string {
@@ -276,6 +302,8 @@ function loop(): never {
         </div>
         <br>
         <div class="callout"><div class="callout-mark">KEY</div><p><strong>Let inference do the work.</strong> <code>identity(42)</code> infers <code>T = number</code> — you rarely write <code>&lt;number&gt;</code> by hand. Constraints (<code>&lt;T extends …&gt;</code>) let you promise a capability while keeping the exact type.</p></div>
+        <br>
+        <div class="callout warning"><div class="callout-mark">!</div><p><strong>In <code>.tsx</code> files, give generic arrows a trailing comma:</strong> <code>const f = &lt;T,&gt;(x: T) =&gt; x</code>. Without the comma, <code>&lt;T&gt;</code> is parsed as a JSX tag and the compiler errors.</p></div>
       </section>
 
       <section class="section searchable" id="classes">
@@ -338,7 +366,7 @@ const enum Color { Red, Green }
 // inlined at compile time — no runtime object</code></pre></article>
         </div>
         <br>
-        <div class="callout warning"><div class="callout-mark">!</div><p><strong>Enums are runtime objects</strong>; a <code>const enum</code> is inlined and emits nothing. For simple finite sets, a union of string literals (<code>"on" | "off"</code>) is often lighter and easier to extend.</p></div>
+        <div class="callout warning"><div class="callout-mark">!</div><p><strong>Enums are runtime objects</strong>; a <code>const enum</code> is inlined and emits nothing — but it's incompatible with <code>isolatedModules</code> (and the newer <code>erasableSyntaxOnly</code>), so bundlers like Vite discourage it. For simple finite sets, a union of string literals (<code>"on" | "off"</code>) is often lighter and easier to extend.</p></div>
       </section>
 
       <section class="section searchable" id="narrowing">
@@ -439,6 +467,8 @@ type Pick&lt;T, K extends keyof T&gt; = { [P in K]: T[P] };</code></pre></articl
         </div>
         <br>
         <div class="callout"><div class="callout-mark">KEY</div><p><code>keyof</code> + mapped types are the building blocks — <code>Partial</code>, <code>Readonly</code>, <code>Pick</code>, and <code>Omit</code> are all implemented this way in the standard library.</p></div>
+        <br>
+        <div class="callout warning"><div class="callout-mark">!</div><p><strong><code>Object.keys(obj)</code> returns <code>string[]</code>, not <code>keyof T</code>.</strong> The runtime keys aren't proven to be typed keys, so indexing with them needs a guard or a cast.</p></div>
       </section>
 
       <section class="section searchable" id="tooling">
@@ -522,6 +552,8 @@ esbuild src/app.ts --bundle --outfile=dist/app.js</code></pre></article>
           </div>
         </div>
         <br>
+        <div class="callout"><div class="callout-mark">KEY</div><p><strong>Current release: TypeScript 5.9</strong> (Aug 2025). Highlights: <code>import defer</code> (deferred module evaluation), a minimal <code>tsc --init</code> that now defaults to <code>module: "nodenext"</code> and <code>target: "esnext"</code>, and — from 5.8 — <code>const</code> type parameters and the <code>--erasableSyntaxOnly</code> flag.</p></div>
+        <br>
         <div class="callout warning"><div class="callout-mark">!</div><p><strong>Declaration files (<code>.d.ts</code>) are types only.</strong> They are stripped from the emitted JavaScript and exist so other projects (and your editor) can consume your public types.</p></div>
       </section>
 
@@ -533,6 +565,12 @@ esbuild src/app.ts --bundle --outfile=dist/app.js</code></pre></article>
           <a href="https://www.typescriptlang.org/tsconfig/" target="_blank" rel="noreferrer">tsconfig reference</a>
           <a href="https://www.typescriptlang.org/docs/handbook/utility-types.html" target="_blank" rel="noreferrer">Utility types</a>
           <a href="../">slop-stuff home</a>
+        </div>
+        <strong style="display:block; margin-top:24px">Related guides</strong>
+        <div class="footer-links">
+          <a href="../golang/">Go</a>
+          <a href="../webgpu/">WebGPU</a>
+          <a href="../python/">Python</a>
         </div>
       </footer>
     </main>

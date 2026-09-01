@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#concepts"><span class="nav-number">02</span>Concepts</a>
         <a href="#panels"><span class="nav-number">03</span>Panels</a>
@@ -71,6 +72,24 @@
             </div>
           </div>
         </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Cheat sheet</h2></div>
+          <p>The commands and values you reach for most. Everything else on this page expands on these.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Task</th><th>Where / how</th><th>Key syntax</th></tr></thead><tbody>
+          <tr><td><strong>Run Grafana</strong></td><td>Docker, one container</td><td><code>docker run -d -p 3000:3000 grafana/grafana</code></td></tr>
+          <tr><td><strong>Add a data source</strong></td><td>Connections → Data sources</td><td><code>prometheus</code> · <code>loki</code> · <code>postgres</code> · <code>tempo</code></td></tr>
+          <tr><td><strong>Add a panel</strong></td><td>Dashboard → Add → Visualization</td><td><code>Explore → Add to dashboard</code></td></tr>
+          <tr><td><strong>Template variable</strong></td><td>Dashboard → Settings → Variables</td><td><code>$var</code> · <code>${var:regex}</code> · <code>${var:raw}</code></td></tr>
+          <tr><td><strong>Reshape a result</strong></td><td>Panel → Transform tab</td><td><code>Reduce</code>, <code>Filter by name</code>, <code>Join by field</code></td></tr>
+          <tr><td><strong>Alert</strong></td><td>Alerting → Alert rules</td><td><code>Reduce + threshold</code>, route by <code>label</code></td></tr>
+          <tr><td><strong>Provision as code</strong></td><td>YAML + env vars</td><td><code>datasources:</code> · <code>GF_SECURITY_ADMIN_USER</code></td></tr>
+          <tr><td><strong>Time-aware PromQL</strong></td><td>Built-in macros</td><td><code>$__rate_interval</code> · <code>$__interval</code> · <code>$__timeFilter()</code></td></tr>
+        </tbody></table></div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">v12</div><p><strong>Current: Grafana 12.</strong> As of late 2025 the current major is Grafana 12 (11.6 was the last 11.x). New in 11/12: <strong>Explore Metrics</strong> &amp; <strong>Explore Logs</strong> (query without PromQL/LogQL), Scenes-powered dynamic dashboards, the <strong>Trend</strong> and <strong>Canvas</strong> panels, a rebuilt table, and label-based access control (LBAC) for metrics.</p></div>
       </section>
 
       <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “panel”, “datasource”, “variable”, “transform”, “alert”, or “provisioning”.</div>
@@ -123,7 +142,7 @@ ORDER BY 1</code></pre></article>
         <div class="callout" style="margin-top:16px"><div class="callout-mark">⌁</div><p><strong>Time &amp; units are panel-level.</strong> The dashboard time range picker applies to every panel. Set units in Panel → Standard options → Unit — common values: <code>bytes</code>, <code>percent (0-100)</code>, <code>percentunit (0.0-1.0)</code>, <code>s</code>, <code>ms</code>, <code>short</code>.</p></div>
         <details style="margin-top:16px">
           <summary>Iterate in Explore</summary>
-          <div class="details-body"><p>Explore runs a query against one data source with the time range and query inspector visible. When a query looks right, use <strong>Add to dashboard</strong> to drop it into a panel.</p><pre><code># Explore → pick data source → write query
+          <div class="details-body"><p>Explore runs a query against one data source with the time range and query inspector visible. When a query looks right, use <strong>Add to dashboard</strong> to drop it into a panel. Grafana 11+ also ships <strong>Explore Metrics</strong> and <strong>Explore Logs</strong> for click-driven browsing without writing PromQL/LogQL.</p><pre><code># Explore → pick data source → write query
 # → Add to dashboard → choose panel type</code></pre></div>
         </details>
       </section>
@@ -153,8 +172,8 @@ ORDER BY 1</code></pre></article>
         <details style="margin-top:16px">
           <summary>More panel types</summary>
           <div class="details-body"><div class="tags">
-            <span class="tag">logs</span><span class="tag">pie chart</span><span class="tag">histogram</span><span class="tag">state timeline</span><span class="tag">status history</span><span class="tag">geomap</span><span class="tag">candlestick</span><span class="tag">heatmap</span><span class="tag">node graph</span><span class="tag">flame graph</span>
-          </div><p style="margin-top:12px">Specialized panels for logs (Loki), distributions (histogram/heatmap), discrete state over time (state timeline/status history), and tracing (node graph, flame graph).</p></div>
+            <span class="tag">logs</span><span class="tag">pie chart</span><span class="tag">histogram</span><span class="tag">state timeline</span><span class="tag">status history</span><span class="tag">geomap</span><span class="tag">candlestick</span><span class="tag">heatmap</span><span class="tag">node graph</span><span class="tag">flame graph</span><span class="tag">trend</span><span class="tag">canvas</span><span class="tag">xy chart</span><span class="tag">dashboard list</span><span class="tag">alert list</span><span class="tag">annotation list</span>
+          </div><p style="margin-top:12px">Specialized panels for logs (Loki), distributions (histogram/heatmap), discrete state over time (state timeline/status history), and tracing (node graph, flame graph). New in Grafana 11/12: <strong>Trend</strong> (sparkline-style per-series stats), <strong>Canvas</strong> (free-form layout), <strong>XY chart</strong> (arbitrary x/y), and the <strong>dashboard / alert / annotation list</strong> panels.</p></div>
         </details>
       </section>
 
@@ -308,17 +327,28 @@ GF_INSTALL_PLUGINS=grafana-clock-panel</code></pre></article>
           <article class="card"><h3>Template var escaping</h3><p><code>$var</code> is auto-escaped; a multi-value PromQL matcher needs the regex form or you'll get a broken query.</p><pre><code>label=~"${jobs:regex}"
 # not: label="$jobs"</code></pre></article>
           <article class="card"><h3>Series naming</h3><p>Multiple series with identical names collapse to one line. Disambiguate with a <code>Legend</code> format or a rename transform.</p><pre><code>Legend: {{job}} - {{instance}}</code></pre></article>
+          <article class="card"><h3>Data source access mode</h3><p><code>access: proxy</code> routes queries through the Grafana server; <code>direct</code> fetches from the browser. In Docker, or when the target isn't reachable from the browser (CORS / private network), <code>direct</code> fails with no data.</p><pre><code>access: proxy   # server-side, default
+access: direct  # browser-side</code></pre></article>
+          <article class="card"><h3>No data &amp; null gaps</h3><p>Gaps appear where a series has <em>no samples</em>, not where it's zero. For lines, enable <strong>Connect null values</strong>; to treat missing as zero, fill in the query with <code>OR on() vector(0)</code> (PromQL) or <code>COALESCE(…, 0)</code> (SQL).</p><pre><code># PromQL: fill missing with 0
+requests_total OR on() vector(0)
+# SQL: SELECT COALESCE(value, 0)</code></pre></article>
         </div>
         <div class="callout warning" style="margin-top:16px"><div class="callout-mark">!</div><p><strong>Data source auth.</strong> Provisioned data sources with credentials need <code>secureJsonData</code> (e.g. <code>basicAuthPassword</code>, <code>token</code>) — plain <code>jsonData</code> holds only non-secret settings. If a panel shows <em>401 / no data</em>, check the source's auth before the query.</p></div>
       </section>
 
       <footer class="footer searchable">
         <strong>Source of truth</strong>
-        <p>This guide covers the Grafana essentials for dashboards, data sources, variables, transforms, alerts, and provisioning. The official docs remain authoritative for version-specific behavior.</p>
+        <p>This guide covers the Grafana essentials for dashboards, data sources, variables, transforms, alerts, and provisioning, current as of Grafana 12. The official docs remain authoritative for version-specific behavior.</p>
         <div class="footer-links">
           <a href="https://grafana.com/docs/" target="_blank" rel="noreferrer">Grafana docs</a>
           <a href="https://grafana.com/docs/grafana/latest/administration/provisioning/" target="_blank" rel="noreferrer">Provisioning</a>
           <a href="../">slop-stuff home</a>
+        </div>
+        <strong style="display:block;margin-top:18px">Related guides</strong>
+        <div class="footer-links">
+          <a href="../promql/">PromQL</a>
+          <a href="../devops/">DevOps</a>
+          <a href="../postgres/">PostgreSQL</a>
         </div>
       </footer>
     </main>

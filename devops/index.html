@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#ci"><span class="nav-number">02</span>CI/CD</a>
         <a href="#containers"><span class="nav-number">03</span>Containers</a>
@@ -67,6 +68,30 @@
         </div>
       </section>
 
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The ten commands you reach for most, in the order of the delivery loop — plus the four deploy strategies. Full context lives in the sections below.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>git push origin main</code><span>Triggers CI — build and test run automatically on the branch.</span></div>
+          <div class="command-row"><code>docker build -t app:1.2.3 .</code><span>Build an image from a Dockerfile in the current dir.</span></div>
+          <div class="command-row"><code>docker run -p 8000:8000 app:1.2.3</code><span>Run a container, mapping host port → container port.</span></div>
+          <div class="command-row"><code>docker compose up -d --build</code><span>Rebuild images and start the whole stack detached.</span></div>
+          <div class="command-row"><code>docker compose down -v</code><span>Stop the stack and remove its volumes.</span></div>
+          <div class="command-row"><code>terraform init</code><span>Download providers and modules (run first, then after edits).</span></div>
+          <div class="command-row"><code>terraform plan -out=tfplan</code><span>Preview the diff and save a reviewable plan.</span></div>
+          <div class="command-row"><code>terraform apply tfplan</code><span>Apply exactly the plan you reviewed.</span></div>
+          <div class="command-row"><code>kubectl apply -f deploy.yaml</code><span>Create or update resources from a manifest.</span></div>
+          <div class="command-row"><code>kubectl rollout undo deploy/web</code><span>Roll back the last deployment in one command.</span></div>
+        </div>
+        <div class="grid four" style="margin-top:16px">
+          <article class="card"><h3>Rolling</h3><p>Replace pods one at a time; rollback is instant.</p></article>
+          <article class="card"><h3>Blue / green</h3><p>Run old and new side by side, flip the router.</p></article>
+          <article class="card"><h3>Canary</h3><p>Send a small % of traffic to the new version.</p></article>
+          <article class="card"><h3>Feature flag</h3><p>Ship the code, toggle behavior per user.</p></article>
+        </div>
+      </section>
       <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “Docker”, “Terraform”, “Kubernetes”, “pipeline”, or “deploy”.</div>
 
       <section class="section searchable" id="start">
@@ -112,10 +137,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
       - run: npm ci
       - run: npm test
@@ -124,7 +149,7 @@ jobs:
 
 build:
   stage: build
-  image: node:20
+  image: node:22
   script:
     - npm ci
     - npm run build
@@ -158,7 +183,7 @@ deploy:
           <p>An image is a read-only filesystem snapshot; a container is a running instance of it. A Dockerfile is the recipe that builds the image.</p>
         </div>
         <div class="grid three">
-          <article class="card"><h3>Dockerfile</h3><pre><code>FROM python:3.12-slim
+          <article class="card"><h3>Dockerfile</h3><pre><code>FROM python:3.13-slim
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install -r requirements.txt
@@ -174,7 +199,7 @@ docker pull ghcr.io/acme/app:1.2.3</code></pre></article>
     build: .
     ports: ["8000:8000"]
   db:
-    image: postgres:16
+    image: postgres:17
     volumes: ["pg:/var/lib/postgresql/data"]
 volumes:
   pg:</code></pre></article>
@@ -212,7 +237,7 @@ volumes:
         <details style="margin-top:16px">
           <summary>Docker deep dive</summary>
           <div class="details-body grid two">
-            <div><h4>Multi-stage builds</h4><p>Build in a heavy image, copy only the artifact into a slim runtime — no build tools in the final image.</p><pre><code>FROM golang:1.22 AS build
+            <div><h4>Multi-stage builds</h4><p>Build in a heavy image, copy only the artifact into a slim runtime — no build tools in the final image.</p><pre><code>FROM golang:1.24 AS build
 WORKDIR /src
 COPY . .
 RUN go build -o /app/server .
@@ -329,6 +354,7 @@ module "vpc" {
           <tr><td><code>ansible-playbook site.yml</code></td><td>Run a playbook against the inventory.</td></tr>
         </tbody></table></div>
         <div class="callout warning" style="margin-top:16px"><div class="callout-mark">⚠</div><p><strong>Config drift is the enemy.</strong> Once a human hand-edits a server, reality and code diverge. Re-run apply/playbook on a schedule and treat manual changes as a bug to be codified, not a fix to keep.</p></div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">i</div><p><strong>Terraform or OpenTofu?</strong> HashiCorp relicensed Terraform under the BUSL (2023); <a href="https://opentofu.org/" target="_blank" rel="noreferrer">OpenTofu</a> is the Linux Foundation fork with a drop-in workflow — <code>tofu init</code>, <code>tofu plan</code>, <code>tofu apply</code>. Same HCL, same providers.</p></div>
       </section>
 
       <section class="section searchable" id="observability">
@@ -387,7 +413,7 @@ git revert &lt;sha&gt; &amp;&amp; git push</code></pre></article>
       <section class="section searchable" id="gotchas">
         <div class="section-head">
           <div><div class="section-kicker">08 / Gotchas</div><h2>Pitfalls</h2></div>
-          <p>Five mistakes that ship broken systems faster than any outage could.</p>
+          <p>Common mistakes that ship broken systems faster than any outage could — each with the fix.</p>
         </div>
         <div class="grid two">
           <article class="card"><h3>Secrets in code</h3><p>A token in a repo is a token on every clone. Use a secret store and scan history.</p><pre><code># bad
@@ -400,6 +426,13 @@ terraform apply  # converge back</code></pre></article>
 docker images | sort -k7 -h</code></pre></article>
           <article class="card"><h3>No rollback plan</h3><p>If you can't undo in one command, the deploy is a trap.</p><pre><code>kubectl rollout undo deploy/web
 helm rollback app 1</code></pre></article>
+          <article class="card"><h3>Running as root</h3><p>Containers default to <code>root</code>. A compromised app then gets far more than it should. Drop privileges in both the image and the pod.</p><pre><code>USER 10001                    # Dockerfile
+
+securityContext:
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false</code></pre></article>
+          <article class="card"><h3>latest &amp; mutable tags</h3><p>A moving tag means the same manifest can deploy different code on different days. Pin by digest for reproducible, auditable deploys.</p><pre><code>image: app:1.2.3                # pinned tag
+image: app@sha256:9f86d08...    # immutable digest</code></pre></article>
         </div>
         <div class="callout warning" style="margin-top:16px"><div class="callout-mark">⚠</div><p><strong>Production data in dev.</strong> Copies of prod databases in dev environments leak PII and drift from schema. Use synthetic or anonymized data, and never run a dev tool against the prod endpoint.</p></div>
       </section>
@@ -412,6 +445,16 @@ helm rollback app 1</code></pre></article>
           <a href="https://docs.docker.com/" target="_blank" rel="noreferrer">Docker docs</a>
           <a href="https://developer.hashicorp.com/terraform" target="_blank" rel="noreferrer">Terraform docs</a>
           <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+
+      <footer class="footer searchable">
+        <strong>Related guides</strong>
+        <p>Keep going through the stack:</p>
+        <div class="footer-links">
+          <a href="../kubectl/">kubectl</a>
+          <a href="../gcloud/">gcloud</a>
+          <a href="../grafana/">Grafana</a>
         </div>
       </footer>
     </main>

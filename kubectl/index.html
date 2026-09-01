@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#inspect"><span class="nav-number">02</span>Inspect</a>
         <a href="#run"><span class="nav-number">03</span>Run &amp; apply</a>
@@ -65,6 +66,26 @@
             <div><span class="prompt">❯</span> <span class="cursor"></span></div>
           </div>
         </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The commands you'll type a hundred times a day, scannable at a glance — everything else on this page is the depth behind them.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>kubectl get pods -n NAMESPACE</code><span>List pods; <code>-A</code> for every namespace.</span></div>
+          <div class="command-row"><code>kubectl describe pod NAME</code><span>Status, conditions, and recent events.</span></div>
+          <div class="command-row"><code>kubectl logs -f deploy/NAME</code><span>Follow logs from a deployment.</span></div>
+          <div class="command-row"><code>kubectl apply -f manifest.yaml</code><span>Create or update from YAML.</span></div>
+          <div class="command-row"><code>kubectl exec -it pod/NAME -- sh</code><span>Open a shell inside a pod.</span></div>
+          <div class="command-row"><code>kubectl port-forward svc/NAME 8080:80</code><span>Forward a local port to a service.</span></div>
+          <div class="command-row"><code>kubectl rollout restart deploy/NAME</code><span>Cycle pods to pick up changes.</span></div>
+          <div class="command-row"><code>kubectl get pods -o yaml</code><span>Full object as YAML.</span></div>
+          <div class="command-row"><code>kubectl config use-context NAME</code><span>Switch clusters.</span></div>
+          <div class="command-row"><code>kubectl config current-context</code><span>Which cluster am I on?</span></div>
+        </div>
+        <div class="callout"><div class="callout-mark">KEY</div><p><strong>Namespace and context shape everything.</strong> <code>-n NAMESPACE</code> scopes one command; <code>kubectl config set-context --current --namespace=team-a</code> sets the default; <code>--context NAME</code> targets another cluster without switching.</p></div>
       </section>
 
       <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “get”, “apply”, “exec”, “logs”, “context”, or “yaml”.</div>
@@ -106,6 +127,7 @@ KUBECONFIG=~/.kube/prod.yaml \
           <div class="command-row"><code>kubectl get deploy,svc,cm</code><span>Several kinds in one shot.</span></div>
           <div class="command-row"><code>kubectl describe pod web-abc123</code><span>Events, conditions, mounts, status.</span></div>
           <div class="command-row"><code>kubectl get events --sort-by=.metadata.creationTimestamp</code><span>Recent cluster events, newest last.</span></div>
+          <div class="command-row"><code>kubectl events --for pod/web-abc123</code><span>Watch events for one resource (1.30+).</span></div>
           <div class="command-row"><code>kubectl api-resources</code><span>Every kind this cluster knows.</span></div>
           <div class="command-row"><code>kubectl explain pod.spec.containers</code><span>Field-by-field documentation.</span></div>
         </div>
@@ -134,6 +156,7 @@ kubectl get events \
           <div class="command-row"><code>kubectl delete -f deploy.yaml</code><span>Delete resources from a manifest.</span></div>
           <div class="command-row"><code>kubectl delete pod web-abc123 --grace-period=0 --force</code><span>Hard-delete a stuck pod.</span></div>
           <div class="command-row"><code>kubectl apply -f app.yaml --dry-run=client -o yaml</code><span>Preview without touching the cluster.</span></div>
+          <div class="command-row"><code>kubectl diff -f app.yaml</code><span>Show exactly what apply would change.</span></div>
         </div>
         <div class="grid two">
           <article class="card"><h3>Generate a manifest</h3><pre><code>kubectl create deploy web \
@@ -151,7 +174,7 @@ kubectl get events \
           <p>Most changes are one-liners: set an image, scale replicas, or restart a rollout. <code>edit</code> and <code>patch</code> handle the rest.</p>
         </div>
         <div class="command-index">
-          <div class="command-row"><code>kubectl set image deploy/web web=nginx:1.25.3</code><span>Swap the container image in place.</span></div>
+          <div class="command-row"><code>kubectl set image deploy/web web=nginx:1.27</code><span>Swap the container image in place.</span></div>
           <div class="command-row"><code>kubectl scale deploy/web --replicas=5</code><span>Change how many replicas run.</span></div>
           <div class="command-row"><code>kubectl rollout restart deploy/web</code><span>Cycle pods to pick up new config.</span></div>
           <div class="command-row"><code>kubectl rollout status deploy/web</code><span>Block until the rollout finishes.</span></div>
@@ -174,7 +197,7 @@ kubectl get events \
       <section class="section searchable" id="debug">
         <div class="section-head">
           <div><div class="section-kicker">05 / Debug &amp; access</div><h2>Debug &amp; access</h2></div>
-          <p>Follow logs, open a shell inside a pod, or forward a port straight to your machine.</p>
+          <p>Follow logs, open a shell inside a pod, forward a port, or drop a <code>debug</code> container into a running pod or node.</p>
         </div>
         <div class="command-index">
           <div class="command-row"><code>kubectl logs deploy/web</code><span>Logs from a deployment's pods.</span></div>
@@ -187,6 +210,8 @@ kubectl get events \
           <div class="command-row"><code>kubectl cp pod/web-abc123:/app/out.txt ./out.txt</code><span>Copy a file out of a pod.</span></div>
           <div class="command-row"><code>kubectl top pods</code><span>CPU/memory (needs metrics-server).</span></div>
           <div class="command-row"><code>kubectl attach pod/web-abc123</code><span>Attach to a container's stdio.</span></div>
+          <div class="command-row"><code>kubectl debug node/worker-1 -it --image=busybox</code><span>Run a debug pod on a node.</span></div>
+          <div class="command-row"><code>kubectl debug pod/web-abc123 -it --image=busybox --target=web</code><span>Ephemeral container sharing the pod's namespaces.</span></div>
         </div>
         <div class="grid two">
           <article class="card"><h3>Crashed container logs</h3><pre><code>kubectl logs pod/web-abc123 \
@@ -218,7 +243,7 @@ metadata:
 spec:
   containers:
     - name: web
-      image: nginx:1.25
+      image: nginx:1.27
       ports:
         - containerPort: 80</code></pre></article>
           <article class="card"><h3>Deployment</h3><pre><code>apiVersion: apps/v1
@@ -237,7 +262,7 @@ spec:
     spec:
       containers:
         - name: web
-          image: nginx:1.25</code></pre></article>
+          image: nginx:1.27</code></pre></article>
           <article class="card"><h3>Service</h3><pre><code>apiVersion: v1
 kind: Service
 metadata:
@@ -320,15 +345,31 @@ kubectl get pods -A -o json | \
   jq '.items | length'</code></pre></article>
         </div>
         <div class="callout warning"><div class="callout-mark">⚠</div><p><strong>Scope is silent.</strong> kubectl defaults to the current namespace, so <code>get pods</code> quietly ignores pods elsewhere. Pass <code>-A</code> / <code>-n NAME</code> to see them. <code>-l</code> filters by label; JSONPath and <code>jq</code> shape the output.</p></div>
+        <details>
+          <summary>More gotchas</summary>
+          <div class="details-body">
+            <p><code>kubectl run</code> creates a bare Pod, not a Deployment — use <code>kubectl create deploy</code> for a managed workload. <code>kubectl cp</code> needs <code>tar</code> inside the container image. <code>logs</code> and <code>exec</code> target one pod; pass <code>deploy/NAME</code> to fan out across its replicas. A context switch is global and sticky — <code>kubectl config use-context prod</code> stays until you switch back, so check <code>current-context</code> before destructive commands. <code>delete</code> waits for graceful shutdown; add <code>--now</code> (<code>--grace-period=0 --force</code>) to skip it. Raw <code>-o yaml</code> includes <code>managedFields</code> noise — strip it with <code>jq 'del(.metadata.managedFields)'</code> when you want a clean manifest.</p>
+          </div>
+        </details>
       </section>
 
       <footer class="footer searchable">
         <strong>Source of truth</strong>
-        <p>This guide covers everyday kubectl. The official reference and cheatsheet remain authoritative for every subcommand and flag.</p>
+        <p>This guide targets recent kubectl — Kubernetes 1.37 is the current stable release (1.35-1.37 are the supported branches, and kubectl skews ±1 minor version). The official reference and cheatsheet remain authoritative for every subcommand and flag.</p>
         <div class="footer-links">
           <a href="https://kubernetes.io/docs/reference/kubectl/" target="_blank" rel="noreferrer">kubectl reference</a>
           <a href="https://kubernetes.io/docs/reference/kubectl/cheatsheet/" target="_blank" rel="noreferrer">Cheatsheet</a>
           <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+
+      <footer class="footer searchable" style="margin-top:24px">
+        <strong>Related</strong>
+        <p>kubectl talks to the cluster — pair it with these guides for the rest of the stack.</p>
+        <div class="footer-links">
+          <a href="../devops/">DevOps</a>
+          <a href="../gcloud/">gcloud</a>
+          <a href="../postgres/">PostgreSQL</a>
         </div>
       </footer>
     </main>

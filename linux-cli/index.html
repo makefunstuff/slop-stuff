@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#sed"><span class="nav-number">02</span>sed</a>
         <a href="#awk"><span class="nav-number">03</span>awk</a>
@@ -70,6 +71,23 @@
         </div>
       </section>
 
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The eight commands you'll reach for most. Memorize these and you can solve the majority of day-to-day text and file problems.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>grep -rE 'pattern' dir</code><span>Recursive extended-regex search.</span></div>
+          <div class="command-row"><code>sed -i 's/old/new/g' file</code><span>Edit a file in place.</span></div>
+          <div class="command-row"><code>awk '{print $1}' file</code><span>Print the first column.</span></div>
+          <div class="command-row"><code>find . -name '*.log' -exec rm {} \;</code><span>Find files, then act on each match.</span></div>
+          <div class="command-row"><code>sort f | uniq -c | sort -rn</code><span>Count duplicates, most common first.</span></div>
+          <div class="command-row"><code>find . -print0 | xargs -0 cmd</code><span>Pass names safely (spaces &amp; newlines).</span></div>
+          <div class="command-row"><code>tar czf archive.tgz dir</code><span>Create a gzipped tarball.</span></div>
+          <div class="command-row"><code>ps aux</code><span>List every running process.</span></div>
+        </div>
+      </section>
+
       <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “sed”, “awk”, “grep”, “find”, “sort”, “git”, or “tcpdump”.</div>
 
       <section class="section searchable" id="start">
@@ -108,6 +126,7 @@ history | tail -20
           <tr><td><code>-i</code></td><td>Edit the file in place</td><td><code>sed -i 's/a/b/' f</code></td></tr>
           <tr><td><code>-E</code></td><td>Extended regex (<code>+</code>, <code>|</code>, <code>()</code> unescaped)</td><td><code>sed -E 's/a+/b/' f</code></td></tr>
           <tr><td><code>-e '…'</code></td><td>Apply multiple commands</td><td><code>sed -e 's/a/b/' -e 's/c/d/' f</code></td></tr>
+          <tr><td><code>-z</code></td><td>Treat NUL as the record separator (whole file)</td><td><code>sed -z 's/foo/bar/g' f</code></td></tr>
         </tbody></table></div>
         <div class="grid two">
           <article class="card"><h3>Capture groups</h3><p>Wrap part of a match and replay it with <code>\1</code>, <code>\2</code>… Use plain parens with <code>-E</code>, escaped parens in basic regex.</p><pre><code>sed -E 's/(foo)(bar)/\2\1/'    # ERE → barfoo
@@ -141,6 +160,7 @@ sed -i '' 's/old/new/g' file    # macOS/BSD</code></pre></article>
           <div class="command-row"><code>awk 'END {print NR}' file</code><span>Count lines.</span></div>
           <div class="command-row"><code>awk '{print $NF}' file</code><span>Last field of each line.</span></div>
           <div class="command-row"><code>awk 'BEGIN {OFS=","} {print $1, $3}' file</code><span>Rearrange columns, comma-joined.</span></div>
+          <div class="command-row"><code>gawk --csv '{print $2}' data.csv</code><span>Parse CSV with quoting rules (gawk 5.3+).</span></div>
         </div>
         <details>
           <summary>More awk recipes</summary>
@@ -169,12 +189,19 @@ sed -i '' 's/old/new/g' file    # macOS/BSD</code></pre></article>
           <tr><td><code>-c</code></td><td>Count matches per file</td></tr>
           <tr><td><code>-o</code></td><td>Print only the matching part, one per line</td></tr>
           <tr><td><code>-A N</code> / <code>-B N</code> / <code>-C N</code></td><td>Show N lines after / before / around each match</td></tr>
+          <tr><td><code>-m N</code></td><td>Stop after N matches per file</td></tr>
+          <tr><td><code>-P</code></td><td>PCRE — Perl-compatible regex (GNU only, not BSD/macOS)</td></tr>
         </tbody></table></div>
         <div class="grid two">
-          <article class="card"><h3>ripgrep equivalents</h3><pre><code>grep -r "foo" .     →  rg "foo"
+          <article class="card"><h3>ripgrep equivalents &amp; extras</h3><pre><code>grep -r "foo" .     →  rg "foo"
 grep -rn "foo" .    →  rg -n "foo"
 grep -rl "foo" .    →  rg -l "foo"
-grep -v "foo" f     →  rg -v "foo" f</code></pre></article>
+grep -v "foo" f     →  rg -v "foo" f
+# rg-only (ripgrep 14+):
+rg --hidden "foo" .     # search dotfiles
+rg -uuu "foo" .         # also binary + ignore
+rg --files -g '*.js'    # list matching files
+rg -t js "foo"          # by file type</code></pre></article>
           <article class="card"><h3>Typical pipelines</h3><pre><code>grep -rn "TODO" src/
 grep -oE '[0-9]+\.[0-9]+' log
 grep -A2 -B1 "error" log
@@ -411,6 +438,16 @@ find . -name '*.txt' # find does the matching</code></pre></article>
 # GNU has grep -P; BSD doesn't
 brew install coreutils</code></pre></article>
         </div>
+        <div class="grid three" style="margin-top:16px">
+          <article class="card"><h3>grep exit codes vs <code>set -e</code></h3><p><code>grep</code> returns <code>0</code> on match, <code>1</code> on no match, <code>2</code> on error. Under <code>set -e</code>, a "no match" silently kills the script.</p><pre><code>grep -q "err" log || true
+if grep -q "err" log; then
+  echo "found"
+fi</code></pre></article>
+          <article class="card"><h3>sort is locale-aware; uniq needs sorted input</h3><p><code>sort</code> order changes with <code>LC_COLLATE</code>; pin byte order with <code>LC_ALL=C</code>. <code>uniq</code> only drops <em>adjacent</em> duplicates — sort first.</p><pre><code>LC_ALL=C sort -u f
+sort f | uniq -c</code></pre></article>
+          <article class="card"><h3>Fail fast with <code>set -euo pipefail</code></h3><p>Put it at the top of scripts: <code>-e</code> exits on error, <code>-u</code> errors on unset variables, <code>-o pipefail</code> makes the pipeline reflect any failing command.</p><pre><code>set -euo pipefail
+false | true   # non-zero with pipefail</code></pre></article>
+        </div>
         <div class="callout warning"><div class="callout-mark">!</div><p><strong>Spaces in filenames break naive pipelines.</strong> <code>for f in $(ls)</code> and unquoted <code>xargs</code> split on whitespace. Use <code>find -print0 | xargs -0</code> or a <code>while read</code> loop to stay safe.</p></div>
       </section>
 
@@ -424,6 +461,16 @@ brew install coreutils</code></pre></article>
           <a href="https://git-scm.com/doc" target="_blank" rel="noreferrer">Git docs</a>
           <a href="https://www.tcpdump.org/manpages/tcpdump.1.html" target="_blank" rel="noreferrer">tcpdump man page</a>
           <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+
+      <footer class="footer searchable" style="margin-top:24px">
+        <strong>Related</strong>
+        <p>These commands pair with the tools above: script them into reusable Bash, parse JSON with jq, or carry them into deployment with DevOps.</p>
+        <div class="footer-links">
+          <a href="../bash/">Bash</a>
+          <a href="../jq/">jq</a>
+          <a href="../devops/">DevOps</a>
         </div>
       </footer>
     </main>

@@ -12,7 +12,7 @@
     <a class="brand" href="../" aria-label="Back to slop-stuff">
       <span class="brand-mark">sh_</span>
       <span>Bash Guide</span>
-      <span class="version">5.x</span>
+      <span class="version">5.3</span>
     </a>
     <label class="search-wrap">
       <span class="sr-only" hidden>Search guide</span>
@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#variables"><span class="nav-number">02</span>Variables</a>
         <a href="#quoting"><span class="nav-number">03</span>Quoting</a>
@@ -75,6 +76,37 @@
             </div>
           </div>
         </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>The daily surface, at a glance</h2></div>
+          <p>The patterns you reach for most, on one screen. Each block is copy-paste ready — string a few together and you've written most shell scripts.</p>
+        </div>
+        <div class="grid four">
+          <article class="card"><h3>Shebang + strict mode</h3><pre><code>#!/usr/bin/env bash
+set -euo pipefail</code></pre></article>
+          <article class="card"><h3>Variables &amp; defaults</h3><pre><code>name="Ada"
+echo "$name" "${name}s"
+echo "${1:-none}"   # default</code></pre></article>
+          <article class="card"><h3>Quoting</h3><pre><code>echo '$HOME'      # literal
+echo "$HOME"      # expands
+echo "$var"       # no split</code></pre></article>
+          <article class="card"><h3>Tests</h3><pre><code>[[ -f "$f" ]] &amp;&amp; echo file
+[[ -n "$x" &amp;&amp; "$x" == y ]]
+[[ $n -gt 0 ]]</code></pre></article>
+          <article class="card"><h3>Loops</h3><pre><code>for f in *.txt; do echo "$f"; done
+while read -r l; do :; done &lt; f</code></pre></article>
+          <article class="card"><h3>Command substitution</h3><pre><code>now=$(date)
+files=$(find . -name '*.sh')</code></pre></article>
+          <article class="card"><h3>Redirection</h3><pre><code>cmd &gt; out 2&gt;&amp;1   # both
+cmd &gt;&gt; log         # append
+cmd 2&gt;/dev/null     # drop err</code></pre></article>
+          <article class="card"><h3>Exit status</h3><pre><code>cmd || echo "failed"
+echo "$?"          # last status
+exit 0             # signal result</code></pre></article>
+        </div>
+        <div class="callout"><div class="callout-mark">KEY</div><p><strong>Quote every expansion, then run ShellCheck.</strong> <code>"$var"</code> and <code>"$@"</code> keep values whole, and <code>[[ ]]</code> needs no extra quoting. These eight patterns cover most day-to-day shell work.</p></div>
       </section>
 
       <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “variable”, “quote”, “loop”, “test”, “function”, or “redirect”.</div>
@@ -378,18 +410,38 @@ echo "$x"         # → 1
 n=0
 cat f | while read l; do n=$((n+1)); done
 echo "$n"         # → 0 (lost)</code></pre></article>
+          <article class="card"><h3>read without -r</h3><p>Bare <code>read</code> treats <code>\</code> as an escape and mangles trailing backslashes. Use <code>-r</code> for raw input.</p><pre><code>read -r line        # raw, keeps \
+read line           # \n → n, trailing \ lost
+while read -r l; do :; done &lt; f</code></pre></article>
+          <article class="card"><h3>local masks exit status</h3><p><code>local x=$(cmd)</code> returns <code>local</code>'s own status (<code>0</code>), not <code>cmd</code>'s — so it defeats <code>set -e</code>. Split the assignment.</p><pre><code># wrong: failure invisible to set -e
+local x=$(false)
+
+# right: status preserved
+local x
+x=$(false)</code></pre></article>
         </div>
         <div class="callout warning"><div class="callout-mark">⚠</div><p><strong>Quote everything, then run ShellCheck.</strong> Most of these gotchas are one unquoted variable away. <code>shellcheck script.sh</code> catches word splitting, <code>set -e</code> traps, and quoting mistakes before you ship.</p></div>
       </section>
 
       <footer class="footer searchable">
         <strong>Source of truth</strong>
-        <p>This guide covers the daily Bash surface. The GNU Bash manual, Greg's BashGuide, and ShellCheck remain authoritative for edge cases, POSIX corners, and correctness.</p>
+        <p>This guide covers the daily Bash surface as of <code>5.3</code> (released July 2025). The GNU Bash manual, Greg's BashGuide, and ShellCheck remain authoritative for edge cases, POSIX corners, and correctness. Recent releases added in-shell command substitution (<code>${ cmd; }</code>), <code>GLOBSORT</code>, and <code>patsub_replacement</code>.</p>
         <div class="footer-links">
           <a href="https://www.gnu.org/software/bash/manual/" target="_blank" rel="noreferrer">Bash manual</a>
+          <a href="https://git.savannah.gnu.org/cgit/bash.git/plain/NEWS" target="_blank" rel="noreferrer">Bash NEWS (changelog)</a>
           <a href="https://mywiki.wooledge.org/BashGuide" target="_blank" rel="noreferrer">BashGuide</a>
           <a href="https://www.shellcheck.net/" target="_blank" rel="noreferrer">ShellCheck</a>
           <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+
+      <footer class="footer searchable" style="margin-top:24px">
+        <strong>Related</strong>
+        <p>Bash is the glue — pair it with the tools it strings together.</p>
+        <div class="footer-links">
+          <a href="../jq/">jq</a>
+          <a href="../linux-cli/">Linux CLI</a>
+          <a href="../devops/">DevOps</a>
         </div>
       </footer>
     </main>

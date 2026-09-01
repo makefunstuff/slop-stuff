@@ -12,7 +12,7 @@
     <a class="brand" href="../" aria-label="Back to slop-stuff">
       <span class="brand-mark">pq_</span>
       <span>PromQL Guide</span>
-      <span class="version">Prometheus</span>
+      <span class="version">Prometheus 3.x</span>
     </a>
     <label class="search-wrap">
       <span class="sr-only" hidden>Search guide</span>
@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#selectors"><span class="nav-number">02</span>Selectors</a>
         <a href="#rates"><span class="nav-number">03</span>Rates</a>
@@ -75,6 +76,25 @@
               <div><span class="prompt">❯</span> <span class="cursor"></span></div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The ten queries you'll reach for every day. Each links to the full section below.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>rate(metric[5m])</code><span>Per-second rate of a counter, reset-aware. <a href="#rates">Rates →</a></span></div>
+          <div class="command-row"><code>irate(metric[5m])</code><span>Per-second rate from the last two samples — for alerting. <a href="#rates">Rates →</a></span></div>
+          <div class="command-row"><code>increase(metric[1h])</code><span>Total counter increase over the window. <a href="#rates">Rates →</a></span></div>
+          <div class="command-row"><code>sum by (label) (metric)</code><span>Aggregate, keeping the listed labels only. <a href="#aggregation">Aggregation →</a></span></div>
+          <div class="command-row"><code>histogram_quantile(0.99, rate(bucket[5m]))</code><span>Percentile latency from histogram buckets. <a href="#functions">Functions →</a></span></div>
+          <div class="command-row"><code>topk(5, metric)</code><span>Largest 5 series by value; <code>bottomk</code> for smallest. <a href="#aggregation">Aggregation →</a></span></div>
+          <div class="command-row"><code>metric{job="api", status=~"5.."}</code><span>Label selectors &amp; matchers. <a href="#selectors">Selectors →</a></span></div>
+          <div class="command-row"><code>sort(metric) / sort_desc(metric)</code><span>Order series by value. <a href="#functions">Functions →</a></span></div>
+          <div class="command-row"><code>rate(metric[5m]) / rate(metric[5m] offset 1h)</code><span>Compare now vs an hour ago. <a href="#functions">Functions →</a></span></div>
+          <div class="command-row"><code>up == 0</code><span>Targets that are down. <a href="#operators">Operators →</a></span></div>
         </div>
       </section>
 
@@ -210,6 +230,9 @@ group by (job) (up)     # one series per job</code></pre>
           <div class="command-row"><code>v offset 1h</code><span>Shift the query one hour into the past.</span></div>
           <div class="command-row"><code>label_replace(v, "dst", "$1", "src", "(.*)")</code><span>Rewrite a label using a regex capture.</span></div>
           <div class="command-row"><code>clamp(v, 0, 100)</code><span>Clamp every value into [0, 100].</span></div>
+          <div class="command-row"><code>sort_by_label(v, "label")</code><span>Sort series by a label's value.</span></div>
+          <div class="command-row"><code>last_over_time(v[5m])</code><span>Last sample in the window — the right way to read a gauge's current value.</span></div>
+          <div class="command-row"><code>info(v, {__name__="build_info"})</code><span>Experimental (3.x): enrich series with labels from <code>target_info</code>/<code>build_info</code> — needs <code>--enable-feature=promql-experimental-functions</code>.</span></div>
         </div>
         <div class="grid two" style="margin-top:16px">
           <article class="card"><h3>Histogram quantiles</h3><p>Always pass the bucket series through <code>rate()</code> first and keep the <code>le</code> label intact.</p><pre><code>histogram_quantile(0.99,
@@ -218,7 +241,7 @@ group by (job) (up)     # one series per job</code></pre>
   / rate(x[5m] offset 1h)</code></pre></article>
         </div>
         <div class="tags" style="margin-top:16px">
-          <span class="tag">histogram</span><span class="tag">sorting</span><span class="tag">prediction</span><span class="tag">absence</span><span class="tag">labels</span><span class="tag">time</span>
+          <span class="tag">histogram</span><span class="tag">sorting</span><span class="tag">prediction</span><span class="tag">absence</span><span class="tag">labels</span><span class="tag">time</span><span class="tag">metadata</span><span class="tag">experimental</span>
         </div>
         <details style="margin-top:16px">
           <summary>label_replace in depth</summary>
@@ -331,6 +354,10 @@ rate(http_requests_total[1m])</code></pre></article>
 http_requests_total{route="/users/:id"}  # good</code></pre></article>
           <article class="card"><h3>Staleness</h3><p>A series that stops scraping goes stale after ~5m and its last sample is ignored by queries, so graphs drop to empty instead of flat-lining.</p><pre><code>up == 0    # target is down
 absent(up) # target vanished entirely</code></pre></article>
+          <article class="card"><h3>Many-to-many matching</h3><p>Joining two vectors with different label sets raises <code>many-to-many matching not allowed</code>. Pin the join with <code>on()</code>/<code>ignoring()</code> plus <code>group_left()</code>/<code>group_right()</code>.</p><pre><code>a * on (job) group_left b   # ok
+a * b                       # error</code></pre></article>
+          <article class="card"><h3>Aggregation drops the name</h3><p><code>sum()</code>, <code>avg()</code>, and the rest strip the <code>__name__</code> label, so the result is nameless. Record the expression or aggregate <code>without(__name__)</code> when you need a stable name.</p><pre><code>sum by (job) (rate(x[5m]))  # no metric name
+job:http_requests:rate5m    # recorded name</code></pre></article>
         </div>
         <div class="callout warning" style="margin-top:16px"><div class="callout-mark">⚠</div><p><strong>Sum after rate, never before.</strong> <code>sum(rate(http_requests_total[5m]))</code> is correct. <code>rate(sum(http_requests_total)[5m])</code> merges reset boundaries and yields a meaningless rate.</p></div>
       </section>
@@ -342,6 +369,12 @@ absent(up) # target vanished entirely</code></pre></article>
           <a href="https://prometheus.io/docs/prometheus/latest/querying/basics/" target="_blank" rel="noreferrer">Querying basics</a>
           <a href="https://prometheus.io/docs/prometheus/latest/querying/functions/" target="_blank" rel="noreferrer">Functions reference</a>
           <a href="../">slop-stuff home</a>
+        </div>
+        <strong style="display:block;margin-top:22px">Related</strong>
+        <div class="footer-links">
+          <a href="../grafana/">Grafana</a>
+          <a href="../devops/">DevOps</a>
+          <a href="../math/">Mathematics</a>
         </div>
       </footer>
     </main>

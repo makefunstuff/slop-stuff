@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#config"><span class="nav-number">02</span>Config</a>
         <a href="#compute"><span class="nav-number">03</span>Compute</a>
@@ -77,6 +78,23 @@
             </div>
           </div>
         </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>The commands you'll type most</h2></div>
+          <p>Six commands plus <code>--format=json</code> cover most everyday GCP work. Each links through to a full section below.</p>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Command</th><th>What it does</th></tr></thead><tbody>
+          <tr><td><code>gcloud auth login</code></td><td>Browser OAuth for your user account.</td></tr>
+          <tr><td><code>gcloud config set project my-project</code></td><td>Set the default project.</td></tr>
+          <tr><td><code>gcloud compute instances list</code></td><td>List your VMs.</td></tr>
+          <tr><td><code>gcloud storage cp file.txt gs://my-bucket/</code></td><td>Upload a file to Cloud Storage.</td></tr>
+          <tr><td><code>gcloud container clusters get-credentials my-cluster</code></td><td>Write the kubeconfig entry so <code>kubectl</code> works.</td></tr>
+          <tr><td><code>gcloud projects add-iam-policy-binding my-project --member=user:ada@example.com --role=roles/viewer</code></td><td>Grant a role to a member.</td></tr>
+          <tr><td><code>gcloud components update</code></td><td>Upgrade the CLI and its components.</td></tr>
+          <tr><td><code>--format=json</code></td><td>Machine-readable output — works on every gcloud command.</td></tr>
+        </tbody></table></div>
       </section>
 
       <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try "compute", "storage", "gke", "iam", "sql", "logging", or "config".</div>
@@ -131,7 +149,7 @@ gcloud config list --all</code></pre></article>
         </div>
         <div class="command-index">
           <div class="command-row"><code>gcloud compute instances list</code><span>All VMs in the current project/zone.</span></div>
-          <div class="command-row"><code>gcloud compute instances create web-1 --zone=us-central1-a --machine-type=e2-medium --image-family=debian-11 --image-project=debian-cloud</code><span>Create a VM.</span></div>
+          <div class="command-row"><code>gcloud compute instances create web-1 --zone=us-central1-a --machine-type=e2-medium --image-family=debian-12 --image-project=debian-cloud</code><span>Create a VM.</span></div>
           <div class="command-row"><code>gcloud compute ssh web-1 --zone=us-central1-a</code><span>SSH in (adds keys automatically).</span></div>
           <div class="command-row"><code>gcloud compute instances start web-1</code><span>Start a stopped VM.</span></div>
           <div class="command-row"><code>gcloud compute instances stop web-1</code><span>Stop a running VM.</span></div>
@@ -249,13 +267,15 @@ roles/owner    # full control + IAM</code></pre></article>
         <div class="command-index">
           <div class="command-row"><code>gcloud sql instances list</code><span>List databases.</span></div>
           <div class="command-row"><code>gcloud sql instances create my-db --tier=db-f1-micro --region=us-central1</code><span>Create an instance.</span></div>
-          <div class="command-row"><code>gcloud sql connect my-db --user=root</code><span>Connect via psql/mysql.</span></div>
+          <div class="command-row"><code>gcloud sql connect my-db --user=root</code><span>Connect via psql/mysql (Auth Proxy V2).</span></div>
           <div class="command-row"><code>gcloud pubsub topics create my-topic</code><span>Create a topic.</span></div>
           <div class="command-row"><code>gcloud pubsub topics publish my-topic --message="hello"</code><span>Publish a message.</span></div>
           <div class="command-row"><code>gcloud pubsub subscriptions create my-sub --topic=my-topic</code><span>Create a subscription.</span></div>
           <div class="command-row"><code>gcloud pubsub subscriptions pull my-sub --auto-ack</code><span>Pull messages.</span></div>
           <div class="command-row"><code>gcloud functions deploy my-fn --runtime=python311 --trigger-http --entry-point=hello --region=us-central1</code><span>Deploy a Cloud Function.</span></div>
           <div class="command-row"><code>gcloud run deploy my-svc --image=gcr.io/my-project/my-svc --region=us-central1 --allow-unauthenticated</code><span>Deploy to Cloud Run.</span></div>
+          <div class="command-row"><code>gcloud run jobs list --region=us-central1</code><span>List Cloud Run jobs.</span></div>
+          <div class="command-row"><code>gcloud run jobs execute my-job --region=us-central1</code><span>Run a job to completion.</span></div>
           <div class="command-row"><code>gcloud sql instances delete my-db</code><span>Delete a database instance.</span></div>
           <div class="command-row"><code>gcloud pubsub topics list</code><span>List topics.</span></div>
         </div>
@@ -318,6 +338,9 @@ roles/owner    # full control + IAM</code></pre></article>
           <tr><td><code>--async</code></td><td>Return immediately, poll later</td><td>Long create/delete operations.</td></tr>
           <tr><td><code>--limit</code></td><td>Cap the number of results</td><td>Keep large lists small.</td></tr>
           <tr><td><code>--account</code></td><td>Run as a different authenticated account</td><td>Multiple identities in one shell.</td></tr>
+          <tr><td><code>--impersonate-service-account</code></td><td>Run as a service account with short-lived credentials</td><td>Least-privilege access without a key file.</td></tr>
+          <tr><td><code>--billing-project</code></td><td>Charge API calls to a different project</td><td>Separate quota/billing from the target project.</td></tr>
+          <tr><td><code>--verbosity</code></td><td>Control output detail (<code>debug</code>, <code>info</code>, <code>error</code>)</td><td>Diagnosing failed commands.</td></tr>
         </tbody></table></div>
         <br>
         <div class="grid two">
@@ -326,6 +349,13 @@ roles/owner    # full control + IAM</code></pre></article>
           <article class="card"><h3>Operations are async</h3><p>Many commands kick off a long-running operation. Watch its progress with the returned operation ID.</p><pre><code>gcloud compute operations list
 gcloud compute operations describe \
   operation-123 --zone=us-central1-a</code></pre></article>
+        </div>
+        <br>
+        <div class="grid two">
+          <article class="card"><h3>Impersonate, don't copy keys</h3><p>Prefer short-lived impersonation over a downloaded service-account key — no secret to leak or rotate.</p><pre><code>gcloud compute instances list \
+  --impersonate-service-account=deployer@my-project.iam.gserviceaccount.com</code></pre></article>
+          <article class="card"><h3>Image families drift</h3><p>Families like <code>debian-11</code> go end-of-life yet the CLI keeps offering them for a while. Pin a current family and re-check before new deploys.</p><pre><code>gcloud compute images list --standard-images \
+  --filter="family:debian*"</code></pre></article>
         </div>
         <br>
         <details>
@@ -348,6 +378,16 @@ gcloud components update</code></pre></div>
           <a href="https://cloud.google.com/sdk/docs" target="_blank" rel="noreferrer">SDK docs</a>
           <a href="https://cloud.google.com/sdk/gcloud/reference" target="_blank" rel="noreferrer">gcloud reference</a>
           <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+
+      <footer class="footer searchable" style="margin-top:24px">
+        <strong>Related</strong>
+        <p>gcloud drives the cluster; kubectl works inside it. Pair this guide with the rest of your cloud toolkit.</p>
+        <div class="footer-links">
+          <a href="../kubectl/">kubectl</a>
+          <a href="../devops/">DevOps</a>
+          <a href="../postgres/">PostgreSQL</a>
         </div>
       </footer>
     </main>

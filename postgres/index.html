@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#users"><span class="nav-number">02</span>Users &amp; permissions</a>
         <a href="#backup"><span class="nav-number">03</span>Backups</a>
@@ -70,6 +71,24 @@
               <div><span class="prompt">❯</span> <span class="cursor"></span></div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The daily surface on one screen — connect, inspect, back up, and keep it healthy. Everything here is expanded in the sections below.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>psql -U postgres -d appdb</code><span>Connect — add <code>-h host</code> <code>-p 5432</code>, or a URI: <code>postgres://u:p@host/db</code>.</span></div>
+          <div class="command-row"><code>\l · \dt · \d users</code><span>List databases, list tables, describe one table.</span></div>
+          <div class="command-row"><code>pg_dump -Fc appdb &gt; appdb.dump</code><span>Compressed custom-format dump (best default).</span></div>
+          <div class="command-row"><code>pg_restore -d appdb appdb.dump</code><span>Restore it — <code>-l</code> lists contents, <code>-j 4</code> restores in parallel.</span></div>
+          <div class="command-row"><code>GRANT SELECT, INSERT ON users TO app;</code><span>Give a role table rights; <code>REVOKE ALL … FROM app</code> takes them back.</span></div>
+          <div class="command-row"><code>VACUUM (ANALYZE) users;</code><span>Reclaim dead tuples and refresh planner stats.</span></div>
+          <div class="command-row"><code>EXPLAIN (ANALYZE, BUFFERS) SELECT …;</code><span>Real query plan with timing and I/O.</span></div>
+          <div class="command-row"><code>CREATE PUBLICATION pub FOR TABLE users;</code><span>Logical replication — or stream WAL to a standby (next section).</span></div>
+          <div class="command-row"><code>SELECT pid, state, query FROM pg_stat_activity;</code><span>What's running right now.</span></div>
         </div>
       </section>
 
@@ -159,6 +178,8 @@ SELECT * FROM information_schema
           <div class="command-row"><code>pg_dumpall &gt; cluster.sql</code><span>Whole cluster: roles + every database.</span></div>
           <div class="command-row"><code>pg_basebackup -D /backup -F t -z -X stream</code><span>Physical base backup for PITR.</span></div>
           <div class="command-row"><code>archive_command = 'cp %p /wal/%f'</code><span>Ship WAL segments for continuous recovery.</span></div>
+          <div class="command-row"><code>pg_basebackup -D /incr --incremental=/full/backup_manifest</code><span>Incremental base backup (PG 17+) — only changed blocks.</span></div>
+          <div class="command-row"><code>pg_combinebackup -o /restore /full /incr</code><span>Reconstruct a full backup from an incremental chain.</span></div>
         </div>
         <div class="flow" style="margin-top:16px">
           <div class="flow-step"><div><strong>Base backup</strong><p><code>pg_basebackup</code> copies the cluster while <code>wal_level</code> keeps WAL flowing.</p></div></div>
@@ -250,13 +271,14 @@ primary_conninfo = 'host=pg1
           <summary>More config worth knowing</summary>
           <div class="details-body">
             <div class="tags">
-              <span class="tag">checkpoint_timeout</span><span class="tag">random_page_cost</span><span class="tag">idle_in_transaction_session_timeout</span><span class="tag">statement_timeout</span><span class="tag">lock_timeout</span><span class="tag">jit</span><span class="tag">track_io_timing</span><span class="tag">synchronous_commit</span>
+              <span class="tag">checkpoint_timeout</span><span class="tag">random_page_cost</span><span class="tag">idle_in_transaction_session_timeout</span><span class="tag">statement_timeout</span><span class="tag">lock_timeout</span><span class="tag">jit</span><span class="tag">track_io_timing</span><span class="tag">synchronous_commit</span><span class="tag">io_method</span>
             </div>
             <div class="command-index" style="margin-top:12px">
               <div class="command-row"><code>statement_timeout = '30s'</code><span>Cancel queries that run too long.</span></div>
               <div class="command-row"><code>lock_timeout = '5s'</code><span>Fail rather than wait on a lock forever.</span></div>
               <div class="command-row"><code>random_page_cost = 1.1</code><span>On SSD storage, bias the planner toward index scans.</span></div>
               <div class="command-row"><code>checkpoint_timeout = '15min'</code><span>Spread checkpoints to smooth I/O.</span></div>
+              <div class="command-row"><code>io_method = 'worker'</code><span>PG 18 async I/O — <code>worker</code> or <code>io_uring</code>; up to 3× read throughput.</span></div>
             </div>
           </div>
         </details>
@@ -330,12 +352,27 @@ ALTER TABLE users
   SET (autovacuum_vacuum_scale_factor
        = 0.01);</code></pre></article>
         </div>
+        <details style="margin-top:16px">
+          <summary>What's new in PostgreSQL 17 &amp; 18</summary>
+          <div class="details-body">
+            <div class="command-index">
+              <div class="command-row"><code>io_method = 'worker'</code><span>PG 18 async I/O (<code>worker</code>/<code>io_uring</code>) — up to 3× read throughput.</span></div>
+              <div class="command-row"><code>uuidv7()</code><span>PG 18 — timestamp-ordered UUIDs for better index locality.</span></div>
+              <div class="command-row"><code>GENERATED ALWAYS AS (…) VIRTUAL</code><span>PG 18 — generated columns computed at read, not stored.</span></div>
+              <div class="command-row"><code>RETURNING old.*, new.*</code><span>PG 18 — reference OLD and NEW row values in DML RETURNING.</span></div>
+              <div class="command-row"><code>auth method = oauth</code><span>PG 18 — SSO via OAuth 2.0; <code>md5</code> password auth is deprecated, use SCRAM.</span></div>
+              <div class="command-row"><code>initdb … (checksums on by default)</code><span>PG 18 — page checksums enabled for new clusters.</span></div>
+              <div class="command-row"><code>pg_basebackup --incremental</code><span>PG 17 — incremental backups, merged with <code>pg_combinebackup</code>.</span></div>
+              <div class="command-row"><code>pg_upgrade (keeps planner stats)</code><span>PG 18 — statistics survive major upgrades; no post-upgrade <code>ANALYZE</code> stall.</span></div>
+            </div>
+          </div>
+        </details>
       </section>
 
       <section class="section searchable" id="gotchas">
         <div class="section-head">
           <div><div class="section-kicker">08 / Gotchas</div><h2>Pitfalls</h2></div>
-          <p>Five ways a healthy-looking Postgres quietly degrades in production.</p>
+          <p>Seven ways a healthy-looking Postgres quietly degrades in production.</p>
         </div>
         <div class="grid two">
           <article class="card"><h3>Connection exhaustion</h3><p>Each connection is a backend process with its own <code>work_mem</code>. A pool of 1000 connections can eat RAM fast.</p><pre><code>SELECT count(*) FROM pg_stat_activity;
@@ -345,18 +382,31 @@ ALTER TABLE users
           <article class="card"><h3>Bloat</h3><p>Dead tuples accumulate until autovacuum or a manual <code>VACUUM</code> cleans up. Tables and indexes swell, queries slow.</p><pre><code>VACUUM (ANALYZE) big_table;</code></pre></article>
           <article class="card"><h3>Wrong index choice</h3><p>A single-column index doesn't serve a two-column <code>WHERE a AND b</code>. Unused indexes cost every write.</p><pre><code>SELECT * FROM pg_stat_user_indexes
   WHERE idx_scan = 0;</code></pre></article>
+          <article class="card"><h3>Transaction ID wraparound</h3><p>Every row carries an <code>xmin</code>. If a database's oldest unfrozen XID falls roughly 2 billion behind, Postgres halts writes rather than risk data loss.</p><pre><code>SELECT age(datfrozenxid)
+  FROM pg_database;
+# keep age &lt; 200M</code></pre></article>
+          <article class="card"><h3>Stale replication slot</h3><p>A slot no standby consumes pins WAL on the primary until the disk fills and writes stop.</p><pre><code>SELECT slot_name, active
+  FROM pg_replication_slots;
+# idle_replication_slot_timeout
+# drops idle slots (PG 18)</code></pre></article>
         </div>
         <div class="callout warning" style="margin-top:16px"><div class="callout-mark">⚠</div><p><strong>Missing backups is the one that ends the company.</strong> A replica is not a backup — a dropped table or <code>DELETE</code> replays onto the standby too. Keep logical dumps <em>and</em> WAL archives, and test the restore.</p></div>
       </section>
 
       <footer class="footer searchable">
         <strong>Source of truth</strong>
-        <p>This guide covers the operational essentials of running PostgreSQL. The official documentation and the <code>psql(1)</code> manual remain authoritative for edge cases.</p>
+        <p>This guide targets PostgreSQL 17/18 — <strong>18 is the current stable major version</strong> (released September 2025), with 19 in beta. The official documentation and the <code>psql(1)</code> manual remain authoritative for edge cases.</p>
         <div class="footer-links">
           <a href="https://www.postgresql.org/docs/" target="_blank" rel="noreferrer">PostgreSQL docs</a>
           <a href="https://www.postgresql.org/docs/current/app-psql.html" target="_blank" rel="noreferrer">psql manual</a>
           <a href="https://wiki.postgresql.org/wiki/" target="_blank" rel="noreferrer">Postgres wiki</a>
           <a href="../">slop-stuff home</a>
+        </div>
+        <div class="footer-links">
+          <strong>Related</strong>
+          <a href="../db-optimization/">DB optimization</a>
+          <a href="../kafka/">Kafka</a>
+          <a href="../devops/">DevOps</a>
         </div>
       </footer>
     </main>

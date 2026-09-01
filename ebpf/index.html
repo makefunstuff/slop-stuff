@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#hooks"><span class="nav-number">02</span>Hooks</a>
         <a href="#maps"><span class="nav-number">03</span>Maps</a>
@@ -71,6 +72,26 @@
               <div><span class="prompt">❯</span> <span class="cursor"></span></div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The eight commands and concepts you'll reach for most — copy, adapt, then dig into the sections below.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>bpftrace -e 'kprobe:vfs_read { @[comm] = count(); }'</code><span>one-liner tracing — count a function call per process, no compile step.</span></div>
+          <div class="command-row"><code>bpftool prog list · bpftool map dump name counts</code><span>list loaded programs and dump a map's key/value pairs.</span></div>
+          <div class="command-row"><code>clang -O2 -g -target bpf -c prog.c -o prog.o</code><span>compile C to BPF bytecode (libbpf object file).</span></div>
+          <div class="command-row"><code>bpftool prog load prog.o /sys/fs/bpf/x autoattach</code><span>load and auto-attach a <code>SEC</code>-tagged object file.</span></div>
+          <div class="command-row"><code>go generate</code><span>cilium/ebpf's <code>bpf2go</code> compiles C and embeds it into Go bindings.</span></div>
+          <div class="command-row"><code>SEC("xdp") · SEC("tracepoint/…")</code><span>the section name chooses the hook — kprobe, tracepoint, XDP, tc, cgroup, uprobe.</span></div>
+          <div class="command-row"><code>BPF_MAP_TYPE_HASH · ARRAY · PERCPU_* · RINGBUF</code><span>hash &amp; array for counters/config, per-CPU to avoid races, ringbuf for streaming.</span></div>
+          <div class="command-row"><code>bpf_core_read(&amp;v, &amp;ctx-&gt;field)</code><span>CO-RE + BTF relocate field offsets — compile once, run on many kernels.</span></div>
+        </div>
+        <div class="tags" style="margin-top:16px">
+          <span class="tag">libbpf</span><span class="tag">cilium/ebpf</span><span class="tag">bpftrace</span><span class="tag">bpftool</span><span class="tag">bpf2go</span><span class="tag">CO-RE</span><span class="tag">BTF</span><span class="tag">sched_ext</span>
         </div>
       </section>
 
@@ -120,6 +141,7 @@ char LICENSE[] = "GPL";</code></pre></article>
         </div>
         <div class="table-wrap"><table><thead><tr><th>Hook</th><th>Where it runs</th><th>Use when</th><th>Example</th></tr></thead><tbody>
           <tr><td><code>kprobe</code> / <code>kretprobe</code></td><td>any kernel function (entry / return)</td><td>tracing one function</td><td><code>kprobe:vfs_read</code></td></tr>
+          <tr><td><code>fentry</code> / <code>fexit</code></td><td>function entry / exit via BTF</td><td>fast, stable tracing (prefer over kprobes)</td><td><code>fentry/vfs_read</code></td></tr>
           <tr><td><code>tracepoint</code></td><td>stable kernel tracepoints</td><td>low-overhead, stable ABI</td><td><code>tracepoint:syscalls:sys_enter_open</code></td></tr>
           <tr><td><code>XDP</code></td><td>earliest point in the NIC driver</td><td>DDoS filter, load balancing</td><td><code>xdp</code></td></tr>
           <tr><td><code>tc</code></td><td>traffic control ingress / egress</td><td>shaping, policing, redirect</td><td><code>tc/ingress</code></td></tr>
@@ -127,7 +149,7 @@ char LICENSE[] = "GPL";</code></pre></article>
           <tr><td><code>cgroup</code></td><td>cgroup attach points</td><td>per-container policy</td><td><code>cgroup/skb</code></td></tr>
           <tr><td><code>uprobe</code> / <code>uretprobe</code></td><td>userspace functions</td><td>tracing applications</td><td><code>uprobe:/bin/bash:readline</code></td></tr>
         </tbody></table></div>
-        <div class="callout" style="margin-top:16px"><div class="callout-mark">!</div><p><strong>kprobes are not a stable ABI.</strong> Kernel function names and signatures change between releases. Prefer tracepoints (a stable interface) for long-lived tooling; reach for kprobes when exploring or when no tracepoint exists.</p></div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">!</div><p><strong>kprobes are not a stable ABI.</strong> Kernel function names and signatures change between releases. Prefer tracepoints (a stable interface) or <code>fentry</code>/<code>fexit</code> (BTF-based function tracing) for long-lived tooling; reach for kprobes when exploring or when no better hook exists.</p></div>
         <div class="grid three" style="margin-top:16px">
           <article class="card"><h3>Attach a kprobe</h3><pre><code>bpftrace -e 'kprobe:do_sys_open { @[comm] = count(); }'</code></pre></article>
           <article class="card"><h3>Attach a tracepoint</h3><pre><code>bpftrace -e 'tracepoint:syscalls:sys_enter_open { @[comm] = count(); }'</code></pre></article>
@@ -150,6 +172,7 @@ ip link set dev eth0 xdp off</code></pre></article>
           <tr><td><code>BPF_MAP_TYPE_PERF_EVENT_ARRAY</code></td><td>events to a perf buffer</td><td>stream events to userspace</td></tr>
           <tr><td><code>BPF_MAP_TYPE_RINGBUF</code></td><td>lock-free ring buffer</td><td>low-latency event streaming</td></tr>
           <tr><td><code>BPF_MAP_TYPE_STACK_TRACE</code></td><td>kernel / user stack traces</td><td>profiling, flame graphs</td></tr>
+          <tr><td><code>BPF_MAP_TYPE_ARENA</code></td><td>huge memory-mapped region</td><td>GB-scale state (e.g. sched_ext schedulers)</td></tr>
         </tbody></table></div>
         <div class="grid two" style="margin-top:16px">
           <article class="card"><h3>Kernel side</h3><p>Look up, update, or delete entries from inside the program.</p><pre><code>__u64 *v = bpf_map_lookup_elem(&amp;counter_map, &amp;key);
@@ -262,9 +285,9 @@ defer tp.Close()
           <tr><td><code>bounded loops</code></td><td>every loop must provably terminate (or be unrolled)</td><td>guarantee finite runtime</td></tr>
           <tr><td><code>bounds checks</code></td><td>every load/store must be provably in-bounds</td><td>no out-of-bounds access</td></tr>
           <tr><td><code>no unreachable code</code></td><td>dead instructions are rejected</td><td>verifier explores all paths</td></tr>
-          <tr><td><code>helper whitelist</code></td><td>only known <code>bpf_*</code> helpers may be called</td><td>no arbitrary kernel calls</td></tr>
+          <tr><td><code>helper whitelist</code></td><td>only whitelisted <code>bpf_*</code> helpers and registered kfuncs may be called</td><td>no arbitrary kernel calls</td></tr>
           <tr><td><code>pointer safety</code></td><td>kernel pointers can't leak to userspace or into maps</td><td>protect kernel memory</td></tr>
-          <tr><td><code>512-byte stack</code></td><td>per-program stack is capped (4 KB on newer kernels)</td><td>bounded memory use</td></tr>
+          <tr><td><code>512-byte stack</code></td><td>per-subprogram stack is capped at 512 B — move big buffers to maps</td><td>bounded memory use</td></tr>
           <tr><td><code>1M instructions</code></td><td>complexity limit before rejection</td><td>the verifier itself terminates</td></tr>
         </tbody></table></div>
         <div class="state-grid" style="margin-top:16px">
@@ -296,14 +319,14 @@ defer tp.Close()
 kretprobe:vfs_read /@start[tid]/ {
   @us = hist((nsecs - @start[tid]) / 1000);
   delete(@start[tid]); }'</code></pre></article>
-          <article class="card"><h3>Networking (XDP)</h3><p>Drop or redirect packets at the NIC, before the network stack — DDoS filtering and load balancing at line rate.</p><pre><code>SEC("xdp")
+          <article class="card"><h3>Networking (XDP)</h3><p>Drop or redirect packets at the NIC, before the network stack — DDoS filtering and load balancing at line rate. In pods, Cilium now attaches these programs to <code>netkit</code> devices instead of veth.</p><pre><code>SEC("xdp")
 int xdp_filter(struct xdp_md *ctx) {
   return XDP_DROP; /* or XDP_PASS / XDP_TX */
 }</code></pre></article>
           <article class="card"><h3>Security</h3><p><code>seccomp-bpf</code> filters syscalls per process; LSM hooks enforce policy across the whole kernel (audit, socket controls).</p><div class="tags"><span class="tag">seccomp</span><span class="tag">LSM</span><span class="tag">audit</span></div></article>
           <article class="card"><h3>Profiling &amp; tracing</h3><p>Sample stack traces at 99 Hz for flame graphs and CPU profiling.</p><pre><code>bpftrace -e 'profile:hz:99 { @[kstack] = count(); }'</code></pre></article>
         </div>
-        <div class="callout" style="margin-top:16px"><div class="callout-mark">→</div><p><strong>Pick the hook to match the goal.</strong> Observability → kprobe / tracepoint; networking → XDP / tc; security → seccomp / LSM / cgroup; profiling → perf events via <code>profile:hz</code>.</p></div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">→</div><p><strong>Pick the hook to match the goal.</strong> Observability → kprobe / tracepoint / fentry; networking → XDP / tc (or <code>netkit</code> devices); security → seccomp / LSM / cgroup; profiling → perf events via <code>profile:hz</code>; scheduling → <code>struct_ops</code> via <code>sched_ext</code> (Linux 6.12+).</p></div>
       </section>
 
       <section class="section searchable" id="gotchas">
@@ -324,6 +347,12 @@ __uint(map_flags, BPF_F_NO_PREALLOC); /* huge hashes */</code></pre></article>
 # 1 = disabled, 2 = always disabled</code></pre></article>
           <article class="card"><h3>Ring buffer vs perf</h3><p>Prefer <code>ringbuf</code> for new code — lock-free, single-producer, and supports reservation for variable-size records.</p><pre><code>__uint(type, BPF_MAP_TYPE_RINGBUF);
 __uint(max_entries, 1 &lt;&lt; 20); /* 1 MiB */</code></pre></article>
+          <article class="card"><h3>Missing BTF</h3><p>CO-RE relocation needs the running kernel's BTF at <code>/sys/kernel/btf/vmlinux</code>. If it's absent (old or stripped kernels), CO-RE fails — ship a matching <code>.BTF</code> blob or fall back to compiled headers.</p><pre><code>ls /sys/kernel/btf/vmlinux
+# absent? boot with CONFIG_DEBUG_INFO_BTF=y</code></pre></article>
+          <article class="card"><h3>fentry/fexit context</h3><p><code>fentry</code>/<code>fexit</code> pass the function's raw arguments as a struct — there's no <code>PT_REGS</code> sugar like kprobes. Read args via CO-RE field access, and require BTF on the target kernel.</p><pre><code>SEC("fentry/vfs_read")
+int BPF_PROG(fentry_vfs_read,
+  struct file *f, char *buf,
+  size_t count, loff_t *pos) { … }</code></pre></article>
         </div>
       </section>
 
@@ -335,6 +364,16 @@ __uint(max_entries, 1 &lt;&lt; 20); /* 1 MiB */</code></pre></article>
           <a href="https://docs.kernel.org/bpf/" target="_blank" rel="noreferrer">kernel BPF docs</a>
           <a href="https://github.com/cilium/ebpf" target="_blank" rel="noreferrer">cilium/ebpf</a>
           <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+
+      <footer class="footer searchable" style="margin-top:24px">
+        <strong>Related</strong>
+        <p>eBPF sits between the kernel you can modify and the systems you run in production.</p>
+        <div class="footer-links">
+          <a href="../osdev/">OS dev</a>
+          <a href="../giants/">Systems giants</a>
+          <a href="../devops/">DevOps</a>
         </div>
       </footer>
     </main>

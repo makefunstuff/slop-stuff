@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#config"><span class="nav-number">02</span>Configuration</a>
         <a href="#sensors"><span class="nav-number">03</span>Sensors</a>
@@ -36,6 +37,7 @@
         <a href="#lambda"><span class="nav-number">06</span>Lambdas</a>
         <a href="#cli"><span class="nav-number">07</span>CLI &amp; flashing</a>
         <a href="#gotchas"><span class="nav-number">08</span>Gotchas</a>
+        <a href="#related"><span class="nav-number">09</span>Related</a>
       </nav>
     </aside>
 
@@ -76,6 +78,37 @@
             </div>
           </div>
         </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The handful of lines and commands you'll reach for most often.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>Minimal device YAML</h3><p>Everything a node needs to phone home and be discoverable.</p><pre><code>esphome:
+  name: livingroom
+  friendly_name: Living Room
+
+esp32:
+  board: esp32dev
+
+wifi:
+  ssid: "my-wifi"
+  password: !secret wifi_password
+
+api:          # HA discovery, port 6053
+ota:          # wireless updates</code></pre></article>
+          <article class="card"><h3>Most-used commands</h3><p>Build, flash, and watch a node from the terminal.</p><div class="command-index">
+            <div class="command-row"><code>esphome dashboard config/</code><span>web UI · http://localhost:6052</span></div>
+            <div class="command-row"><code>esphome run livingroom.yaml</code><span>compile + upload + logs</span></div>
+            <div class="command-row"><code>esphome compile livingroom.yaml</code><span>build the binary only</span></div>
+            <div class="command-row"><code>esphome upload livingroom.yaml</code><span>flash USB, then OTA</span></div>
+            <div class="command-row"><code>esphome logs livingroom.yaml</code><span>stream serial logs</span></div>
+            <div class="command-row"><code>esphome config livingroom.yaml</code><span>validate the YAML</span></div>
+          </div></article>
+        </div>
+        <div class="callout"><div class="callout-mark">⌁</div><p><strong>Common sensors:</strong> <code>dht</code> (temp + humidity) · <code>bme280</code> (temp + humidity + pressure, I2C) · <code>ultrasonic</code> (distance) · <code>adc</code> (0–3.3 V) · <code>gpio</code> binary (button / PIR). <strong>Boards:</strong> <code>esp32dev</code> · <code>esp32-c3-devkitm-1</code> · <code>nodemcuv2</code> · <code>d1_mini</code>. <strong>Ports:</strong> API <code>6053</code> · dashboard <code>6052</code> · web <code>80</code>.</p></div>
       </section>
 
       <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “sensor”, “YAML”, “GPIO”, “MQTT”, “OTA”, or “lambda”.</div>
@@ -141,6 +174,8 @@ ota:                         # over-the-air updates
   - platform: esphome
     password: !secret ota_password
 
+captive_portal:              # wifi setup page in fallback-AP mode
+
 logger:                      # serial logs
 
 sensor:
@@ -157,12 +192,14 @@ sensor:
 esp8266:
   board: nodemcuv2
   #   d1_mini / esp01_1m</code></pre></article>
-          <article class="card"><h3>Wi-Fi &amp; fallback AP</h3><p>If the station can't connect, the board starts the <code>ap:</code> hotspot so you can still reach it.</p><pre><code>wifi:
+          <article class="card"><h3>Wi-Fi &amp; fallback AP</h3><p>If the station can't connect, the board starts the <code>ap:</code> hotspot; add <code>captive_portal:</code> to get a web setup page when you join it.</p><pre><code>wifi:
   ssid: "my-wifi"
   password: !secret wifi_password
   ap:
     ssid: "Node Fallback"
-    password: "12345678"</code></pre></article>
+    password: "12345678"
+
+captive_portal:</code></pre></article>
         </div>
         <div class="callout"><div class="callout-mark">⌁</div><p><strong><code>api:</code> and <code>ota:</code> make ESPHome feel native.</strong> <code>api:</code> opens port <code>6053</code> for the Home Assistant integration (auto-discovered over mDNS); <code>ota:</code> lets you push new firmware over Wi-Fi. Pull every password from <code>secrets.yaml</code> via <code>!secret</code>.</p></div>
       </section>
@@ -188,6 +225,7 @@ esp8266:
             <div><h4>DHT22 on one wire</h4><pre><code>sensor:
   - platform: dht
     pin: GPIO4
+    model: DHT22          # default: AUTO_DETECT
     temperature:
       name: "Living Room Temp"
     humidity:
@@ -367,7 +405,7 @@ ota_password: "another-secret"
       <section class="section searchable" id="gotchas">
         <div class="section-head">
           <div><div class="section-kicker">08 / Gotchas</div><h2>Pitfalls</h2></div>
-          <p>Five mistakes that cost the most debugging time — all avoidable up front.</p>
+          <p>The mistakes that cost the most debugging time — all avoidable up front.</p>
         </div>
         <div class="grid two">
           <article class="card"><h3>YAML indentation</h3><p>Two spaces, never tabs. A list item one space off silently nests under the wrong key.</p><pre><code># ✗ pin indented under platform
@@ -397,8 +435,32 @@ esphome upload livingroom.yaml</code></pre></article>
   ap:
     ssid: "Node Fallback"
     password: "12345678"</code></pre></article>
+          <article class="card"><h3>OTA brick → safe mode</h3><p>Safe mode is on by default: after repeated failed boots, the node drops to a minimal firmware (OTA + API only) so you can push a fix wirelessly.</p><pre><code>safe_mode:              # defaults shown
+  num_attempts: 5       # failed boots to trigger
+  reboot_timeout: 5min  # window to count
+
+button:
+  - platform: safe_mode
+    name: "Safe Mode Boot"</code></pre></article>
+          <article class="card"><h3>Rotated the API key</h3><p>Change the <code>api:</code> encryption key and Home Assistant shows the node offline until you re-approve it — the old key no longer matches.</p><pre><code>api:
+  encryption:
+    key: !secret api_key
+# HA → Settings → Devices:
+# re-add after any key change</code></pre></article>
         </div>
         <div class="callout warning"><div class="callout-mark">!</div><p><strong>3.3 V logic only.</strong> ESP32/ESP8266 GPIOs are not 5 V tolerant. Level-shift 5 V sensors, and never power a relay coil straight from a pin.</p></div>
+      </section>
+
+      <section class="section searchable" id="related">
+        <div class="section-head">
+          <div><div class="section-kicker">09 / Related</div><h2>Keep exploring</h2></div>
+          <p>Neighboring cheatsheets for the same workbench.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>ESP32</h3><p>Bare-metal ESP32 development — IDF, pin maps, Wi-Fi, and low-level APIs.</p><a class="button" href="../esp32/">ESP32 guide →</a></article>
+          <article class="card"><h3>Embedded dev</h3><p>Cross-platform embedded fundamentals, toolchains, and workflows.</p><a class="button" href="../embedded/">Embedded dev →</a></article>
+          <article class="card"><h3>Hardware list</h3><p>Boards, sensors, and parts to stock the physical build.</p><a class="button" href="../hardware/">Hardware list →</a></article>
+        </div>
       </section>
 
       <footer class="footer searchable">

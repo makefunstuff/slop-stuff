@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#schematic"><span class="nav-number">02</span>Schematic</a>
         <a href="#layout"><span class="nav-number">03</span>PCB layout</a>
@@ -78,6 +79,37 @@
         </div>
       </section>
 
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>The 20-second version</h2></div>
+          <p>Schematic → netlist → PCB → DRC → gerbers. Six commands carry the flow; a handful of hotkeys do the editing.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>The flow</h3><pre><code>1. Schematic  place symbols, wire, run ERC
+2. Netlist    assign footprints, sync to board
+3. PCB        place, route, pour a GND plane
+4. DRC        fix clearance + connectivity errors
+5. Gerbers    copper + mask + silk + drill → zip
+6. Fabricate  upload zip, check the preview</code></pre></article>
+          <article class="card"><h3>Key hotkeys</h3><pre><code>A  add symbol     W  wire / route
+P  power port     V  drop a via
+L  net label      B  refill zones
+M  move           F  flip side
+G  drag           R  rotate CCW
+E  properties     `  highlight net</code></pre></article>
+        </div>
+        <div class="command-index" style="margin-top:16px">
+          <div class="command-row"><code>kicad-cli sch export netlist board.kicad_sch</code><span>Schematic → netlist.</span></div>
+          <div class="command-row"><code>kicad-cli sch erc board.kicad_sch</code><span>Electrical rules check.</span></div>
+          <div class="command-row"><code>kicad-cli pcb drc board.kicad_pcb</code><span>Design rules check.</span></div>
+          <div class="command-row"><code>kicad-cli pcb export gerbers -o gerbers/ board.kicad_pcb</code><span>Copper, mask, silk — one file per layer.</span></div>
+          <div class="command-row"><code>kicad-cli pcb export drill -o gerbers/ board.kicad_pcb</code><span>Excellon drill file (.drl).</span></div>
+          <div class="command-row"><code>kicad-cli pcb export pos -o pos.csv --format csv board.kicad_pcb</code><span>Pick-and-place positions.</span></div>
+          <div class="command-row"><code>kicad-cli sch export bom -o bom.csv board.kicad_sch</code><span>Bill of materials.</span></div>
+          <div class="command-row"><code>kicad-cli jobset run board.kicad_pro</code><span>Run a saved output jobset (KiCad 9+).</span></div>
+        </div>
+      </section>
+
       <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “schematic”, “footprint”, “netlist”, “DRC”, “copper pour”, or “gerber”.</div>
 
       <section class="section searchable" id="start">
@@ -103,7 +135,7 @@
         <div class="grid four" style="margin-top:16px">
           <article class="card"><div class="card-number">1</div><h3>Install</h3><pre><code>brew install --cask kicad   # macOS
 sudo apt install kicad      # Debian/Ubuntu
-winget install KiCad.KiCad  # Windows</code></pre></article>
+winget install KiCad.KiCad  # Windows</code></pre><p>Current stable: <strong>KiCad 10</strong> (Mar 2026); 9.0.x is still maintained.</p></article>
           <article class="card"><div class="card-number">2</div><h3>New project</h3><pre><code>File → New Project → "board"
 # creates board.kicad_pro
 #          board.kicad_sch
@@ -144,7 +176,7 @@ kicad-cli sch export netlist</code></pre></article>
           <article class="card"><h3>Run ERC before you leave</h3><p>The Electrical Rules Checker catches unconnected pins, duplicate references, and power-net mistakes.</p><pre><code>Inspect → Electrical Rules Checker
 # or on the command line:
 kicad-cli sch erc board.kicad_sch</code></pre></article>
-          <article class="card"><h3>Generate the netlist</h3><p>The netlist is the list of connections that Pcbnew turns into copper. KiCad 7+ also syncs it directly via “Update PCB from Schematic”.</p><pre><code>kicad-cli sch export netlist \
+          <article class="card"><h3>Generate the netlist</h3><p>The netlist is the list of connections that Pcbnew turns into copper. KiCad 7 and later (9/10) also sync it directly via “Update PCB from Schematic”.</p><pre><code>kicad-cli sch export netlist \
   board.kicad_sch</code></pre></article>
         </div>
         <div class="callout warning" style="margin-top:16px"><div class="callout-mark">!</div><p><strong>Power nets need a PWR_FLAG.</strong> A net driven only by power symbols (like <code>GND</code> or <code>VCC</code>) triggers “power output pin connected to power output pin”. Place a <code>PWR_FLAG</code> symbol on each such net to tell ERC it's powered.</p></div>
@@ -193,6 +225,7 @@ high current: 0.8 mm pad / 0.4 mm drill</code></pre></article>
         <div class="grid two" style="margin-top:16px">
           <article class="card"><h3>Footprint editor</h3><p>Pads carry the electrical connection; pad numbers must match the symbol's pin numbers exactly, or the netlist won't line up.</p><pre><code>SMD pad:  F.Cu + F.Mask + F.Paste
 TH pad:   through all Cu layers
+F.Fab:    fabrication outline + pin 1
 # pad number = symbol pin number</code></pre></article>
           <article class="card"><h3>Courtyard &amp; silkscreen</h3><p>The courtyard layer stops footprints from touching; silkscreen marks the reference designator and pin 1.</p><pre><code>F.Courtyard: keep-out outline
 F.Silkscreen: refdes + pin-1 dot
@@ -282,6 +315,8 @@ board.drl             drill file</code></pre></article>
             <div class="shortcut-row"><span>Edit properties</span><div class="keys"><kbd>E</kbd></div></div>
             <div class="shortcut-row"><span>Copy / paste</span><div class="keys"><kbd>Ctrl</kbd><kbd>C</kbd><kbd>Ctrl</kbd><kbd>V</kbd></div></div>
             <div class="shortcut-row"><span>Delete</span><div class="keys"><kbd>Del</kbd></div></div>
+            <div class="shortcut-row"><span>Cancel current tool</span><div class="keys"><kbd>Esc</kbd></div></div>
+            <div class="shortcut-row"><span>Undo / redo</span><div class="keys"><kbd>Ctrl</kbd><kbd>Z</kbd><kbd>Ctrl</kbd><kbd>Y</kbd></div></div>
           </div></div>
           <div class="shortcut-group"><h3>Schematic (Eeschema)</h3><div class="shortcut-list">
             <div class="shortcut-row"><span>Begin wire</span><div class="keys"><kbd>W</kbd></div></div>
@@ -317,10 +352,15 @@ kicad-cli pcb drc board.kicad_pcb</code></pre></article>
       from Schematic</code></pre></article>
           <article class="card"><h3>Power flags missing</h3><p><code>GND</code>/<code>VCC</code> nets driven only by power symbols need a <code>PWR_FLAG</code>, or ERC reports “power pin connected to power pin”.</p><pre><code>place PWR_FLAG on each
 power-only net</code></pre></article>
-          <article class="card"><h3>Silkscreen overlap</h3><p>Refdes text sitting on pads or over holes. Move it to open space and keep it off copper.</p><pre><code>move refdes to open space
-# enable --subtract-soldermask</code></pre></article>
+          <article class="card"><h3>Silkscreen overlap</h3><p>Refdes text sitting on pads or over holes. Move it to open space and keep it off copper — a covered pad can't be soldered.</p><pre><code>move refdes to open space
+# keep silk off pads &amp; holes
+# DXF export: --subtract-soldermask</code></pre></article>
           <article class="card"><h3>No board outline</h3><p>If <code>Edge.Cuts</code> is missing or open, the fab can't cut your board shape.</p><pre><code>draw a closed shape on
 Edge.Cuts around the board</code></pre></article>
+          <article class="card"><h3>Zones not refilled</h3><p>DRC ignores unfilled zones, so pads on the GND pour read as unconnected. Press <code>B</code> to refill every zone before you run DRC or export Gerbers.</p><pre><code>press B in Pcbnew
+# refill → re-run DRC → export</code></pre></article>
+          <article class="card"><h3>Missing drill file</h3><p>Gerbers without the <code>.drl</code> can't be drilled. The drill file must sit in the same zip as the copper, mask, and silk layers.</p><pre><code>kicad-cli pcb export drill \
+  -o gerbers/ board.kicad_pcb</code></pre></article>
         </div>
         <div class="callout warning" style="margin-top:16px"><div class="callout-mark">!</div><p><strong>Verify before you order.</strong> Check the board outline (Edge.Cuts), pin-1 orientation, and that every part has a footprint. A re-spin costs more than the extra hour of checking.</p></div>
       </section>
@@ -333,6 +373,12 @@ Edge.Cuts around the board</code></pre></article>
           <a href="https://docs.kicad.org/" target="_blank" rel="noreferrer">Documentation</a>
           <a href="https://jlcpcb.com/" target="_blank" rel="noreferrer">JLCPCB</a>
           <a href="../">slop-stuff home</a>
+        </div>
+        <strong style="display:block;margin-top:22px">Related</strong>
+        <div class="footer-links">
+          <a href="../electronics/">Electronics</a>
+          <a href="../electrical/">Electrical</a>
+          <a href="../hardware/">Hardware list</a>
         </div>
       </footer>
     </main>

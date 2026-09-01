@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#model"><span class="nav-number">02</span>Mental model</a>
         <a href="#running"><span class="nav-number">03</span>Running the agent</a>
@@ -49,7 +50,7 @@
           <h1 id="hero-title">An agent that <span>lives in the terminal.</span></h1>
           <p>Hermes Agent is a full terminal UI — multiline editing, slash-command autocomplete, session history, interrupt-and-redirect, and streaming tool output. Built for people who never leave the shell.</p>
           <div class="hero-actions">
-            <a class="button primary" href="#start">Start in 5 minutes →</a>
+            <a class="button primary" href="#quickref">Quick reference →</a>
             <a class="button" href="#keyboard">See keybindings</a>
             <a class="button" href="#slash">Browse slash commands</a>
           </div>
@@ -59,15 +60,15 @@
           <div class="terminal-body">
             <div class="mock-side">
               <p class="mock-label">Status</p>
-              <div class="mock-row active">claude-sonnet-4</div>
+              <div class="mock-row active">claude-opus-4.6</div>
               <div class="mock-row">12.4K / 200K</div>
               <div class="mock-row">$0.06 · 15m</div>
             </div>
             <div class="mock-pane">
-              <div><span class="dim">⚕ claude-sonnet-4-20250514 │ 12.4K/200K │ [██████░░░░] 6% │ $0.06 │ 15m</span></div>
+              <div><span class="dim">⚕ anthropic/claude-opus-4.6 │ 12.4K/200K │ [██████░░░░] 6% │ $0.06 │ 15m</span></div>
               <br>
               <div><span class="prompt">❯</span> <span class="cmd">/model</span></div>
-              <div class="dim">claude-sonnet-4 · openrouter:anthropic/claude-sonnet-4</div>
+              <div class="dim">claude-opus-4.6 · anthropic:claude-opus-4.6</div>
               <br>
               <div><span class="prompt">❯</span> <span class="cmd">Review this repo and open a PR</span></div>
               <div class="dim">┊ 💻 terminal `git status` (0.3s)</div>
@@ -76,6 +77,45 @@
               <div><span class="prompt">❯</span> <span class="cursor"></span></div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Everything you reach for daily</h2></div>
+          <p>The handful of commands and keys that cover most of a session — full detail in the sections below.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>Run it</h3>
+            <div class="command-index">
+              <div class="command-row"><code>hermes</code><span>Start an interactive session (or <code>--tui</code>).</span></div>
+              <div class="command-row"><code>hermes -z "…"</code><span>One-shot: prompt in, final answer out.</span></div>
+              <div class="command-row"><code>hermes -c [name]</code><span>Resume most recent (matching) session.</span></div>
+              <div class="command-row"><code>hermes -r &lt;id&gt;</code><span>Resume an exact session by ID/title.</span></div>
+              <div class="command-row"><code>hermes chat -q "…"</code><span>Single non-interactive query, then exit.</span></div>
+              <div class="command-row"><code>hermes setup</code><span>First-run wizard (providers &amp; keys).</span></div>
+            </div>
+          </article>
+          <article class="card"><h3>In-session</h3>
+            <div class="command-index">
+              <div class="command-row"><code>/help</code><span>List every slash command.</span></div>
+              <div class="command-row"><code>/model</code><span>Show / switch model (<code>provider:model</code>).</span></div>
+              <div class="command-row"><code>/new</code><span>Fresh session (<code>/reset</code> is the same).</span></div>
+              <div class="command-row"><code>/compress</code><span>Summarize context now, manually.</span></div>
+              <div class="command-row"><code>/retry</code> · <code>/undo</code><span>Resend last turn · drop last exchange.</span></div>
+              <div class="command-row"><code>/quit</code><span>Exit (<code>/exit</code>, <code>/q</code>).</span></div>
+            </div>
+          </article>
+          <article class="card"><h3>Keys</h3>
+            <div class="shortcut-list">
+              <div class="shortcut-row"><span>Send</span><div class="keys"><kbd>Enter</kbd></div></div>
+              <div class="shortcut-row"><span>Interrupt</span><div class="keys"><kbd>Ctrl C</kbd></div></div>
+              <div class="shortcut-row"><span>New line</span><div class="keys"><kbd>Meta Enter</kbd><span>/</span><kbd>Esc Enter</kbd></div></div>
+              <div class="shortcut-row"><span>Autocomplete</span><div class="keys"><kbd>Tab</kbd></div></div>
+              <div class="shortcut-row"><span>Clear screen</span><div class="keys"><kbd>Ctrl L</kbd></div></div>
+              <div class="shortcut-row"><span>History</span><div class="keys"><kbd>↑</kbd><kbd>↓</kbd></div></div>
+            </div>
+          </article>
         </div>
       </section>
 
@@ -89,12 +129,13 @@
         <div class="grid four">
           <article class="card"><div class="card-number">1</div><h3>Install</h3><p>Grab the agent from the repo, then the wizard handles providers and keys.</p><pre><code># install via the official repo
 # (NousResearch/hermes-agent)</code></pre></article>
-          <article class="card"><div class="card-number">2</div><h3>First-run setup</h3><p>One command: OAuth into Nous Portal and opt into the Tool Gateway.</p><pre><code>hermes setup --portal</code></pre></article>
-          <article class="card"><div class="card-number">3</div><h3>Start chatting</h3><p>Default is an interactive session. Or seed a query and stay in the session.</p><pre><code>hermes
+          <article class="card"><div class="card-number">2</div><h3>First-run setup</h3><p>One command runs the wizard: provider, API key, terminal backend. <code>--portal</code> does a one-shot Nous Portal OAuth.</p><pre><code>hermes setup
+hermes setup --portal   # one-shot Nous Portal OAuth</code></pre></article>
+          <article class="card"><div class="card-number">3</div><h3>Start chatting</h3><p>Default is an interactive session. A <code>-q</code> query runs once, then exits.</p><pre><code>hermes
 hermes chat -q "Summarize the latest PRs"</code></pre></article>
-          <article class="card"><div class="card-number">4</div><h3>Exit &amp; resume</h3><p>Leave with <kbd>Ctrl</kbd>+<kbd>D</kbd>, come back later with <code>--continue</code>.</p><pre><code>hermes --continue   # -c</code></pre></article>
+          <article class="card"><div class="card-number">4</div><h3>Exit &amp; resume</h3><p>Leave with <kbd>Ctrl</kbd>+<kbd>D</kbd> or <code>/quit</code>, come back later with <code>--continue</code>.</p><pre><code>hermes --continue   # -c</code></pre></article>
         </div>
-        <div class="callout" style="margin-top:16px"><div class="callout-mark">KEY</div><p><strong>Two entry points:</strong> <code>hermes</code> (classic REPL) and <code>hermes --tui</code> (modal TUI with mouse). Same engine, different surface. <code>--cli</code> forces the classic REPL if your config defaults to TUI.</p></div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">KEY</div><p><strong>Two surfaces:</strong> <code>hermes</code> (the interactive session) and <code>hermes --tui</code> (modal TUI with mouse). Same engine, different surface. <code>--cli</code> forces the classic line-based REPL if your config defaults to TUI.</p></div>
         <div class="callout warning" style="margin-top:12px"><div class="callout-mark">!</div><p><strong><code>hermes model</code> vs <code>/model</code>.</strong> Run <code>hermes model</code> from your terminal (outside a session) to add providers and API keys. <code>/model</code> inside a session only switches between what's already set up.</p></div>
       </section>
 
@@ -122,30 +163,31 @@ hermes doctor</code></pre></article>
 
       <section class="section searchable" id="running">
         <div class="section-head">
-          <div><div class="section-kicker">03 / Running the agent</div><h2>Interactive, seeded, or scripted</h2></div>
+          <div><div class="section-kicker">03 / Running the agent</div><h2>Interactive, single-shot, or scripted</h2></div>
           <p>Same agent, three wrappers. Pick the one that matches the job.</p>
         </div>
         <div class="grid three">
           <article class="card"><span class="tag">Interactive</span><h3 style="margin-top:14px">The default REPL</h3><pre><code>hermes</code></pre><p>Multiline editing, autocomplete, history, redirect mid-turn. <code>hermes --tui</code> for the modal TUI.</p></article>
-          <article class="card"><span class="tag">Seeded</span><h3 style="margin-top:14px">Start with a prompt</h3><pre><code>hermes chat -q "Summarize PRs"</code></pre><p>The query is submitted literally as turn one and the session stays open. Add <code>--oneshot</code> to answer and exit.</p></article>
+          <article class="card"><span class="tag">Single query</span><h3 style="margin-top:14px">One run, then exit</h3><pre><code>hermes chat -q "Summarize PRs"</code></pre><p><code>-q</code> runs one non-interactive query and exits. Plain <code>hermes</code> to stay in the session.</p></article>
           <article class="card"><span class="tag">Scripted</span><h3 style="margin-top:14px">Pure one-shot</h3><pre><code>hermes -z "Capital of France?"
 # → Paris.</code></pre><p>Prompt in, final answer out — nothing else on stdout. Built for shell scripts and CI.</p></article>
         </div>
         <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Mode</th><th>Command</th><th>Behavior</th></tr></thead><tbody>
-          <tr><td>Interactive session</td><td><code>hermes</code></td><td>REPL; stays open.</td></tr>
-          <tr><td>Seeded session</td><td><code>hermes chat -q "…"</code></td><td>Literal first turn, session stays open.</td></tr>
-          <tr><td>Answer &amp; exit</td><td><code>hermes chat --oneshot -q "…"</code></td><td>Answers, prints, exits.</td></tr>
+          <tr><td>Interactive session</td><td><code>hermes</code></td><td>REPL/TUI; stays open.</td></tr>
+          <tr><td>Single query</td><td><code>hermes chat -q "…"</code></td><td>Non-interactive; answers and exits.</td></tr>
           <tr><td>From file / stdin</td><td><code>hermes chat --query-file prompt.txt</code></td><td>Nothing shell-interpreted; safe for untrusted text.</td></tr>
           <tr><td>Pure one-shot</td><td><code>hermes -z "…"</code></td><td>Only the final reply, plain text.</td></tr>
         </tbody></table></div>
         <div class="grid two" style="margin-top:16px">
           <article class="card"><h3>Useful <code>chat</code> options</h3><div class="table-wrap"><table><tbody>
             <tr><td><code>-m, --model &lt;model&gt;</code></td><td>Override the model for this run.</td></tr>
-            <tr><td><code>--provider &lt;provider&gt;</code></td><td>Force a provider (deepseek, openrouter, anthropic…).</td></tr>
+            <tr><td><code>--provider &lt;provider&gt;</code></td><td>Force a provider (anthropic, openrouter, zai…).</td></tr>
             <tr><td><code>-t, --toolsets &lt;csv&gt;</code></td><td>Enable toolsets, e.g. <code>web,terminal,skills</code>.</td></tr>
-            <tr><td><code>-s, --skills &lt;name&gt;</code></td><td>Preload skills for the session.</td></tr>
-            <tr><td><code>-Q, --quiet</code></td><td>Suppress banner/spinner/tool previews.</td></tr>
+            <tr><td><code>-s, --skills &lt;name&gt;</code></td><td>Preload skills (repeat or comma-separate).</td></tr>
+            <tr><td><code>-Q, --quiet</code></td><td>Suppress banner/spinner/tool previews — final response only.</td></tr>
+            <tr><td><code>-v, --verbose</code></td><td>Verbose output.</td></tr>
             <tr><td><code>--worktree, -w</code></td><td>Start in an isolated git worktree.</td></tr>
+            <tr><td><code>--checkpoints</code></td><td>Snapshot files before destructive ops (enables <code>/rollback</code>).</td></tr>
             <tr><td><code>--yolo</code></td><td>Skip dangerous-command approval prompts.</td></tr>
             <tr><td><code>--max-turns &lt;N&gt;</code></td><td>Tool-calling iterations per turn (default 500).</td></tr>
           </tbody></table></div></article>
@@ -165,21 +207,23 @@ hermes doctor</code></pre></article>
       <section class="section searchable" id="keyboard">
         <div class="section-head">
           <div><div class="section-kicker">04 / Keyboard</div><h2>The daily keymap</h2></div>
-          <p>Modeled on Claude Code / Codex / OpenCode multiline conventions. On Windows Terminal use <code>Ctrl+J</code> or <code>Ctrl+Enter</code> for a newline (<code>Alt+Enter</code> is captured by the terminal).</p>
+          <p>Modeled on Claude Code / Codex / OpenCode multiline conventions. New line is <code>Meta+Enter</code> (<code>Esc</code> then <code>Enter</code> also works). On Windows Terminal use <code>Ctrl+J</code> or <code>Ctrl+Enter</code> for a newline (<code>Alt+Enter</code> is captured by the terminal).</p>
         </div>
         <div class="shortcut-grid">
           <div class="shortcut-group"><h3>Composing</h3><div class="shortcut-list">
             <div class="shortcut-row"><span>Send message</span><div class="keys"><kbd>Enter</kbd></div></div>
-            <div class="shortcut-row"><span>New line</span><div class="keys"><kbd>Alt Enter</kbd><span>/</span><kbd>Ctrl J</kbd><span>/</span><kbd>Shift Enter</kbd></div></div>
+            <div class="shortcut-row"><span>New line</span><div class="keys"><kbd>Meta Enter</kbd><span>/</span><kbd>Esc Enter</kbd><span>/</span><kbd>Ctrl J</kbd></div></div>
             <div class="shortcut-row"><span>Edit in $EDITOR</span><div class="keys"><kbd>Ctrl G</kbd><span>/</span><kbd>Ctrl X Ctrl E</kbd></div></div>
             <div class="shortcut-row"><span>Stash draft (stack)</span><div class="keys"><kbd>Ctrl S</kbd></div></div>
             <div class="shortcut-row"><span>Accept suggestion</span><div class="keys"><kbd>Tab</kbd></div></div>
+            <div class="shortcut-row"><span>Input history</span><div class="keys"><kbd>↑</kbd><kbd>↓</kbd></div></div>
             <div class="shortcut-row"><span>Paste image</span><div class="keys"><kbd>Alt V</kbd></div></div>
           </div></div>
           <div class="shortcut-group"><h3>Controlling</h3><div class="shortcut-list">
             <div class="shortcut-row"><span>Interrupt agent</span><div class="keys"><kbd>Ctrl C</kbd></div></div>
             <div class="shortcut-row"><span>Force exit (2×)</span><div class="keys"><kbd>Ctrl C</kbd><span>×2</span></div></div>
             <div class="shortcut-row"><span>Exit session</span><div class="keys"><kbd>Ctrl D</kbd></div></div>
+            <div class="shortcut-row"><span>Clear screen</span><div class="keys"><kbd>Ctrl L</kbd></div></div>
             <div class="shortcut-row"><span>Suspend (Unix)</span><div class="keys"><kbd>Ctrl Z</kbd></div></div>
             <div class="shortcut-row"><span>Voice record</span><div class="keys"><kbd>Ctrl B</kbd></div></div>
             <div class="shortcut-row"><span>Paste text</span><div class="keys"><kbd>Ctrl V</kbd></div></div>
@@ -200,27 +244,31 @@ hermes doctor</code></pre></article>
           <p>Commands are case-insensitive (<code>/HELP</code> = <code>/help</code>). Installed skills also become slash commands automatically.</p>
         </div>
         <div class="command-index">
-          <div class="command-row"><code>/help</code><span>Show command help.</span></div>
-          <div class="command-row"><code>/model [name]</code><span>Show or switch model (session-scoped; add <code>--global</code> to persist).</span></div>
-          <div class="command-row"><code>/tools</code><span>List currently available tools.</span></div>
-          <div class="command-row"><code>/skills browse</code><span>Browse the skills hub and optional skills.</span></div>
-          <div class="command-row"><code>/bg &lt;prompt&gt;</code><span>Run a prompt in a separate background session.</span></div>
-          <div class="command-row"><code>/btw &lt;question&gt;</code><span>Side question without interrupting the current turn.</span></div>
-          <div class="command-row"><code>/skin</code><span>Show or switch the active CLI skin.</span></div>
-          <div class="command-row"><code>/voice on|tts</code><span>Enable voice input / spoken replies.</span></div>
-          <div class="command-row"><code>/reasoning high</code><span>Increase reasoning effort.</span></div>
+          <div class="command-row"><code>/help</code><span>Show all available commands.</span></div>
+          <div class="command-row"><code>/model [provider:model]</code><span>Show or switch model; <code>provider:</code> tab-completes.</span></div>
+          <div class="command-row"><code>/new</code> · <code>/reset</code><span>Start a fresh session (new ID + empty history).</span></div>
+          <div class="command-row"><code>/clear</code><span>Clear the screen and start a new session (CLI only).</span></div>
+          <div class="command-row"><code>/retry</code><span>Resend your last message.</span></div>
+          <div class="command-row"><code>/undo</code><span>Drop the last user/assistant exchange from context.</span></div>
           <div class="command-row"><code>/title &lt;name&gt;</code><span>Name the current session.</span></div>
-          <div class="command-row"><code>/status</code><span>Session info + local recap (no LLM call).</span></div>
-          <div class="command-row"><code>/context [all]</code><span>Visual context-usage breakdown.</span></div>
-          <div class="command-row"><code>/sessions</code><span>Interactive session picker.</span></div>
-          <div class="command-row"><code>/usage</code><span>Token / cost breakdown. <code>/usage reset</code> on codex.</span></div>
-          <div class="command-row"><code>/compress</code><span>Summarize context manually.</span></div>
-          <div class="command-row"><code>/personality &lt;name&gt;</code><span>Change tone (pirate, concise, kawaii…).</span></div>
-          <div class="command-row"><code>/yolo</code><span>Toggle auto-approve mode.</span></div>
+          <div class="command-row"><code>/resume [name]</code><span>Resume a previously-named session.</span></div>
+          <div class="command-row"><code>/compress</code><span>Summarize context manually, now.</span></div>
+          <div class="command-row"><code>/rollback [n]</code><span>List / restore filesystem checkpoints (needs <code>--checkpoints</code>).</span></div>
+          <div class="command-row"><code>/background</code> · <code>/bg &lt;prompt&gt;</code><span>Run a prompt in a parallel background session.</span></div>
+          <div class="command-row"><code>/stop</code><span>Kill running background processes.</span></div>
+          <div class="command-row"><code>/provider</code><span>Show available providers + the active one.</span></div>
+          <div class="command-row"><code>/personality &lt;name&gt;</code><span>Change tone (concise, pirate, kawaii…).</span></div>
+          <div class="command-row"><code>/reasoning [level|show|hide]</code><span>none/low/minimal/medium/high/xhigh; show/hide the block.</span></div>
+          <div class="command-row"><code>/skin [name]</code><span>Show or switch the active CLI skin.</span></div>
+          <div class="command-row"><code>/voice [on|off|tts|status]</code><span>Voice input / spoken replies.</span></div>
           <div class="command-row"><code>/verbose</code><span>Cycle tool-preview verbosity.</span></div>
-          <div class="command-row"><code>/busy &lt;mode&gt;</code><span>Set busy-input behavior (interrupt/queue/steer).</span></div>
-          <div class="command-row"><code>/stop</code><span>Cancel the turn and its foreground work.</span></div>
-          <div class="command-row"><code>/worktree prune</code><span>Reclaim scratch worktrees.</span></div>
+          <div class="command-row"><code>/tools [list|disable|enable]</code><span>Manage enabled tools.</span></div>
+          <div class="command-row"><code>/toolsets</code><span>List available toolsets.</span></div>
+          <div class="command-row"><code>/skills [search|browse|inspect|install|list]</code><span>Search, install, and manage skills.</span></div>
+          <div class="command-row"><code>/reload-mcp</code><span>Reload MCP server connections from config.</span></div>
+          <div class="command-row"><code>/usage</code><span>Token / cost stats for the current session.</span></div>
+          <div class="command-row"><code>/status</code><span>Session info — gateway only; the CLI shows it in the banner.</span></div>
+          <div class="command-row"><code>/quit</code> · <code>/exit</code> · <code>/q</code><span>Exit the CLI.</span></div>
         </div>
         <details style="margin-top:16px">
           <summary>Built-in personalities</summary>
@@ -250,7 +298,7 @@ hermes sessions export out.jsonl
 hermes sessions prune --older-than 90d
 hermes sessions stats</code></pre></article>
         </div>
-        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">↺</div><p><strong>Compression.</strong> Long conversations auto-summarize near the context limit, keeping the first 3 and last 20 turns intact. The 🗜️ badge in the status bar shows how many times compression fired.</p></div>
+        <div class="callout warning" style="margin-top:16px"><div class="callout-mark">↺</div><p><strong>Compression.</strong> Long conversations auto-summarize near the context limit, keeping the first 3 and last 4 turns intact. A fast auxiliary model (default <code>google/gemini-3-flash-preview</code>) writes the summary. The 🗜️ badge in the status bar shows how many times compression fired.</p></div>
       </section>
 
       <section class="section searchable" id="models">
@@ -260,16 +308,15 @@ hermes sessions stats</code></pre></article>
         </div>
         <div class="grid three">
           <article class="card"><h3>Add providers</h3><p>Run from outside a session to add providers, run OAuth flows, and enter API keys.</p><pre><code>hermes model</code></pre></article>
-          <article class="card"><h3>Switch mid-session</h3><p>Only switches between already-configured models.</p><pre><code>/model claude-sonnet-4
-/model zai:glm-5
-/model claude-sonnet-4 --global</code></pre></article>
+          <article class="card"><h3>Switch mid-session</h3><p>Only switches between already-configured models. <code>provider:model</code> tab-completes.</p><pre><code>/model anthropic/claude-opus-4.6
+/model openrouter:anthropic/claude-opus-4.6</code></pre></article>
           <article class="card"><h3>Fallbacks</h3><p>Configure fallback providers tried when the primary errors.</p><pre><code>hermes fallback</code></pre></article>
         </div>
         <details open style="margin-top:16px">
           <summary>Provider families (--provider)</summary>
           <div class="details-body"><div class="tags">
-            <span class="tag">openrouter</span><span class="tag">nous</span><span class="tag">anthropic</span><span class="tag">openai-codex</span><span class="tag">copilot</span><span class="tag">gemini</span><span class="tag">deepseek</span><span class="tag">xai</span><span class="tag">qwen-oauth</span><span class="tag">bedrock</span><span class="tag">ollama-cloud</span><span class="tag">lmstudio</span><span class="tag">zai</span><span class="tag">kimi-coding</span><span class="tag">minimax</span><span class="tag">alibaba</span><span class="tag">nvidia</span><span class="tag">openai-api</span><span class="tag">huggingface</span><span class="tag">opencode-zen</span><span class="tag">opencode-free</span><span class="tag">commandcode</span><span class="tag">azure-foundry</span><span class="tag">nebius-token-factory</span><span class="tag">router</span><span class="tag">…and more</span>
-          </div><p style="margin-top:12px">Use <code>hermes chat --provider deepseek -m deepseek-chat</code> to force a provider for one run. The full list is long — check <code>hermes chat --help</code> for the authoritative set.</p></div>
+            <span class="tag">auto</span><span class="tag">openrouter</span><span class="tag">nous</span><span class="tag">anthropic</span><span class="tag">openai-codex</span><span class="tag">copilot</span><span class="tag">copilot-acp</span><span class="tag">gemini</span><span class="tag">deepseek</span><span class="tag">xai</span><span class="tag">qwen-oauth</span><span class="tag">bedrock</span><span class="tag">ollama-cloud</span><span class="tag">lmstudio</span><span class="tag">zai</span><span class="tag">kimi-coding</span><span class="tag">minimax</span><span class="tag">minimax-cn</span><span class="tag">alibaba</span><span class="tag">nvidia</span><span class="tag">openai-api</span><span class="tag">huggingface</span><span class="tag">opencode-zen</span><span class="tag">opencode-free</span><span class="tag">commandcode</span><span class="tag">kilocode</span><span class="tag">azure-foundry</span><span class="tag">nebius-token-factory</span><span class="tag">router</span><span class="tag">…and more</span>
+          </div><p style="margin-top:12px">Use <code>hermes chat --provider anthropic -m anthropic/claude-opus-4.6</code> to force a provider for one run; <code>auto</code> lets Hermes pick. The full list is long — check <code>hermes chat --help</code> for the authoritative set.</p></div>
         </details>
       </section>
 
@@ -295,7 +342,7 @@ hermes sessions stats</code></pre></article>
 
 auxiliary:
   compression:
-    model: ""        # empty = main model</code></pre></article>
+    model: "google/gemini-3-flash-preview"   # default fast summarizer</code></pre></article>
           <article class="card"><h3>Display</h3><pre><code>display:
   interface: cli          # or tui
   busy_input_mode: "interrupt"  # | queue | steer
@@ -350,6 +397,7 @@ jq .estimated_cost_usd /tmp/usage.json</code></pre></article>
           <div class="command-row"><code>hermes config</code><span>Show, edit, migrate, query config.</span></div>
           <div class="command-row"><code>hermes profile</code><span>Manage isolated profiles.</span></div>
           <div class="command-row"><code>hermes skills</code><span>Browse, install, publish, audit skills.</span></div>
+          <div class="command-row"><code>hermes tools</code><span>Configure enabled tools per platform.</span></div>
           <div class="command-row"><code>hermes plugins</code><span>Manage plugins (install/enable/disable).</span></div>
           <div class="command-row"><code>hermes mcp</code><span>Manage MCP servers.</span></div>
           <div class="command-row"><code>hermes memory</code><span>Configure external memory provider.</span></div>
@@ -362,6 +410,8 @@ jq .estimated_cost_usd /tmp/usage.json</code></pre></article>
           <div class="command-row"><code>hermes dashboard</code><span>Web dashboard (config, keys, sessions).</span></div>
           <div class="command-row"><code>hermes serve</code><span>Headless backend server.</span></div>
           <div class="command-row"><code>hermes update</code><span>Pull latest code and reinstall.</span></div>
+          <div class="command-row"><code>hermes version</code><span>Print the installed version.</span></div>
+          <div class="command-row"><code>hermes uninstall</code><span>Remove Hermes Agent.</span></div>
           <div class="command-row"><code>hermes completion</code><span>Print shell completion scripts.</span></div>
           <div class="command-row"><code>hermes security audit</code><span>Supply-chain audit (OSV.dev).</span></div>
           <div class="command-row"><code>hermes backup / import</code><span>Back up / restore the Hermes home dir.</span></div>
@@ -376,8 +426,10 @@ jq .estimated_cost_usd /tmp/usage.json</code></pre></article>
         <details open><summary>“Is this bug mine or Hermes'?”</summary><div class="details-body"><pre><code>hermes chat --safe-mode -q "repro the issue"</code></pre><p><code>--safe-mode</code> disables user config, rules, plugins, shell hooks, and MCP servers. If the bug disappears, it's in your setup.</p></div></details>
         <details><summary>“I only see OpenRouter models in /model.”</summary><div class="details-body"><p>You've only configured OpenRouter. Exit the session and run <code>hermes model</code> from the terminal to add another provider.</p></div></details>
         <details><summary>“A config edit had no effect.”</summary><div class="details-body"><p>Run <code>hermes config</code> to inspect, and <code>hermes doctor</code> to check for invalid values. Some startup-only settings need a session restart.</p></div></details>
-        <details><summary>“Shift+Enter inserts a newline but I want it to send.”</summary><div class="details-body"><p>Your terminal may not distinguish Shift+Enter. Use <code>Alt+Enter</code> / <code>Ctrl+J</code> for newlines, or disable multiline shortcuts via <code>display.cli_multiline_shortcuts: false</code>.</p></div></details>
+        <details><summary>“Shift+Enter inserts a newline but I want it to send.”</summary><div class="details-body"><p>Your terminal may not distinguish Shift+Enter. Use <code>Meta+Enter</code> / <code>Esc</code> then <code>Enter</code> / <code>Ctrl+J</code> for newlines, or disable multiline shortcuts via <code>display.cli_multiline_shortcuts: false</code>.</p></div></details>
         <details><summary>“The gateway keeps disconnecting on WSL.”</summary><div class="details-body"><p>Prefer <code>hermes gateway run</code> (foreground) over <code>hermes gateway start</code> on WSL, and wrap it in tmux: <code>tmux new -s hermes 'hermes gateway run'</code>.</p></div></details>
+        <details><summary>“<code>hermes chat -q</code> exited right after answering.”</summary><div class="details-body"><p>That's expected: <code>-q</code> is non-interactive in current builds — one query, then exit. Use plain <code>hermes</code> (then type your message) for an ongoing session, or <code>hermes -z</code> for scripts.</p></div></details>
+        <details><summary>“<code>/rollback</code> says there are no checkpoints.”</summary><div class="details-body"><p>Filesystem checkpoints must be enabled first. Start the session with <code>hermes --checkpoints</code> (or <code>hermes chat --checkpoints</code>) so destructive file operations are snapshotted and restorable via <code>/rollback</code>.</p></div></details>
       </section>
 
       <footer class="footer searchable">
@@ -386,8 +438,15 @@ jq .estimated_cost_usd /tmp/usage.json</code></pre></article>
         <div class="footer-links">
           <a href="https://hermes-agent.nousresearch.com/docs/user-guide/cli/" target="_blank" rel="noreferrer">CLI guide</a>
           <a href="https://hermes-agent.nousresearch.com/docs/reference/cli-commands" target="_blank" rel="noreferrer">CLI commands reference</a>
+          <a href="https://hermes-agent.nousresearch.com/docs/reference/slash-commands" target="_blank" rel="noreferrer">Slash commands reference</a>
           <a href="https://github.com/NousResearch/hermes-agent" target="_blank" rel="noreferrer">GitHub</a>
           <a href="../">slop-stuff home</a>
+        </div>
+        <strong style="display:block;margin-top:22px">Related</strong>
+        <div class="footer-links">
+          <a href="../herdr-cheatsheet/">Herdr</a>
+          <a href="../omp/">omp harness</a>
+          <a href="../llm-ai/">LLM &amp; AI</a>
         </div>
       </footer>
     </main>

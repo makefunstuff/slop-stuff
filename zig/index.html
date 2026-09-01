@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="The daily Zig surface: comptime, memory/allocators, optionals/errors, build system, and C interop.">
+  <meta name="description" content="The daily Zig surface (0.14): comptime, memory/allocators, optionals/errors, build system, and C interop.">
   <title>Zig — Visual Cheatsheet</title>
   <link rel="stylesheet" href="../assets/style.css">
 </head>
@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#basics"><span class="nav-number">02</span>Basics</a>
         <a href="#memory"><span class="nav-number">03</span>Memory &amp; allocators</a>
@@ -44,7 +45,7 @@
         <div class="hero-copy">
           <div class="eyebrow">Visual cheatsheet + usage guide</div>
           <h1 id="hero-title">A modern C <span>that's easier to read.</span></h1>
-          <p>Zig is a general-purpose systems language with no hidden control flow, no hidden allocation, and a build system that doubles as a C/C++ compiler. This is the surface you touch every day: syntax, memory, errors, comptime, and C interop.</p>
+          <p>Zig is a general-purpose systems language with no hidden control flow, no hidden allocation, and a build system that doubles as a C/C++ compiler. This is the surface you touch every day: syntax, memory, errors, comptime, and C interop — current for <strong>Zig 0.14.0</strong>.</p>
           <div class="hero-actions">
             <a class="button primary" href="#start">Start here →</a>
             <a class="button" href="#memory">Memory &amp; allocators</a>
@@ -75,6 +76,24 @@
               <div><span class="prompt">❯</span> <span class="cursor"></span></div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The nine things you reach for most often, in one glance — each is unpacked in the sections below.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>zig init</code><span>Scaffold a project: build.zig, build.zig.zon, src/main.zig.</span></div>
+          <div class="command-row"><code>zig build / run / test</code><span>build compiles, build run compiles + runs, build test runs tests.</span></div>
+          <div class="command-row"><code>const / var</code><span>Immutable vs mutable binding — prefer const; Zig enforces it.</span></div>
+          <div class="command-row"><code>comptime</code><span>Evaluate code at build time; types are first-class values, no macros.</span></div>
+          <div class="command-row"><code>try / catch / orelse</code><span>Propagate errors, handle them, or supply a default value.</span></div>
+          <div class="command-row"><code>defer / errdefer</code><span>Scope-exit cleanup (LIFO); errdefer runs only on error return.</span></div>
+          <div class="command-row"><code>Allocator</code><span>Passed explicitly everywhere — no hidden allocation. You allocate, you free.</span></div>
+          <div class="command-row"><code>@cImport / @cInclude</code><span>Parse C headers and call into C directly — no bindings generator.</span></div>
+          <div class="command-row"><code>!T / ?T</code><span>Error unions and optionals — errors and null are values, not exceptions.</span></div>
         </div>
       </section>
 
@@ -167,7 +186,7 @@ if (maybe) |m| { /* m: u32 */ }</code></pre></div>
         </div>
         <div class="callout"><div class="callout-mark">KEY</div><p><strong>No hidden allocation.</strong> Zig never allocates behind your back. Any function that needs memory takes an <code>Allocator</code> argument you pass in, and you free it yourself (or let <code>defer</code> do it).</p></div>
         <div class="grid three">
-          <article class="card"><h3>GeneralPurposeAllocator</h3><p>Safety-first: detects leaks and double-frees on <code>deinit</code>. Use during development.</p><pre><code>var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+          <article class="card"><h3>DebugAllocator</h3><p>Safety-first: detects leaks and double-frees on <code>deinit</code>. Use during development. Renamed from <code>GeneralPurposeAllocator</code> in 0.14.</p><pre><code>var gpa: std.heap.DebugAllocator(.{}) = .init;
 defer _ = gpa.deinit();
 const alloc = gpa.allocator();
 
@@ -312,7 +331,7 @@ zig cc -c helper.c -o helper.o</code></pre></article>
           <div class="command-row"><code>std.StringHashMap(V)</code><span>string-keyed map: put, get, deinit.</span></div>
           <div class="command-row"><code>std.fmt</code><span>format &amp; parse: allocPrint, parseInt, bufPrint.</span></div>
           <div class="command-row"><code>std.mem</code><span>memory utils: eql, indexOf, tokenize, copyForwards.</span></div>
-          <div class="command-row"><code>std.os / std.posix</code><span>OS interfaces: argv, getenv, file I/O.</span></div>
+          <div class="command-row"><code>std.posix</code><span>OS interfaces: argv, getenv, file I/O. (std.os is the legacy alias.)</span></div>
           <div class="command-row"><code>std.testing</code><span>assertions: expect, expectEqual, expectError.</span></div>
           <div class="command-row"><code>std.debug.print</code><span>printf-style debug output to stderr.</span></div>
         </div>
@@ -343,6 +362,7 @@ test "1 + 1 = 2" {
           <tr><td><code>{e}</code></td><td>float, scientific</td></tr>
           <tr><td><code>{any}</code></td><td>any value (debug)</td></tr>
         </tbody></table></div>
+        <div class="callout"><div class="callout-mark">0.14</div><p><strong>0.14 std direction:</strong> the library is moving toward <em>unmanaged</em> containers — <code>std.ArrayListUnmanaged</code> / <code>std.StringHashMapUnmanaged</code>, which take an allocator per call. The managed <code>std.ArrayList</code> and <code>std.StringHashMap</code> shown here still work, and <code>std.heap.GeneralPurposeAllocator</code> is now <code>std.heap.DebugAllocator</code>.</p></div>
       </section>
 
       <section class="section searchable" id="gotchas">
@@ -361,6 +381,20 @@ const m: u8 = @intCast(300); // panic: 300 &gt; 255</code></pre></article>
 //   if (err) return err;</code></pre></article>
           <article class="card"><h3>No RAII, no destructors</h3><p>Resources are freed explicitly. There are no destructors; scope-exit cleanup is done with <code>defer</code> (and <code>errdefer</code> on error paths).</p><pre><code>var arena = std.heap.ArenaAllocator.init(page);
 defer arena.deinit();</code></pre></article>
+          <article class="card"><h3>Unused locals don't compile</h3><p>Zig rejects unused local variables and function parameters — and shadowing an outer name. Discard deliberately with <code>_ = value;</code>.</p><pre><code>fn f(x: u32) void {
+    _ = x;            // discard, not unused
+}
+
+pub fn main() void {
+    var y: u32 = 0;   // error: unused local
+}</code></pre></article>
+          <article class="card"><h3>for-loops &amp; exhaustive switch</h3><p>There's no C-style <code>for (;;)</code> — iterate collections with <code>for</code> and loops with <code>while</code>. A <code>switch</code> over an enum must cover every case (or add <code>else</code>).</p><pre><code>for (items, 0..) |it, i| { /* it, i */ }
+
+switch (c) {
+    .red =&gt; {},
+    .green =&gt; {},
+    .blue =&gt; {},   // omit one → compile error
+}</code></pre></article>
         </div>
         <div class="callout warning"><div class="callout-mark">!</div><p><strong>comptime is build-time, not runtime.</strong> A <code>comptime</code> type or value does not exist in the final binary. Materialize a runtime value from it before the binary runs.</p></div>
       </section>
@@ -373,6 +407,12 @@ defer arena.deinit();</code></pre></article>
           <a href="https://ziglang.org/documentation/master/" target="_blank" rel="noreferrer">Language reference</a>
           <a href="https://ziglang.org/learn/" target="_blank" rel="noreferrer">Learn</a>
           <a href="../">slop-stuff home</a>
+        </div>
+        <div class="footer-links">
+          <strong>Related</strong>
+          <a href="../rust/">Rust</a>
+          <a href="../c/">C</a>
+          <a href="../asm/">Assembly</a>
         </div>
       </footer>
     </main>

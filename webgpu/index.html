@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#wgsl"><span class="nav-number">02</span>WGSL</a>
         <a href="#pipeline"><span class="nav-number">03</span>Render pipeline</a>
@@ -73,6 +74,25 @@
               <div><span class="prompt">❯</span> <span class="cursor"></span></div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The ten calls that carry most WebGPU programs, in roughly the order you use them. Everything else on this page builds on these.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>navigator.gpu.requestAdapter()</code><span>pick a physical GPU (async — null if WebGPU is unavailable)</span></div>
+          <div class="command-row"><code>adapter.requestDevice()</code><span>open a logical device + its queue (async)</span></div>
+          <div class="command-row"><code>device.createShaderModule({ code })</code><span>compile a WGSL string into a shader module</span></div>
+          <div class="command-row"><code>device.createRenderPipeline({ … })</code><span>immutable render pipeline: shaders + vertex layout + targets</span></div>
+          <div class="command-row"><code>device.createComputePipeline({ … })</code><span>immutable compute pipeline</span></div>
+          <div class="command-row"><code>device.createBindGroup({ layout, entries })</code><span>attach buffers/textures to a bind group layout</span></div>
+          <div class="command-row"><code>device.queue.writeBuffer(buf, 0, data)</code><span>upload data straight into a buffer</span></div>
+          <div class="command-row"><code>encoder.beginRenderPass({ … })</code><span>open a render pass over a canvas view</span></div>
+          <div class="command-row"><code>pass.draw(n) · pass.dispatchWorkgroups(k)</code><span>issue a draw / launch k compute workgroups</span></div>
+          <div class="command-row"><code>device.queue.submit([enc.finish()])</code><span>execute the recorded command buffer</span></div>
         </div>
       </section>
 
@@ -138,12 +158,14 @@ fn pow2(x: f32) -&gt; f32 {
 }</code></pre></article>
         </div>
         <div class="table-wrap"><table><thead><tr><th>Builtin</th><th>Stage</th><th>Meaning</th></tr></thead><tbody>
-          <tr><td><code>@builtin(position)</code></td><td>vertex out / fragment in</td><td>clip-space position</td></tr>
+          <tr><td><code>@builtin(position)</code></td><td>vertex out / fragment in</td><td>clip-space position (vertex) / pixel coordinate (fragment)</td></tr>
           <tr><td><code>@builtin(vertex_index)</code></td><td>vertex</td><td>index into the vertex buffer</td></tr>
           <tr><td><code>@builtin(instance_index)</code></td><td>vertex</td><td>current instance number</td></tr>
-          <tr><td><code>@builtin(frag_coord)</code></td><td>fragment</td><td>pixel coordinate</td></tr>
+          <tr><td><code>@builtin(front_facing)</code></td><td>fragment</td><td>true if the fragment is on a front-facing triangle</td></tr>
           <tr><td><code>@builtin(global_invocation_id)</code></td><td>compute</td><td>global thread id</td></tr>
           <tr><td><code>@builtin(local_invocation_id)</code></td><td>compute</td><td>thread id within a workgroup</td></tr>
+          <tr><td><code>@builtin(local_invocation_index)</code></td><td>compute</td><td>linear (flat) index within a workgroup</td></tr>
+          <tr><td><code>@builtin(workgroup_id)</code></td><td>compute</td><td>which workgroup this thread belongs to</td></tr>
         </tbody></table></div>
       </section>
 
@@ -323,7 +345,7 @@ fn fs_main() -&gt; @location(0) vec4&lt;f32&gt; {
       <section class="section searchable" id="native">
         <div class="section-head">
           <div><div class="section-kicker">07 / Native (wgpu)</div><h2>wgpu (Rust/native)</h2></div>
-          <p><code>wgpu</code> is the Rust implementation of the same model. Dawn (C++) powers Chromium; both speak WGSL, so shaders port unchanged.</p>
+          <p><code>wgpu</code> is the Rust implementation of the same model — currently at <code>v26</code> — and also ships inside Firefox and Deno. Dawn (C++) powers Chromium; all speak WGSL, so shaders port unchanged.</p>
         </div>
         <div class="grid two">
           <article class="card"><h3>wgpu in Rust</h3><pre><code>let instance = wgpu::Instance::default();
@@ -348,10 +370,10 @@ let (device, queue) = adapter
 wgpu::Device device = instance.RequestDevice();</code></pre></article>
         </div>
         <div class="state-grid">
-          <div class="state-card done"><h4>Browser</h4><p><code>navigator.gpu</code> in Chrome, Edge, Firefox, Safari.</p></div>
-          <div class="state-card working"><h4>wgpu (Rust)</h4><p>Native over Vulkan, Metal, DX12.</p></div>
-          <div class="state-card working"><h4>Dawn (C++)</h4><p>Chromium's implementation.</p></div>
-          <div class="state-card unknown"><h4>Node.js</h4><p>Behind <code>--experimental-webgpu</code>.</p></div>
+          <div class="state-card done"><h4>Browser</h4><p><code>navigator.gpu</code> ships in Chrome/Edge 113+, Safari 26+, Firefox 141+.</p></div>
+          <div class="state-card working"><h4>wgpu (Rust)</h4><p>Native over Vulkan, Metal, DX12 — <code>v26</code> is current. Powers Firefox &amp; Deno.</p></div>
+          <div class="state-card working"><h4>Dawn (C++)</h4><p>Chromium's implementation (Chrome &amp; Edge).</p></div>
+          <div class="state-card done"><h4>Node.js</h4><p>Unflagged <code>navigator.gpu</code> in Node 22+; Deno ships WebGPU too.</p></div>
         </div>
       </section>
 
@@ -371,18 +393,31 @@ if (!adapter) throw new Error("no WebGPU");</code></pre></article>
   requiredLimits: { maxStorageBufferBindingSize: 1 &lt;&lt; 30 }
 });</code></pre></article>
           <article class="card"><h3>Canvas format must match</h3><p>The <code>configure()</code> format and every pipeline's <code>fragment.targets</code> format must be identical — use <code>navigator.gpu.getPreferredCanvasFormat()</code>.</p></article>
+          <article class="card"><h3>Command buffers are single-use</h3><p>Once you call <code>finish()</code> the encoder is spent — you can't add to it or submit it twice. Build a fresh encoder every frame.</p><pre><code>const enc = device.createCommandEncoder();
+// … record work …
+device.queue.submit([enc.finish()]);
+// enc is now invalid — create a new one next frame</code></pre></article>
+          <article class="card"><h3>Don't touch buffers the GPU is reading</h3><p><code>writeBuffer</code>, <code>mapAsync</code>, or <code>destroy()</code> on a buffer still in flight is a validation error. Wait for the queue to drain, or use extra buffers.</p><pre><code>await device.queue.onSubmittedWorkDone();
+device.queue.writeBuffer(buf, 0, nextData);</code></pre></article>
         </div>
-        <div class="callout warning"><div class="callout-mark">⚠</div><p><strong>Check the console.</strong> WebGPU reports misuse as asynchronous uncapturederror events and <code>GPUValidationError</code> strings. Add <code>device.addEventListener("uncapturederror", …)</code> during development so failures don't vanish silently.</p></div>
+        <div class="callout warning"><div class="callout-mark">⚠</div><p><strong>Check the console.</strong> WebGPU reports misuse as asynchronous <code>uncapturederror</code> events with <code>GPUValidationError</code> strings. Add a listener during development — and wrap suspicious calls in <code>pushErrorScope()</code> / <code>popErrorScope()</code> to catch the error where it's raised — so failures don't vanish silently.</p></div>
       </section>
 
       <footer class="footer searchable">
         <strong>Source of truth</strong>
-        <p>This guide covers the WebGPU essentials. The W3C specification, the WGSL spec, and the wgpu project remain authoritative for details and edge cases.</p>
+        <p>This guide covers the WebGPU essentials. The W3C WebGPU and WGSL specifications (Candidate Recommendation) and the wgpu project remain authoritative for details and edge cases.</p>
         <div class="footer-links">
           <a href="https://www.w3.org/TR/webgpu/" target="_blank" rel="noreferrer">W3C WebGPU spec</a>
           <a href="https://gpuweb.github.io/gpuweb/wgsl/" target="_blank" rel="noreferrer">WGSL spec</a>
+          <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API" target="_blank" rel="noreferrer">MDN WebGPU API</a>
           <a href="https://wgpu.rs/" target="_blank" rel="noreferrer">wgpu.rs</a>
           <a href="../">slop-stuff home</a>
+        </div>
+        <strong style="display:block; margin-top:24px">Related guides</strong>
+        <div class="footer-links">
+          <a href="../opengl/">OpenGL</a>
+          <a href="../shaders/">Shaders</a>
+          <a href="../sdl/">SDL</a>
         </div>
       </footer>
     </main>

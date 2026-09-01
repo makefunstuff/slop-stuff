@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#mode"><span class="nav-number">02</span>Protected mode</a>
         <a href="#interrupts"><span class="nav-number">03</span>Interrupts</a>
@@ -75,6 +76,23 @@
         </div>
       </section>
 
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The essentials you reach for on every boot — compile flags, boot protocol, tables, paging, and interrupts in one scannable pass. UEFI is the modern default; treat legacy BIOS as deprecated.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>x86_64-elf-gcc -ffreestanding -nostdlib -mno-red-zone -c kernel.c</code><span>Cross-compile with no hosted libc; add <code>-mno-mmx -mno-sse</code>.</span></div>
+          <div class="command-row"><code>x86_64-elf-ld -T linker.ld -o kernel.bin *.o</code><span>Link with a custom script; <code>. = 1M</code> and <code>*(.multiboot)</code> first.</span></div>
+          <div class="command-row"><code>grub-mkrescue -o os.iso isodir</code><span>Multiboot2 ISO — header must sit in the first 8 KiB, 4-byte aligned.</span></div>
+          <div class="command-row"><code>qemu-system-x86_64 -kernel kernel.bin</code><span>Boot a raw multiboot kernel; add <code>-s -S</code> to wait for GDB on <code>:1234</code>.</span></div>
+          <div class="command-row"><code>lgdt [gdt_descriptor]  /  jmp 0x08:reload_cs</code><span>Null + code + data GDT entries needed for protected and long mode.</span></div>
+          <div class="command-row"><code>lidt [idt_descriptor]  /  outb(0x20, 0x20)</code><span>Load the IDT; remap the PIC to 32–47 and send EOI per IRQ.</span></div>
+          <div class="command-row"><code>mov cr3, rax</code><span>Paging: PML4 → PDPT → PD → PT → 4 KiB frame; the faulting address lands in <code>CR2</code>.</span></div>
+          <div class="command-row"><code>cli / sti / hlt / iretq</code><span>Disable, enable, halt until an IRQ, and return from an interrupt.</span></div>
+        </div>
+      </section>
+
       <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “boot”, “GDT”, “interrupt”, “paging”, or “scheduler”.</div>
 
       <section class="section searchable" id="start">
@@ -83,11 +101,12 @@
           <p>Firmware → bootloader → kernel. The kernel is a plain binary with no libc, no <code>main()</code>, and no OS underneath it.</p>
         </div>
         <div class="flow">
-          <div class="flow-step"><div><strong>BIOS / UEFI firmware</strong><p>Runs first. Initializes hardware, then loads a bootloader from disk (MBR, or an EFI executable).</p></div></div>
-          <div class="flow-step"><div><strong>Bootloader (GRUB)</strong><p>Reads the kernel image, sets up 32-bit protected mode, and passes a multiboot info struct (memory map, framebuffer, modules).</p></div></div>
+          <div class="flow-step"><div><strong>BIOS / UEFI firmware</strong><p>Runs first and hands off to a bootloader. UEFI is the modern standard — legacy BIOS (MBR/CSM) is deprecated. UEFI loads an EFI executable straight into 64-bit long mode with paging already on.</p></div></div>
+          <div class="flow-step"><div><strong>Bootloader (GRUB / Limine)</strong><p>Reads the kernel image and passes a boot-info struct (memory map, framebuffer, modules). On BIOS it drops into 32-bit protected mode first; on UEFI you're already in long mode. Multiboot2 and the Limine protocol are the current choices.</p></div></div>
           <div class="flow-step"><div><strong>Kernel entry</strong><p>Your <code>_start</code> runs: set up a stack, zero the BSS, and hand control to C.</p></div></div>
           <div class="flow-step"><div><strong>Kernel takes over</strong><p>Build a GDT/IDT, enable paging, then never return — the kernel is the environment now.</p></div></div>
         </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">KEY</div><p><strong>Target UEFI, not legacy BIOS.</strong> BIOS/CSM is deprecated and vanishing from new boards. A UEFI kernel is a position-independent EFI executable (PE32+) loaded from a GPT EFI system partition; the firmware hands you long mode, flat memory, and paging already enabled. To ship one image for both firmware types, use a protocol like <strong>Limine</strong> or <strong>Multiboot2</strong> (via GRUB) that abstracts the difference away.</p></div>
         <div class="grid four" style="margin-top:16px">
           <article class="card"><div class="card-number">1</div><h3>Cross-compile</h3><pre><code>x86_64-elf-gcc -ffreestanding -c kernel.c -o kernel.o
 x86_64-elf-ld -T linker.ld -o kernel.bin kernel.o</code></pre></article>
@@ -191,6 +210,7 @@ outb(0xA1, 0x01);</code></pre></article>
           <span class="tag">iretq — return from an interrupt</span>
         </div>
         <div class="callout warning" style="margin-top:16px"><div class="callout-mark">!</div><p><strong>Remap the PIC before enabling interrupts.</strong> By default IRQ0 maps to vector 8, which collides with the CPU's double-fault exception. Remap to 32–47 and remember to send EOI (<code>outb(0x20, 0x20)</code>) at the end of every IRQ handler.</p></div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">NOTE</div><p><strong>The 8259 PIC is legacy.</strong> It's what QEMU's default <code>pc</code> machine and old BIOS boxes expose. Modern firmware and UEFI systems route interrupts through the local APIC + I/O APIC instead — you program the APIC's redirection tables (or use MSI/MSI-X for PCI devices) rather than remapping the 8259.</p></div>
       </section>
 
       <section class="section searchable" id="paging">
@@ -376,7 +396,7 @@ SECTIONS {
       <section class="section searchable" id="gotchas">
         <div class="section-head">
           <div><div class="section-kicker">08 / Gotchas</div><h2>Pitfalls</h2></div>
-          <p>The five mistakes that sink every first kernel: assuming libc, trusting the compiler on MMIO, racing interrupts, and forgetting the stack and ABI.</p>
+          <p>The mistakes that sink every first kernel: assuming libc, trusting the compiler on MMIO, racing interrupts, forgetting the stack and ABI, skipping the BSS, and enabling paging before mapping the code that does it.</p>
         </div>
         <div class="grid two">
           <article class="card"><h3>No libc — freestanding</h3><p><code>printf</code>, <code>malloc</code>, and <code>memcpy</code> don't exist. Write them, or bring a minimal subset.</p><pre><code>void *memset(void *dst, int c, size_t n) {
@@ -398,6 +418,20 @@ stack_top:
 ; in _start:
 mov esp, stack_top     ; 32-bit
 ; or mov rsp, stack_top (64-bit)</code></pre></article>
+          <article class="card"><h3>Zero the BSS</h3><p>The loader hands you an image, not a guarantee that <code>.bss</code> is zeroed. Any uninitialized global reads garbage until you clear it before C runs.</p><pre><code>; in _start, before calling C:
+mov edi, bss_start
+mov ecx, bss_end - bss_start
+xor eax, eax
+rep stosb              ; zero it all</code></pre></article>
+          <article class="card"><h3>Use a real cross-compiler</h3><p>Your host <code>gcc</code> targets your OS, not bare metal — wrong ABI, wrong ELF, and it links libc. Build a freestanding toolchain, or point clang at the right target.</p><pre><code>x86_64-elf-gcc ...          # crosstool / portable
+clang --target=x86_64-none-elf \
+  -ffreestanding -c kernel.c</code></pre></article>
+          <article class="card"><h3>Map the code that enables paging</h3><p>The instant you set <code>CR0.PG</code>, the next instruction fetch goes through the page tables. If your current code isn't mapped at the same virtual address, you triple-fault.</p><pre><code>; identity-map the kernel (or set up a
+; higher half) BEFORE toggling the bit:
+mov eax, cr0
+or  eax, 0x80000000    ; CR0.PG
+mov cr0, eax           ; must be mapped here
+; then jump to the higher half</code></pre></article>
         </div>
         <div class="callout warning" style="margin-top:16px"><div class="callout-mark">!</div><p><strong>Bare metal still follows the platform ABI.</strong> On x86-64 SysV: args go in <code>rdi, rsi, rdx, rcx, r8, r9</code>, the stack must be 16-byte aligned before each <code>call</code>, and the 128-byte red zone below <code>rsp</code> becomes unsafe once interrupts can fire. Your assembly must match the C compiler's expectations.</p></div>
       </section>
@@ -410,6 +444,12 @@ mov esp, stack_top     ; 32-bit
           <a href="https://www.gnu.org/software/grub/manual/multiboot/" target="_blank" rel="noreferrer">GRUB Multiboot</a>
           <a href="https://www.qemu.org/docs/master/" target="_blank" rel="noreferrer">QEMU docs</a>
           <a href="../">slop-stuff home</a>
+        </div>
+        <strong style="display:block; margin-top:22px">Related</strong>
+        <div class="footer-links">
+          <a href="../asm/">Assembly</a>
+          <a href="../embedded/">Embedded dev</a>
+          <a href="../giants/">Systems giants</a>
         </div>
       </footer>
     </main>

@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#memory"><span class="nav-number">02</span>Memory</a>
         <a href="#control"><span class="nav-number">03</span>Control flow</a>
@@ -67,6 +68,43 @@
               <div><span class="prompt">❯</span> <span class="cursor"></span></div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The eight snippets you'll reach for most often — registers, moves, branches, calls, and syscalls at a glance.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>move &amp; arithmetic</h3><pre><code>mov rax, rbx   ; rax = rbx
+add rax, 1     ; rax += 1
+sub rax, rcx   ; rax -= rcx
+xor rax, rax   ; rax = 0</code></pre></article>
+          <article class="card"><h3>key registers</h3><pre><code>rax   ; return value
+rdi   ; 1st argument
+rsi   ; 2nd argument
+rsp   ; stack pointer
+rbx   ; callee-saved</code></pre></article>
+          <article class="card"><h3>push / pop</h3><pre><code>push rax   ; rsp -= 8; [rsp] = rax
+pop  rax   ; rax = [rsp]; rsp += 8</code></pre></article>
+          <article class="card"><h3>compare &amp; branch</h3><pre><code>cmp rax, rbx
+je  equal   ; ==
+jne diff    ; !=
+jl  less    ; &lt; (signed)
+jmp loop    ; always</code></pre></article>
+          <article class="card"><h3>call / ret</h3><pre><code>call func   ; push return addr, jump
+ret         ; pop return addr, jump back</code></pre></article>
+          <article class="card"><h3>syscall</h3><pre><code>mov rax, 60   ; exit
+mov rdi, 0    ; status
+syscall       ; result in rax</code></pre></article>
+          <article class="card"><h3>AT&amp;T vs Intel</h3><pre><code>; Intel: mov rax, 1
+; AT&amp;T:  movq $1, %rax
+; Intel: dst, src
+; AT&amp;T:  src, dst</code></pre></article>
+          <article class="card"><h3>memory</h3><pre><code>mov rax, [rbx]          ; load
+mov [rbx], rax          ; store
+mov rax, [rbx+rcx*4+16] ; full form</code></pre></article>
         </div>
       </section>
 
@@ -323,6 +361,15 @@ ja above   ; unsigned</code></pre></article>
 ; ... use rbx ...
 pop  rbx       ; restore
 ret</code></pre></article>
+          <article class="card"><h3>No memory-to-memory moves</h3><p><code>mov</code> can't copy memory to memory — at least one operand must be a register. Load into a scratch register, then store.</p><pre><code>mov rax, [rsi]  ; load
+mov [rdi], rax  ; store</code></pre></article>
+          <article class="card"><h3>mul / div use implicit registers</h3><p><code>mul rbx</code> is really <code>rdx:rax = rax * rbx</code> — it reads <code>rax</code> and writes both <code>rax</code> and <code>rdx</code>, silently clobbering <code>rdx</code>. <code>idiv rcx</code> divides the 128-bit <code>rdx:rax</code> by <code>rcx</code>.</p><pre><code>mul  rbx   ; rdx:rax = rax*rbx
+idiv rcx   ; rax = quo, rdx = rem</code></pre></article>
+          <article class="card"><h3>Variable shift count lives in cl</h3><p>A shift or rotate count must be an immediate or in <code>cl</code> — no other register is accepted.</p><pre><code>shl rax, 3   ; immediate OK
+mov cl, 3
+shl rax, cl  ; variable count</code></pre></article>
+          <article class="card"><h3>syscall uses r10, not rcx</h3><p>For <code>syscall</code>, the 4th argument goes in <code>r10</code> — <code>syscall</code> clobbers <code>rcx</code> with the return address. Function calls use <code>rcx</code>; system calls use <code>r10</code>.</p><pre><code>; function: 4th arg = rcx
+; syscall:  4th arg = r10</code></pre></article>
         </div>
       </section>
 
@@ -334,6 +381,12 @@ ret</code></pre></article>
           <a href="https://cs.lmu.edu/~ray/notes/x86assembly/" target="_blank" rel="noreferrer">x86 assembly notes</a>
           <a href="https://developer.arm.com/documentation" target="_blank" rel="noreferrer">ARM documentation</a>
           <a href="../">slop-stuff home</a>
+        </div>
+        <p style="margin-top:18px"><strong>Related</strong></p>
+        <div class="footer-links">
+          <a href="../osdev/">OS development</a>
+          <a href="../c/">C language</a>
+          <a href="../giants/">Systems giants</a>
         </div>
       </footer>
     </main>

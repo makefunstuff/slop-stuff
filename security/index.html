@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#auth"><span class="nav-number">02</span>Auth</a>
         <a href="#secrets"><span class="nav-number">03</span>Secrets</a>
@@ -76,6 +77,25 @@
         </div>
       </section>
 
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>Seven habits that stop most attacks, plus three that keep you patched and visible. The sections below add the how.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>CIA triad</code><span>Confidentiality (encrypt, control access), Integrity (hash, sign), Availability (redundancy, rate limits).</span></div>
+          <div class="command-row"><code>argon2id / bcrypt</code><span>Hash passwords with argon2id (OWASP first choice) or bcrypt cost 12+ — never MD5 / SHA-1 / plaintext.</span></div>
+          <div class="command-row"><code>MFA</code><span>Require a second factor (passkey / TOTP) for every human account — the biggest lever against account takeover.</span></div>
+          <div class="command-row"><code>Least privilege</code><span>Non-root, read-only, scoped IAM, short-lived tokens. Grant the minimum a task needs.</span></div>
+          <div class="command-row"><code>Secrets management</code><span>Vault-managed and runtime-injected; never in git, env dumps, or frontends. Rotate before you leak.</span></div>
+          <div class="command-row"><code>OWASP Top 10</code><span>The 2025 baseline for web risk — broken access control stays #1; SSRF now folds into it.</span></div>
+          <div class="command-row"><code>TLS</code><span>TLS 1.3 preferred, 1.2 minimum, HSTS on. Encrypt in transit everywhere.</span></div>
+          <div class="command-row"><code>Defense in depth</code><span>Layer independent controls so one failure isn't a full compromise. Assume breach.</span></div>
+          <div class="command-row"><code>SBOM + scan</code><span>Pin dependencies, generate an SBOM, scan for CVEs in CI (trivy / osv-scanner / npm audit).</span></div>
+          <div class="command-row"><code>Rate limit</code><span>Throttle login and token endpoints to blunt brute force, stuffing, and scraping.</span></div>
+        </div>
+      </section>
+
       <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “auth”, “secret”, “OWASP”, “harden”, or “incident”.</div>
 
       <section class="section searchable" id="start">
@@ -98,8 +118,8 @@
           <p>Prove who someone is (authN), then decide what they may do (authZ). Never store passwords in plaintext.</p>
         </div>
         <div class="table-wrap"><table><thead><tr><th>Password hashing</th><th>Work factor</th><th>Use when</th><th>Notes</th></tr></thead><tbody>
-          <tr><td><code>bcrypt</code></td><td>cost 12+</td><td>Default for web apps</td><td>Slow, salted, battle-tested.</td></tr>
-          <tr><td><code>argon2id</code></td><td>memory + time + lanes</td><td>Highest assurance</td><td>PHC winner; resists GPU cracking.</td></tr>
+          <tr><td><code>bcrypt</code></td><td>cost 12+</td><td>Default for web apps</td><td>Slow, salted; 72-byte input limit.</td></tr>
+          <tr><td><code>argon2id</code></td><td>memory + time + lanes</td><td>OWASP first choice</td><td>PHC winner; resists GPU cracking.</td></tr>
           <tr><td><code>scrypt</code></td><td>N, r, p</td><td>Memory-hard alternative</td><td>Common in crypto libraries.</td></tr>
           <tr><td><code>PBKDF2</code></td><td>600k+ iterations</td><td>FIPS / legacy</td><td>Older but fine at high iterations.</td></tr>
           <tr><td><code>MD5 / SHA-1 / plain</code></td><td>—</td><td>Never</td><td>Fast hashes crack at scale.</td></tr>
@@ -226,7 +246,7 @@ osv-scanner -r .</code></pre></div>
 USER 10001
 COPY --chown=10001 . /app
 # run: --read-only --cap-drop ALL</code></pre></article>
-          <article class="card"><h3>TLS everywhere</h3><p>TLS 1.2+ only, HSTS, automate certs. Never terminate at the edge without re-encrypting.</p><pre><code>Strict-Transport-Security:
+          <article class="card"><h3>TLS everywhere</h3><p>TLS 1.3 preferred, 1.2 minimum, HSTS, automate certs. Never terminate at the edge without re-encrypting.</p><pre><code>Strict-Transport-Security:
   max-age=31536000; includeSubDomains</code></pre></article>
           <article class="card"><h3>SSH hardening</h3><p>Keys only, no root login, minimal ciphers.</p><pre><code># /etc/ssh/sshd_config
 PermitRootLogin no
@@ -260,7 +280,7 @@ AllowUsers deploy</code></pre></article>
           <div class="shortcut-group">
             <h4>Network</h4>
             <div class="shortcut-list">
-              <div class="shortcut-row"><span>TLS version</span><span class="keys"><kbd>1.2+</kbd></span></div>
+              <div class="shortcut-row"><span>TLS version</span><span class="keys"><kbd>1.3 / 1.2 min</kbd></span></div>
               <div class="shortcut-row"><span>HSTS max-age</span><span class="keys"><kbd>31536000</kbd></span></div>
               <div class="shortcut-row"><span>Firewall default</span><span class="keys"><kbd>deny</kbd></span></div>
             </div>
@@ -274,17 +294,17 @@ AllowUsers deploy</code></pre></article>
           <div><div class="section-kicker">06 / Web &amp; API</div><h2>Web &amp; API security</h2></div>
           <p>Assume every request is hostile: validate input, set headers, and limit abuse.</p>
         </div>
-        <div class="table-wrap"><table><thead><tr><th>OWASP Top 10 (2021)</th><th>Risk</th><th>Core defense</th></tr></thead><tbody>
-          <tr><td><code>A01</code> Broken access control</td><td>users reach others' data</td><td>authorize every request server-side</td></tr>
-          <tr><td><code>A02</code> Cryptographic failures</td><td>data exposed in transit/at rest</td><td>TLS 1.2+, strong ciphers</td></tr>
-          <tr><td><code>A03</code> Injection</td><td>SQL, OS, LDAP command injection</td><td>parameterized queries, allowlists</td></tr>
-          <tr><td><code>A04</code> Insecure design</td><td>flaws baked into architecture</td><td>threat modeling, fail closed</td></tr>
-          <tr><td><code>A05</code> Security misconfiguration</td><td>defaults, debug, verbose errors</td><td>harden, disable unused features</td></tr>
-          <tr><td><code>A06</code> Vulnerable components</td><td>old deps with known CVEs</td><td>pin + scan + patch</td></tr>
-          <tr><td><code>A07</code> Auth failures</td><td>credential stuffing, weak MFA</td><td>MFA, rate-limit login, bcrypt</td></tr>
-          <tr><td><code>A08</code> Integrity failures</td><td>unsigned updates, CI poisoning</td><td>SBOM, signed commits</td></tr>
-          <tr><td><code>A09</code> Logging failures</td><td>no visibility into attacks</td><td>structured logs + alerting</td></tr>
-          <tr><td><code>A10</code> SSRF</td><td>server fetches attacker URLs</td><td>allowlist outbound, block metadata IPs</td></tr>
+        <div class="table-wrap"><table><thead><tr><th>OWASP Top 10 (2025)</th><th>Risk</th><th>Core defense</th></tr></thead><tbody>
+          <tr><td><code>A01</code> Broken access control</td><td>users reach others' data; now includes SSRF, BOLA/BFLA</td><td>authorize every request server-side, deny by default</td></tr>
+          <tr><td><code>A02</code> Security misconfiguration</td><td>defaults, debug, verbose errors, open buckets</td><td>harden, disable unused, scan IaC + headers</td></tr>
+          <tr><td><code>A03</code> Software supply chain failures</td><td>compromised deps, build, CI/CD</td><td>SBOM, pin + sign + scan, trusted sources</td></tr>
+          <tr><td><code>A04</code> Cryptographic failures</td><td>data exposed in transit/at rest</td><td>TLS 1.3/1.2, argon2id, strong keys</td></tr>
+          <tr><td><code>A05</code> Injection</td><td>SQL, OS, LDAP, XSS</td><td>parameterized queries, output-encode</td></tr>
+          <tr><td><code>A06</code> Insecure design</td><td>flaws baked into architecture</td><td>threat modeling, fail closed</td></tr>
+          <tr><td><code>A07</code> Authentication failures</td><td>credential stuffing, weak MFA, sessions</td><td>MFA, rate-limit, breached-password checks</td></tr>
+          <tr><td><code>A08</code> Software/data integrity failures</td><td>unsigned updates, insecure deserialization</td><td>sign artifacts, verify integrity</td></tr>
+          <tr><td><code>A09</code> Logging &amp; alerting failures</td><td>no visibility or response to attacks</td><td>structured logs + alerting + playbooks</td></tr>
+          <tr><td><code>A10</code> Mishandling of exceptional conditions</td><td>fail-open logic, verbose errors</td><td>fail closed, centralized error handling</td></tr>
         </tbody></table></div>
         <div class="grid two" style="margin-top:16px">
           <article class="card"><h3>Content-Security-Policy</h3><p>Restrict what the browser may load and execute — the single best header against XSS.</p><pre><code>Content-Security-Policy: default-src 'self';
@@ -302,7 +322,7 @@ tmpl.Execute(w, userInput)</code></pre></article>
         <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Header</th><th>What it does</th><th>Example</th></tr></thead><tbody>
           <tr><td><code>Content-Security-Policy</code></td><td>allowlist of script/style sources</td><td><code>default-src 'self'</code></td></tr>
           <tr><td><code>Strict-Transport-Security</code></td><td>force HTTPS</td><td><code>max-age=31536000</code></td></tr>
-          <tr><td><code>X-Frame-Options</code></td><td>block clickjacking</td><td><code>DENY</code></td></tr>
+          <tr><td><code>X-Frame-Options</code></td><td>block clickjacking (legacy; prefer CSP <code>frame-ancestors</code>)</td><td><code>DENY</code></td></tr>
           <tr><td><code>Referrer-Policy</code></td><td>limit referrer leakage</td><td><code>strict-origin-when-cross-origin</code></td></tr>
           <tr><td><code>Permissions-Policy</code></td><td>disable camera/mic/geolocation</td><td><code>geolocation=()</code></td></tr>
           <tr><td><code>X-Content-Type-Options</code></td><td>stop MIME sniffing</td><td><code>nosniff</code></td></tr>
@@ -371,17 +391,33 @@ bash install.sh</code></pre></article>
           <article class="card"><h3>Default credentials</h3><p>Ship with the vendor's default login and scanners will find you in minutes. Change on first boot; rotate regularly.</p><pre><code># change before exposing anything
 admin / admin
 root / password</code></pre></article>
+          <article class="card"><h3>bcrypt's 72-byte limit</h3><p>bcrypt silently truncates input after 72 bytes, so a 100-char passphrase and its 72-byte prefix hash the same. Pre-hash with SHA-384, or use argon2id for long passphrases.</p><pre><code># argon2id has no 72-byte ceiling
+# or: bcrypt(sha384(pw)) for long inputs</code></pre></article>
+          <article class="card"><h3>Forced password rotation</h3><p>Scheduled rotation pushes users to weak, predictable passwords. NIST 800-63B: drop expiry, check new passwords against breached lists, rotate only on compromise.</p><pre><code># check pwned passwords (k-anonymity)
+# rotate on breach, not on a calendar</code></pre></article>
+          <article class="card"><h3>Non-constant-time comparison</h3><p>Comparing tokens or MACs with <code>==</code> leaks how many bytes match via timing. Use a constant-time compare for secrets.</p><pre><code>crypto.timingSafeEqual(a, b)   # Node
+hashlib.compare_digest(a, b)   # Python</code></pre></article>
         </div>
       </section>
 
       <footer class="footer searchable">
         <strong>Source of truth</strong>
-        <p>This guide summarizes industry practice. The OWASP Top 10, the OWASP Cheat Sheet Series, and the CIS Benchmarks remain authoritative for details.</p>
+        <p>This guide summarizes industry practice. The OWASP Top 10 (2025 edition), the OWASP Cheat Sheet Series, NIST 800-63B, and the CIS Benchmarks remain authoritative for details.</p>
         <div class="footer-links">
           <a href="https://owasp.org/www-project-top-ten/" target="_blank" rel="noreferrer">OWASP Top 10</a>
           <a href="https://cheatsheetseries.owasp.org/" target="_blank" rel="noreferrer">OWASP Cheat Sheets</a>
           <a href="https://www.cisecurity.org/cis-benchmarks" target="_blank" rel="noreferrer">CIS Benchmarks</a>
           <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+
+      <footer class="footer searchable">
+        <strong>Related guides</strong>
+        <p>Keep going through the stack:</p>
+        <div class="footer-links">
+          <a href="../pentesting/">Pentesting</a>
+          <a href="../devops/">DevOps</a>
+          <a href="../linux-cli/">Linux CLI</a>
         </div>
       </footer>
     </main>

@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#linear"><span class="nav-number">02</span>Linear algebra</a>
         <a href="#prob"><span class="nav-number">03</span>Probability</a>
@@ -76,6 +77,23 @@
               <div><span class="prompt">❯</span> <span class="cursor"></span></div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The eight formulas you'll reach for most — scan this before anything else.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>a · b = |a||b| cos θ</code><span><strong>Dot &amp; cross product.</strong> Dot → scalar (alignment); cross → vector perpendicular to both (3D only).</span></div>
+          <div class="command-row"><code>C[i][j] = Σ A[i][k] · B[k][j]</code><span><strong>Matrix multiplication.</strong> <code>(m×n)·(n×p) = (m×p)</code>; entry <code>(i, j)</code> is row <code>i</code> of A dotted with column <code>j</code> of B.</span></div>
+          <div class="command-row"><code>d/dx x^n = n·x^(n−1)</code><span><strong>Derivative — power rule.</strong> Bring the exponent down and drop it by one; <code>d/dx e^x = e^x</code>, <code>d/dx ln x = 1/x</code>.</span></div>
+          <div class="command-row"><code>d/dx f(g(x)) = f'(g(x)) · g'(x)</code><span><strong>Chain rule.</strong> Derivative of a composition = outside × inside. Backpropagation is exactly this, layered backward.</span></div>
+          <div class="command-row"><code>P(A|B) = P(B|A) · P(A) / P(B)</code><span><strong>Bayes' theorem.</strong> Update a belief with evidence; the denominator normalizes over all outcomes.</span></div>
+          <div class="command-row"><code>X(f) = ∫ x(t) e^(−j2πft) dt</code><span><strong>Fourier transform.</strong> Time ↔ frequency; convolution in time becomes multiplication in frequency (FFT: <code>O(N log N)</code>).</span></div>
+          <div class="command-row"><code>θ = θ − α · ∇J(θ)</code><span><strong>Gradient descent.</strong> Step downhill against the gradient; <code>α</code> is the learning rate (step size).</span></div>
+          <div class="command-row"><code>a ≡ b (mod m)</code><span><strong>Modular arithmetic.</strong> Clock arithmetic — <code>(a+b) mod m = (a mod m + b mod m) mod m</code>. Basis of hashing and crypto.</span></div>
         </div>
       </section>
 
@@ -435,6 +453,14 @@ median = 3     # robust</code></pre></article>
           <article class="card"><h3>Correlation ≠ causation</h3><p>Two series moving together doesn't mean one causes the other — a third factor or pure coincidence is common.</p><pre><code># ice cream sales ↑ and drownings ↑
 # both driven by summer, not each other
 # control for confounders, run experiments</code></pre></article>
+          <article class="card"><h3>Radians vs degrees</h3><p>Trig functions (<code>sin</code>, <code>cos</code>, <code>tan</code>) take <strong>radians</strong> in code, not degrees. Forgetting to convert silently distorts angles, rotations, and FFT phases.</p><pre><code># 2π rad = 360°
+rad = deg × π / 180
+deg = rad × 180 / π
+sin(90)    # 0.894…  ← radians, NOT 1
+sin(π/2)   # 1        ← what you meant</code></pre></article>
+          <article class="card"><h3>Percent vs percentage points</h3><p>A change from <code>1%</code> to <code>2%</code> is +1 <strong>percentage point</strong> but a +100% <strong>relative</strong> change. Mixing them up mangles rates and A/B results.</p><pre><code>1% → 2%     # +1 pp,  +100% relative
+50% → 55%   # +5 pp,  +10% relative
+# state which one you mean</code></pre></article>
         </div>
         <div class="callout warning" style="margin-top:16px"><div class="callout-mark">⚠</div><p><strong>Check your inputs.</strong> Most "math bugs" aren't the formula — they're a wrong unit, an off-by-one index, a silent overflow, or comparing floats with <code>==</code>. Sanity-check the magnitude of every result.</p></div>
       </section>
@@ -447,6 +473,12 @@ median = 3     # robust</code></pre></article>
           <a href="https://www.khanacademy.org/math" target="_blank" rel="noreferrer">Khan Academy</a>
           <a href="https://en.wikipedia.org/wiki/Linear_algebra" target="_blank" rel="noreferrer">Linear algebra (Wikipedia)</a>
           <a href="../">slop-stuff home</a>
+        </div>
+        <strong style="display:block;margin-top:22px">Related</strong>
+        <div class="footer-links">
+          <a href="../algorithms/">Algorithms</a>
+          <a href="../finance/">Finance</a>
+          <a href="../sdr/">SDR</a>
         </div>
       </footer>
     </main>

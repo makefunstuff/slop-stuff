@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#nginx"><span class="nav-number">02</span>nginx</a>
         <a href="#redis"><span class="nav-number">03</span>Redis</a>
@@ -75,6 +76,23 @@
               <div><span class="prompt">❯</span> <span class="cursor"></span></div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The ten-second version — every lesson on this page in one glance.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>epoll_wait()</code><span>non-blocking I/O: one thread watches many fds and never waits on a single client.</span></div>
+          <div class="command-row"><code>event loop</code><span>single thread multiplexes I/O — keep blocking work out of it.</span></div>
+          <div class="command-row"><code>perf stat ./prog</code><span>measure first: the bottleneck is rarely where you guessed.</span></div>
+          <div class="command-row"><code>SoA, cache lines</code><span>data structures dominate — keep one cache line hot.</span></div>
+          <div class="command-row"><code>fork() + COW</code><span>copy-on-write and RCU share pages/reads until a writer must diverge.</span></div>
+          <div class="command-row"><code>cache + invalidate</code><span>store results near where they're used; stale data is worse than slow data.</span></div>
+          <div class="command-row"><code>0x5f3759df</code><span>bit hack + Newton for 1/√x — historic, now superseded by <code>rsqrtss</code>.</span></div>
+          <div class="command-row"><code>delete code</code><span>keep it simple: the fastest path is the one you didn't write.</span></div>
         </div>
       </section>
 
@@ -165,7 +183,7 @@ http {
         <div class="grid three">
           <article class="card"><h3>Single thread, no locks</h3><p>Commands execute one at a time on one thread, so there are no races, no locks, and no context switches on the command path. Each command is effectively atomic.</p></article>
           <article class="card"><h3>In-memory</h3><p>Everything lives in RAM, so reads never touch disk. Durability is a separate, configurable concern — not on the hot path.</p></article>
-          <article class="card"><h3>I/O multiplexing</h3><p>One thread serves many clients with the same <code>epoll</code> trick as nginx. (Redis 6+ adds threads for parsing network bytes, but command execution stays single-threaded.)</p></article>
+          <article class="card"><h3>I/O multiplexing</h3><p>One thread serves many clients with the same <code>epoll</code> trick as nginx. (Redis 6+ added I/O threads for parsing network bytes, and Redis 8 adds event-driven async I/O threading — but command execution stays single-threaded.)</p></article>
         </div>
         <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Type</th><th>Backing structure</th><th>Use for</th></tr></thead><tbody>
           <tr><td><code>string</code></td><td>SDS, embeds small ints</td><td>caches, counters (<code>INCR</code>)</td></tr>
@@ -258,7 +276,7 @@ kfree(node);             /* then reclaim */</code></pre>
           <p>John Carmack's code is a masterclass in measuring, simplifying, and squeezing the machine.</p>
         </div>
         <div class="grid two">
-          <article class="card"><h3>Fast inverse square root</h3><p>From Quake III's source: a bit-level hack seeds a Newton iteration, computing <code>1/√x</code> ~4× faster than the naive route on 1990s hardware. The magic constant <code>0x5f3759df</code> was long attributed to Carmack, though its true origin is debated.</p></article>
+          <article class="card"><h3>Fast inverse square root</h3><p>From Quake III's source: a bit-level hack seeds a Newton iteration, computing <code>1/√x</code> ~4× faster than the naive route on 1990s hardware. The magic constant <code>0x5f3759df</code> was long attributed to Carmack, but its author was actually Greg Walsh at Ardent Computer — authorship settled in 2006. On modern x86 the SSE instruction <code>rsqrtss</code> does the same job faster and more accurately.</p></article>
           <article class="card"><h3>The function, complete</h3><pre><code>float Q_rsqrt(float number) {
   long i;
   float x2, y;
@@ -334,6 +352,8 @@ __atomic_compare_exchange_n(&amp;ptr, &amp;old, new,
           <article class="card"><h3>Blocking the event loop</h3><p>One synchronous <code>read()</code>, <code>sleep()</code>, or heavy CPU burst stalls every client behind it. Never run blocking work inside the loop.</p></article>
           <article class="card"><h3>Cache invalidation</h3><p>“There are only two hard things in Computer Science: cache invalidation and naming things.” — Phil Karlton. Version, expire, or invalidate — stale data is worse than slow data.</p></article>
           <article class="card"><h3>Concurrency bugs</h3><p>Races, deadlocks, and torn reads don't reproduce on demand. Prefer immutability, ownership, and atomics over shared mutable state.</p></article>
+          <article class="card"><h3>Cache stampede</h3><p>When a hot cache key expires, every client recomputes or hammers the origin at once. Add jitter to TTLs, lock the recompute, or serve stale while revalidating.</p></article>
+          <article class="card"><h3>COW fork thrash</h3><p><code>fork()</code> shares pages until a write forces a copy. A large process that forks and then writes heavily — Redis taking an RDB snapshot is the classic case — can briefly spike toward 2× its memory.</p></article>
         </div>
         <div class="callout warning" style="margin-top:16px"><div class="callout-mark">⚠</div><p><strong>Complexity creep.</strong> Every feature adds surface for bugs, and every abstraction adds a place to hide them. The giants stay fast partly because they say no: a small, well-understood system beats a clever, sprawling one.</p></div>
       </section>
@@ -347,6 +367,13 @@ __atomic_compare_exchange_n(&amp;ptr, &amp;old, new,
           <a href="https://www.kernel.org/doc/" target="_blank" rel="noreferrer">kernel docs</a>
           <a href="https://en.wikipedia.org/wiki/Fast_inverse_square_root" target="_blank" rel="noreferrer">Fast inverse square root</a>
           <a href="../">slop-stuff home</a>
+        </div>
+        <strong>Related guides</strong>
+        <p>Go deeper into the machinery these lessons lean on.</p>
+        <div class="footer-links">
+          <a href="../osdev/">OS dev</a>
+          <a href="../asm/">Assembly</a>
+          <a href="../ebpf/">eBPF</a>
         </div>
       </footer>
     </main>

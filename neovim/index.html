@@ -12,7 +12,7 @@
     <a class="brand" href="../" aria-label="Back to slop-stuff">
       <span class="brand-mark">nv_</span>
       <span>Neovim Guide</span>
-      <span class="version">0.10+</span>
+      <span class="version">0.11+</span>
     </a>
     <label class="search-wrap">
       <span class="sr-only" hidden>Search guide</span>
@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#motion"><span class="nav-number">02</span>Motion</a>
         <a href="#editing"><span class="nav-number">03</span>Editing</a>
@@ -75,6 +76,54 @@
             </div>
           </div>
         </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>The everyday keys, at a glance</h2></div>
+          <p>Nine blocks cover the daily surface — modes, movement, operators, text objects, search, replace, splits, config, and LSP. Skim it once, then dive into the sections below for depth.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>Modes</h3><pre><code>Esc           " back to Normal (always)
+i  a  o       " insert before / after / new line
+v  V  Ctrl-v  " visual: char / line / block
+:             " command-line mode</code></pre></article>
+          <article class="card"><h3>Move</h3><pre><code>h  j  k  l    " left / down / up / right
+w  b  e       " word: next / back / end
+0  $  ^       " line start / end / first char
+gg  G  12G    " top / bottom / line 12</code></pre></article>
+          <article class="card"><h3>Operators</h3><pre><code>d  c  y       " delete / change / yank
+x  p  P       " char / put after / before
+u  Ctrl-r     " undo / redo
+.             " repeat last change</code></pre></article>
+          <article class="card"><h3>Text objects</h3><pre><code>ciw  ci"      " change word / string
+di(  di{      " delete inside ( / {
+yap  yit      " yank paragraph / tag
+cit           " change tag content</code></pre></article>
+          <article class="card"><h3>Search</h3><pre><code>/pattern      " search forward
+?pattern      " search backward
+n  N          " next / previous match
+*  #          " word under cursor fwd/back
+:noh          " clear highlight</code></pre></article>
+          <article class="card"><h3>Replace</h3><pre><code>:s/old/new/    " current line, first
+:%s/old/new/g  " whole file
+:%s/old/new/gc " whole file, confirm
+&amp;               " repeat last :s</code></pre></article>
+          <article class="card"><h3>Splits</h3><pre><code>:sp  :vsp      " split horizontal / vertical
+Ctrl-w h j k l " move focus
+Ctrl-w q  o    " close / only window
+Ctrl-w =       " equalize sizes</code></pre></article>
+          <article class="card"><h3>init.lua</h3><pre><code>~/.config/nvim/init.lua   " entry point
+vim.opt.number = true     " options
+vim.keymap.set("n", ...)  " keymaps
+require("lazy").setup("plugins")</code></pre></article>
+          <article class="card"><h3>LSP</h3><pre><code>gd  gr         " definition / references
+K              " hover docs
+&lt;leader&gt;rn    " rename symbol
+:LspInstall srv  " install a server
+:LspInfo       " what's attached</code></pre></article>
+        </div>
+        <div class="callout"><div class="callout-mark">KEY</div><p><strong>The grammar of every command:</strong> <code>count</code> + <code>operator</code> + <code>motion</code>. <code>d3w</code> deletes three words, <code>ci"</code> changes inside the quotes — everything else is a refinement of that one sentence.</p></div>
       </section>
 
       <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “motion”, “operator”, “text object”, “split”, or “lsp”.</div>
@@ -280,17 +329,16 @@ require("lazy").setup("plugins")</code></pre></article>
           <p>Language servers give you go-to-definition, references, rename, and diagnostics; treesitter adds real syntax parsing; nvim-cmp ties it into completion.</p>
         </div>
         <div class="grid three">
-          <article class="card"><h3>mason + lspconfig</h3><p>Install servers with <code>:LspInstall</code>, then attach them per buffer.</p><pre><code>require("mason").setup()
+          <article class="card"><h3>mason + lspconfig</h3><p>Install servers with <code>:LspInstall</code>, then attach them per buffer — or use the built-in <code>vim.lsp.enable</code> on 0.11+.</p><pre><code>require("mason").setup()
 require("mason-lspconfig").setup({
   ensure_installed = { "lua_ls", "rust_analyzer" },
 })
 require("lspconfig").lua_ls.setup({})
 require("lspconfig").rust_analyzer.setup({})</code></pre></article>
-          <article class="card"><h3>treesitter</h3><p>Install parsers with <code>:TSInstall lua</code>, enable highlighting and indentation.</p><pre><code>require("nvim-treesitter.configs").setup({
-  ensure_installed = { "lua", "rust" },
-  highlight = { enable = true },
-  indent = { enable = true },
-})</code></pre></article>
+          <article class="card"><h3>treesitter</h3><p>Built into core since 0.11 — parsers for C, Lua, Vimscript, and Vimdoc ship with Neovim, and treesitter highlighting is the default in 0.12. The <code>nvim-treesitter</code> plugin was archived in 2026; keep it only for extra parsers via <code>:TSInstall</code>.</p><pre><code>-- 0.11+ / 0.12: nothing to configure
+-- parsing + highlighting are built in
+-- extra parsers still need the plugin:
+--   :TSInstall rust</code></pre></article>
           <article class="card"><h3>nvim-cmp</h3><p>Completion engine fed by LSP, buffer words, and paths.</p><pre><code>local cmp = require("cmp")
 cmp.setup({
   sources = {
@@ -323,7 +371,7 @@ cmp.setup({
             <div class="shortcut-row"><span>Restart LSP client</span><div class="keys"><kbd>:</kbd><kbd>LspRestart</kbd></div></div>
           </div></div>
         </div>
-        <div class="callout" style="margin-top:16px"><div class="callout-mark">LSP</div><p><strong>Zero-config setup:</strong> <code>:LspInstall rust_analyzer</code> installs a server, <code>:TSInstall rust</code> adds treesitter parsing, and <code>:LspInfo</code> shows what's attached to the current buffer. <code>:LspLog</code> reveals errors when a server won't start.</p></div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">LSP</div><p><strong>Zero-config setup:</strong> <code>:LspInstall rust_analyzer</code> installs a server, <code>:LspInfo</code> shows what's attached, and <code>:LspLog</code> reveals errors when a server won't start. On 0.11+ you can skip lspconfig entirely with the built-in <code>vim.lsp.config()</code> + <code>vim.lsp.enable("rust_analyzer")</code>.</p></div>
       </section>
 
       <section class="section searchable" id="gotchas">
@@ -345,17 +393,35 @@ u  Ctrl-r      " undo / redo</code></pre></article>
           <article class="card"><h3>Registers &amp; dot</h3><p><code>.</code> repeats only the last <em>change</em> — motions don't count, and undo doesn't count either. Pasted text lands in <code>"+</code> only if your build has clipboard support; check with <code>:checkhealth</code>.</p><pre><code>"ap      " paste register a
 :reg     " list all registers
 .        " repeat the last change only</code></pre></article>
+          <article class="card"><h3>:s scope surprises</h3><p><code>:s</code> substitutes on the <em>current line only</em>, and only the first match unless you add <code>g</code>. <code>:%s</code> reaches the whole file, and <code>&amp;</code> repeats the last substitution.</p><pre><code>:s/old/new/     " this line, first hit
+:s/old/new/g    " this line, all
+:%s/old/new/g   " whole file
+&amp;               " repeat last :s</code></pre></article>
+          <article class="card"><h3>Silent config errors</h3><p>A typo in <code>init.lua</code> stops the file mid-way with no loud alarm — half your keymaps just won't exist. Read the messages with <code>:messages</code>, trace an option with <code>:verbose set nu?</code>, and run <code>:checkhealth</code> after big edits.</p><pre><code>:messages        " recent errors + messages
+:verbose set nu? " where 'number' was set
+:checkhealth     " LSP / provider report</code></pre></article>
         </div>
         <div class="callout warning" style="margin-top:16px"><div class="callout-mark">!</div><p><strong>Lost your way?</strong> <code>:q!</code> discards only the current window's changes. If <code>Ctrl-c</code> won't leave insert mode you may be in <code>-- TERMINAL --</code>; press <code>Ctrl-\ Ctrl-n</code> to escape a terminal back to Normal mode.</p></div>
       </section>
 
       <footer class="footer searchable">
         <strong>Source of truth</strong>
-        <p>This guide summarizes Neovim's defaults and common Lua configuration. The built-in manual — <code>:help</code> — and the official documentation remain authoritative for your installed version.</p>
+        <p>This guide covers Neovim <code>0.11+</code> (0.11 shipped March 2025; 0.12 landed in 2026). The built-in manual — <code>:help</code> — and the official documentation remain authoritative for your installed version.</p>
         <div class="footer-links">
           <a href="https://neovim.io/doc/" target="_blank" rel="noreferrer">Neovim docs</a>
           <a href="https://neovim.io/doc/user/lua.html" target="_blank" rel="noreferrer">Lua guide</a>
+          <a href="https://neovim.io/doc/user/news-0.11.html" target="_blank" rel="noreferrer">0.11 release notes</a>
           <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+
+      <footer class="footer searchable" style="margin-top:24px">
+        <strong>Related</strong>
+        <p>Neovim edits the files the shell creates — pair it with the tools around it.</p>
+        <div class="footer-links">
+          <a href="../linux-cli/">Linux CLI</a>
+          <a href="../bash/">Bash</a>
+          <a href="../c/">C</a>
         </div>
       </footer>
     </main>

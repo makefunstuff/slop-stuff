@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#statements"><span class="nav-number">02</span>Financial statements</a>
         <a href="#ratios"><span class="nav-number">03</span>Valuation ratios</a>
@@ -77,6 +78,24 @@
               <div><span class="prompt">❯</span> <span class="cursor"></span></div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The nine numbers you'll reach for first — each is expanded in the sections below.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>P/E = Price ÷ EPS</code><span>&lt; 15× cheap · &gt; 25× pricey — always compare within a sector.</span></div>
+          <div class="command-row"><code>P/B = Price ÷ Book value per share</code><span>&lt; 1.5× cheap · &gt; 3× pricey. The key metric for banks, insurers, and asset-heavy firms.</span></div>
+          <div class="command-row"><code>ROE = Net income ÷ Equity</code><span>Consistently &gt; 15% over 5+ years = a compounding machine.</span></div>
+          <div class="command-row"><code>DCF = Σ FCFₜ/(1+r)ᵗ + TV/(1+r)ⁿ</code><span>Intrinsic value = discounted future cash + terminal value. Run a range, never a single point.</span></div>
+          <div class="command-row"><code>Margin of safety = 1 − Price ÷ Value</code><span>Buy only when &gt; 30% below intrinsic value — the discount absorbs your estimation error.</span></div>
+          <div class="command-row"><code>Graham number = √(22.5 × EPS × BVPS)</code><span>Fair-value ceiling for a defensive stock — 15× P/E × 1.5× P/B.</span></div>
+          <div class="command-row"><code>FCF = Operating cash flow − Capex</code><span>The cash a business can return to owners. Want FCF ≈ net income.</span></div>
+          <div class="command-row"><code>EV/EBITDA = (Mkt cap + Debt − Cash) ÷ EBITDA</code><span>&lt; 8× cheap · &gt; 14× pricey. Best for capital-intensive firms where depreciation hides economics.</span></div>
+          <div class="command-row"><code>PEG = P/E ÷ EPS growth rate</code><span>&lt; 1 cheap · &gt; 2 pricey — credits fast growers a higher P/E.</span></div>
         </div>
       </section>
 
@@ -144,7 +163,7 @@
           <tr><td><code>P/B</code></td><td>Price ÷ book value / share</td><td>&lt; 1.5×</td><td>&gt; 3×</td></tr>
           <tr><td><code>P/S</code></td><td>Market cap ÷ revenue</td><td>&lt; 1×</td><td>&gt; 3×</td></tr>
           <tr><td><code>EV/EBITDA</code></td><td>(Mkt cap + debt − cash) ÷ EBITDA</td><td>&lt; 8×</td><td>&gt; 14×</td></tr>
-          <tr><td><code>PEG</code></td><td>P/E ÷ EPS growth %</td><td>&lt; 1</td><td>&gt; 2</td></tr>
+          <tr><td><code>PEG</code></td><td>P/E ÷ EPS growth rate</td><td>&lt; 1</td><td>&gt; 2</td></tr>
           <tr><td><code>Dividend yield</code></td><td>Dividend ÷ price</td><td>&gt; 4%</td><td>&lt; 1.5%</td></tr>
         </tbody></table></div>
         <p>Sector caveats — the same number means different things in different industries:</p>
@@ -318,12 +337,15 @@ Owner earnings = Net income
           <p>Ways a value investor loses money. Know them before the market teaches you.</p>
         </div>
         <div class="grid three">
-          <article class="card"><h3>Value traps</h3><p>Cheap keeps getting cheaper because the business is deteriorating. Cheap ≠ undervalued.</p></article>
-          <article class="card"><h3>Accounting tricks</h3><p>Channel stuffing, capitalizing expenses, cookie-jar reserves. Watch cash flow vs earnings.</p></article>
-          <article class="card"><h3>Survivorship bias</h3><p>Backtests and index histories omit the bankrupt — past returns look better than they were.</p></article>
-          <article class="card"><h3>Over-leverage</h3><p>Debt amplifies losses in a downturn. High leverage turns a bad year into a wipeout.</p></article>
-          <article class="card"><h3>Anchoring</h3><p>Fixating on a past price or your purchase price instead of intrinsic value. The market owes you nothing.</p></article>
-          <article class="card"><h3>Confirmation bias</h3><p>Seeking only evidence that agrees with your thesis. Actively hunt for the bear case.</p></article>
+          <article class="card"><h3>Value traps</h3><p>Cheap keeps getting cheaper because the business is deteriorating. Cheap ≠ undervalued. Ask the hard question: is the decline cyclical (recoverable) or secular (permanent)?</p></article>
+          <article class="card"><h3>Accounting tricks</h3><p>Channel stuffing, capitalizing expenses, cookie-jar reserves, aggressive revenue recognition. Always reconcile cash flow against earnings — when they diverge, find out why.</p></article>
+          <article class="card"><h3>Survivorship bias</h3><p>Backtests and index histories omit the companies that went bankrupt, so past returns look rosier than they were. You're seeing the winners who lived.</p></article>
+          <article class="card"><h3>Over-leverage</h3><p>Debt amplifies losses in a downturn. A leveraged company earns more in good times, but a single bad year can wipe out equity entirely.</p></article>
+          <article class="card"><h3>Anchoring</h3><p>Fixating on your purchase price or a past high instead of intrinsic value. Your cost basis is irrelevant to what the business is worth today — the market owes you nothing.</p></article>
+          <article class="card"><h3>Confirmation bias</h3><p>Seeking only evidence that agrees with your thesis. Actively build the bear case and read the short sellers' argument before you buy.</p></article>
+          <article class="card"><h3>Precision illusion</h3><p>A DCF spits out a number with false precision, yet small changes in growth or discount rate swing it wildly. Treat the model as a range, not a fact.</p></article>
+          <article class="card"><h3>Dilution</h3><p>Stock-based compensation and secondary offerings quietly grow the share count, shrinking each share's claim. Value the business per share, not just in total.</p></article>
+          <article class="card"><h3>Recency bias</h3><p>Extrapolating the last few quarters into forever. Mean reversion is brutal — growth that can't be sustained gets priced back down.</p></article>
         </div>
       </section>
 
@@ -335,6 +357,12 @@ Owner earnings = Net income
           <a href="https://www.investopedia.com/terms/g/grahamnumber.asp" target="_blank" rel="noreferrer">Graham number</a>
           <a href="https://www.buffett.cn/" target="_blank" rel="noreferrer">Buffett.cn</a>
           <a href="../">slop-stuff home</a>
+        </div>
+        <div class="footer-links">
+          <strong>Related</strong>
+          <a href="../math/">Mathematics</a>
+          <a href="../excel/">Excel</a>
+          <a href="../db-optimization/">DB optimization</a>
         </div>
       </footer>
     </main>

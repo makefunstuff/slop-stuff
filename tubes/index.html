@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#bjt"><span class="nav-number">02</span>BJT</a>
         <a href="#mosfet"><span class="nav-number">03</span>MOSFETs</a>
@@ -72,6 +73,40 @@
               <div><span class="term-accent">small signal in → big current out</span><span class="cursor"></span></div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The facts you reach for most — polarity, gain, thresholds, and operating regions — at a glance. Full explanations live in the numbered sections below.</p>
+        </div>
+        <div class="grid three">
+          <article class="card"><h3>NPN vs PNP</h3><p>Same rules, opposite polarity. The emitter arrow shows conventional current direction.</p><pre><code>NPN: base +0.7 V above emitter → ON
+     Ic flows C → E  (current sink)
+PNP: base −0.7 V below emitter → ON
+     Ic flows E → C  (current source)</code></pre></article>
+          <article class="card"><h3>Gain</h3><p>BJT is current gain (β); FETs and tubes are voltage gain via transconductance.</p><pre><code>Ic = hFE · Ib      β ≈ 100–300
+gm  = ΔId / ΔVgs    # transconductance
+Av  ≈ −gm · Rd      # common source / emitter</code></pre></article>
+          <article class="card"><h3>BJT states</h3><p>Three regions decide switch vs amplifier.</p><pre><code>cutoff:     Vbe &lt; 0.7 V  → Ic ≈ 0
+active:     Ic = hFE · Ib  → amplify
+saturation: Vce ≈ 0.2 V  → closed switch</code></pre></article>
+          <article class="card"><h3>MOSFET gate &amp; threshold</h3><p>Voltage-controlled; the gate is a capacitor, not a resistor.</p><pre><code>N-ch ON: Vgs &gt; Vth   # Vth ≈ 1–4 V
+P-ch ON: Vgs &lt; Vth
+gate draws ~0 DC; 10k pull to a defined level</code></pre></article>
+          <article class="card"><h3>Saturation vs cutoff</h3><p>Switch = slam between the two; amplifier = stay in the middle.</p><pre><code>saturation: fully ON,  Vce ≈ 0.2 V / Vds ≈ 0
+cutoff:     fully OFF, Ic ≈ 0
+linear:     in between → amplifier</code></pre></article>
+          <article class="card"><h3>Triode vs pentode</h3><p>Extra grids around the basic triode trade feedback for gain.</p><pre><code>triode:  cathode · grid · anode   μ ≈ 20–100
+tetrode: + screen grid  (less Miller feedback)
+pentode: + suppressor grid (no secondary emission)</code></pre></article>
+          <article class="card"><h3>Common-emitter amp</h3><p>The go-to voltage gain stage; it inverts the signal.</p><pre><code>Av ≈ −Rc / Re    # BJT, inverting
+Av ≈ −gm · Rd     # FET common source
+bias mid-active region; AC-couple in/out</code></pre></article>
+          <article class="card"><h3>Bias point</h3><p>Resistors set the DC operating point the signal swings around.</p><pre><code>Vb = Vcc · R2 / (R1 + R2)
+Ve = Vb − 0.7 V
+Ic ≈ Ie = Ve / Re</code></pre></article>
         </div>
       </section>
 
@@ -225,7 +260,7 @@ use: VFD, inverter, welder, EV traction</code></pre></article>
           <tr><td><code>Diode</code></td><td>cathode, anode</td><td>one-way flow</td><td>rectifier, detector</td></tr>
           <tr><td><code>Triode</code></td><td>+ control grid</td><td>voltage gain (μ)</td><td>audio/RF amps</td></tr>
           <tr><td><code>Tetrode</code></td><td>+ screen grid</td><td>less Miller feedback</td><td>RF power</td></tr>
-          <tr><td><code>Pentode</code></td><td>+ suppressor grid</td><td>higher gain, high Rp</td><td>audio/RF power</td></tr>
+          <tr><td><code>Pentode</code></td><td>+ suppressor grid</td><td>suppresses secondary emission; high gain, high Rp</td><td>audio/RF power</td></tr>
         </tbody></table></div>
         <div class="grid two" style="margin-top:16px">
           <article class="card"><h3>Grid bias</h3><p>The grid must sit negative relative to the cathode to set the idle plate current.</p><pre><code>cathode bias: Rk develops Vk = Ik · Rk
@@ -347,6 +382,12 @@ check the quiescent current (Ic / Id / Ip)</code></pre></article>
           <article class="card"><h3>No heat sink</h3><p>Even a few watts can push a TO-220 past its 150 °C junction limit.</p><pre><code>P = V · I  (or Id² · Rds(on))
 Rθja without sink ≈ 60 °C/W
 add sink → Rθja drops to ~10 °C/W</code></pre></article>
+          <article class="card"><h3>Gate ringing / oscillation</h3><p>Long or un-damped gate traces can ring, spiking Vgs past its limit and making the device switch erratically.</p><pre><code>fix: series gate resistor (10–100 Ω)
+     short, wide traces; local bypass cap
+     keep Vgs within ±20 V</code></pre></article>
+          <article class="card"><h3>Exceeding the SOA</h3><p>A device can fail even inside its max V and I ratings if it sees high voltage and high current at the same time.</p><pre><code>secondary breakdown → local hotspot
+linear pass: P = (Vin − Vout) · I
+check the SOA curve; keep Tj &lt; 150 °C</code></pre></article>
         </div>
         <div class="callout warning" style="margin-top:16px"><div class="callout-mark">!</div><p><strong>When in doubt, measure.</strong> Bias is set by resistors and voltages — not vibes. Check <code>Vbe</code> (~0.6–0.7 V), <code>Vgs</code> vs <code>Vth</code>, and the idle current before you trust a circuit.</p></div>
       </section>
@@ -359,6 +400,16 @@ add sink → Rθja drops to ~10 °C/W</code></pre></article>
           <a href="https://en.wikipedia.org/wiki/MOSFET" target="_blank" rel="noreferrer">MOSFET</a>
           <a href="https://en.wikipedia.org/wiki/Vacuum_tube" target="_blank" rel="noreferrer">Vacuum tube</a>
           <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+
+      <footer class="footer searchable" style="margin-top:16px">
+        <strong>Related</strong>
+        <p>Neighbouring guides for the components and circuits around active devices.</p>
+        <div class="footer-links">
+          <a href="../electronics/">Electronics</a>
+          <a href="../electrical/">Electrical</a>
+          <a href="../hardware/">Hardware list</a>
         </div>
       </footer>
     </main>

@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#setup"><span class="nav-number">02</span>Setup</a>
         <a href="#pid"><span class="nav-number">03</span>PID</a>
@@ -63,7 +64,7 @@
             <div class="mock-pane">
               <div><span class="prompt">#</span> <span class="cmd">diff all</span></div>
               <div class="dim"># version</div>
-              <div class="dim"># Betaflight / STM32F405 (S4FO) 4.5.0</div>
+              <div class="dim"># Betaflight / STM32F405 (S4FO) 4.6.0</div>
               <br>
               <div><span class="prompt">#</span> <span class="cmd">set pid_loop_freq = 8000</span></div>
               <div><span class="prompt">#</span> <span class="cmd">set gyro_lpf1_static_hz = 0</span></div>
@@ -80,6 +81,24 @@
 
       <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “rate”, “PID”, “filter”, “mode”, or “CLI”.</div>
 
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The essentials you reach for on every build and tune — each section below expands on one of them.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>Flash + Configurator</code><span>Firmware Flasher → pick target + latest stable (4.6), Load Online. Configurator is date-versioned (2025.12+).</span></div>
+          <div class="command-row"><code>PID profiles</code><span>Up to 6 profiles; switch with <code>profile N</code>. Tune P → D → I → F per quad.</span></div>
+          <div class="command-row"><code>Rates</code><span><code>rates_type = ACTUAL</code> sets center + max deg/s directly; switch with <code>rateprofile N</code>.</span></div>
+          <div class="command-row"><code>Filters &amp; dynamic notch</code><span>RPM filter first (<code>dshot_bidir = ON</code>), then dynamic notch, then raise lowpass cutoffs.</span></div>
+          <div class="command-row"><code>Modes</code><span><code>ARM</code> on a dedicated switch; <code>ANGLE</code> self-levels, <code>ACRO</code> is default, <code>AIRMODE</code> on for freestyle.</span></div>
+          <div class="command-row"><code>DShot</code><span><code>DShot300</code>/<code>DShot600</code> on the Motors tab; <code>dshot_bidir</code> adds RPM telemetry.</span></div>
+          <div class="command-row"><code>CLI diff / dump</code><span><code>diff all</code> is your whole tune; <code>dump all</code> is the full config. Back up before changes.</span></div>
+          <div class="command-row"><code>Arming flags</code><span><code>status</code> prints why it won't arm — <code>RX_FAILSAFE</code>, <code>THROTTLE</code>, <code>CALIBRATING</code>…</span></div>
+        </div>
+        <div class="callout"><div class="callout-mark">⚡</div><p><strong>Props off for every bench step.</strong> Flash, motor test, and first arm are the dangerous moments — no props, and no battery when USB is enough.</p></div>
+      </section>
+
       <section class="section searchable" id="start">
         <div class="section-head">
           <div><div class="section-kicker">01 / Start here</div><h2>What Betaflight is</h2></div>
@@ -88,7 +107,7 @@
         <div class="grid four">
           <article class="card"><div class="card-number">1</div><h3>Flight controller firmware</h3><p>Runs the <code>gyro → PID → motor</code> loop at 4–8 kHz to control roll, pitch, and yaw.</p></article>
           <article class="card"><div class="card-number">2</div><h3>Targets</h3><p>Firmware is built per board target, e.g. <code>STM32F405 (S4FO)</code>. The Configurator auto-selects it when you flash.</p></article>
-          <article class="card"><div class="card-number">3</div><h3>Configurator</h3><p>The GUI (Betaflight Configurator 10.10+) edits every setting; the CLI exposes the same values as text.</p></article>
+          <article class="card"><div class="card-number">3</div><h3>Configurator</h3><p>The GUI (Betaflight Configurator 2025.12+ (date-versioned)) edits every setting; the CLI exposes the same values as text.</p></article>
           <article class="card"><div class="card-number">4</div><h3>Board orientation</h3><p>The FC's arrow must face forward. If it's mounted rotated, set Board &amp; Sensor Alignment so up and forward match the quad.</p></article>
         </div>
         <div class="model" aria-label="Betaflight control loop">
@@ -327,6 +346,9 @@ save</code></pre></div>
           <article class="card"><h3>Failsafe not configured</h3><p>Defaults may keep the motors running or drop without warning. Set Drop (or GPS rescue), and verify by switching the radio off while armed on the bench.</p><pre><code>set failsafe_switch_mode = STAGE1
 status   # check the arming flags</code></pre></article>
           <article class="card"><h3>Filter over-tuning</h3><p>Too-low cutoffs feel mushy and can still overheat; too-high amplifies noise into hot motors. Change one filter at a time and test in the air.</p><pre><code>get gyro_lpf1_dyn_min_hz   # before you touch it</code></pre></article>
+          <article class="card"><h3>Arming disabled flags</h3><p>"Why won't it arm?" — <code>status</code> prints the exact reason as flags: <code>RX_FAILSAFE</code> (no link), <code>THROTTLE</code> (stick not down), <code>ARM_SWITCH</code>, <code>CALIBRATING</code>, <code>MSP</code>, <code>CLI</code>. Fix the flag, not the switch.</p><pre><code>status   # list arming disable flags</code></pre></article>
+          <article class="card"><h3>ESC protocol mismatch</h3><p>If the FC outputs DShot but the ESC is configured for Oneshot/PWM (or vice versa), motors can runaway or the quad flips on arm. Match the protocol in the Motors tab and the ESC configurator.</p><pre><code>set motor_pwm_protocol = DSHOT600
+save</code></pre></article>
         </div>
         <div class="tags">
           <span class="tag">RX_FAILSAFE</span><span class="tag">THROTTLE</span><span class="tag">ANGLE</span><span class="tag">ARM_SWITCH</span><span class="tag">CLI</span><span class="tag">CALIBRATING</span>
@@ -342,6 +364,12 @@ status   # check the arming flags</code></pre></article>
           <a href="https://betaflight.com/docs/" target="_blank" rel="noreferrer">Docs</a>
           <a href="https://oscarliang.com/" target="_blank" rel="noreferrer">Oscar Liang</a>
           <a href="../">slop-stuff home</a>
+        </div>
+        <div class="footer-links">
+          <strong>Related</strong>
+          <a href="../fpv/">FPV</a>
+          <a href="../pid-tuning/">PID tuning</a>
+          <a href="../ardupilot/">ArduPilot</a>
         </div>
       </footer>
     </main>

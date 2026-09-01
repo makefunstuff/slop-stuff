@@ -12,7 +12,7 @@
     <a class="brand" href="../" aria-label="Back to slop-stuff">
       <span class="brand-mark">ap_</span>
       <span>ArduPilot Guide</span>
-      <span class="version">autopilot</span>
+      <span class="version">4.6</span>
     </a>
     <label class="search-wrap">
       <span class="sr-only" hidden>Search guide</span>
@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#setup"><span class="nav-number">02</span>Setup</a>
         <a href="#modes"><span class="nav-number">03</span>Flight modes</a>
@@ -70,12 +71,31 @@
         </div>
       </section>
 
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The 90% cheat sheet — ground station, calibration, the modes you'll actually fly, failsafes, and the EKF.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>Ground station</h3><p><code>Mission Planner</code> (Windows) or <code>QGroundControl</code> (all platforms) — flash firmware, set parameters, and plan missions over MAVLink.</p></article>
+          <article class="card"><h3>Calibrate first</h3><p>Accel (all 6 faces) → compass (every axis) → radio (full range) → GPS outdoors for a 3D fix.</p></article>
+          <article class="card"><h3>Stabilize</h3><p>Self-levels, throttle is manual — your takeoff and recovery mode.</p></article>
+          <article class="card"><h3>AltHold</h3><p>Holds altitude on the barometer; you steer, mid-throttle = hover.</p></article>
+          <article class="card"><h3>Loiter</h3><p>Holds GPS position + altitude; stops and waits.</p></article>
+          <article class="card"><h3>RTL</h3><p>Climbs to <code>RTL_ALT</code>, flies home, lands. Keep it one switch throw away.</p></article>
+          <article class="card"><h3>Auto</h3><p>Flies the loaded mission waypoint by waypoint — survey, mapping, autonomous legs.</p></article>
+          <article class="card"><h3>Failsafes</h3><p>Battery, radio, GCS, and EKF — set them before the first flight. <code>FS_BATT_*</code>, <code>FS_THR_ENABLE</code>, <code>FS_EKF_*</code>.</p></article>
+          <article class="card"><h3>EKF</h3><p>Fuses IMU + GPS + compass + barometer into one estimate. Watch <code>VIBE</code> and <code>HDOP</code>.</p></article>
+          <article class="card"><h3>Arm / disarm</h3><p>Throttle down + yaw right to arm, yaw left to disarm.</p></article>
+        </div>
+      </section>
+
       <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “mode”, “failsafe”, “EKF”, “mission”, or “Mission Planner”.</div>
 
       <section class="section searchable" id="start">
         <div class="section-head">
           <div><div class="section-kicker">01 / Start here</div><h2>What ArduPilot is</h2></div>
-          <p>Open-source autopilot firmware that flies Copter, Plane, Rover, and Sub — configured from Mission Planner or QGroundControl.</p>
+          <p>Open-source autopilot firmware that flies Copter, Plane, Rover, and Sub — configured from Mission Planner or QGroundControl. Current stable is 4.6 (Copter, Plane, Rover).</p>
         </div>
         <div class="grid four">
           <article class="card"><div class="card-number">1</div><h3>Firmware</h3><p>ArduPilot is the software running on the flight controller. One codebase, four vehicles:</p><pre><code>Copter    # multirotor
@@ -145,7 +165,7 @@ GPS:     outdoors, 3D fix before arm</code></pre></article>
       <section class="section searchable" id="modes">
         <div class="section-head">
           <div><div class="section-kicker">03 / Flight modes</div><h2>Flight modes</h2></div>
-          <p>Each mode hands a different amount of control back to the pilot — from full manual to a loaded mission.</p>
+          <p>Copter ships 25 built-in modes — 10 are used day-to-day. Each hands a different amount of control back to the pilot, from full manual to a loaded mission.</p>
         </div>
         <div class="table-wrap"><table><thead><tr><th>Mode</th><th>What it does</th><th>Use when</th></tr></thead><tbody>
           <tr><td><code>Stabilize</code></td><td>Self-levels and holds attitude; throttle is manual.</td><td>Takeoff, recovery, first flights.</td></tr>
@@ -155,18 +175,23 @@ GPS:     outdoors, 3D fix before arm</code></pre></article>
           <tr><td><code>Auto</code></td><td>Flies the mission loaded from the GCS, waypoint by waypoint.</td><td>Survey, mapping, autonomous legs.</td></tr>
           <tr><td><code>Guided</code></td><td>Follows position commands from the GCS — click “fly to” and it goes.</td><td>GCS-directed repositioning.</td></tr>
           <tr><td><code>Acro</code></td><td>Rate control, no self-leveling; sticks command angular rate directly.</td><td>Flips, agility, manual flying.</td></tr>
+          <tr><td><code>PosHold</code></td><td>Like Loiter, but moving the sticks gives immediate manual control; recenter to hold.</td><td>Manual flying with a position safety net.</td></tr>
+          <tr><td><code>Land</code></td><td>Descends straight down and lands where it is — no horizontal travel.</td><td>Immediate, controlled touchdown.</td></tr>
+          <tr><td><code>Brake</code></td><td>Stops the vehicle dead and holds position.</td><td>Recover from a flyaway or lost orientation.</td></tr>
+          <tr><td><code>Sport</code></td><td>Rate control (like Acro) but holds attitude when the sticks center.</td><td>Agile flying with a leveling safety net.</td></tr>
+          <tr><td><code>SmartRTL</code></td><td>Retraces the exact path flown back to home (battery-backed).</td><td>Return home through complex terrain.</td></tr>
         </tbody></table></div>
         <div class="state-grid" style="margin-top:16px">
           <div class="state-card working"><strong>Manual</strong><p><code>Acro</code>, <code>Stabilize</code> — you fly, it levels.</p></div>
-          <div class="state-card done"><strong>Assisted</strong><p><code>AltHold</code>, <code>Loiter</code> — it holds, you steer.</p></div>
-          <div class="state-card unknown"><strong>Autonomous</strong><p><code>Auto</code>, <code>RTL</code>, <code>Guided</code> — it flies itself.</p></div>
+          <div class="state-card done"><strong>Assisted</strong><p><code>AltHold</code>, <code>Loiter</code>, <code>PosHold</code> — it holds, you steer.</p></div>
+          <div class="state-card unknown"><strong>Autonomous</strong><p><code>Auto</code>, <code>RTL</code>, <code>Guided</code>, <code>SmartRTL</code>, <code>Land</code> — it flies itself.</p></div>
         </div>
         <div class="callout" style="margin-top:16px"><div class="callout-mark">KEY</div><p><strong>Mode switch = transmitter channel.</strong> Map a 3-position switch to a channel, then assign modes to its low / mid / high PWM ranges in <em>Flight Modes</em>. Keep <code>Stabilize</code> or <code>RTL</code> one switch throw away.</p></div>
         <details style="margin-top:16px">
           <summary>GPS-dependent vs manual modes</summary>
           <div class="details-body grid two">
-            <div><h4>Need a GPS fix</h4><p><code>Loiter</code>, <code>RTL</code>, <code>Auto</code>, and <code>Guided</code> all require a healthy position estimate.</p></div>
-            <div><h4>Fly without GPS</h4><p><code>Stabilize</code>, <code>AltHold</code>, and <code>Acro</code> work on the IMU and barometer alone.</p></div>
+            <div><h4>Need a GPS fix</h4><p><code>Loiter</code>, <code>PosHold</code>, <code>RTL</code>, <code>SmartRTL</code>, <code>Auto</code>, <code>Guided</code>, and <code>Brake</code> require a healthy position estimate.</p></div>
+            <div><h4>Fly without GPS</h4><p><code>Stabilize</code>, <code>AltHold</code>, <code>Acro</code>, <code>Sport</code>, and <code>Land</code> work on the IMU and barometer alone.</p></div>
           </div>
         </details>
       </section>
@@ -318,13 +343,15 @@ Vibration: X/Y/Z &lt; 30 m/s²</code></pre></article>
       <section class="section searchable" id="gotchas">
         <div class="section-head">
           <div><div class="section-kicker">08 / Gotchas</div><h2>Pitfalls</h2></div>
-          <p>The five mistakes that ground most builds — and how to avoid them.</p>
+          <p>The mistakes that ground most builds — and how to avoid them.</p>
         </div>
         <div class="grid two">
           <article class="card"><h3>GPS interference</h3><p>Mount the GPS high and away from ESCs, power wires, VTX, and carbon fiber. Wait for a 3D fix and <code>HDOP &lt; 2</code> before arming — never arm indoors.</p></article>
           <article class="card"><h3>Vibration</h3><p>A hard-mounted IMU saturates on resonance. Soft-mount the flight controller, balance props, and check <code>VIBE</code> in the logs before pushing gains.</p></article>
           <article class="card"><h3>Compass calibration</h3><p>Recalibrate after moving anything magnetic — battery, mount, wires. Keep the compass away from power lines and verify the HUD heading matches the real vehicle.</p></article>
           <article class="card"><h3>Props off</h3><p>Bench tests, radio calibration, ESC calibration, and the first motor-spin all happen with props removed. Throttle checks are the classic way to lose a finger.</p></article>
+          <article class="card"><h3>RTL_ALT below obstacles</h3><p>RTL climbs to <code>RTL_ALT</code> then flies a straight line home — if a tree or ridge is taller, it flies straight into it. Set <code>RTL_ALT</code> above everything on the route and confirm before trusting RTL.</p></article>
+          <article class="card"><h3>Never test the failsafes</h3><p>A failsafe you've never triggered is a failsafe you don't have. Deliberately test low battery and radio loss at a safe altitude before you need them.</p></article>
         </div>
         <div class="callout warning" style="margin-top:16px"><div class="callout-mark">⚠</div><p><strong>Battery failsafe first.</strong> Set <code>FS_BATT_ENABLE</code>, <code>FS_BATT_VOLTAGE</code>, and <code>FS_BATT_MAH</code> before flying. Too high and a sagging pack triggers RTL mid-flight; too low and you brown out the ESCs.</p></div>
         <details style="margin-top:16px">
@@ -346,6 +373,12 @@ Vibration: X/Y/Z &lt; 30 m/s²</code></pre></article>
           <a href="https://ardupilot.org/copter/" target="_blank" rel="noreferrer">Copter docs</a>
           <a href="https://ardupilot.org/planner/" target="_blank" rel="noreferrer">Mission Planner</a>
           <a href="../">slop-stuff home</a>
+        </div>
+        <strong style="display:block;margin-top:22px">Related guides</strong>
+        <div class="footer-links">
+          <a href="../betaflight/">Betaflight</a>
+          <a href="../pid-tuning/">PID tuning</a>
+          <a href="../fpv/">FPV</a>
         </div>
       </footer>
     </main>

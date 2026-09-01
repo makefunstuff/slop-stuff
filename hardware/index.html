@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#sensors"><span class="nav-number">02</span>Sensors</a>
         <a href="#comm"><span class="nav-number">03</span>Communication</a>
@@ -73,6 +74,25 @@
         </div>
       </section>
 
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The ten parts that cover most builds — grab these first, then dig into the full tables below when you need the long tail.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>ESP32</code><span>Wi-Fi + BLE MCU · 3.3 V · 4 MB flash · 30+ GPIO</span></div>
+          <div class="command-row"><code>Arduino Uno</code><span>5 V beginner board · ATmega328P · shield ecosystem</span></div>
+          <div class="command-row"><code>Pi Pico (RP2040)</code><span>dual Cortex-M0+ · 3.3 V · PIO state machines</span></div>
+          <div class="command-row"><code>STM32 Blue Pill</code><span>Cortex-M3 · 72 MHz · RTOS / PWM-heavy</span></div>
+          <div class="command-row"><code>DS18B20</code><span>1-Wire digital temp · ±0.5 °C · waterproof probe</span></div>
+          <div class="command-row"><code>BME280</code><span>I2C temp + humidity + pressure · 0x76/0x77</span></div>
+          <div class="command-row"><code>MPU6050</code><span>I2C 6-axis IMU (accel + gyro) · 0x68</span></div>
+          <div class="command-row"><code>DRV8825</code><span>stepper driver · 1/32 microstep · 2.2 A</span></div>
+          <div class="command-row"><code>SSD1306</code><span>128×64 OLED · I2C 0x3C · only 4 wires</span></div>
+          <div class="command-row"><code>LM2596 + TP4056</code><span>3 A buck step-down · 1 A Li-ion charger</span></div>
+        </div>
+      </section>
+
       <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “ESP32”, “I2C”, “relay”, “stepper”, “OLED”, or “3.3 V”.</div>
 
       <section class="section searchable" id="start">
@@ -95,13 +115,17 @@
 64–1024 KB flash</code></pre></article>
         </div>
         <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Board</th><th>Best for</th><th>Key specs</th></tr></thead><tbody>
-          <tr><td><code>Arduino Uno</code></td><td>Beginner prototyping, 5 V shields</td><td>ATmega328P · 5 V · 32 KB flash · 2 KB RAM · 14 digital / 6 analog pins</td></tr>
+          <tr><td><code>Arduino Uno R3</code></td><td>Beginner prototyping, 5 V shields</td><td>ATmega328P · 5 V · 32 KB flash · 2 KB RAM · 14 digital / 6 analog pins</td></tr>
+          <tr><td><code>Arduino Uno R4</code></td><td>Current official Uno, faster + more RAM</td><td>Renesas RA4M1 Cortex-M4 · 48 MHz · 5 V · 256 KB flash · 32 KB RAM · (WiFi adds ESP32-S3)</td></tr>
           <tr><td><code>Arduino Nano</code></td><td>Breadboard builds, small enclosures</td><td>ATmega328P · 5 V · 32 KB flash · mini-USB · same pins as Uno, smaller</td></tr>
           <tr><td><code>Arduino Mega 2560</code></td><td>Many pins, RAM-hungry sketches</td><td>ATmega2560 · 5 V · 256 KB flash · 8 KB RAM · 54 digital / 16 analog pins</td></tr>
           <tr><td><code>ESP32</code></td><td>Wi-Fi + Bluetooth, most projects</td><td>dual Xtensa LX6 · 240 MHz · 3.3 V · 4 MB flash · 520 KB RAM · 30+ GPIO</td></tr>
+          <tr><td><code>ESP32-S3</code></td><td>Modern ESP32: USB + more GPIO + AI</td><td>dual Xtensa LX7 · 240 MHz · 3.3 V · BLE 5 · USB-OTG · AI vector extensions</td></tr>
           <tr><td><code>ESP8266</code></td><td>Cheap Wi-Fi only</td><td>Tensilica L106 · 80/160 MHz · 3.3 V · 4 MB flash · ~80 KB RAM · 11 GPIO</td></tr>
           <tr><td><code>STM32 (Blue Pill)</code></td><td>Performance, RTOS, PWM-heavy</td><td>Cortex-M3 · 72 MHz · 3.3 V · 64/128 KB flash · 20 KB RAM · 37 GPIO</td></tr>
+          <tr><td><code>STM32 Black Pill (F411)</code></td><td>More flash/RAM, FPU, native USB</td><td>Cortex-M4F · 100 MHz · 3.3 V · 512 KB flash · 128 KB RAM · 25 GPIO</td></tr>
           <tr><td><code>RP2040 (Pi Pico)</code></td><td>Hobby + PIO state machines</td><td>dual Cortex-M0+ · 133 MHz · 3.3 V · 2 MB flash · 264 KB RAM · 26 GPIO</td></tr>
+          <tr><td><code>RP2350 (Pico 2)</code></td><td>Next-gen Pico, Arm or RISC-V cores</td><td>dual Cortex-M33 (or Hazard3 RISC-V) · 150 MHz · 3.3 V · 4 MB flash · 520 KB RAM</td></tr>
           <tr><td><code>ATtiny85</code></td><td>Tiny, low-power, battery</td><td>8-pin AVR · 2.7–5.5 V · 8 KB flash · 512 B RAM · 6 GPIO</td></tr>
           <tr><td><code>Teensy 4.x</code></td><td>High-speed USB, audio, fast GPIO</td><td>Cortex-M7 · 600 MHz · 3.3 V · 2 MB flash · 1 MB RAM</td></tr>
           <tr><td><code>Raspberry Pi</code></td><td>Full Linux, camera/display, networking</td><td>1–8 GB RAM · 5 V · GPIO with I2C / SPI / UART / PWM</td></tr>
@@ -131,7 +155,9 @@
           <tr><td><code>DS18B20</code></td><td>Digital temperature</td><td>1-Wire · -55…+125 °C · ±0.5 °C · 3–5.5 V · waterproof probe variant</td></tr>
           <tr><td><code>DHT22 (AM2302)</code></td><td>Temperature + humidity</td><td>0–100 % RH ±2 % · -40…+80 °C · single-wire · 0.5 Hz sampling</td></tr>
           <tr><td><code>DHT11</code></td><td>Cheap temp + humidity</td><td>20–90 % RH ±5 % · 0–50 °C · 1 Hz sampling · single-wire</td></tr>
+          <tr><td><code>SHT40</code></td><td>Precise temp + humidity</td><td>I2C · 0x44 · ±0.2 °C / ±1.8 % RH · replaces DHT22 for accuracy</td></tr>
           <tr><td><code>BME280</code></td><td>Temp + humidity + pressure</td><td>I2C/SPI · 0x76/0x77 · 300–1100 hPa · indoor weather</td></tr>
+          <tr><td><code>BME680</code></td><td>Temp + humidity + pressure + VOC gas</td><td>I2C/SPI · 0x76/0x77 · adds indoor air-quality (IAQ) index</td></tr>
           <tr><td><code>LM35</code></td><td>Analog temperature</td><td>10 mV/°C · -55…+150 °C · 4–30 V · analog out</td></tr>
           <tr><td><code>TMP36</code></td><td>Analog temperature</td><td>10 mV/°C · -40…+125 °C · 2.7–5.5 V · easier than LM35</td></tr>
           <tr><td><code>NTC thermistor</code></td><td>Temperature</td><td>resistance falls as it heats · needs divider + lookup table</td></tr>
@@ -143,12 +169,14 @@
           <tr><td><code>LDR (photoresistor)</code></td><td>Analog light level</td><td>resistance drops with light · needs voltage divider</td></tr>
           <tr><td><code>BH1750</code></td><td>Digital lux (light)</td><td>I2C · 0x23/0x5C · 1–65535 lx · 3.3/5 V</td></tr>
           <tr><td><code>MQ-2</code></td><td>Gas / smoke (LPG, alcohol)</td><td>analog + digital out · 5 V heater · needs preheat + calibration</td></tr>
+          <tr><td><code>SCD40</code></td><td>CO₂ + temp + humidity</td><td>I2C · 0x62 · true CO₂ 400–2000 ppm · factory calibrated</td></tr>
           <tr><td><code>ACS712</code></td><td>Hall-effect current</td><td>5 / 20 / 30 A variants · analog 66–185 mV/A · 5 V</td></tr>
           <tr><td><code>BMP280</code></td><td>Barometric pressure + temp</td><td>I2C/SPI · 0x76/0x77 · 300–1100 hPa · altimeter</td></tr>
           <tr><td><code>NEO-6M (GPS)</code></td><td>Position + time</td><td>UART · 9600 baud · NMEA · 3.3/5 V · needs antenna</td></tr>
           <tr><td><code>A3144 (hall)</code></td><td>Magnetic field / RPM</td><td>digital switch · 5 V · triggers near a magnet</td></tr>
           <tr><td><code>Load cell + HX711</code></td><td>Weight / force</td><td>full bridge · HX711 24-bit ADC · 2-wire · 5 V</td></tr>
           <tr><td><code>Potentiometer</code></td><td>Analog position / knob</td><td>3-terminal divider · 10k common · wiper to ADC</td></tr>
+          <tr><td><code>AS5600</code></td><td>Magnetic rotary angle encoder</td><td>I2C · 0x36 · 12-bit contactless knob · pairs with a diametric magnet</td></tr>
         </tbody></table></div>
         <div class="grid two" style="margin-top:16px">
           <article class="card"><h3>Analog read (voltage divider)</h3><p>Resistive sensors (LDR, thermistor, flex) need a fixed resistor to form a divider; the ADC reads the midpoint.</p><pre><code>VCC ──[sensor]──┬──→ A0
@@ -182,7 +210,8 @@ int raw = analogRead(A0);</code></pre></article>
           <tr><td><code>MAX485</code></td><td>RS-485</td><td>half-duplex differential · 5 V · multi-drop, 1200 m</td></tr>
           <tr><td><code>MCP2515 + TJA1050</code></td><td>CAN bus</td><td>SPI · 1 Mbps · 5 V · automotive / robotics</td></tr>
           <tr><td><code>W5500</code></td><td>Ethernet</td><td>SPI · 10/100 Mbit · TCP/IP offload · 3.3 V</td></tr>
-          <tr><td><code>SIM800L</code></td><td>GSM / GPRS (2G)</td><td>UART · AT commands · 3.7–4.2 V · 2 A peak current</td></tr>
+          <tr><td><code>SIM800L</code></td><td>GSM / GPRS (2G — being sunset)</td><td>UART · AT commands · 3.7–4.2 V · 2 A peak · check local 2G availability</td></tr>
+          <tr><td><code>SIM7000 / SIM7080G</code></td><td>LTE Cat-M / NB-IoT</td><td>UART · AT commands · 3.3/5 V · the current low-power cellular choice</td></tr>
         </tbody></table></div>
         <div class="grid two" style="margin-top:16px">
           <article class="card"><h3>Range vs power, at a glance</h3><pre><code>Bluetooth LE   → ~10 m
@@ -222,6 +251,7 @@ frequency + sync word</code></pre></article>
           <tr><td><code>L293D</code></td><td>Dual H-bridge (small)</td><td>600 mA/ch · 4.5–36 V · built-in flyback diodes</td></tr>
           <tr><td><code>DRV8825</code></td><td>Stepper driver</td><td>1/32 microstep · 2.2 A · 8.2–45 V · current-limit pot</td></tr>
           <tr><td><code>A4988</code></td><td>Stepper driver</td><td>1/16 microstep · 2 A · 8–35 V · current-limit pot</td></tr>
+          <tr><td><code>TMC2209</code></td><td>Silent stepper driver</td><td>stealthChop · 1/256 microstep · 2.8 A peak · 4.75–29 V · UART or standalone</td></tr>
           <tr><td><code>TB6612FNG</code></td><td>Dual motor driver</td><td>1.2 A/ch · 2.5–13.5 V · compact, efficient</td></tr>
           <tr><td><code>SG90</code></td><td>Micro servo</td><td>9 g · 4.8–6 V · 180° · ~50 Hz PWM</td></tr>
           <tr><td><code>MG996R</code></td><td>Metal-gear servo</td><td>55 g · 4.8–7.2 V · ~10 kg·cm · 180°</td></tr>
@@ -263,6 +293,8 @@ servo.write(180);  // max</code></pre></article>
           <tr><td><code>SSD1306</code></td><td>128×64 OLED</td><td>I2C/SPI · 0x3C · 3.3/5 V · no backlight</td></tr>
           <tr><td><code>SH1106</code></td><td>128×64 OLED (1.3")</td><td>I2C · 0x3C · different init from SSD1306</td></tr>
           <tr><td><code>ST7735</code></td><td>1.8" color TFT</td><td>SPI · 128×160 · 3.3/5 V · fast enough for sprites</td></tr>
+          <tr><td><code>ST7789</code></td><td>1.3–2.0" IPS color TFT</td><td>SPI · 240×240 · 3.3 V · the go-to small full-color display</td></tr>
+          <tr><td><code>GC9A01</code></td><td>1.28" round color TFT</td><td>SPI · 240×240 · 3.3 V · circular display for watch-style builds</td></tr>
           <tr><td><code>ILI9341</code></td><td>2.4–3.2" color TFT</td><td>SPI · 240×320 · 3.3/5 V · touch variants</td></tr>
           <tr><td><code>E-paper (SSD1680)</code></td><td>2.9" e-ink</td><td>SPI · 296×128 · zero-power image · slow refresh</td></tr>
           <tr><td><code>TM1637</code></td><td>4-digit 7-segment</td><td>2-wire · 5 V · clock/digits · colon</td></tr>
@@ -386,6 +418,12 @@ ls /dev/cu.*    # CH340 → cu.wchusbserial*
           <article class="card"><h3>ESD &amp; reverse polarity</h3><p>Discharge static before touching bare ICs, and add a flyback diode across any relay, solenoid, or motor. Double-check capacitor polarity and battery orientation — one reversed electrolytic pops.</p><pre><code>coil + ──|>|── coil -
    flyback diode across
    every inductive load</code></pre></article>
+          <article class="card"><h3>Li-ion battery safety</h3><p>Never discharge a bare 18650 below ~2.8 V or charge above 4.2 V — use protected cells or a <code>DW01A + 8205A</code> board. Don't mix cells of different age or capacity, and retire any cell that puffs.</p><pre><code>4.2 V full · 3.7 V nominal
+2.8 V empty · don't go below
+TP4056 charges at 1 A</code></pre></article>
+          <article class="card"><h3>2G / 3G sunset</h3><p>Carriers are switching off 2G and 3G region by region, so <code>SIM800L</code>-based builds will stop connecting. For new cellular projects use LTE Cat-M / NB-IoT (<code>SIM7000</code>, <code>SIM7080G</code>) or Wi-Fi via an ESP32.</p><pre><code>2G  → sunset, avoid new builds
+4G  → SIM7000 / SIM7080G
+IoT → NB-IoT / LTE Cat-M</code></pre></article>
         </div>
         <div class="prefix-demo" style="margin-top:16px">
           <code>5 V → 3.3 V</code> <span class="tag">divider</span>
@@ -409,6 +447,12 @@ ls /dev/cu.*    # CH340 → cu.wchusbserial*
           <a href="https://www.sparkfun.com/" target="_blank" rel="noreferrer">SparkFun</a>
           <a href="https://learn.adafruit.com/" target="_blank" rel="noreferrer">Adafruit Learn</a>
           <a href="../">slop-stuff home</a>
+        </div>
+        <strong style="display:block;margin-top:22px">Related</strong>
+        <div class="footer-links">
+          <a href="../electronics/">Electronics</a>
+          <a href="../esp32/">ESP32</a>
+          <a href="../kicad/">KiCad</a>
         </div>
       </footer>
     </main>

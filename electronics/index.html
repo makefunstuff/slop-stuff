@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#components"><span class="nav-number">02</span>Components</a>
         <a href="#active"><span class="nav-number">03</span>Active components</a>
@@ -72,6 +73,25 @@
             </div>
           </div>
         </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The numbers and formulas you reach for on every build — each one expanded in its own section below.</p>
+        </div>
+        <div class="command-index">
+          <div class="command-row"><code>V = I × R</code><span>Ohm's law — rearrange for I or R. Power: P = V × I = I² × R = V² ÷ R.</span></div>
+          <div class="command-row"><code>digit · digit × multiplier ± tolerance</code><span>Resistor bands — black 0, brown 1, red 2, orange 3, yellow 4, green 5, blue 6, violet 7, grey 8, white 9; gold ±5%, silver ±10%.</span></div>
+          <div class="command-row"><code>Vout = Vin × R2 / (R1 + R2)</code><span>Voltage divider — scale a voltage down.</span></div>
+          <div class="command-row"><code>fc = 1 / (2π × R × C)</code><span>RC filter — -3 dB cutoff for low- and high-pass.</span></div>
+          <div class="command-row"><code>Gain = 1 + R2 / R1</code><span>Op-amp non-inverting gain — inverting: Gain = -Rf / Rin; follower: Gain = 1.</span></div>
+          <div class="command-row"><code>f = 1.44 / ((R1 + 2R2) × C)</code><span>555 astable frequency — duty = (R1 + R2) / (R1 + 2R2), always &gt;50%.</span></div>
+          <div class="command-row"><code>R = (Vs - Vf) / I</code><span>LED series resistor — limit current to ~20 mA.</span></div>
+          <div class="command-row"><code>7805: 7–25 V in → 5 V out</code><span>Regulators — 7805/LDO linear (7805 dropout ≈ 2 V, LDO far lower); buck Vout = duty × Vin; boost Vout = Vin / (1 - duty).</span></div>
+          <div class="command-row"><code>100 nF + 10 µF</code><span>Decoupling — 100 nF ceramic at every IC power pin, 10 µF bulk per rail.</span></div>
+        </div>
+        <div class="callout"><div class="callout-mark">QR</div><p><strong>Where to find it:</strong> fundamentals and passive parts → <a href="#start">01</a>/<a href="#components">02</a>, gain and filters → <a href="#opamp">04</a>, regulators and decoupling → <a href="#power">05</a>, divider/555/LED → <a href="#circuits">06</a>.</p></div>
       </section>
 
       <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “resistor”, “op-amp”, “diode”, “PWM”, or “555”.</div>
@@ -325,6 +345,8 @@ duty = t_on / (t_on + t_off)</code></pre></article>
           <article class="card"><h3>Decoupling</h3><p>ICs glitch without bypass caps. Random resets and noise are usually a missing <code>100 nF</code> at the power pin.</p></article>
           <article class="card"><h3>Floating inputs</h3><p>An unconnected CMOS input floats and oscillates randomly. Tie it high or low with a pull-up or pull-down resistor.</p></article>
           <article class="card"><h3>ESD</h3><p>Static discharge destroys MOSFETs and CMOS. Ground yourself first, use a wrist strap, and store ICs in anti-static bags.</p></article>
+          <article class="card"><h3>Shared ground</h3><p>Every part of a circuit must share one common <code>0 V</code> reference. Two boards or modules with no joined ground — or a forgotten <code>GND</code> jumper — is the classic "nothing works" cause.</p></article>
+          <article class="card"><h3>Flyback / back-EMF</h3><p>Switching off a relay coil, motor, or solenoid collapses its magnetic field into a voltage spike that can kill the driver transistor. Put a flyback diode across the coil, cathode to <code>+V</code>.</p></article>
         </div>
         <div class="callout warning"><div class="callout-mark">!</div><p><strong>Before powering on:</strong> check polarity, confirm the supply voltage matches the board, and double-check capacitor orientation. Smoke is permanent.</p></div>
       </section>
@@ -337,6 +359,16 @@ duty = t_on / (t_on + t_off)</code></pre></article>
           <a href="https://www.allaboutcircuits.com/" target="_blank" rel="noreferrer">All About Circuits</a>
           <a href="https://www.electronics-tutorials.ws/" target="_blank" rel="noreferrer">Electronics Tutorials</a>
           <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+
+      <footer class="footer searchable" style="margin-top:16px">
+        <strong>Related guides</strong>
+        <p>More from the slop-stuff library for the power, parts, and boards around these circuits.</p>
+        <div class="footer-links">
+          <a href="../electrical/">Electrical</a>
+          <a href="../tubes/">Transistors &amp; tubes</a>
+          <a href="../hardware/">Hardware list</a>
         </div>
       </footer>
     </main>

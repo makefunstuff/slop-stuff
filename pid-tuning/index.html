@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#terms"><span class="nav-number">02</span>Terms</a>
         <a href="#behavior"><span class="nav-number">03</span>Symptoms</a>
@@ -71,6 +72,23 @@
               <div><span class="prompt">❯</span> <span class="cursor"></span></div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The whole loop on one screen: the equation, the three terms, the tuning order, and the constants you'll actually reach for.</p>
+        </div>
+        <div class="grid four">
+          <article class="card"><div class="card-number">1</div><h3>The equation</h3><p>Output = present + past + future.</p><pre><code>u = Kp·e + Ki·∫e dt + Kd·de/dt</code></pre></article>
+          <article class="card"><div class="card-number">2</div><h3>P — proportional</h3><p>Acts on error <code>e = r − y</code> now. Raise for speed; too high → overshoot + oscillation.</p></article>
+          <article class="card"><div class="card-number">3</div><h3>I — integral</h3><p>Sums past error <code>∫e dt</code>. Kills steady-state offset; too high → slow oscillation + windup.</p></article>
+          <article class="card"><div class="card-number">4</div><h3>D — derivative</h3><p>Rate of change <code>de/dt</code>. Damps overshoot; too high → noise, jittery output.</p></article>
+          <article class="card"><div class="card-number">5</div><h3>Tune in order</h3><p><code>P</code> first, then <code>D</code>, then <code>I</code> — one gain at a time, watch the step after each move.</p></article>
+          <article class="card"><div class="card-number">6</div><h3>Ziegler–Nichols</h3><p>Ultimate gain: <code>Kp = 0.6·Ku</code>, <code>Ti = Tu/2</code>, <code>Td = Tu/8</code>. Aggressive — back off 20–30%.</p></article>
+          <article class="card"><div class="card-number">7</div><h3>Anti-windup</h3><p>Clamp <code>u</code> and stop integrating while saturated, or the integral overshoots on recovery.</p></article>
+          <article class="card"><div class="card-number">8</div><h3>Derivative on measurement</h3><p>Differentiate <code>y</code>, not <code>e</code> — avoids a derivative kick on setpoint steps.</p></article>
         </div>
       </section>
 
@@ -181,7 +199,7 @@ oscillating  — never settles             →  lower Kp, then Ki</code></pre>
           <tr><td>Ziegler–Nichols — reaction curve</td><td><code>1.2·T/(K·L)</code></td><td><code>2·L</code></td><td><code>0.5·L</code></td></tr>
           <tr><td>Cohen–Coon</td><td><code>(T/(K·L))·(4/3 + L/(4T))</code></td><td><code>L·(32 + 6·L/T)/(13 + 8·L/T)</code></td><td><code>4·L/(11 + 2·L/T)</code></td></tr>
         </tbody></table></div>
-        <div class="callout"><div class="callout-mark">⌁</div><p><strong>Reading the table:</strong> <code>Ku</code> is the ultimate gain (the <code>Kp</code> that just sustains oscillation) and <code>Tu</code> is that oscillation's period. Reaction-curve methods use the open-loop step response: <code>K</code> = process gain, <code>L</code> = dead time, <code>T</code> = time constant. Convert times to parallel gains with <code>Ki = Kp/Ti</code> and <code>Kd = Kp·Td</code>. Ziegler-Nichols is aggressive — back <code>Kp</code> off 20–30% on real plants.</p></div>
+        <div class="callout"><div class="callout-mark">⌁</div><p><strong>Reading the table:</strong> <code>Ku</code> is the ultimate gain (the <code>Kp</code> that just sustains oscillation) and <code>Tu</code> is that oscillation's period. Reaction-curve methods use the open-loop step response: <code>K</code> = process gain, <code>L</code> = dead time, <code>T</code> = time constant. Convert times to parallel gains with <code>Ki = Kp/Ti</code> and <code>Kd = Kp·Td</code>. Ziegler–Nichols targets ~25% overshoot (quarter-amplitude decay) and is aggressive on real plants — back <code>Kp</code> off 20–30% before commissioning.</p></div>
         <details>
           <summary>Ziegler–Nichols: finding Ku and Tu</summary>
           <div class="details-body">
@@ -315,7 +333,7 @@ u[k] = Kp*e[k] + Ki*integral[k] + Kd*derivative[k]</code></pre>
       <section class="section searchable" id="gotchas">
         <div class="section-head">
           <div><div class="section-kicker">08 / Gotchas</div><h2>Pitfalls</h2></div>
-          <p>Too much D, integral windup, wrong signs, inconsistent dt, and deadband — the five that bite everyone once.</p>
+          <p>Too much D, windup, wrong sign, dt drift, deadband — and the subtler ones: stiction, nonlinear plants, and noisy measurements.</p>
         </div>
         <div class="grid two">
           <article class="card"><h3>Too much D amplifies noise</h3><p>Derivative gain multiplies sensor noise and high-frequency jitter. If the output chatters, lower <code>Kd</code> or low-pass the derivative term.</p></article>
@@ -323,6 +341,9 @@ u[k] = Kp*e[k] + Ki*integral[k] + Kd*derivative[k]</code></pre>
           <article class="card"><h3>Wrong sign</h3><p>A reversed polarity (positive instead of negative feedback) makes the loop run away. Check that increasing <code>u</code> drives <code>y</code> toward <code>r</code>, not away.</p></article>
           <article class="card"><h3>dt inconsistency</h3><p>If the sample period changes between tuning and running, <code>I</code> and <code>D</code> change too. Use a fixed <code>dt</code> or measure elapsed time every call.</p></article>
           <article class="card"><h3>Deadband too wide</h3><p>A deadband that turns the output off near zero error can produce a small limit cycle — the loop hunts around the setpoint instead of settling.</p></article>
+          <article class="card"><h3>Stiction &amp; backlash</h3><p>A valve or linkage that sticks ignores small corrections, so the loop overshoots once it finally breaks free. Add a small deadband, dither, or a positioner.</p></article>
+          <article class="card"><h3>Nonlinear plant</h3><p>Gains tuned at one operating point can oscillate at another. Tune near the real setpoint, or schedule gains across the range.</p></article>
+          <article class="card"><h3>Noisy measurement</h3><p>A noisy sensor pollutes <code>D</code> however low <code>Kd</code> is. Low-pass the measurement (or derivative) first, then bring <code>D</code> back.</p></article>
         </div>
         <div class="callout warning"><div class="callout-mark">⚠</div><p><strong>Before tuning, prove the feedback is stable:</strong> nudge the output by hand and confirm the measurement moves the way you expect. A wrong sign or a dead sensor makes any tuning session futile.</p></div>
       </section>
@@ -335,6 +356,16 @@ u[k] = Kp*e[k] + Ki*integral[k] + Kd*derivative[k]</code></pre>
           <a href="https://controlguru.com/" target="_blank" rel="noreferrer">Control Guru</a>
           <a href="https://www.wescottdesign.com/articles/pid/pidWithoutAPhd.pdf" target="_blank" rel="noreferrer">PID Without a PhD (PDF)</a>
           <a href="../">slop-stuff home</a>
+        </div>
+      </footer>
+
+      <footer class="footer searchable">
+        <strong>Related</strong>
+        <p>Neighbouring cheatsheets in the same style:</p>
+        <div class="footer-links">
+          <a href="../betaflight/">Betaflight</a>
+          <a href="../ardupilot/">ArduPilot</a>
+          <a href="../math/">Mathematics</a>
         </div>
       </footer>
     </main>

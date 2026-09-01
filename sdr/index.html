@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#iq"><span class="nav-number">02</span>IQ</a>
         <a href="#freq"><span class="nav-number">03</span>Frequency</a>
@@ -62,16 +63,49 @@
             </div>
             <div class="mock-pane">
               <div><span class="prompt">❯</span> <span class="cmd">rtl_sdr -f 100e6 -s 2.4e6 capture.bin</span></div>
-              <div class="dim">Found 1 device(s): 0: Realtek, RTL2838UHIDIR</div>
+              <div class="dim">Found 1 device(s): 0: Realtek, RTL2832U</div>
               <div class="dim">Reading samples in async mode...</div>
               <br>
-              <div><span class="prompt">❯</span> <span class="cmd">rtl_fm -f 100e6 -M fm -s 200k -r 48k -</span></div>
-              <div class="dim">Found Rafael Micro R820T tuner</div>
+              <div><span class="prompt">❯</span> <span class="cmd">rtl_fm -f 100e6 -M wbfm -s 200k -r 48k -</span></div>
+              <div class="dim">Found Rafael Micro R828D tuner</div>
               <br>
               <div><span class="prompt">❯</span> <span class="cursor"></span></div>
             </div>
           </div>
         </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The commands and numbers you reach for most — the fast path into every section below.</p>
+        </div>
+        <div class="grid four">
+          <article class="card"><h3>Capture IQ</h3><pre><code>rtl_sdr -f 100e6 -s 2.4e6 -g 20 out.bin
+# 2.4 MS/s ≈ 2.4 MHz of spectrum</code></pre></article>
+          <article class="card"><h3>Live FM</h3><pre><code>rtl_fm -f 100.1e6 -M wbfm \
+  -s 200k -r 48k - | aplay -r 48k -f S16_LE</code></pre></article>
+          <article class="card"><h3>IQ sample</h3><pre><code>I = A·cos(2π·Δf·t)
+Q = A·sin(2π·Δf·t)
+mag   = hypot(I, Q)    # strength
+phase = atan2(Q, I)    # angle</code></pre></article>
+          <article class="card"><h3>Rate ↔ bandwidth</h3><pre><code>fs ≈ capture bandwidth
+fs &gt; 2 × BW        # Nyquist
+# FM ≈ 200 kHz → 480 kS/s+</code></pre></article>
+          <article class="card"><h3>FFT spectrum</h3><pre><code># scan 88–108 MHz, log power
+rtl_power -f 88e6:108e6:100k \
+  -g 30 -e 1m scan.csv</code></pre></article>
+          <article class="card"><h3>Flowgraph</h3><pre><code>RTL-SDR Source → Low Pass →
+  WBFM Receive → Audio Sink
+# wire in GRC, run the .py</code></pre></article>
+          <article class="card"><h3>Signals at a glance</h3><pre><code>FM       88–108 MHz   wbfm
+ADS-B    1090 MHz     dump1090
+NOAA APT 137 MHz      noaa-apt
+AIS      162 MHz      GMSK</code></pre></article>
+          <article class="card"><h3>ADS-B decode</h3><pre><code>rtl_sdr -f 1090e6 -s 2.4e6 -g 10 - | \
+  dump1090 --interactive</code></pre></article>
+        </div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">REF</div><p><strong>Everything here is expanded below.</strong> Capture flags in <a href="#tools">Tools</a>, IQ math in <a href="#iq">IQ</a>, bandwidth in <a href="#freq">Frequency</a>, FFT in <a href="#dsp">DSP</a>, flowgraphs in <a href="#gnuradio">GNU Radio</a>, and the signal table in <a href="#signals">Signals</a>.</p></div>
       </section>
 
       <div class="no-results" id="noResults" role="status" aria-live="polite">No section matches that search. Try “IQ”, “sample rate”, “FFT”, “FM”, or “RTL-SDR”.</div>
@@ -85,7 +119,7 @@
           <article class="card"><div class="card-number">1</div><h3>ADC + tuner</h3><p>The tuner shifts an RF band down to an intermediate frequency; the ADC digitizes it. Everything after the ADC is software.</p></article>
           <article class="card"><div class="card-number">2</div><h3>Sampling theorem</h3><p>To represent a signal without aliasing, sample at more than twice its bandwidth: <code>fs &gt; 2 × BW</code>.</p></article>
           <article class="card"><div class="card-number">3</div><h3>Front-end chain</h3><p>Antenna → LNA → tuner/mixer → ADC → sample buffer → host over USB.</p></article>
-          <article class="card"><div class="card-number">4</div><h3>Hardware</h3><p><strong>RTL-SDR</strong> (RX, 24 MHz–1.7 GHz, ~2.4 MS/s), <strong>HackRF</strong> (RX/TX), <strong>SDRplay</strong> (wide dynamic range).</p></article>
+          <article class="card"><div class="card-number">4</div><h3>Hardware</h3><p><strong>RTL-SDR Blog V4</strong> (RX, 500 kHz–1.766 GHz, ~2.4 MS/s), <strong>HackRF</strong> (RX/TX, 1 MHz–6 GHz), <strong>SDRplay</strong> / <strong>Airspy</strong> (wide dynamic range).</p></article>
         </div>
         <div class="callout" style="margin-top:16px"><div class="callout-mark">RF</div><p><strong>Receive-only first.</strong> RTL-SDR dongles are cheap, legal to own, and enough to learn sampling, IQ, and DSP. Only HackRF-class devices can transmit — and transmitting needs a license.</p></div>
       </section>
@@ -179,16 +213,19 @@ audio = diff(unwrap(phase))</code></pre></article>
         </div>
         <div class="command-index">
           <div class="command-row"><code>rtl_sdr</code><span>Raw IQ capture to a file from RTL-SDR dongles.</span></div>
-          <div class="command-row"><code>rtl_fm</code><span>Narrowband/WFM demod; pipe audio to a player.</span></div>
+          <div class="command-row"><code>rtl_fm</code><span>Narrowband/wideband FM demod; pipe audio to a player.</span></div>
+          <div class="command-row"><code>rtl_power</code><span>Spectrum scanner — sweep a band to a CSV log/heatmap.</span></div>
+          <div class="command-row"><code>rtl_433</code><span>Decodes 433/868/915 MHz ISM sensors (weather, TPMS, remotes).</span></div>
           <div class="command-row"><code>gqrx</code><span>GUI receiver: waterfall, demod, audio (uses GNU Radio).</span></div>
+          <div class="command-row"><code>SDR++</code><span>Modern cross-platform GUI receiver (RTL-SDR, Airspy, HackRF).</span></div>
           <div class="command-row"><code>SDR#</code><span>Windows GUI receiver for RTL-SDR and Airspy.</span></div>
-          <div class="command-row"><code>GNU Radio</code><span>Flowgraph framework — build the DSP yourself.</span></div>
+          <div class="command-row"><code>GNU Radio</code><span>Flowgraph framework (3.10.x) — build the DSP yourself.</span></div>
           <div class="command-row"><code>SDRAngel</code><span>Multi-mode receiver/transmitter with deep feature set.</span></div>
         </div>
         <div class="grid two" style="margin-top:16px">
           <article class="card"><h3>Capture raw IQ</h3><pre><code>rtl_sdr -f 100e6 -s 2.4e6 -g 20 capture.bin</code></pre><p>Record 2.4 MHz of spectrum around 100 MHz to a file.</p></article>
-          <article class="card"><h3>Live FM audio</h3><pre><code>rtl_fm -f 100.1e6 -M fm -s 200k -r 48k - | \
-  aplay -r 48k -f S16_LE</code></pre><p>Demodulate and play an FM station on Linux.</p></article>
+          <article class="card"><h3>Live FM audio</h3><pre><code>rtl_fm -f 100.1e6 -M wbfm -s 200k -r 48k - | \
+  aplay -r 48k -f S16_LE</code></pre><p>Demodulate and play a broadcast FM station on Linux.</p></article>
         </div>
         <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Flag</th><th>Modulation</th><th>Use for</th></tr></thead><tbody>
           <tr><td><code>-M fm</code></td><td>narrowband FM</td><td>2-way radio, ham repeaters, NOAA APT</td></tr>
@@ -196,7 +233,7 @@ audio = diff(unwrap(phase))</code></pre></article>
           <tr><td><code>-M am</code></td><td>AM envelope</td><td>airband, AM broadcast</td></tr>
           <tr><td><code>-M raw</code></td><td>no demod</td><td>pass IQ straight through</td></tr>
         </tbody></table></div>
-        <div class="callout" style="margin-top:16px"><div class="callout-mark">⌁</div><p><strong>Install:</strong> <code>brew install rtl-sdr</code> (macOS) or <code>sudo apt install rtl-sdr gqrx-sdr</code> (Debian/Ubuntu). Blacklist the DVB-T kernel driver so the dongle is free for SDR use.</p></div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">⌁</div><p><strong>Install:</strong> <code>brew install rtl-sdr rtl-433 gnuradio</code> (macOS) or <code>sudo apt install rtl-sdr rtl-433 gqrx-sdr gnuradio</code> (Debian/Ubuntu). Blacklist the DVB-T kernel driver so the dongle is free for SDR use. GNU Radio <strong>3.10.x</strong> is the current stable line.</p></div>
       </section>
 
       <section class="section searchable" id="signals">
@@ -207,7 +244,7 @@ audio = diff(unwrap(phase))</code></pre></article>
         <div class="table-wrap"><table><thead><tr><th>Signal</th><th>Frequency</th><th>Modulation</th><th>Decoder</th></tr></thead><tbody>
           <tr><td>AM broadcast</td><td>530–1700 kHz</td><td>AM, ~10 kHz channels</td><td>any AM receiver</td></tr>
           <tr><td>FM broadcast</td><td>88–108 MHz</td><td>WFM, 200 kHz, 19 kHz pilot</td><td><code>rtl_fm -M wbfm</code></td></tr>
-          <tr><td>NOAA APT</td><td>137.1 / 137.62 / 137.9125 MHz</td><td>WFM, 34 kHz</td><td><code>noaa-apt</code></td></tr>
+          <tr><td>NOAA APT</td><td>137.1 (NOAA-19) / 137.62 (NOAA-15) / 137.9125 (NOAA-18) MHz</td><td>WFM, 34 kHz</td><td><code>noaa-apt</code></td></tr>
           <tr><td>ADS-B</td><td>1090 MHz</td><td>pulse-position, Mode-S</td><td><code>dump1090</code></td></tr>
           <tr><td>POCSAG (paging)</td><td>138 / 153 / 929 MHz</td><td>FSK</td><td><code>multimon-ng</code></td></tr>
           <tr><td>ACARS</td><td>131.550 MHz (VHF)</td><td>AFSK</td><td><code>acarsdec</code></td></tr>
@@ -228,7 +265,7 @@ audio = diff(unwrap(phase))</code></pre></article>
               <tr><td>AIS</td><td>161.975 / 162.025 MHz</td><td>ship tracking, GMSK</td></tr>
               <tr><td>RTTY / FT8</td><td>HF amateur bands</td><td>data modes via <code>fldigi</code> / <code>wsjt-x</code></td></tr>
               <tr><td>SSTV</td><td>145.800 MHz (ISS)</td><td>slow-scan TV images</td></tr>
-              <tr><td>Meteor M2</td><td>137.9 MHz</td><td>LRPT weather imagery</td></tr>
+              <tr><td>Meteor-M2-3 / M2-4</td><td>137.1 / 137.9 MHz</td><td>LRPT weather imagery</td></tr>
             </tbody></table></div>
           </div>
         </details>
@@ -287,6 +324,8 @@ rtl_sdr -f 100e6 -s 2.4e6 -b 0 out.bin  # bigger buffer</code></pre></article>
 rtl_sdr -f 1090e6 -s 2.4e6 -g 10 adsb.bin</code></pre></article>
           <article class="card"><h3>Listening vs transmitting</h3><p>RTL-SDR dongles are receive-only, which is generally fine. HackRF and similar can transmit, and transmitting without a license is illegal in most jurisdictions — don't.</p><pre><code># receive-only: no license required in most places
 # transmitting:  requires a license — always</code></pre></article>
+          <article class="card"><h3>Clock drift (PPM)</h3><p>Cheap crystal oscillators drift a few ppm, so every signal sits slightly off-frequency. The RTL-SDR V4 ships a 1 ppm TCXO, but older dongles need a correction like <code>-p 42</code>.</p><pre><code># calibrate against a known signal
+rtl_fm -f 100e6 -M fm -s 200k -p 42 -</code></pre></article>
         </div>
         <div class="callout warning" style="margin-top:16px"><div class="callout-mark">⚠</div><p><strong>Stay on the receive side.</strong> Receiving law varies by country, and decoding some services (paging, aircraft) is restricted in places. Transmitting on licensed bands without authorization is illegal almost everywhere — a HackRF is not a license.</p></div>
       </section>
@@ -299,6 +338,12 @@ rtl_sdr -f 1090e6 -s 2.4e6 -g 10 adsb.bin</code></pre></article>
           <a href="https://www.rtl-sdr.com/" target="_blank" rel="noreferrer">RTL-SDR blog</a>
           <a href="https://www.sigidwiki.com/" target="_blank" rel="noreferrer">Signal Identification Wiki</a>
           <a href="../">slop-stuff home</a>
+        </div>
+        <strong style="display:block;margin-top:22px">Related</strong>
+        <div class="footer-links">
+          <a href="../hamradio/">Ham radio</a>
+          <a href="../embedded/">Embedded dev</a>
+          <a href="../math/">Mathematics</a>
         </div>
       </footer>
     </main>

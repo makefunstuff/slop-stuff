@@ -28,6 +28,7 @@
     <aside class="sidebar" aria-label="Guide sections">
       <p class="side-label">On this page</p>
       <nav>
+        <a href="#quickref"><span class="nav-number">00</span>Quick reference</a>
         <a href="#start"><span class="nav-number">01</span>Start here</a>
         <a href="#math"><span class="nav-number">02</span>Math</a>
         <a href="#physics"><span class="nav-number">03</span>Physics</a>
@@ -77,6 +78,28 @@
               <div><span class="prompt">❯</span> <span class="cursor"></span></div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section class="section searchable" id="quickref">
+        <div class="section-head">
+          <div><div class="section-kicker">00 / Quick reference</div><h2>Quick reference</h2></div>
+          <p>The numbers you reach for first: wavelength, decibels, match, bands, and the antennas and modes that carry a contact.</p>
+        </div>
+        <div class="prefix-demo">
+          <kbd>λ(m)</kbd> = <kbd>300 / f(MHz)</kbd>
+          <kbd>1 W</kbd> = <kbd>+30 dBm</kbd>
+          <kbd>dipole(ft)</kbd> = <kbd>468 / f(MHz)</kbd>
+        </div>
+        <div class="grid four">
+          <article class="card"><div class="card-number">1</div><h3>Wavelength</h3><p><code>λ = c / f</code>. In metres: <code>λ = 300 / f(MHz)</code>. <code>14.2 MHz → ~21.1 m</code>.</p></article>
+          <article class="card"><div class="card-number">2</div><h3>Decibels</h3><p><code>dB = 10·log10(P1/P0)</code>; <code>dBm</code> references 1 mW. <code>+3 dB ≈ ×2</code>, <code>+10 dB ≈ ×10</code>.</p></article>
+          <article class="card"><div class="card-number">3</div><h3>SWR</h3><p><code>SWR = (1 + |Γ|) / (1 - |Γ|)</code>. <code>1.5:1 ≈ 4%</code> reflected, <code>3:1 ≈ 25%</code> — fix it before transmitting.</p></article>
+          <article class="card"><div class="card-number">4</div><h3>Bands</h3><p><strong>HF</strong> 1.8–30 MHz (DX via skywave) · <strong>VHF</strong> 30–300 MHz · <strong>UHF</strong> 300 MHz–3 GHz (local).</p></article>
+          <article class="card"><div class="card-number">5</div><h3>Dipole</h3><p>Half-wave, center-fed, ~73 Ω. <code>L = 468 / f(MHz)</code> feet, or <code>143 / f(MHz)</code> metres.</p></article>
+          <article class="card"><div class="card-number">6</div><h3>Vertical</h3><p>Quarter-wave over a ground plane, ~36 Ω, low take-off. <code>L = 234 / f(MHz)</code> feet.</p></article>
+          <article class="card"><div class="card-number">7</div><h3>Yagi</h3><p>Reflector + driven + directors → gain and directivity. 3 elements ≈ 7 dBi; a long boom 12–15 dBi.</p></article>
+          <article class="card"><div class="card-number">8</div><h3>FT8</h3><p>8-FSK, 15 s cycles, ~50 Hz, weak-signal DX. Run WSJT-X on <code>14.074</code> (20 m) and the band-edge data frequencies.</p></article>
         </div>
       </section>
 
@@ -218,11 +241,13 @@ balanced    → ladder line + balun</code></pre></article>
         <div class="table-wrap"><table><thead><tr><th>Band</th><th>Frequency</th><th>Propagation</th><th>Typical use</th></tr></thead><tbody>
           <tr><td>160 m</td><td>1.8–2.0 MHz</td><td>ground wave + night sky wave</td><td>regional, "top band"</td></tr>
           <tr><td>80 m</td><td>3.5–4.0 MHz</td><td>night, regional</td><td>ragchews, nets</td></tr>
+          <tr><td>60 m</td><td>5.3515–5.3665 MHz</td><td>regional, NVIS</td><td>secondary, 15 kHz channels</td></tr>
           <tr><td>40 m</td><td>7.0–7.3 MHz</td><td>night, long haul</td><td>DX, evening workhorse</td></tr>
           <tr><td>30 m</td><td>10.1–10.15 MHz</td><td>all-day (WARC)</td><td>CW / digital only</td></tr>
           <tr><td>20 m</td><td>14.0–14.35 MHz</td><td>daytime DX</td><td>the DX workhorse</td></tr>
           <tr><td>17 m</td><td>18.068–18.168 MHz</td><td>daytime (WARC)</td><td>DX, no contests</td></tr>
           <tr><td>15 m</td><td>21.0–21.45 MHz</td><td>daytime, sunspot-driven</td><td>DX openings</td></tr>
+          <tr><td>12 m</td><td>24.89–24.99 MHz</td><td>daytime (WARC)</td><td>DX, no contests</td></tr>
           <tr><td>10 m</td><td>28.0–29.7 MHz</td><td>sunspot peak</td><td>DX + local FM repeaters</td></tr>
           <tr><td>6 m</td><td>50–54 MHz</td><td>sporadic-E</td><td>the "magic band"</td></tr>
           <tr><td>2 m</td><td>144–148 MHz</td><td>line of sight</td><td>FM repeaters, SSB weak signal</td></tr>
@@ -230,6 +255,7 @@ balanced    → ladder line + balun</code></pre></article>
         </tbody></table></div>
         <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Mode</th><th>Keying</th><th>Bandwidth</th><th>Note</th></tr></thead><tbody>
           <tr><td><strong>FT8</strong></td><td>8-FSK, 15 s cycles</td><td>~50 Hz</td><td>weak-signal DX; run with WSJT-X</td></tr>
+          <tr><td><strong>FT4</strong></td><td>4-GFSK, 7.5 s cycles</td><td>~90 Hz</td><td>FT8's faster sibling; contesting, DXpeditions</td></tr>
           <tr><td><strong>RTTY</strong></td><td>2-FSK, 45.45 baud</td><td>~270 Hz</td><td>contest and data classic</td></tr>
           <tr><td><strong>PSK31</strong></td><td>BPSK/QPSK, 31.25 baud</td><td>~60 Hz</td><td>narrow keyboard chat</td></tr>
           <tr><td><strong>WSPR</strong></td><td>FSK beacon</td><td>~6 Hz</td><td>propagation probes</td></tr>
@@ -237,13 +263,14 @@ balanced    → ladder line + balun</code></pre></article>
         </tbody></table></div>
         <div class="tags" style="margin-top:16px">
           <span class="tag">FT8</span>
+          <span class="tag">FT4</span>
           <span class="tag">RTTY</span>
           <span class="tag">PSK31</span>
           <span class="tag">WSPR</span>
           <span class="tag">WSJT-X</span>
           <span class="tag">fldigi</span>
         </div>
-        <div class="callout" style="margin-top:16px"><div class="callout-mark">▦</div><p><strong>Band plan first.</strong> Each band is split by mode (CW, data, SSB, FM) and by region. Check your national band plan before transmitting — 30 m is CW/digital only worldwide, and repeater sub-bands differ by country.</p></div>
+        <div class="callout" style="margin-top:16px"><div class="callout-mark">▦</div><p><strong>Band plan first.</strong> Each band is split by mode (CW, data, SSB, FM) and by region. Check your national band plan before transmitting — 30 m is CW/digital only worldwide, and repeater sub-bands differ by country. Beyond this table there are also <strong>2200 m</strong> (135.7 kHz), <strong>630 m</strong> (472 kHz), <strong>1.25 m</strong> (222 MHz), and <strong>23 cm</strong> (1240 MHz) allocations. Solar Cycle 25 peaked around 2024–2025, so 10–6 m openings are frequent now.</p></div>
       </section>
 
       <section class="section searchable" id="embedded">
@@ -335,6 +362,8 @@ SWR &lt; 1.5:1 → good to go</code></pre></article>
 # transmitting: requires a license — always</code></pre></article>
           <article class="card"><h3>Antenna placement</h3><p>Near power lines = fatal; near metal = detuning and a skewed pattern. Height and clear space beat more power almost every time.</p><pre><code>higher + in the clear &gt; more watts</code></pre></article>
           <article class="card"><h3>No antenna, no TX</h3><p>Keying up into an open or shorted output can destroy finals. Confirm a matched load is attached before every transmission.</p><pre><code># open / shorted output → dead finals</code></pre></article>
+          <article class="card"><h3>RF in the shack</h3><p>Common-mode current on the coax shield puts RF on the rig, mic, and key — the "RF bite". Choke it with a <strong>balun</strong> or ferrite at the feedpoint.</p><pre><code>feedpoint → 1:1 current balun / ferrite choke</code></pre></article>
+          <article class="card"><h3>Digital duty cycle</h3><p>FT8, FT4, and RTTY transmit near <strong>100% duty cycle</strong>. Back off to ~50% of rated power so the finals don't overheat on long sessions.</p><pre><code>100 W rig → run data modes at ~50 W</code></pre></article>
         </div>
         <div class="callout warning" style="margin-top:16px"><div class="callout-mark">⚠</div><p><strong>Know the law.</strong> Amateur licensing is personal and non-commercial. Rules vary by country; your national regulator and the exam material are authoritative — not forum posts. When in doubt, don't transmit.</p></div>
       </section>
@@ -347,6 +376,14 @@ SWR &lt; 1.5:1 → good to go</code></pre></article>
           <a href="https://en.wikipedia.org/wiki/Amateur_radio" target="_blank" rel="noreferrer">Amateur radio (Wikipedia)</a>
           <a href="https://www.eham.net/" target="_blank" rel="noreferrer">eHam.net</a>
           <a href="../">slop-stuff home</a>
+        </div>
+        <div style="margin-top:20px">
+          <strong>Related guides</strong>
+          <div class="footer-links">
+            <a href="../sdr/">SDR</a>
+            <a href="../electronics/">Electronics</a>
+            <a href="../math/">Mathematics</a>
+          </div>
         </div>
       </footer>
     </main>

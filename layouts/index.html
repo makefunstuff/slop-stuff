@@ -1,0 +1,71 @@
+{{ define "main" }}
+<main class="hub">
+  <p class="lede">{{ .RawContent | markdownify }}</p>
+  <p class="stats muted">
+    {{ len .Site.RegularPages }} guides
+    · <a href="{{ "links/" | relURL }}">link library</a>
+    · {{ len hugo.Data.experiments }} experiment{{ if ne (len hugo.Data.experiments) 1 }}s{{ end }}
+  </p>
+
+  {{ $pages := .Site.RegularPages }}
+  {{ $cats := hugo.Data.categories }}
+  {{ range $cats }}
+    {{ $cat := . }}
+    {{ $group := where $pages "Params.category" $cat }}
+    {{ if $group }}
+    <section class="cat" id="{{ $cat | urlize }}">
+      <h2>{{ $cat }}</h2>
+      <ul>
+        {{ range $group.ByTitle }}
+        <li>
+          <a href="{{ .RelPermalink }}"><code>{{ .Section }}</code></a>
+          <span class="sep">—</span>
+          <span class="t">{{ .Title }}</span>
+          {{ with .Description }}<span class="d muted">{{ . }}</span>{{ end }}
+        </li>
+        {{ end }}
+      </ul>
+    </section>
+    {{ end }}
+  {{ end }}
+
+  {{ $known := hugo.Data.categories }}
+  {{ $rest := slice }}
+  {{ range $pages }}
+    {{ if not (in $known .Params.category) }}
+      {{ $rest = $rest | append . }}
+    {{ end }}
+  {{ end }}
+  {{ if $rest }}
+  <section class="cat">
+    <h2>Other</h2>
+    <ul>
+      {{ range $rest }}
+      <li>
+        <a href="{{ .RelPermalink }}"><code>{{ .Section }}</code></a>
+        <span class="sep">—</span>
+        <span class="t">{{ .Title }}</span>
+        {{ with .Description }}<span class="d muted">{{ . }}</span>{{ end }}
+      </li>
+      {{ end }}
+    </ul>
+  </section>
+  {{ end }}
+
+  <section class="cat" id="experiments">
+    <h2>Experiments</h2>
+    <p class="muted">Playable things that live in other repos. Linked, not hosted here.</p>
+    <ul>
+      {{ range hugo.Data.experiments }}
+      <li>
+        <a href="{{ .url }}" rel="noreferrer"><code>{{ .title | urlize }}</code></a>
+        <span class="sep">—</span>
+        <span class="t">{{ .title }}</span>
+        <span class="d muted">{{ .description }}</span>
+        {{ with .repo }}<a class="muted" href="{{ . }}" rel="noreferrer">source</a>{{ end }}
+      </li>
+      {{ end }}
+    </ul>
+  </section>
+</main>
+{{ end }}

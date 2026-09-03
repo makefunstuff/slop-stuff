@@ -3,7 +3,7 @@
 A dense wiki of AI-generated cheatsheets and usage notes, built with [Hugo](https://gohugo.io/) and served at
 [makefunstuff.github.io/slop-stuff](https://makefunstuff.github.io/slop-stuff/).
 
-Each guide is a Markdown file under `content/<kebab-slug>/index.md`. Hugo renders kebab-case URLs — `/rust/`, `/esp32/`, `/linux-cli/`.
+Each guide is a Markdown file. Hugo renders kebab-case URLs — `/rust/`, `/esp32/`, `/linux-cli/` — same as the old hand-written HTML folders.
 
 ## Preview locally
 
@@ -13,7 +13,7 @@ Install [Hugo](https://gohugo.io/installation/) (extended, v0.165+), then:
 hugo server
 ```
 
-Production base URL is `https://makefunstuff.github.io/slop-stuff/`.
+Open the printed `localhost` URL. Production base URL is `https://makefunstuff.github.io/slop-stuff/`.
 
 ```
 hugo --gc --minify
@@ -40,28 +40,36 @@ One-paragraph lead.
 ## Quick reference
 
 - `zig build` — compile via `build.zig`
+
+## Gotchas
+
+…
 ```
 
 3. Write the body in Markdown. Tables, fenced code, lists, and `<kbd>` / `<details>` HTML all work. Do **not** add the page to the hub by hand — `layouts/index.html` lists every regular page grouped by `category`.
 
-4. Optional fields: `lead` (subtitle), `tags` (search), `weight` (sort order).
+4. Optional fields:
+
+   - `lead` — short subtitle under the title
+   - `tags` — shown on the page and used by search
+   - `weight` — sort order inside a category (lower first; title is the fallback)
 
 5. Run `hugo server` and hit `/<kebab-slug>/`.
 
-Starter: `hugo new rust/index.md` uses `archetypes/default.md`.
+A starter file: `hugo new rust/index.md` uses `archetypes/default.md`.
 
 ## Hub, search, experiments
 
-- The root page is generated from front matter / `data/categories.yaml`.
-- Header search reads `/index.json` (built by Hugo).
-- Games live in other repos. Link them from `data/experiments.yaml`.
+- The root page is generated from front matter / `data/categories.yaml`. No giant HTML index.
+- Header search reads `/index.json` (built by Hugo) and filters title, category, description, tags.
+- Games and other builds that are **not** cheatsheets belong in their own repos. Link them from `data/experiments.yaml` instead of adding pages here.
 
 ## Deploy (GitHub Pages)
 
-Copy [`docs/hugo-pages.yml`](docs/hugo-pages.yml) to `.github/workflows/hugo.yml` (the token used for this PR cannot write workflow files). Then:
+[`docs/hugo-pages.yml`](docs/hugo-pages.yml) is the intended GitHub Actions workflow. Copy it to `.github/workflows/hugo.yml` (writing workflow files needs the `workflow` OAuth scope, which this PR may not have). Then:
 
-1. Settings, Pages, Build and deployment, Source: GitHub Actions.
-2. After merge the site is https://makefunstuff.github.io/slop-stuff/
+1. **Settings → Pages → Build and deployment → Source:** GitHub Actions.
+2. After merge (and the workflow file is in place), the site is `https://makefunstuff.github.io/slop-stuff/`.
 
 ## Layout
 
@@ -73,7 +81,6 @@ static/js/wiki.js         theme, search, copy buttons
 data/categories.yaml      hub section order
 data/experiments.yaml     off-repo games / toys
 hugo.toml                 baseURL, markup, outputs
-docs/hugo-pages.yml       GitHub Actions workflow to copy into .github/workflows/
 ```
 
 Organic (non-AI) codebases still live somewhere else.

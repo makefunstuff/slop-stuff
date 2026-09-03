@@ -1,0 +1,18 @@
+{{ define "main" }}
+<aside class="toc" aria-label="On this page">
+  <p class="toc-label">on this page</p>
+  {{ .TableOfContents }}
+</aside>
+<article class="doc">
+  <p class="crumb"><a href="{{ "/" | relURL }}">{{ .Site.Title }}</a>{{ with .Params.category }} / {{ . }}{{ end }}</p>
+  <h1>{{ .Title }}</h1>
+  {{ with .Params.lead }}<p class="lede">{{ . }}</p>{{ end }}
+  {{ with .Description }}<p class="muted sub">{{ . }}</p>{{ end }}
+  {{ with .Params.tags }}
+  <p class="tags">{{ range . }}<span>{{ . }}</span>{{ end }}</p>
+  {{ end }}
+  <div class="body">
+    {{ .Content }}
+  </div>
+</article>
+{{ end }}

@@ -18,7 +18,7 @@
       <ul>
         {{ range $group.ByTitle }}
         <li>
-          <a href="{{ .RelPermalink }}"><code>{{ .Section }}</code></a>
+          <a href="{{ .RelPermalink }}"><code>{{ path.Base .File.Dir }}</code></a>
           <span class="sep">—</span>
           <span class="t">{{ .Title }}</span>
           {{ with .Description }}<span class="d muted">{{ . }}</span>{{ end }}
@@ -42,7 +42,7 @@
     <ul>
       {{ range $rest }}
       <li>
-        <a href="{{ .RelPermalink }}"><code>{{ .Section }}</code></a>
+        <a href="{{ .RelPermalink }}"><code>{{ path.Base .File.Dir }}</code></a>
         <span class="sep">—</span>
         <span class="t">{{ .Title }}</span>
         {{ with .Description }}<span class="d muted">{{ . }}</span>{{ end }}

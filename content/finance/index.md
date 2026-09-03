@@ -1,299 +1,257 @@
 ---
 title: "Finance — value investing cheatsheet"
-description: "Financial statements, valuation ratios, DCF, and margin of safety."
+description: "Statements, FCFF/FCFE, ratio herding, DCF, MoS, EDGAR workflow, and AI-slop kill-list."
 category: "Quantitative"
-tags: ["finance", "P/E", "DCF", "margin of safety"]
+tags: ["finance", "FCFF", "DCF", "margin of safety", "ROIC"]
 weight: 520
-lead: "Buy businesses, not tickers."
+lead: "Buy businesses, not tickers — with explicit math."
 version: "value investing"
 ---
-Value investing means estimating a company's `intrinsic value` and buying only when Mr. Market offers it at a big enough `margin of safety`.
+Value investing means estimating `intrinsic value` and buying only with an explicit `margin of safety`. This page herds the formulas, ratios, and process — not vibes.
 
 ## Quick reference {#quickref}
 
-The nine numbers you'll reach for first — each is expanded in the sections below.
+| Thing | Formula / rule |
+| --- | --- |
+| `MoS` | `1 − Price/IV` — buy vs **bottom** of IV range, not a feeling |
+| `EV bridge` | `MktCap + Debt + Pref + NCI − Cash (− non-ops)` |
+| `FCFF` | `EBIT(1−t)+D&A−Capex−ΔNWC` → discount @ **WACC** → **EV** |
+| `FCFE` | `FCFF−Int(1−t)+NetBorrow` → discount @ **r_e** → **Equity** |
+| `WACC` | `(E/V)r_e + (D/V)r_d(1−t)` — **market** weights |
+| `TV (Gordon)` | `FCFF_{n+1}/(WACC−g)` — need `WACC>g`; `g≲2–4%` |
+| `TV (exit)` | `EBITDA_{n+1}×ExitMult` — back out implied `g` |
+| `Equity/sh` | `(EV − NetDebt − Pref − NCI) / diluted shares` |
+| Cash ≠ EBITDA | Prefer `CFO` / `FCF` / `FCFF` — EBITDA skips capex, WC, tax, SBC |
 
-- `P/E = Price ÷ EPS` — < 15× cheap · > 25× pricey — always compare within a sector.
-- `P/B = Price ÷ Book value per share` — < 1.5× cheap · > 3× pricey. The key metric for banks, insurers, and asset-heavy firms.
-- `ROE = Net income ÷ Equity` — Consistently > 15% over 5+ years = a compounding machine.
-- `DCF = Σ FCFₜ/(1+r)ᵗ + TV/(1+r)ⁿ` — Intrinsic value = discounted future cash + terminal value. Run a range, never a single point.
-- `Margin of safety = 1 − Price ÷ Value` — Buy only when > 30% below intrinsic value — the discount absorbs your estimation error.
-- `Graham number = √(22.5 × EPS × BVPS)` — Fair-value ceiling for a defensive stock — 15× P/E × 1.5× P/B.
-- `FCF = Operating cash flow − Capex` — The cash a business can return to owners. Want FCF ≈ net income.
-- `EV/EBITDA = (Mkt cap + Debt − Cash) ÷ EBITDA` — < 8× cheap · > 14× pricey. Best for capital-intensive firms where depreciation hides economics.
-- `PEG = P/E ÷ EPS growth rate` — < 1 cheap · > 2 pricey — credits fast growers a higher P/E.
+Eight multiples to herd (always **sector + cycle + quality**):
 
-## Value investing mindset {#start}
+| Multiple | Cheap *context* | Watch |
+| --- | --- | --- |
+| `P/E`, fwd `P/E` | vs peers / history | cyclicals, GAAP vs non-GAAP |
+| `PEG` | `<1` rough | define growth period |
+| `P/B` | banks/asset-heavy | needs ROE/ROTE |
+| `P/S` | early / trough | ignores margins |
+| `EV/EBITDA`, `EV/EBIT` | cap-structure neutral | leases, SBC, capex |
+| `EV/FCF`, FCF yield | label **equity vs firm** | define FCF |
 
-Four ideas define the discipline. Price is what you pay; value is what you get.
+## Mindset {#start}
 
-### 1. Intrinsic value
+Four ideas. Price is what you pay; value is what you get.
 
-The present value of all future cash flows a business will produce. Independent of what the market quotes today.
+1. **Intrinsic value** — PV of future cash the business will produce.
+2. **Margin of safety** — explicit % below estimated IV (sized to uncertainty).
+3. **Mr. Market** — daily quote you may ignore or exploit.
+4. **Circle of competence** — only businesses you can understand and value.
 
-### 2. Margin of safety
+> **KEY:** **Think in decades.** A share is ownership in a business you'd hold for ten years — not a ticket to flip on the next print.
 
-Buy only when price sits well below intrinsic value — the discount absorbs your estimation error.
+## Statements map {#statements}
 
-### 3. Mr. Market
+Three reports + notes. Read together; normalize before ratios.
 
-Graham's manic partner quotes a price daily. You're free to ignore him, or profit when he's fearful.
+| Statement | What it says | Herd |
+| --- | --- | --- |
+| Income | Rev → COGS → GP → OpInc → NI | mix, one-offs, SBC |
+| Balance | Assets = Liab + Equity | cash, AR, inv, debt, goodwill, NCI |
+| Cash flow | Op / Inv / Fin | CFO vs NI; capex; buybacks |
+| Equity stmt | Shares, OCI, NCI | dilution, RSU, buybacks |
 
-### 4. Circle of competence
+**Normalize before you trust a number:**
 
-Invest only in businesses you can understand and value. The size of the circle matters less than knowing its edge.
+| Adjust | Why |
+| --- | --- |
+| One-offs | Strip (carefully) for run-rate |
+| SBC | Real cost — expense **or** dilution |
+| Leases | Add for IFRS16 peer comps |
+| Op vs non-op | Value non-ops separately in EV bridge |
+| Diluted shares | Options/RSU treasury method |
+| NCI / Pref | In EV bridge; don't orphan them |
 
-The fifth idea ties them together:
+> **✓:** **Cash is fact, earnings are opinion.** Want `FCF ≈ NI`. Rising AR/inventory vs sales → accruals / channel risk.
 
-> **KEY:** **Think in decades, not quarters.** Compounding needs time. Treat a share as a slice of ownership in a real business you'd be glad to hold for ten years — not a ticket to flip on the next earnings print.
+## Ratio tables {#ratios}
 
-## Financial statements {#statements}
+Each row: formula · meaning · use · pitfall. Prefer **5–10y** history + peers.
 
-Three linked reports tell the story. Read them together, never in isolation.
+### Profitability
 
-### Income statement
-
-- Revenue — the top line.
-- COGS — direct cost of goods sold.
-- Gross profit = revenue − COGS.
-- Operating income — after opex.
-- Net income — the bottom line.
-
-### Balance sheet
-
-- Assets = liabilities + equity.
-- Current vs non-current.
-- Watch cash, receivables, inventory.
-- Watch debt, goodwill, intangibles.
-- Book value = assets − liabilities.
-
-### Cash flow statement
-
-- Operating — cash from the business.
-- Investing — capex, acquisitions.
-- Financing — debt, dividends, buybacks.
-- FCF = operating cash flow − capex.
-
-What to look for:
-
-> **✓:** **Cash is fact, earnings are opinion.** Prefer companies where `free cash flow ≈ net income`. Be wary when receivables or inventory grow faster than sales — it can mean earnings are being pulled forward with accruals.
-
-## Valuation ratios {#ratios}
-
-Quick heuristics for what's cheap and what's expensive. Always compare within a sector.
-
-| Ratio | Formula | Cheap signal | Expensive signal |
+| Metric | Formula | Use | Pitfall |
 | --- | --- | --- | --- |
-| `P/E` | Price ÷ EPS | < 15× | > 25× |
-| `P/B` | Price ÷ book value / share | < 1.5× | > 3× |
-| `P/S` | Market cap ÷ revenue | < 1× | > 3× |
-| `EV/EBITDA` | (Mkt cap + debt − cash) ÷ EBITDA | < 8× | > 14× |
-| `PEG` | P/E ÷ EPS growth rate | < 1 | > 2 |
-| `Dividend yield` | Dividend ÷ price | > 4% | < 1.5% |
+| Gross margin | `(Rev−COGS)/Rev` | pricing power vs peers | mix / freight / reseller |
+| Op margin | `EBIT/Rev` | core ops | restructuring, lease/SBC class |
+| Net margin | `NI/Rev` | quick only | financing distorts — prefer FCF margin |
+| ROE | `NI/Avg equity` | quality if sustained | leverage & buybacks inflate |
+| ROA | `NI/Avg assets` | asset-heavy / banks | intensity differs by model |
+| **ROIC** | `NOPAT/IC` · `NOPAT=EBIT(1−t)` | **ROIC>WACC** = value create | avg IC; goodwill consistency |
+| FCF margin | `FCF/Rev` | cash conversion | lumpy capex; maint vs growth |
 
-Sector caveats — the same number means different things in different industries:
+### Leverage / liquidity
+
+| Metric | Formula | Use | Pitfall |
+| --- | --- | --- | --- |
+| Current | `CA/CL` | near-term solvency | inventory-heavy mirage |
+| Quick | `(Cash+ST+AR)/CL` | stress | AR quality |
+| D/E | `IB debt / Equity` | gearing screen | prefer **Net debt**; hybrids |
+| Interest cover | `EBIT/Interest` | debt cushion | cyclical EBIT; leases |
+| Net debt/EBITDA | `(Debt−cash)/EBITDA` | credit comps | EBITDA≠cash; add leases |
+
+### Efficiency
+
+| Metric | Formula | Use | Pitfall |
+| --- | --- | --- | --- |
+| Asset turnover | `Rev/Avg assets` | DuPont | model intensity |
+| Inventory days | `(Avg inv/COGS)×365` | mfg/retail | seasonality, write-downs |
+| DSO | `(Avg AR/Rev)×365` | collections | ↑↑ vs sales → stuffing |
+| CCC | `Inv days + DSO − DPO` | WC quality | negative CCC ≠ always good |
+
+### Valuation
+
+| Metric | Formula | Use | Pitfall |
+| --- | --- | --- | --- |
+| P/E | `Price/EPS` (diluted TTM/NTM) | peer + history | cycle peak EPS |
+| Fwd P/E | `Price/FY1` | growth bet | stale estimates |
+| PEG | `(P/E)/g%` | growth-adj | define `g` |
+| P/B | `Price/BVPS` | banks/asset-heavy | intangibles; needs ROE |
+| P/S | `MktCap/Rev` | early / trough | ignores margins |
+| EV/EBITDA | `EV/EBITDA` | firm comps | capex/SBC/leases |
+| EV/EBIT | `EV/EBIT` | after D&A | still pre-reinvestment |
+| EV/FCF | `EV/FCFF` | cash firm mult | define FCF |
+| FCF yield | `FCF/MktCap` **or** `FCFF/EV` | owner screen | **label equity vs firm** |
+| Earn. yield | `EPS/Price` or `EBIT(1−t)/EV` | vs bonds | earnings quality |
+
+### Quality
+
+| Metric | Idea | Use | Pitfall |
+| --- | --- | --- | --- |
+| Accruals | `(NI−CFO)/Avg assets` | earnings vs cash | single-year noise |
+| Owner earnings | `NI + non-cash − maint. capex (−ΔWC)` | Buffett cash base | maint. capex is **estimate** |
+| Rule of 40 | `growth% + margin% ≥ 40` | **SaaS only** | margin definition varies |
+
+## Sector lens {#sectors}
+
+| Sector | Prefer | Avoid / caution |
+| --- | --- | --- |
+| Industrials | EV multiples, ROIC, FCF | absolute “cheap P/E” |
+| Banks / insurers | P/B, ROE/ROTE, NIM, NPL, capital | EV/EBITDA as primary |
+| SaaS | Rule of 40, NRR, FCF margin | industrial templates |
+| Cyclicals | mid-cycle / normalized EPS | trough P/E as “expensive”, peak as “cheap” |
+| Asset-heavy | EV/EBITDA, FCF, maint. capex | P/E alone |
+
+> **⌁:** Cyclicals look cheapest at the **top** (peak EPS). Low multiples can be a **value trap**.
+
+## DCF machine {#dcf}
+
+**Match cash to rate to value:**
+
+| Path | Cash | Rate | Result |
+| --- | --- | --- | --- |
+| Firm | FCFF | WACC | Enterprise value |
+| Equity | FCFE | `r_e` | Equity value |
+
+```
+# FCFF (CFA-style)
+FCFF = EBIT(1−t) + D&A − Capex − ΔNWC
+     = NI + NCC + Int(1−t) − FCInv − WCInv
+     = CFO + Int(1−t) − Capex     # US GAAP: CFO after interest
+
+FCFE = FCFF − Int(1−t) + NetBorrow
+     = NI + NCC − FCInv − WCInv + NetBorrow
+
+WACC = (E/V)·r_e + (D/V)·r_d·(1−t)   # V = market E+D
+EV   = Σ FCFF_t/(1+WACC)^t + TV_n/(1+WACC)^n
+TV   = FCFF_{n+1}/(WACC−g)           # require WACC>g
+   or  EBITDA_{n+1}×ExitMult         # check implied g
+
+Equity = EV − NetDebt − Pref − NCI (+ non-op assets)
+Value/sh = Equity / diluted shares
+```
+
+**Knobs:** forecast margins/growth · WACC · `g` or exit mult · diluted count · TV share of EV (flag if `>80%`).
 
 <details>
-<summary>Why a “cheap” multiple isn't universal</summary>
+<summary>Tiny worked path (illustrative)</summary>
 
-#### Cyclicals
-
-P/E looks lowest at the peak of the cycle — earnings are inflated. Use normalized, mid-cycle earnings.
-
-#### Banks & insurers
-
-P/E and EV/EBITDA mislead; use P/B and ROE, and watch loan-loss reserves.
-
-#### Asset-heavy
-
-Depreciation hides true economics; EV/EBITDA and FCF matter more than P/E.
-
-#### Growth
-
-A high P/E can be fair if growth and ROIC justify it; lean on PEG and DCF.
+```
+fcf  = [100, 108, 117, 126, 136]   # explicit FCFF
+r,g  = 0.10, 0.03
+pv   = Σ f/(1+r)**t
+tv   = fcf[-1]*(1+g)/(r−g)
+EV   = pv + tv/(1+r)**n
+# then − net debt, ÷ diluted → IV/share; MoS vs bottom of range
+```
 
 </details>
 
-A low multiple is a hypothesis, not a verdict:
+> **!:** **Single-point DCF is theatre.** Bear/base/bull; sensitivity on `g`/WACC/margins; sanity-check exit mult vs peers; fade ROIC→WACC in the stable phase.
 
-> **⌁:** Cyclicals look cheapest at the top (high earnings inflate the denominator) and dearest at the bottom. Low `P/E` can also signal a **value trap** — a cheap business in permanent decline. Cross-check every multiple against quality and growth.
-
-## Quality metrics {#quality}
-
-Cheap and good beats cheap and bad. These measure whether the business compounds.
-
-- `ROE = Net income ÷ Equity` — Return on equity; consistently > 15% is strong.
-- `ROIC = NOPAT ÷ Invested capital` — Value is created only when ROIC > WACC.
-- `Gross margin = (Rev − COGS) ÷ Rev` — Pricing power; compare to industry peers.
-- `Operating margin = Op income ÷ Rev` — Efficiency before interest and taxes.
-- `Net margin = Net income ÷ Rev` — What's actually left for shareholders.
-- `Debt/equity = Total debt ÷ Equity` — < 1 is conservative; check interest coverage too.
-- `FCF = OCF − Capex` — Cash the business can return to owners.
-- `Moat = durable advantage` — Network effects, switching costs, brand, cost lead.
-
-## DCF & intrinsic value {#dcf}
-
-Intrinsic value is the discounted sum of future cash. Here's the whole machine.
+## Margin of safety {#mos}
 
 ```
-Value  = Σ FCF_t / (1 + r)^t  +  TV / (1 + r)^n
-TV     = FCF_{n+1} / (r − g)              # Gordon growth (needs r > g)
-
-Gordon growth model:  P  = D_1 / (r − g)
-Present value:        PV = FV / (1 + r)^t
+MoS = 1 − Price / IntrinsicValue
+# Buy when Price ≤ IV_low × (1 − required_MoS)
+# e.g. IV range 80–120, require 30% → buy ≤ ~56–70 vs low end — pick a rule and stick to it
 ```
 
-The pipeline from forecast to per-share value:
+MoS is an **explicit haircut** to estimated IV, sized to how wrong you might be — not “feels cheap.”
 
-**FCF forecasts** (5–10 years) → **Discount** (@ WACC) → **+ Terminal value** (Gordon growth) → **Enterprise value** (− net debt) → **Intrinsic / share** (÷ shares)
+## Graham shortcuts {#graham}
 
-The three knobs:
+```
+Graham number = √(22.5 × EPS × BVPS)   # 15×P/E × 1.5×P/B — ceiling heuristic, NOT IV
+Owner earnings = NI + D&A + other non-cash − maintenance capex (− ΔWC if needed)
+```
 
-### WACC
+Defensive screen (compressed): adequate size · current ≥2 · low LT debt · 10y positive EPS · long dividend record · EPS growth · P/E≤15 on avg EPS · P/B≤1.5 (or P/E×P/B≤22.5).
 
-The blended cost of capital. `WACC = (E/V)·rₑ + (D/V)·r_d·(1 − t)`. Higher WACC → lower value.
+> **!:** **Owner earnings ≠ reported earnings.** Maintenance capex is judgment. Graham number is a **ceiling**, not a DCF substitute.
 
-### Discount rate
+## Workflow {#process}
 
-The required return you demand (often 8–12%). Use it to discount each year's cash flow back to today.
+1. **EDGAR** — 10-K / 10-Q / 20-F: Business, Risks, MD&A, statements + notes, auditor. IR decks = non-GAAP — reconcile.
+2. **Normalize** — one-offs, SBC, leases, op vs non-op, diluted shares, NCI.
+3. **Ratios** — 5–10y; DuPont on ROE; accruals & CCC.
+4. **Comps** — same model; EV multiples for industrials; P/B+ROE for banks.
+5. **DCF** — bear/base/bull; TV share; implied `g`; ROIC fade.
+6. **MoS** — vs **bottom** of credible IV range.
+7. **Checklist** — moat · capital allocation · dilution · cyclical peak · BS survival.
 
-### Terminal value
-
-Value of everything beyond the forecast. Gordon growth `FCF_{n+1} / (r − g)` needs `r > g`.
-
-Worked example — the arithmetic behind the terminal above:
+**Data:** SEC EDGAR + IR are primary. Aggregators (Macrotrends etc.): lag, TTM stitch errors, non-GAAP pollution — **spot-check the 10-K**.
 
 <details>
-<summary>DCF step by step</summary>
+<summary>Screening starters (hypothesis generators)</summary>
 
-```
-fcf  = [100, 108, 117, 126, 136]     # M, next 5 years
-r    = 0.10                           # WACC / discount rate
-g    = 0.03                           # perpetual growth
-
-pv   = sum(f/(1+r)**(i+1) for i,f in enumerate(fcf))
-# ≈ 90.9 + 89.3 + 87.9 + 86.1 + 84.5 = 438.6
-
-tv    = fcf[-1] * (1+g) / (r - g)     # = 140.08 / 0.07 ≈ 2001
-value = pv + tv / (1+r)**5            # = 438.6 + 1242.5 ≈ 1681
-
-margin = 1 - price / value            # buy when > 0.30
-```
+- Quality: ROE/ROIC sustained, FCF≈NI, low accruals
+- Solvency: net debt/EBITDA sane, interest cover, BS survival
+- Price: peer-relative multiples + MoS to IV range — not absolute bands alone
 
 </details>
 
-> **!:** **The output is only as good as the inputs.** Small changes in `g` or the discount rate swing the answer wildly. Run a range (bear / base / bull), never a single point.
+## AI-slop kill-list {#gotchas}
 
-## Graham & Buffett {#graham}
+| Slop | Reality |
+| --- | --- |
+| EBITDA ≈ cash | Ignores capex/WC/tax/SBC/interest → CFO/FCF/FCFF |
+| DCF off raw NI | Need FCFF/FCFE + reinvestment + interest shield |
+| Ignore dilution/SBC | Per **diluted** share; SBC = cost or dilution |
+| Mix TTM↔fwd, GAAP↔non-GAAP | Label everything; reconcile footnotes |
+| Gordon `g≥WACC` | TV blows up; cap `g`; exit-mult cross-check |
+| MoS as “feels cheap” | Explicit % below estimated IV |
+| Equity multiple on EV (or reverse) | P/E world ≠ EV/EBITDA world |
+| Bank ratios = industrial | Skip EV/EBITDA; P/B, ROE/ROTE, NIM, NPL, capital |
+| `FCF=CFO−capex` as FCFF w/o `+Int(1−t)` | US GAAP CFO is after interest |
+| Single-point DCF | Sensitivity; report a **range** |
+| Absolute “cheap P/E” bands | Sector + cycle + ROIC-growth context |
+| Graham number as IV | Ceiling heuristic only |
 
-Two quick intrinsic-value shortcuts and the discipline behind them.
+Also: value traps, channel stuffing, survivorship bias, anchoring, confirmation bias, recency bias — build the **bear** case before you buy.
 
-```
-Graham number  = √(22.5 × EPS × BVPS)      # 22.5 = 15 P/E × 1.5 P/B
+## Refs {#refs}
 
-Owner earnings = Net income
-               + depreciation & amortization
-               − maintenance capex
-               − Δ working capital
-```
-
-Buffett's refinement of Graham:
-
-### Defensive investor criteria
-
-- Adequate size (a large company).
-- Current ratio ≥ 2; low long-term debt.
-- Positive EPS for the past 10 years.
-- 20 years of uninterrupted dividends.
-- EPS growth ≥ 33% over 10 years.
-- P/E ≤ 15× average 3-year EPS.
-- P/B ≤ 1.5× (or P/E × P/B ≤ 22.5).
-
-### Moat thinking
-
-“It's far better to buy a wonderful company at a fair price than a fair company at a wonderful price.” A durable moat lets a business earn excess returns for years.
-
-`network effects` `switching costs` `cost advantage` `brand` `intangibles`
-
-> **!:** **Owner earnings ≠ reported earnings.** It subtracts the capex needed to *maintain* the business — a company can report profit while quietly consuming its productive base.
-
-## Screening & checklist {#process}
-
-Turn the philosophy into a repeatable pipeline.
-
-1. **Screen** — Filter a universe by ratios: P/E < 20, P/B < 2, ROE > 15%, debt/equity < 1, positive FCF.
-1. **Read the filings** — 10-K / 10-Q, MD&A, and footnotes. Understand how the company actually makes money.
-1. **Estimate intrinsic value** — DCF, Graham number, or conservative comps. Use a range, not a point.
-1. **Decide** — Buy only with a margin of safety. No good price for a bad business; no bad price for a good one you don't understand.
-Rules of thumb to run the first pass:
-
-<details>
-<summary>Screening criteria</summary>
-
-- `P/E < 20, P/B < 2` — Cheap enough to investigate further.
-- `ROE > 15% for 5+ years` — A compounding machine.
-- `Debt/equity < 1` — Survives a downturn.
-- `FCF > 0 and growing` — Real cash, not accounting profit.
-- `Dividends ≤ FCF` — The payout is actually affordable.
-- `Insider ownership > 0` — Management has skin in the game.
-
-</details>
-
-Due diligence in two columns:
-
-### Quantitative checklist
-
-- Revenue and EPS growth over 5–10 years.
-- Stable or rising gross / operating margins.
-- ROE and ROIC above cost of capital.
-- FCF ≈ net income; low accruals.
-- Debt serviceable; interest coverage > 3.
-
-### Qualitative questions
-
-- Is there a durable moat, or will competition erode it?
-- Is management honest and aligned with owners?
-- Is the industry growing, stable, or shrinking?
-- Is there customer or supplier concentration risk?
-
-> **✕:** **Red flags:** revenue recognized before cash, receivables/inventory outpacing sales, serial acquisitions that grow goodwill, constant non-GAAP add-backs, auditor or CFO churn, and related-party deals.
-
-## Pitfalls {#gotchas}
-
-Ways a value investor loses money. Know them before the market teaches you.
-
-### Value traps
-
-Cheap keeps getting cheaper because the business is deteriorating. Cheap ≠ undervalued. Ask the hard question: is the decline cyclical (recoverable) or secular (permanent)?
-
-### Accounting tricks
-
-Channel stuffing, capitalizing expenses, cookie-jar reserves, aggressive revenue recognition. Always reconcile cash flow against earnings — when they diverge, find out why.
-
-### Survivorship bias
-
-Backtests and index histories omit the companies that went bankrupt, so past returns look rosier than they were. You're seeing the winners who lived.
-
-### Over-leverage
-
-Debt amplifies losses in a downturn. A leveraged company earns more in good times, but a single bad year can wipe out equity entirely.
-
-### Anchoring
-
-Fixating on your purchase price or a past high instead of intrinsic value. Your cost basis is irrelevant to what the business is worth today — the market owes you nothing.
-
-### Confirmation bias
-
-Seeking only evidence that agrees with your thesis. Actively build the bear case and read the short sellers' argument before you buy.
-
-### Precision illusion
-
-A DCF spits out a number with false precision, yet small changes in growth or discount rate swing it wildly. Treat the model as a range, not a fact.
-
-### Dilution
-
-Stock-based compensation and secondary offerings quietly grow the share count, shrinking each share's claim. Value the business per share, not just in total.
-
-### Recency bias
-
-Extrapolating the last few quarters into forever. Mean reversion is brutal — growth that can't be sustained gets priced back down.
+1. [Damodaran](https://pages.stern.nyu.edu/~adamodar/)
+2. [Damodaran ch.15 (valuation)](https://pages.stern.nyu.edu/~adamodar/pdfiles/valn2ed/ch15.pdf)
+3. [CFA — Free Cash Flow Valuation](https://www.cfainstitute.org/insights/professional-learning/refresher-readings/2026/free-cash-flow-valuation)
+4. [SEC — How to Read a 10-K](https://www.sec.gov/fast-answers/answersreada10khtm.html)
+5. [SEC EDGAR](https://www.sec.gov/search-filings)
+6. [SEC — Beginners’ Guide to Financial Statements](https://www.sec.gov/about/reports-publications/beginners-guide-financial-statements)
+7. [Buffett 1986 — owner earnings](https://www.berkshirehathaway.com/letters/1986.html)
+8. Graham — *The Intelligent Investor* (Mr. Market, MoS)

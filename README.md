@@ -1,121 +1,86 @@
 # slop-stuff
 
-All the AI slop lives here: little static sites, experiments, and random stuff — hosted on GitHub Pages.
+A dense wiki of AI-generated cheatsheets and usage notes, built with [Hugo](https://gohugo.io/) and served at
+[makefunstuff.github.io/slop-stuff](https://makefunstuff.github.io/slop-stuff/).
 
-## Cheatsheets & guides
+Each guide is a Markdown file. Hugo renders kebab-case URLs — `/rust/`, `/esp32/`, `/linux-cli/` — same as the old hand-written HTML folders.
 
-Each guide is a subfolder, served under `https://makefunstuff.github.io/slop-stuff/<folder>/`. The root **[index.html](./index.html)** is the hub linking everything, with a **site-wide search box** (built from `assets/search-index.js`) that finds any cheatsheet by title, category, or topic.
+## Preview locally
 
-### AI & agents
+Install [Hugo](https://gohugo.io/installation/) (extended, v0.165+), then:
 
-- **[herdr-cheatsheet](./herdr-cheatsheet/)** — Herdr: workspaces, panes, agents, remote, automation, plugins
-- **[herdr-agentic](./herdr-agentic/)** — agentic patterns with Herdr: orchestrator-worker, reviewer, parallel worktrees
-- **[hermes-agent](./hermes-agent/)** — Hermes Agent: CLI, keybindings, slash commands, sessions, providers, config
-- **[omp](./omp/)** — omp harness: tools, subagents, LSP/DAP, hashline edits, providers, memory
-- **[llm-ai](./llm-ai/)** — LLM & AI: tokens, embeddings, attention, transformers, RAG, prompting, agents, evals
+```
+hugo server
+```
 
-### Languages
+Open the printed `localhost` URL. Production base URL is `https://makefunstuff.github.io/slop-stuff/`.
 
-- **[rust](./rust/)** — ownership, cargo, match, Result, traits, concurrency
-- **[c](./c/)** — pointers, memory, structs, strings, preprocessor
-- **[cpp](./cpp/)** — STL, smart pointers, templates, modern C++
-- **[python](./python/)** — comprehensions, decorators, dataclasses, stdlib
-- **[lua](./lua/)** — tables, metatables, patterns, modules, embedding
-- **[golang](./golang/)** — modules, structs, interfaces, goroutines, channels, errors
-- **[typescript](./typescript/)** — types, interfaces, generics, narrowing, utility types
-- **[zig](./zig/)** — comptime, memory/allocators, optionals/errors, build.zig, C interop
+```
+hugo --gc --minify
+```
 
-### CLI & shell
+writes the static site to `public/`.
 
-- **[jq](./jq/)** — JSON filters, recipes, operators, flags, curl pipelines
-- **[bash](./bash/)** — variables, quoting, loops, conditionals, functions, expansion
-- **[linux-cli](./linux-cli/)** — sed, awk, grep, find, xargs, sort, tar, git, and networking
+## Add a new Markdown guide
 
-### Cloud, DevOps & observability
+1. Create `content/<kebab-slug>/index.md`. The folder name **is** the URL path.
 
-- **[kubectl](./kubectl/)** — inspect, run, edit, debug, contexts
-- **[gcloud](./gcloud/)** — compute, storage, GKE, IAM, SQL, logging
-- **[grafana](./grafana/)** — panels, variables, transforms, alerts, provisioning
-- **[promql](./promql/)** — selectors, rates, aggregation, functions
-- **[devops](./devops/)** — CI/CD, Docker, containers, orchestration, IaC, observability, deployment
+2. Fill in front matter. `category` should be one of the values in `data/categories.yaml` so the hub groups it automatically.
 
-### Data & databases
+```markdown
+---
+title: "Zig"
+description: "Comptime, allocators, optionals/errors, build.zig, C interop."
+category: "Languages"
+tags: ["language", "comptime"]
+---
 
-- **[postgres](./postgres/)** — psql, users/permissions, backups, replication, tuning, monitoring
-- **[kafka](./kafka/)** — topics, partitions, producers, consumers, offsets, operations
-- **[db-optimization](./db-optimization/)** — indexes, query plans, normalization vs denormalization, Redis, tuning
-- **[excel](./excel/)** — formulas, functions, pivot tables, lookups, shortcuts
+One-paragraph lead.
 
-### Embedded & hardware
+## Quick reference
 
-- **[esp32](./esp32/)** — GPIO, UART/I2C/SPI, Wi-Fi, storage, power, OTA
-- **[embedded](./embedded/)** — bare-metal/RTOS: registers, interrupts, timers, memory, boot, FreeRTOS, RP2040/Pico, debugging
-- **[electrical](./electrical/)** — Ohm's law, logic levels, pull-ups, dividers, power for firmware devs
-- **[sdr](./sdr/)** — IQ, sampling, DSP, GNU Radio, common signals
-- **[hamradio](./hamradio/)** — bands, propagation, antennas, and the math/physics/embedded side of RF
-- **[esphome](./esphome/)** — YAML firmware, sensors, home automation for ESP devices
+- `zig build` — compile via `build.zig`
 
-### Electronics
+## Gotchas
 
-- **[electronics](./electronics/)** — components, circuits, op-amps, power supplies, practical electronics
-- **[tubes](./tubes/)** — BJTs, MOSFETs, JFETs, vacuum tubes: operation, biasing, circuits
-- **[hardware](./hardware/)** — modules, ICs, MCUs, and sensors (typical and unusual) for DIY builds
-- **[kicad](./kicad/)** — schematic, layout, footprints, design rules, fabrication output
+…
+```
 
-### Drones & FPV
+3. Write the body in Markdown. Tables, fenced code, lists, and `<kbd>` / `<details>` HTML all work. Do **not** add the page to the hub by hand — `layouts/index.html` lists every regular page grouped by `category`.
 
-- **[betaflight](./betaflight/)** — rates, PIDs, filters, modes, CLI
-- **[ardupilot](./ardupilot/)** — firmware, flight modes, failsafes, tuning, Mission Planner
-- **[pid-tuning](./pid-tuning/)** — P/I/D terms, tuning methods, symptoms, implementation
-- **[fpv](./fpv/)** — frames, motors, ESCs, VTX, radios, batteries, build workflow
+4. Optional fields:
 
-### Graphics
+   - `lead` — short subtitle under the title
+   - `tags` — shown on the page and used by search
+   - `weight` — sort order inside a category (lower first; title is the fallback)
 
-- **[shaders](./shaders/)** — GLSL, the pipeline, uniforms/varyings, lighting, SDFs, effects
-- **[opengl](./opengl/)** — buffers, VAOs, shaders, textures, framebuffers, core profile
-- **[webgpu](./webgpu/)** — devices, pipelines, buffers, WGSL shaders, render/compute
+5. Run `hugo server` and hit `/<kebab-slug>/`.
 
-### Game dev
+A starter file: `hugo new rust/index.md` uses `archetypes/default.md`.
 
-- **[sdl](./sdl/)** — SDL2/SDL3: game loop, window, rendering, input, audio, textures
-- **[gamedev](./gamedev/)** — game loop, component/entity, state machines, pooling, messaging
+## Hub, search, experiments
 
-### Systems & CS
+- The root page is generated from front matter / `data/categories.yaml`. No giant HTML index.
+- Header search reads `/index.json` (built by Hugo) and filters title, category, description, tags.
+- Games and other builds that are **not** cheatsheets belong in their own repos. Link them from `data/experiments.yaml` instead of adding pages here.
 
-- **[allocators](./allocators/)** — bump, free lists, arenas, slab, buddy, garbage collection
-- **[algorithms](./algorithms/)** — complexity, sorting, searching, data structures, graphs
-- **[dop](./dop/)** — Data-Oriented Design: SoA vs AoS, cache locality, ECS, layout patterns
-- **[osdev](./osdev/)** — boot, protected mode, interrupts, paging, kernel basics
-- **[asm](./asm/)** — registers, instructions, addressing, calling conventions, syscalls
-- **[giants](./giants/)** — systems lessons from nginx, Redis, the Linux kernel, and Carmack
-- **[ebpf](./ebpf/)** — programs, maps, hooks, the verifier, observability tooling
+## Deploy (GitHub Pages)
 
-### Quantitative
+[`docs/hugo-pages.yml`](docs/hugo-pages.yml) is the intended GitHub Actions workflow. Copy it to `.github/workflows/hugo.yml` (writing workflow files needs the `workflow` OAuth scope, which this PR may not have). Then:
 
-- **[math](./math/)** — linear algebra, probability, calculus, discrete, and signal/DSP math
-- **[finance](./finance/)** — value investing: statements, valuation ratios, DCF, margin of safety
+1. **Settings → Pages → Build and deployment → Source:** GitHub Actions.
+2. After merge (and the workflow file is in place), the site is `https://makefunstuff.github.io/slop-stuff/`.
 
-### Security
+## Layout
 
-- **[pentesting](./pentesting/)** — recon, scanning, exploitation, privilege escalation, reporting
-- **[security](./security/)** — auth, secrets, supply chain, hardening, web security, incident response
+```
+content/<slug>/index.md   guides (kebab-case paths)
+layouts/                  wiki chrome (hub, single, search JSON)
+static/css/wiki.css       dense hacker-wiki styles
+static/js/wiki.js         theme, search, copy buttons
+data/categories.yaml      hub section order
+data/experiments.yaml     off-repo games / toys
+hugo.toml                 baseURL, markup, outputs
+```
 
-### Editors
-
-- **[neovim](./neovim/)** — modes, motions, text objects, config, LSP
-
-## Link library
-
-- **[links](./links/)** — a curated, curl-verified directory of ~90 useful links across every topic in this repo.
-
-## Shared assets
-
-All cheatsheet pages share the design system in [`assets/style.css`](./assets/style.css) and [`assets/app.js`](./assets/app.js) (theme toggle, search, copy buttons, scrollspy). To add a new guide, copy a page's structure, point at `../assets/`, and set a unique `data-guide` on `<html>`.
-
-## Experiments
-
-Games and other builds live in their own repos (e.g. [invader-rogue](https://github.com/makefunstuff/invader-rogue)) and are linked from the hub.
-
-## Notes
-
-This repo replaces the old `makefunstuff` (personal page) and `herdr-cheatsheet` repos, which were merged here. Organic codebases (not written by AI) still live somewhere else.
+Organic (non-AI) codebases still live somewhere else.

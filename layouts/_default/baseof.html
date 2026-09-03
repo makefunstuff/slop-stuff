@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ if .IsHome }}{{ .Site.Title }}{{ else }}{{ .Title }} — {{ .Site.Title }}{{ end }}</title>
+  <meta name="description" content="{{ with .Description }}{{ . }}{{ else }}{{ .Site.Params.description }}{{ end }}">
+  <link rel="canonical" href="{{ .Permalink }}">
+  <link rel="stylesheet" href="{{ "css/wiki.css" | relURL }}">
+  <script>
+    (function () {
+      var k = "slop-theme";
+      var t = localStorage.getItem(k);
+      if (!t) t = matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", t);
+    })();
+  </script>
+</head>
+<body>
+  <header class="bar">
+    <a class="brand" href="{{ "/" | relURL }}">{{ .Site.Title }}</a>
+    <span class="muted hide-narrow">{{ .Site.Params.tagline }}</span>
+    <form class="seek" role="search" action="{{ "/" | relURL }}" method="get">
+      <input id="q" type="search" name="q" placeholder="search guides…" autocomplete="off" aria-label="Search guides">
+      <div id="hits" class="hits" hidden></div>
+    </form>
+    <button type="button" class="icon" id="theme" title="Toggle theme" aria-label="Toggle theme">◐</button>
+    <a class="icon" href="{{ .Site.Params.github }}" rel="noreferrer">git</a>
+  </header>
+  <div class="wrap{{ if eq .Kind "page" }} wrap-guide{{ end }}">
+    {{ block "main" . }}{{ end }}
+  </div>
+  <footer class="foot">
+    <span>{{ .Site.Title }}</span>
+    <span class="muted">served under <code>makefunstuff.github.io/slop-stuff/&lt;folder&gt;/</code></span>
+    <a href="{{ "links/" | relURL }}">links</a>
+    <a href="{{ .Site.Params.github }}">repo</a>
+  </footer>
+  <script src="{{ "js/wiki.js" | relURL }}" defer></script>
+</body>
+</html>

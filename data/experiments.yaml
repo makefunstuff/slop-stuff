@@ -1,0 +1,7 @@
+- title: Invader Rogue
+  url: https://makefunstuff.github.io/invader-rogue/
+  repo: https://github.com/makefunstuff/invader-rogue
+  description: Space Invaders with roguelike upgrades and random challenge modifiers. Lives in its own repo — no build step, assets generated at runtime.
+  tags:
+    - game
+    - phaser 3

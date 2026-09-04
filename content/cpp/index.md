@@ -1,473 +1,179 @@
 ---
 title: "C++"
-description: "STL, smart pointers, templates, and modern C++ syntax."
+description: "C++20 RAII, smart pointers, STL picks, concepts, views lifetimes, UB, and sanitizers."
 category: "Languages"
-tags: ["language", "STL", "RAII", "templates"]
+tags: ["language", "C++20", "RAII", "STL", "concepts"]
 weight: 70
-lead: "Zero-cost abstractions, safely."
-version: "C++20 · C++23 · C++26"
+lead: "Zero-cost abstractions — C++20 daily."
+version: "C++20 · C++23/26 deltas"
 ---
-C++ gives you C's speed with zero-cost abstractions: `RAII`, smart pointers, templates, and the STL. This is the daily surface — from `g++` flags to the gotchas that bite everyone once.
+Pin **C++20** (`-std=c++20`) as the daily baseline. C++23/26 are teach/skip deltas below — not the happy path. Prefer **Rule of 0** and **no owning `new`**.
 
 ## Quick reference {#quickref}
 
-The 10 things you reach for most — compile, containers, pointers, syntax. Copy any line straight into your code.
-
-- `g++ -std=c++20 main.cpp -o main` — compile with C++20; add `-Wall -Wextra`.
-- `std::vector<int> v; v.push_back(x);` — dynamic array — your default container.
-- `std::map<K,V> m; m[k] = v;` — sorted key → value; `unordered_map` for hashing.
-- `auto p = std::make_unique<T>(…)` — exclusive owner; freed at scope exit.
-- `auto sp = std::make_shared<T>()` — reference-counted; `weak_ptr` observes without owning.
-- `auto x = 42;` — type deduced at compile time.
-- `for (const auto& x : v)` — iterate a range without copying.
-- `auto f = [&](int n){ return n * 2; };` — lambda; `[=]` copies, `[&]` captures by ref.
-- `template <typename T> T add(T a, T b)` — compile-time generic function.
-- `class R { /* ctor acquires */ ~R(){ /* frees */ } }` — RAII — resource lifetime = object lifetime.
-
-## Compile & basics {#start}
-
-Two compilers, one standard, and the tiny syntax you need before anything else. Every program starts in `main()`.
-
-### 1. Compile
-
 ```
-g++ -std=c++23 main.cpp -o main
-clang++ -std=c++23 main.cpp -o main
-g++ -std=c++20 main.cpp -o main  # pin older
-g++ -std=c++26 main.cpp -o main  # newest
+g++     -std=c++20 -Wall -Wextra -Wpedantic main.cpp -o main
+clang++ -std=c++20 -Wall -Wextra -Wpedantic main.cpp -o main
 ```
 
-### 2. Useful flags
+| Reach for | Idiom |
+| --- | --- |
+| Container | `std::vector<int> v; v.push_back(x);` |
+| Hash map | `std::unordered_map<K,V>` if no order · `std::map` if ordered |
+| Unique owner | `auto p = std::make_unique<T>(...);` |
+| Shared | `auto sp = std::make_shared<T>(...);` · `weak_ptr` breaks cycles |
+| Loop | `for (const auto& x : v)` |
+| Lambda | `auto f = [&](int n){ return n * 2; };` |
+| Concept | `void print(const std::integral auto& x);` |
+| RAII | resource lifetime = object lifetime |
+
+## Compile {#compile}
+
+Daily: **`-std=c++20` only**. Add `-g -O1` for sanitize builds. Don’t advertise c++23/26 as the default line on this page.
 
 ```
--Wall -Wextra   # warnings
--Wpedantic      # strict ISO C++
--O2             # optimize
--g              # debug symbols
+clang++ -std=c++20 -g -O1 -fno-omit-frame-pointer \
+  -Wall -Wextra -Wpedantic -Wshadow -Wconversion \
+  -fsanitize=address,undefined -fno-sanitize-recover=undefined \
+  main.cpp -o main
 ```
 
-### 3. Hello world
+No ASan+TSan in one binary. `-fno-exceptions` only if intentional.
+
+## Value categories / move {#move}
+
+| Category | Identity? | Move from? |
+| --- | --- | --- |
+| lvalue | yes | no (normally) |
+| xvalue | yes | **yes** (`std::move`) |
+| prvalue | no | initializes / materializes |
+
+`std::move` = last use of an lvalue → treat as xvalue (**not** a magic speedup). `std::forward` **only** with forwarding refs (`T&&`). Never `move` a `const` object (silent copy). Moved-from state = valid but unspecified — don’t use except to destroy/assign.
+
+## RAII · Rule of 0/3/5 · const {#raii}
+
+| Rule | Meaning |
+| --- | --- |
+| **0** | Prefer composing members that already manage resources |
+| **3** | If you touch copy/dtor in old code → consistency |
+| **5** | If you define any of copy/move/dtor → define or `=delete` **all five** |
+
+Polymorphic bases: **virtual destructor**; often delete copy. Prefer `const` and `constexpr` where it documents intent. Don’t return `const` by value as a “safety” habit.
+
+## Smart pointers {#ptrs}
+
+| Pointer | When |
+| --- | --- |
+| `unique_ptr` | **default** exclusive owner |
+| `shared_ptr` | only when ownership is truly shared |
+| `weak_ptr` | observe / break cycles |
+| raw `T*` / ref | **non-owning** views only |
+
+**No owning `new`** (Core Guidelines R.11). Prefer `make_unique` / `make_shared`. Don’t default to `shared_ptr` everywhere.
+
+## Containers {#containers}
+
+| Pick | Why |
+| --- | --- |
+| `vector` | **default** contiguous |
+| `unordered_map` / `unordered_set` | hash, no order |
+| `map` / `set` | ordered / lower_bound |
+| `deque` | grow both ends |
+| `list` | **almost never** |
+| `flat_map` / `flat_set` | **C++23** — contiguous associative |
+
+**Invalidation:** `vector` realloc invalidates all pointers/iters/refs · `unordered_*` rehash invalidates iterators · erasing invalidates the erased.
+
+## Algorithms {#algo}
+
+- Prefer half-open ranges `[first, last)`
+- Prefer `std::ranges::sort` / constrained algos (C++20)
+- Erase-remove: C++20 `std::erase` / `std::erase_if` on containers
+- Comparators must induce a **strict weak ordering** or you get UB in `sort` / `map`
+- Don’t assume algorithm stability unless documented
+
+## `string_view` / `span` lifetimes {#views}
+
+They **do not** extend lifetime.
 
 ```
-#include <iostream>
-int main() {
-  std::cout << "hi\n";
-}
+std::string_view v = std::string{"hi"};  // DANGLING
+// don't return a view to a local or temporary
+// span into a vector dies on realloc
 ```
 
-### 4. auto & namespaces
+Document who **owns** the bytes. Views are non-owning — treat like raw pointers to buffers.
+
+## Templates / concepts (C++20) {#concepts}
 
 ```
-namespace app { int version = 1; }
-auto x = 42;              // int
-auto s = "text";          // const char*
-std::cout << app::version;
-```
+template<class T>
+  requires std::integral<T>
+T twice(T x) { return x + x; }
 
-<kbd>g++</kbd> compile
-<kbd>-std=c++20</kbd> standard
-<kbd>-Wall</kbd> warnings
-<kbd>-o main</kbd> output
+template<class T>
+concept Addable = requires(T a, T b) { a + b; };
 
-> **KEY:** **Prefer `std::`.** Write `std::cout`, `std::vector`, `std::string`. A blanket `using namespace std;` is fine for tiny demos but pollutes the global namespace in real code.
-
-## STL containers & algorithms {#stl}
-
-`vector`, `map`, `set`, `unordered_map`, `string` — plus the `<algorithm>` toolbox and iterators.
-
-| Container | Header | Behavior | Access |
-| --- | --- | --- | --- |
-| `std::vector<T>` | `<vector>` | dynamic array, contiguous | `v.push_back(x); v[i]` |
-| `std::string` | `<string>` | growable text buffer | `s += "x"; s.size()` |
-| `std::map<K,V>` | `<map>` | sorted key → value | `m["k"] = v;` |
-| `std::set<T>` | `<set>` | sorted, unique elements | `s.insert(x);` |
-| `std::unordered_map<K,V>` | `<unordered_map>` | hash map, O(1) average | `um.at("k")` |
-| `std::array<T,N>` | `<array>` | fixed size, no heap | `a[0]; a.size()` |
-
-### Common algorithms
-
-- `std::sort(v.begin(), v.end())` — ascending; pass a comparator for custom order.
-- `std::find(v.begin(), v.end(), x)` — iterator to x, or end().
-- `std::count(v.begin(), v.end(), x)` — number of matches.
-- `std::min_element(b, e)` — iterator to smallest.
-- `std::max_element(b, e)` — iterator to largest.
-- `std::reverse(b, e)` — reverse in place.
-- `std::any_of(b, e, pred)` — does any element satisfy pred?
-- `std::accumulate(b, e, 0)` — sum — from <numeric>.
-
-### Iterators
-
-Iterators point into a container; `begin()`/`end()` bound a half-open range. Range-`for` is sugar over them.
-
-```
-std::vector<int> v{3, 1, 2};
-for (auto it = v.begin(); it != v.end(); ++it)
-  std::cout << *it << ' ';
-for (int x : v)          // same thing
-  std::cout << x << ' ';
-```
-
-<details>
-<summary>Erase–remove idiom</summary>
-
-Erasing while iterating invalidates iterators. Remove first, then erase once.
-
-```
-// remove all 2s from v
-v.erase(std::remove(v.begin(), v.end(), 2), v.end());
-```
-
-</details>
-
-## Classes & inheritance {#classes}
-
-`class` vs `struct`, constructors and destructors, member init lists, inheritance, and `virtual`.
-
-### class vs struct
-
-```
-class Dog {          // private by default
-  int age;
- public:
-  void bark() { /* … */ }
-};
-struct Point {       // public by default
-  int x, y;
-};
-```
-
-### Constructors & destructors
-
-```
-class Foo {
- public:
-  Foo(int n) : value(n) {}     // member init list
-  Foo(const Foo&) = default;   // copy ctor
-  ~Foo() = default;            // destructor
- private:
-  int value;
-};
-```
-
-### Inheritance
-
-```
-class Shape {
- public:
-  virtual double area() const = 0;  // pure virtual
-};
-class Circle : public Shape {
- public:
-  double area() const override;     // implement
-};
-```
-
-### virtual / override / final
-
-```
-class Base { public: virtual void f() const; };
-class Mid : public Base { void f() const override; };
-class Leaf final : public Mid { void f() const final; };
-```
-
-> **KEY:** **Access specifiers:** `public` (anyone), `protected` (this class + derived), `private` (this class only). `virtual` enables dispatch through a base pointer; `override` catches typos, `final` blocks further overriding.
-
-## Memory & smart pointers {#memory}
-
-`new`/`delete`, `unique_ptr`, `shared_ptr`/`weak_ptr`, and RAII — the rule of 3/5/0.
-
-### new / delete (raw)
-
-```
-int* p = new int(5);      // allocate
-delete p;                 // free
-int* arr = new int[10];
-delete[] arr;             // array form
-```
-
-### std::unique_ptr
-
-```
-auto p = std::make_unique<Widget>(a, b);
-p->draw();               // sole owner
-// no delete — freed at scope exit
-auto q = std::move(p);    // transfer ownership
-```
-
-### std::shared_ptr / weak_ptr
-
-```
-auto sp = std::make_shared<Widget>();
-std::weak_ptr<Widget> wp = sp;   // no ownership
-if (auto lock = wp.lock()) {     // promote
-  lock->draw();
-}
-```
-
-### RAII
-
-```
-class File {
-  FILE* f_;
- public:
-  File(const char* path) : f_(fopen(path, "r")) {}
-  ~File() { if (f_) fclose(f_); }  // always runs
-};
-```
-
-**new / delete** (manual, error-prone) → **unique_ptr** (exclusive owner) → **shared_ptr** (reference-counted)
-
-1. **Acquire** — Open the resource in the constructor.
-1. **Use** — Work with the object normally.
-1. **Release** — The destructor frees it — even when an exception unwinds.
-> **!:** **Rule of three / five / zero.** If a class owns a resource and you hand-write a destructor, copy constructor, or copy assignment, you probably need all five (plus move). If it owns nothing, write none — that's the rule of zero.
-
-## Templates, lambdas & auto {#templates}
-
-Function and class templates, lambdas with captures, `auto`, `decltype`, and `constexpr`.
-
-### Function template
-
-```
-template <typename T>
+template<Addable T>
 T add(T a, T b) { return a + b; }
 
-add(1, 2);        // int
-add(1.5, 2.5);    // double
+void print(const std::integral auto& x);
 ```
 
-### Class template
+Prefer concepts over `enable_if` walls. CTAD: `std::vector v{1, 2, 3};`.
 
-```
-template <typename T>
-struct Box { T value; };
+## Concurrency (short) {#concurrency}
 
-Box<int> b{42};
-Box<std::string> s{"hi"};
-```
-
-### Lambdas
-
-```
-auto twice = [](int x) { return x * 2; };
-auto sum = [](auto a, auto b) { return a + b; };
-
-// captures: [=] copy · [&] ref · [this]
-int n = 10;
-auto plus_n = [=](int x) { return x + n; };
-```
-
-### auto & decltype
-
-```
-auto x = compute();              // deduced type
-decltype(x) y = x;               // "type of x"
-auto f(int a, int b) -> int;     // trailing return
-```
-
-### constexpr
-
-```
-constexpr int sq(int n) { return n * n; }
-static_assert(sq(4) == 16);      // compile-time
-constexpr auto v = sq(3);        // a constant
-```
-
-<details>
-<summary>Lambda captures at a glance</summary>
-
-| Capture | Meaning |
+| Do | Don’t |
 | --- | --- |
-| `[=]` | capture everything used, by value |
-| `[&]` | capture everything used, by reference |
-| `[this]` | capture the enclosing object |
-| `[n]` | capture `n` by value |
-| `[&n]` | capture `n` by reference |
+| `mutex` / `lock_guard` / `scoped_lock` | Data races (UB) |
+| `atomic` for simple flags/counters | Bare `std::thread` without join/detach plan |
+| Send ownership with `move` across threads | Share raw owning pointers |
 
-</details>
+## UB / invalidation hotspots {#ub}
 
-`template` `typename` `auto` `constexpr` `lambda` `decltype`
+| Hotspot | Reality |
+| --- | --- |
+| Dangling `string_view` / `span` | Instant footgun |
+| Iterator invalidation | After realloc / erase / rehash |
+| Object slicing | Copy polymorphic by value |
+| Signed overflow | UB (same spirit as C) |
+| Data races | UB |
+| Bad comparators | UB in ordered containers / sort |
+| `vector<bool>` | Not a real container of `bool` |
+| OOB `operator[]` | UB (use `.at` when you want checks) |
+| Use-after-move | Logic bug / UB if invariants broken |
+| Wrong `delete` / `delete[]` | Don’t — use smart pointers |
 
-## Modern features {#modern}
+## C++23 teach / skip {#cxx23}
 
-Range-`for`, structured bindings, move semantics, initializer lists, `enum class`, `nullptr`, `optional`/`variant` — plus the C++20/23/26 highlights worth knowing.
+**Teach:** `std::print` / `println` · `expected` · optional monadic ops · `ranges::to` · `flat_map` / `flat_set` · `contains` · deducing this · `std::unreachable`
 
-### Range-for & structured bindings
+**Skip here:** mdspan deep dive · generator details · extended FP · module politics
 
-```
-for (int x : v) { … }
-for (const auto& x : v) { … }   // no copy
+## C++26 names only {#cxx26}
 
-auto [name, age] = person;      // structured binding
-auto& [a, b] = pair;
-```
+Contracts · reflection (`^^`) · `std::execution` · `inplace_vector` · `simd` — feature-frozen / early compilers · **not** daily baseline. Not “finalized 2025.”
 
-### Move semantics
+## AI-slop kill-list {#gotchas}
 
-```
-std::vector<int> a = build();    // move elision
-std::vector<int> b = std::move(a); // a is moved-from
+| Slop | Reality |
+| --- | --- |
+| Owning `new` / naked `delete` | `unique_ptr` / containers |
+| `shared_ptr` everywhere | Default `unique_ptr` |
+| `using namespace std;` in headers | Pollution / ADL pain |
+| Dangling `string_view` from temporaries | Own a `string` or document lifetime |
+| `std::endl` flush spam | Prefer `'\n'` |
+| `std::move` on `const` | Silent copy |
+| Teaching c++23/26 as daily compile line | **c++20** happy path |
+| Bare `thread` tutorials without lifetime | Join / `jthread` (C++20) |
+| `list` as default sequence | `vector` |
+| `enable_if` walls | Concepts |
+| “C++26 finalized 2025” | Wrong framing for this sheet |
+| Mangled template examples (`vector v` without CTAD note) | Show real syntax |
 
-void sink(Widget&& w);          // rvalue reference
-```
+## Refs {#refs}
 
-### Init lists, enum class, nullptr
-
-```
-std::vector<int> v{1, 2, 3};    // init list
-
-enum class Color { Red, Green };
-Color c = Color::Red;           // scoped
-
-int* p = nullptr;               // not 0 / NULL
-```
-
-### std::optional
-
-```
-std::optional<int> find(int k) {
-  if (k < 0) return std::nullopt;
-  return k * 2;
-}
-if (auto r = find(3)) use(*r);
-```
-
-### std::variant
-
-```
-std::variant<int, std::string> v = "hi";
-if (auto* s = std::get_if<std::string>(&v))
-  use(*s);
-std::visit([](auto&& x){ … }, v);
-```
-
-- **lvalue** — Named, addressable — a variable.
-- **prvalue** — Pure temporary — a call result.
-- **xvalue** — eXpiring — result of `std::move`.
-- **glvalue** — lvalue or xvalue.
-> **NEW:** **C++23** added `std::print`/`std::println`, `std::expected`, `std::mdspan`, `std::flat_map`, and `std::ranges::to`. **C++26** (ISO, finalized 2025) is the biggest upgrade since C++11 — reflection, contracts, and `std::execution`.
-
-## stdlib bits {#stdlib}
-
-`filesystem`, `chrono`, `thread`, `optional`, `variant`, `any` — the utilities you reach for.
-
-### std::filesystem
-
-```
-namespace fs = std::filesystem;
-fs::path p{"data/out.txt"};
-if (fs::exists(p)) fs::remove(p);
-for (auto& e : fs::directory_iterator("data"))
-  std::cout << e.path() << '\n';
-```
-
-### std::chrono
-
-```
-using namespace std::chrono;
-auto t0 = steady_clock::now();
-work();
-auto ms = duration_cast<milliseconds>(
-            steady_clock::now() - t0).count();
-```
-
-### std::thread / std::any
-
-```
-std::thread t([]{ std::cout << "bg\n"; });
-t.join();                    // wait
-
-std::any a = 42;             // hold any type
-int n = std::any_cast<int>(a);
-```
-
-- `std::print / std::println` — C++23 — format-aware printing; replaces `cout <<` chains.
-- `std::format` — C++20 — type-safe string formatting.
-- `std::span<T>` — C++20 — non-owning view over an array/vector.
-- `std::expected<T,E>` — C++23 — a value or an error (like `Result`).
-- `std::ranges / std::views` — C++20 — compose algorithms over ranges.
-- `std::optional<T>` — a value or std::nullopt.
-- `std::variant<A,B>` — one of several types.
-- `std::any` — any copyable type.
-- `std::filesystem::path` — filesystem paths and traversal.
-- `std::chrono::steady_clock` — monotonic timing.
-- `std::thread / std::jthread` — concurrency.
-- `std::async → std::future` — background result.
-- `std::to_string / std::stoi` — string ⇄ number.
-
-## Pitfalls {#gotchas}
-
-Dangling references, object slicing, iterator invalidation, const correctness, shadowing, and the rule of 3/5.
-
-### Dangling references
-
-```
-const std::string& bad() {
-  std::string s = "temp";
-  return s;                 // s dies at return
-}                           // → dangling
-std::string good() { return "temp"; } // return by value
-```
-
-### Object slicing
-
-```
-Derived d;
-Base b = d;        // slices off Derived members
-// store by pointer/reference instead:
-Base& r = d;
-auto p = std::make_unique<Derived>();
-```
-
-### Iterator invalidation
-
-```
-for (auto it = v.begin(); it != v.end(); ++it)
-  if (*it == 2) v.erase(it);   // it is invalidated
-// safe: erase–remove, rebuild, or index loop
-```
-
-### Const correctness
-
-```
-void f(const std::vector<int>& v); // no copy, no mutation
-const int* p;     // pointer to const
-int* const q;     // const pointer
-const int& r = x; // const reference
-```
-
-### Rule of three / five / zero
-
-If a class owns a resource and you hand-write a destructor, copy constructor, or copy assignment, you almost always need all five (copy + move + destructor). If it owns nothing, write none.
-
-```
-// Rule of five: = default or = delete
-Foo(const Foo&) = default;
-Foo(Foo&&) = default;
-```
-
-### Shadowing
-
-```
-int x = 1;
-{ int x = 2; }   // shadows outer x — confusing
-// rename inner variables; compile with -Wshadow
-```
-
-### Most vexing parse
-
-```
-Widget w();      // declares a FUNCTION, not an object
-Widget w;        // default-constructs
-Widget w{args};  // braces always construct
-```
-
-### Signed/unsigned comparison
-
-```
-for (int i = 0; i < v.size(); ++i)   // sign mismatch
-for (std::size_t i = 0; i < v.size(); ++i)
-// v[i] is unchecked; v.at(i) throws out_of_range
-```
-
-> **!:** **Enable warnings.** `-Wall -Wextra -Wshadow -Wpedantic` catch most of these at compile time. Add sanitizers (`-fsanitize=address,undefined`) to catch dangling pointers and undefined behavior at runtime.
+- [cppreference C++](https://en.cppreference.com/w/cpp) · [C++20](https://en.cppreference.com/w/cpp/20) · [C++23](https://en.cppreference.com/w/cpp/23) · [C++26](https://en.cppreference.com/w/cpp/26)
+- [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines) — especially Resource management R.1–R.36
+- Value categories · Rule of three/five · `string_view` · `span` · concepts · Clang ASan/UBSan docs

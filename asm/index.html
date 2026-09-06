@@ -1,0 +1,157 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Assembly — slop-stuff</title><meta name=description content="Registers, instructions, addressing, calling conventions, and syscalls."><link rel=canonical href=https://makefunstuff.github.io/slop-stuff/asm/><link rel=stylesheet href=https://makefunstuff.github.io/slop-stuff/css/wiki.css><script>(function(){var t="slop-theme",e=localStorage.getItem(t);e||(e=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"),document.documentElement.setAttribute("data-theme",e)})()</script></head><body><header class=bar><a class=brand href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a>
+<span class="muted hide-narrow">cheatsheets & experiments</span><form class=seek role=search action=https://makefunstuff.github.io/slop-stuff/ method=get><input id=q type=search name=q placeholder="search guides…" autocomplete=off aria-label="Search guides"><div id=hits class=hits hidden></div></form><button type=button class=icon id=theme title="Toggle theme" aria-label="Toggle theme">◐</button>
+<a class=icon href=https://github.com/makefunstuff/slop-stuff rel=noreferrer>git</a></header><div class="wrap wrap-guide"><aside class=toc aria-label="On this page"><p class=toc-label>on this page</p><nav id=TableOfContents><ul><li><a href=#quickref>Quick reference</a></li><li><a href=#start>Registers & basics</a></li><li><a href=#memory>Memory & addressing</a></li><li><a href=#control>Control flow</a></li><li><a href=#calling>Calling conventions</a></li><li><a href=#syscalls>System calls</a></li><li><a href=#flags>Flags & arithmetic</a></li><li><a href=#gas>Syntax & tooling</a></li><li><a href=#gotchas>Pitfalls</a></li></ul></nav></aside><article class=doc><p class=crumb><a href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a> / Systems & CS</p><h1>Assembly</h1><p class=lede>Think in instructions.</p><p class="muted sub">Registers, instructions, addressing, calling conventions, and syscalls.</p><p class=tags><span>systems</span><span>registers</span><span>syscall</span><span>x86-64</span></p><div class=body><p>Assembly is the machine&rsquo;s native language: a flat list of instructions operating on registers and memory. This cheatsheet covers the x86-64 and ARM essentials — registers, addressing, calling conventions, and <code>syscall</code>.</p><h2 id=quickref>Quick reference</h2><p>The eight snippets you&rsquo;ll reach for most often — registers, moves, branches, calls, and syscalls at a glance.</p><h3 id=move--arithmetic>move & arithmetic</h3><pre tabindex=0><code>mov rax, rbx   ; rax = rbx
+add rax, 1     ; rax += 1
+sub rax, rcx   ; rax -= rcx
+xor rax, rax   ; rax = 0
+</code></pre><h3 id=key-registers>key registers</h3><pre tabindex=0><code>rax   ; return value
+rdi   ; 1st argument
+rsi   ; 2nd argument
+rsp   ; stack pointer
+rbx   ; callee-saved
+</code></pre><h3 id=push--pop>push / pop</h3><pre tabindex=0><code>push rax   ; rsp -= 8; [rsp] = rax
+pop  rax   ; rax = [rsp]; rsp += 8
+</code></pre><h3 id=compare--branch>compare & branch</h3><pre tabindex=0><code>cmp rax, rbx
+je  equal   ; ==
+jne diff    ; !=
+jl  less    ; &lt; (signed)
+jmp loop    ; always
+</code></pre><h3 id=call--ret>call / ret</h3><pre tabindex=0><code>call func   ; push return addr, jump
+ret         ; pop return addr, jump back
+</code></pre><h3 id=syscall>syscall</h3><pre tabindex=0><code>mov rax, 60   ; exit
+mov rdi, 0    ; status
+syscall       ; result in rax
+</code></pre><h3 id=att-vs-intel>AT&amp;T vs Intel</h3><pre tabindex=0><code>; Intel: mov rax, 1
+; AT&amp;T:  movq $1, %rax
+; Intel: dst, src
+; AT&amp;T:  src, dst
+</code></pre><h3 id=memory>memory</h3><pre tabindex=0><code>mov rax, [rbx]          ; load
+mov [rbx], rax          ; store
+mov rax, [rbx+rcx*4+16] ; full form
+</code></pre><h2 id=start>Registers & basics</h2><p>x86-64 has sixteen 64-bit general-purpose registers. The <code>mov</code> instruction copies a value, <code>add</code> and <code>sub</code> do arithmetic.</p><table><thead><tr><th>Register</th><th>32-bit</th><th>16-bit</th><th>8-bit</th><th>Purpose</th></tr></thead><tbody><tr><td><code>rax</code></td><td><code>eax</code></td><td><code>ax</code></td><td><code>al</code></td><td>Return value; accumulator</td></tr><tr><td><code>rbx</code></td><td><code>ebx</code></td><td><code>bx</code></td><td><code>bl</code></td><td>Callee-saved base</td></tr><tr><td><code>rcx</code></td><td><code>ecx</code></td><td><code>cx</code></td><td><code>cl</code></td><td>4th arg; counter / shift count</td></tr><tr><td><code>rdx</code></td><td><code>edx</code></td><td><code>dx</code></td><td><code>dl</code></td><td>3rd arg; mul/div high half</td></tr><tr><td><code>rsi</code></td><td><code>esi</code></td><td><code>si</code></td><td><code>sil</code></td><td>2nd arg; source index</td></tr><tr><td><code>rdi</code></td><td><code>edi</code></td><td><code>di</code></td><td><code>dil</code></td><td>1st arg; destination index</td></tr><tr><td><code>rbp</code></td><td><code>ebp</code></td><td><code>bp</code></td><td><code>bpl</code></td><td>Frame pointer; callee-saved</td></tr><tr><td><code>rsp</code></td><td><code>esp</code></td><td><code>sp</code></td><td><code>spl</code></td><td>Stack pointer</td></tr><tr><td><code>r8</code>–<code>r15</code></td><td><code>r8d</code>–<code>r15d</code></td><td><code>r8w</code>–<code>r15w</code></td><td><code>r8b</code>–<code>r15b</code></td><td>General; <code>r8</code>/<code>r9</code> are args 5–6, <code>r12</code>–<code>r15</code> callee-saved</td></tr></tbody></table><h3 id=move--add--sub>move / add / sub</h3><pre tabindex=0><code>mov rax, rbx     ; rax = rbx
+add rax, 1       ; rax = rax + 1
+sub rax, rcx     ; rax = rax - rcx
+inc rax          ; rax++
+dec rax          ; rax--
+</code></pre><h3 id=operand-sizes>Operand sizes</h3><pre tabindex=0><code>mov al, 1        ; byte  (8 bits)
+mov ax, 1        ; word  (16 bits)
+mov eax, 1       ; dword (32 bits)
+mov rax, 1       ; qword (64 bits)
+</code></pre><h3 id=arm-registers>ARM registers</h3><pre tabindex=0><code>mov x0, #42      ; x0 = 42
+add x1, x0, x2   ; x1 = x0 + x2
+ldr x0, [sp]     ; load qword from stack
+; w0 is low 32 bits of x0
+</code></pre><h3 id=zero---sign-extend>Zero- & sign-extend</h3><pre tabindex=0><code>movzx rax, bl    ; zero-extend bl to rax
+movsx rax, bl    ; sign-extend bl to rax
+movzx rax, byte [rsi]  ; load + zero-extend
+</code></pre><h3 id=immediates--swap>Immediates & swap</h3><pre tabindex=0><code>mov rax, 0x1234  ; load immediate
+mov rbx, 60      ; decimal is fine too
+xchg rax, rbx    ; swap the two
+</code></pre><blockquote><p><strong>KEY:</strong> Writing to <code>eax</code> zeroes the upper 32 bits of <code>rax</code>; writing to <code>al</code> or <code>ax</code> leaves them untouched. On ARM, registers are <code>x0</code>–<code>x30</code> (64-bit) with <code>w0</code>–<code>w30</code> as the low 32 bits, plus <code>sp</code> (stack pointer) and <code>x30</code> (link register).</p></blockquote><h2 id=memory>Memory & addressing</h2><p>Memory is addressed as <code>[base + index*scale + offset]</code>. The stack is just memory pointed at by <code>rsp</code>.</p><table><thead><tr><th>Addressing mode</th><th>Example</th><th>Meaning</th></tr></thead><tbody><tr><td>Register indirect</td><td><code>mov rax, [rbx]</code></td><td>qword at address in <code>rbx</code></td></tr><tr><td>Base + offset</td><td><code>mov rax, [rbx+8]</code></td><td>qword at <code>rbx + 8</code></td></tr><tr><td>Base + index</td><td><code>mov rax, [rbx+rcx]</code></td><td>qword at <code>rbx + rcx</code></td></tr><tr><td>Base + index*scale</td><td><code>mov rax, [rbx+rcx*4]</code></td><td>scale is 1, 2, 4, or 8</td></tr><tr><td>Full form</td><td><code>mov rax, [rbx+rcx*4+16]</code></td><td><code>base + index*scale + offset</code></td></tr></tbody></table><h3 id=lea--load-effective-address>lea — load effective address</h3><pre tabindex=0><code>lea rax, [rbx+8]       ; rax = rbx + 8
+lea rax, [rbx+rcx*4]   ; compute address, no read
+</code></pre><h3 id=push--pop-1>push / pop</h3><pre tabindex=0><code>push rax   ; rsp -= 8; [rsp] = rax
+pop  rax   ; rax = [rsp]; rsp += 8
+</code></pre><blockquote><p><strong>STACK:</strong> The stack grows <strong>downward</strong>: <code>push</code> subtracts from <code>rsp</code>, <code>pop</code> adds to it. <code>rsp</code> always points to the top of the stack; <code>rbp</code> is conventionally used as a fixed frame base so locals and arguments have stable offsets.</p></blockquote><h2 id=control>Control flow</h2><p><code>cmp</code> sets flags, <code>jcc</code> branches on them, <code>call</code>/<code>ret</code> enter and leave functions.</p><table><thead><tr><th>Jump</th><th>Jumps when (after <code>cmp a, b</code>)</th></tr></thead><tbody><tr><td><code>je</code> / <code>jz</code></td><td>equal / zero — <code>a == b</code></td></tr><tr><td><code>jne</code> / <code>jnz</code></td><td>not equal — <code>a != b</code></td></tr><tr><td><code>jg</code></td><td>greater, signed — <code>a > b</code></td></tr><tr><td><code>jge</code></td><td>greater or equal, signed — <code>a >= b</code></td></tr><tr><td><code>jl</code></td><td>less, signed — <code>a &lt; b</code></td></tr><tr><td><code>jle</code></td><td>less or equal, signed — <code>a &lt;= b</code></td></tr><tr><td><code>ja</code> / <code>jb</code></td><td>above / below, unsigned — <code>a > b</code> / <code>a &lt; b</code></td></tr><tr><td><code>jmp</code></td><td>unconditional</td></tr></tbody></table><h3 id=compare--branch-1>Compare & branch</h3><pre tabindex=0><code>cmp rax, rbx
+je  equal    ; if rax == rbx
+jl  less     ; if rax &lt; rbx (signed)
+</code></pre><h3 id=counted-loop>Counted loop</h3><pre tabindex=0><code>mov rcx, 10
+loop:
+  ; body
+  dec rcx
+  jnz loop
+</code></pre><h3 id=call--ret-1>call / ret</h3><pre tabindex=0><code>call func   ; push return addr, jump
+; ...
+ret         ; pop return addr, jump back
+</code></pre><blockquote><p><strong>IDIOMS:</strong> <code>test rax, rax</code> is a cheaper <code>cmp rax, 0</code>. Conditional moves avoid branches entirely: <code>cmp rax, 0</code> then <code>cmovge rbx, rax</code> sets <code>rbx = rax</code> only if <code>rax >= 0</code>. <code>call</code> pushes the return address and jumps; <code>ret</code> pops it and jumps back.</p></blockquote><h2 id=calling>Calling conventions</h2><p>System V AMD64 (used on Linux and macOS) passes the first six integer arguments in registers and returns in <code>rax</code>.</p><table><thead><tr><th>Position</th><th>Register</th></tr></thead><tbody><tr><td>1st argument</td><td><code>rdi</code></td></tr><tr><td>2nd argument</td><td><code>rsi</code></td></tr><tr><td>3rd argument</td><td><code>rdx</code></td></tr><tr><td>4th argument</td><td><code>rcx</code></td></tr><tr><td>5th argument</td><td><code>r8</code></td></tr><tr><td>6th argument</td><td><code>r9</code></td></tr><tr><td>7th and beyond</td><td>pushed on the stack, right-to-left</td></tr><tr><td>Return value</td><td><code>rax</code> (<code>rdx:rax</code> for 128-bit)</td></tr></tbody></table><h3 id=who-must-save-what>Who must save what</h3><pre tabindex=0><code>; callee-saved (preserve):
+;   rbx, rbp, r12, r13, r14, r15
+; caller-saved (may be clobbered):
+;   rax, rcx, rdx, rsi, rdi, r8-r11
+</code></pre><h3 id=example-function>Example function</h3><pre tabindex=0><code>; int add(int a, int b)  a=rdi, b=rsi
+add:
+  lea  rax, [rdi+rsi]  ; rax = a + b
+  ret
+</code></pre><h3 id=call-site>Call site</h3><pre tabindex=0><code>; int r = add(2, 3);
+mov edi, 2     ; 1st arg
+mov esi, 3     ; 2nd arg
+call add       ; result in rax
+</code></pre><blockquote><p><strong>!:</strong> <strong>Stack alignment:</strong> keep <code>rsp</code> 16-byte aligned before any <code>call</code>. On function entry <code>rsp % 16 == 8</code> (the return address has shifted it). A function that uses callee-saved registers must save them (<code>push</code>) and restore them (<code>pop</code>) before <code>ret</code>.</p></blockquote><h2 id=syscalls>System calls</h2><p>Put the syscall number in <code>rax</code>, arguments in <code>rdi</code>/<code>rsi</code>/<code>rdx</code>, then <code>syscall</code>. The return value lands in <code>rax</code>.</p><table><thead><tr><th>Syscall</th><th><code>rax</code></th><th>Arguments</th></tr></thead><tbody><tr><td><code>read</code></td><td>0</td><td><code>rdi</code>=fd, <code>rsi</code>=buf, <code>rdx</code>=count</td></tr><tr><td><code>write</code></td><td>1</td><td><code>rdi</code>=fd, <code>rsi</code>=buf, <code>rdx</code>=count</td></tr><tr><td><code>open</code></td><td>2</td><td><code>rdi</code>=path, <code>rsi</code>=flags, <code>rdx</code>=mode</td></tr><tr><td><code>mmap</code></td><td>9</td><td><code>rdi</code>=addr, <code>rsi</code>=len, <code>rdx</code>=prot, <code>r10</code>=flags</td></tr><tr><td><code>exit</code></td><td>60</td><td><code>rdi</code>=status</td></tr></tbody></table><h3 id=hello-world-x86-64>hello, world (x86-64)</h3><pre tabindex=0><code>section .data
+msg db &#34;hello, world&#34;, 10   ; 13 bytes
+
+section .text
+global _start
+_start:
+  mov rax, 1        ; syscall: write
+  mov rdi, 1        ; fd = stdout
+  mov rsi, msg      ; buffer
+  mov rdx, 13       ; count
+  syscall
+
+  mov rax, 60       ; syscall: exit
+  xor rdi, rdi      ; status 0
+  syscall
+</code></pre><h3 id=read-from-stdin>read from stdin</h3><pre tabindex=0><code>section .bss
+buf resb 16       ; 16-byte buffer
+
+_start:
+  mov rax, 0      ; syscall: read
+  mov rdi, 0      ; fd = stdin
+  mov rsi, buf    ; buffer
+  mov rdx, 16     ; max count
+  syscall         ; rax = bytes read
+</code></pre><h3 id=arm-svc>ARM (svc)</h3><pre tabindex=0><code>mov x0, #1        ; fd = stdout
+adr x1, msg       ; buffer
+mov x2, #13       ; count
+mov x8, #64       ; write (Linux)
+svc #0            ; syscall
+</code></pre><blockquote><p><strong>NOTE:</strong> <code>syscall</code> clobbers <code>rcx</code> and <code>r11</code> (they hold the return address and flags) and returns the result in <code>rax</code>. A negative value means error (negated <code>errno</code>). Syscall numbers differ by OS and architecture — check your platform&rsquo;s tables.</p></blockquote><h2 id=flags>Flags & arithmetic</h2><p>Arithmetic and bitwise instructions set condition flags in <code>EFLAGS</code>; <code>cmp</code> and <code>jcc</code> read them back.</p><table><thead><tr><th>Flag</th><th>Name</th><th>Set when</th></tr></thead><tbody><tr><td><code>ZF</code></td><td>Zero</td><td>result is zero</td></tr><tr><td><code>CF</code></td><td>Carry</td><td>unsigned overflow or borrow</td></tr><tr><td><code>SF</code></td><td>Sign</td><td>high bit of result set (negative)</td></tr><tr><td><code>OF</code></td><td>Overflow</td><td>signed overflow</td></tr></tbody></table><h3 id=add--sub>add / sub</h3><pre tabindex=0><code>add rax, rbx   ; rax += rbx
+sub rax, 10    ; rax -= 10
+neg rax        ; rax = -rax
+</code></pre><h3 id=mul--div>mul / div</h3><pre tabindex=0><code>imul rax, 10   ; rax *= 10 (signed)
+mul  rbx       ; rdx:rax = rax*rbx
+idiv rcx       ; rax = quo, rdx = rem
+</code></pre><h3 id=shifts>shifts</h3><pre tabindex=0><code>shl rax, 1   ; left, fill 0
+shr rax, 1   ; right, fill 0
+sar rax, 1   ; right, fill sign
+mov cl, 3
+shl rax, cl  ; shift by cl
+</code></pre><h3 id=bitwise>bitwise</h3><pre tabindex=0><code>and rax, rbx   ; rax &amp;= rbx
+or  rax, 0x01  ; set bit 0
+xor rax, rax   ; zero rax
+not rax        ; ~rax
+</code></pre><blockquote><p><strong>TIP:</strong> Use <code>xor rax, rax</code> instead of <code>mov rax, 0</code> — it&rsquo;s a shorter encoding and also clears the flags. <code>shl</code>/<code>sar</code> by 1 is multiplication/division by 2; use <code>sar</code> (not <code>shr</code>) to preserve sign on signed values.</p></blockquote><h2 id=gas>Syntax & tooling</h2><p>Two dialects dominate: AT&amp;T (used by <code>gas</code>) and Intel (used by <code>nasm</code> and most documentation). This guide uses Intel syntax.</p><table><thead><tr><th>Element</th><th>AT&amp;T (gas)</th><th>Intel (nasm)</th></tr></thead><tbody><tr><td>Operand order</td><td><code>src, dst</code></td><td><code>dst, src</code></td></tr><tr><td>Registers</td><td><code>%rax</code></td><td><code>rax</code></td></tr><tr><td>Immediates</td><td><code>$1</code></td><td><code>1</code></td></tr><tr><td>Memory</td><td><code>8(%rbx)</code></td><td><code>[rbx+8]</code></td></tr><tr><td>Size suffix</td><td><code>movq</code>, <code>movl</code></td><td><code>mov</code> (inferred)</td></tr></tbody></table><h3 id=att-gas>AT&amp;T (gas)</h3><pre tabindex=0><code>movq %rax, %rbx      # rbx = rax
+movq $1, %rax        # rax = 1
+movq 8(%rbx), %rax   # rax = [rbx+8]
+</code></pre><h3 id=intel-nasm>Intel (nasm)</h3><pre tabindex=0><code>mov rbx, rax         ; rbx = rax
+mov rax, 1           ; rax = 1
+mov rax, [rbx+8]     ; rax = [rbx+8]
+</code></pre><h3 id=assemble-link-disassemble>Assemble, link, disassemble</h3><pre tabindex=0><code>as hello.s -o hello.o     # gas
+nasm -f elf64 hello.asm   # nasm
+gcc -o hello hello.o      # link
+objdump -d hello          # disassemble
+objdump -d -M intel hello # Intel syntax
+gdb -batch -ex &#39;disas main&#39; hello
+</code></pre><h3 id=sections>Sections</h3><pre tabindex=0><code>section .text   ; code (executable)
+section .data   ; initialized data
+section .bss    ; zero-filled data
+</code></pre><h2 id=gotchas>Pitfalls</h2><p>Small mistakes that produce wrong code instead of errors.</p><h3 id=att-operand-order-is-reversed>AT&amp;T operand order is reversed</h3><p>In AT&amp;T syntax the source comes first: <code>mov %rax, %rbx</code> copies <code>rax</code> into <code>rbx</code> — the opposite of Intel syntax.</p><pre tabindex=0><code>movq %rax, %rbx   # rbx = rax
+</code></pre><h3 id=signed-vs-unsigned-jumps>Signed vs unsigned jumps</h3><p>After <code>cmp</code>, <code>jg</code>/<code>jl</code> compare signed values while <code>ja</code>/<code>jb</code> compare unsigned. Use the wrong pair and negative numbers misbehave.</p><pre tabindex=0><code>jg above   ; signed
+ja above   ; unsigned
+</code></pre><h3 id=stack-alignment>Stack alignment</h3><p><code>call</code> requires a 16-byte-aligned <code>rsp</code>. An off-by-8 stack misaligns <code>movaps</code> and SSE code, crashing with a segfault.</p><pre tabindex=0><code>; before call: rsp % 16 == 0
+; on entry:    rsp % 16 == 8
+</code></pre><h3 id=clobbering-callee-saved-registers>Clobbering callee-saved registers</h3><p>If your function touches <code>rbx</code>, <code>rbp</code>, or <code>r12</code>–<code>r15</code>, you must save and restore them or the caller breaks.</p><pre tabindex=0><code>push rbx       ; save
+; ... use rbx ...
+pop  rbx       ; restore
+ret
+</code></pre><h3 id=no-memory-to-memory-moves>No memory-to-memory moves</h3><p><code>mov</code> can&rsquo;t copy memory to memory — at least one operand must be a register. Load into a scratch register, then store.</p><pre tabindex=0><code>mov rax, [rsi]  ; load
+mov [rdi], rax  ; store
+</code></pre><h3 id=mul--div-use-implicit-registers>mul / div use implicit registers</h3><p><code>mul rbx</code> is really <code>rdx:rax = rax * rbx</code> — it reads <code>rax</code> and writes both <code>rax</code> and <code>rdx</code>, silently clobbering <code>rdx</code>. <code>idiv rcx</code> divides the 128-bit <code>rdx:rax</code> by <code>rcx</code>.</p><pre tabindex=0><code>mul  rbx   ; rdx:rax = rax*rbx
+idiv rcx   ; rax = quo, rdx = rem
+</code></pre><h3 id=variable-shift-count-lives-in-cl>Variable shift count lives in cl</h3><p>A shift or rotate count must be an immediate or in <code>cl</code> — no other register is accepted.</p><pre tabindex=0><code>shl rax, 3   ; immediate OK
+mov cl, 3
+shl rax, cl  ; variable count
+</code></pre><h3 id=syscall-uses-r10-not-rcx>syscall uses r10, not rcx</h3><p>For <code>syscall</code>, the 4th argument goes in <code>r10</code> — <code>syscall</code> clobbers <code>rcx</code> with the return address. Function calls use <code>rcx</code>; system calls use <code>r10</code>.</p><pre tabindex=0><code>; function: 4th arg = rcx
+; syscall:  4th arg = r10
+</code></pre></div></article></div><footer class=foot><span>slop-stuff</span>
+<span class=muted>served under <code>makefunstuff.github.io/slop-stuff/&lt;folder>/</code></span>
+<a href=https://makefunstuff.github.io/slop-stuff/links/>links</a>
+<a href=https://github.com/makefunstuff/slop-stuff>repo</a></footer><script src=https://makefunstuff.github.io/slop-stuff/js/wiki.js defer></script></body></html>

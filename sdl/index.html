@@ -1,0 +1,175 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>SDL2/SDL3 — slop-stuff</title><meta name=description content="Game loop, window, rendering, input, audio, and textures with SDL2/SDL3."><link rel=canonical href=https://makefunstuff.github.io/slop-stuff/sdl/><link rel=stylesheet href=https://makefunstuff.github.io/slop-stuff/css/wiki.css><script>(function(){var t="slop-theme",e=localStorage.getItem(t);e||(e=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"),document.documentElement.setAttribute("data-theme",e)})()</script></head><body><header class=bar><a class=brand href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a>
+<span class="muted hide-narrow">cheatsheets & experiments</span><form class=seek role=search action=https://makefunstuff.github.io/slop-stuff/ method=get><input id=q type=search name=q placeholder="search guides…" autocomplete=off aria-label="Search guides"><div id=hits class=hits hidden></div></form><button type=button class=icon id=theme title="Toggle theme" aria-label="Toggle theme">◐</button>
+<a class=icon href=https://github.com/makefunstuff/slop-stuff rel=noreferrer>git</a></header><div class="wrap wrap-guide"><aside class=toc aria-label="On this page"><p class=toc-label>on this page</p><nav id=TableOfContents><ul><li><a href=#quickref>Quick reference</a></li><li><a href=#start>Init & window</a></li><li><a href=#loop>The game loop</a></li><li><a href=#render>Rendering & textures</a></li><li><a href=#input>Input & events</a></li><li><a href=#audio>Audio</a></li><li><a href=#surfaces>Surfaces & pixels</a></li><li><a href=#timing>Timing & misc</a></li><li><a href=#gotchas>Pitfalls</a></li></ul></nav></aside><article class=doc><p class=crumb><a href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a> / Game dev</p><h1>SDL2/SDL3</h1><p class=lede>Multimedia, cross-platform.</p><p class="muted sub">Game loop, window, rendering, input, audio, and textures with SDL2/SDL3.</p><p class=tags><span>gamedev</span><span>game loop</span><span>renderer</span><span>events</span></p><div class=body><p>SDL is the C library behind countless games: one thin, portable layer over windowing, rendering, input, audio, and timing. Two major versions exist — <code>SDL2</code> and <code>SDL3</code> — and this guide covers both. SDL3 is the actively developed stable line (the 3.4.x series at the time of writing).</p><h2 id=quickref>Quick reference</h2><p>The handful of calls every SDL program touches — init, window, renderer, the loop, textures, audio, and time. SDL3 forms shown; SDL2 noted where it differs.</p><h3 id=init>Init</h3><pre tabindex=0><code>SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
+// SDL3: returns bool; SDL2: &lt; 0 = error
+</code></pre><h3 id=window--renderer>Window & renderer</h3><pre tabindex=0><code>SDL_Window *w =
+    SDL_CreateWindow(&#34;game&#34;, 800, 600, 0);
+SDL_Renderer *r =
+    SDL_CreateRenderer(w, NULL);   // SDL3
+// SDL2: SDL_CreateRenderer(w, -1,
+//   SDL_RENDERER_ACCELERATED);
+</code></pre><h3 id=game-loop>Game loop</h3><pre tabindex=0><code>while (running) {
+    poll_events();
+    update(dt);
+    draw();   // clear, copy, present
+}
+</code></pre><h3 id=poll-events>Poll events</h3><pre tabindex=0><code>SDL_Event e;
+while (SDL_PollEvent(&amp;e))
+    if (e.type == SDL_EVENT_QUIT) // SDL2: SDL_QUIT
+        running = false;
+</code></pre><h3 id=textures>Textures</h3><pre tabindex=0><code>SDL_Texture *t =
+    SDL_CreateTextureFromSurface(r, s);
+SDL_RenderTexture(r, t, NULL, NULL);
+// SDL2: SDL_RenderCopy(r, t, NULL, NULL)
+</code></pre><h3 id=audio-sdl3>Audio (SDL3)</h3><pre tabindex=0><code>const SDL_AudioSpec spec =
+    { SDL_AUDIO_S16, 2, 44100 };
+SDL_AudioStream *st = SDL_OpenAudioDeviceStream(
+    SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK,
+    &amp;spec, NULL, NULL);
+SDL_ResumeAudioDevice(
+    SDL_GetAudioStreamDevice(st));
+SDL_PutAudioStreamData(st, buf, len);
+</code></pre><h3 id=ticks>Ticks</h3><pre tabindex=0><code>Uint64 now = SDL_GetTicks();   // SDL2: SDL_GetTicks64()
+Uint64 ns  = SDL_GetTicksNS();
+Uint64 c   = SDL_GetPerformanceCounter();
+</code></pre><h3 id=teardown>Teardown</h3><pre tabindex=0><code>SDL_DestroyTexture(tex);
+SDL_DestroyRenderer(r);
+SDL_DestroyWindow(w);
+SDL_Quit();   // last
+</code></pre><h2 id=start>Init & window</h2><p>Initialize subsystems, create a window, then a renderer. Tear them down in reverse order and call <code>SDL_Quit</code> last.</p><h3 id=1-init>1. Init</h3><pre tabindex=0><code>SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
+// returns 0 on success, &lt; 0 on error
+</code></pre><h3 id=2-window>2. Window</h3><pre tabindex=0><code>SDL_Window *w = SDL_CreateWindow(
+    &#34;My Game&#34;, SDL_WINDOWPOS_CENTERED,
+    SDL_WINDOWPOS_CENTERED, 800, 600,
+    SDL_WINDOW_SHOWN);
+</code></pre><h3 id=3-renderer>3. Renderer</h3><pre tabindex=0><code>SDL_Renderer *r = SDL_CreateRenderer(
+    w, -1, SDL_RENDERER_ACCELERATED);
+// SDL3: SDL_CreateRenderer(w, NULL);
+</code></pre><h3 id=4-teardown>4. Teardown</h3><pre tabindex=0><code>SDL_DestroyRenderer(r);
+SDL_DestroyWindow(w);
+SDL_Quit();  // shuts down every subsystem
+</code></pre><details><summary>SDL3: SDL_InitSubSystem & init flags</summary><blockquote><p><strong>3:</strong> <strong><code>SDL_Init(flags)</code> became <code>SDL_InitSubSystem(flags)</code>.</strong> Bare <code>SDL_Init()</code> now initializes everything, and <code>SDL_QuitSubSystem()</code> tears one subsystem down. <code>SDL_INIT_GAMECONTROLLER</code> is now <code>SDL_INIT_GAMEPAD</code>, and most error returns are <code>bool</code>.</p></blockquote><pre tabindex=0><code>#include &lt;SDL3/SDL.h&gt;
+#include &lt;SDL3/SDL_main.h&gt;
+
+SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
+SDL_InitSubSystem(SDL_INIT_JOYSTICK);
+SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
+SDL_Quit();
+</code></pre></details><h2 id=loop>The game loop</h2><p>Poll events, advance your world with a fixed timestep, render, then present. Keep each frame deterministic and responsive.</p><ol><li><strong>Poll events</strong> — Drain the queue; the quit event flips a flag that ends the loop.</li><li><strong>Fixed timestep</strong> — Step the simulation in fixed increments so physics behaves the same at any framerate.</li><li><strong>Delta time</strong> — For smooth motion that scales with frame rate, scale by the elapsed time.</li><li><strong>Render</strong> — Clear the backbuffer, draw your textures, then present once per frame.</li><li><strong>Sync</strong> — Present blocks when vsync is enabled; otherwise cap the rate yourself with <code>SDL_Delay</code>.</li></ol><h2 id=render>Rendering & textures</h2><p>Draw through a renderer: clear the frame, copy textures, present. Think of <code>SDL_Texture</code> as the GPU copy and <code>SDL_Surface</code> as the CPU copy.</p><h3 id=clear-copy--present>Clear, copy & present</h3><pre tabindex=0><code>SDL_SetRenderDrawColor(r, 0, 0, 0, 255);
+SDL_RenderClear(r);              // wipe the backbuffer
+SDL_RenderCopy(r, tex, NULL, NULL);  // SDL3: SDL_RenderTexture
+SDL_RenderPresent(r);            // swap to screen
+</code></pre><h3 id=making-textures>Making textures</h3><pre tabindex=0><code>SDL_Surface *s = SDL_LoadBMP(&#34;sprite.bmp&#34;);
+SDL_Texture *t = SDL_CreateTextureFromSurface(r, s);
+SDL_DestroySurface(s);   // SDL2: SDL_FreeSurface(s)
+
+SDL_Texture *rt = SDL_CreateTexture(r,
+    SDL_PIXELFORMAT_RGBA8888,
+    SDL_TEXTUREACCESS_TARGET, 64, 64);
+</code></pre><p><code>STATIC</code> <code>STREAMING</code> <code>TARGET</code></p><h3 id=texture-vs-surface>Texture vs surface</h3><p><code>SDL_Texture</code> lives in GPU memory and is drawn by the renderer — filtered, scaled, and usable as a render target. <code>SDL_Surface</code> is a CPU pixel buffer you can lock, read, and poke. Convert once, then free it.</p><pre tabindex=0><code>SDL_Texture *t =
+    SDL_CreateTextureFromSurface(r, surface);
+</code></pre><h2 id=input>Input & events</h2><p><code>SDL_Event</code> is a tagged union: check <code>.type</code>, then read the matching struct. Use keycode for meaning and scancode for position.</p><table><thead><tr><th>Event</th><th>SDL2 type</th><th>SDL3 type</th><th>Read it as</th></tr></thead><tbody><tr><td>Quit</td><td><code>SDL_QUIT</code></td><td><code>SDL_EVENT_QUIT</code></td><td>set <code>running = false</code></td></tr><tr><td>Key down</td><td><code>SDL_KEYDOWN</code></td><td><code>SDL_EVENT_KEY_DOWN</code></td><td><code>e.key.keysym.sym</code> → <code>e.key.key</code></td></tr><tr><td>Key up</td><td><code>SDL_KEYUP</code></td><td><code>SDL_EVENT_KEY_UP</code></td><td><code>e.key.keysym.sym</code> → <code>e.key.key</code></td></tr><tr><td>Mouse button</td><td><code>SDL_MOUSEBUTTONDOWN</code></td><td><code>SDL_EVENT_MOUSE_BUTTON_DOWN</code></td><td><code>e.button.button</code> (<code>SDL_BUTTON_LEFT</code>)</td></tr><tr><td>Mouse motion</td><td><code>SDL_MOUSEMOTION</code></td><td><code>SDL_EVENT_MOUSE_MOTION</code></td><td><code>e.motion.x</code> / <code>.y</code> (floats in SDL3)</td></tr><tr><td>Gamepad button</td><td><code>SDL_CONTROLLERBUTTONDOWN</code></td><td><code>SDL_EVENT_GAMEPAD_BUTTON_DOWN</code></td><td><code>e.cbutton.button</code> → <code>e.gbutton.button</code></td></tr></tbody></table><details><summary>Keycode vs scancode, and gamepads</summary><h4 id=keycode-vs-scancode>Keycode vs scancode</h4><p>A <code>SDL_Keycode</code> means “what key after layout” (press <kbd>Esc</kbd>); an <code>SDL_Scancode</code> means “where it physically sits”.</p><pre tabindex=0><code>switch (e.key.keysym.sym) {       // SDL3: e.key.key
+  case SDLK_ESCAPE: running = SDL_FALSE; break;
+  case SDLK_SPACE:  jump(); break;
+}
+</code></pre><h4 id=game-controller>Game controller</h4><p><code>SDL_GameController</code> is renamed <code>SDL_Gamepad</code> in SDL3, and buttons are positional (<code>SOUTH</code> ≈ A).</p><pre tabindex=0><code>SDL_GameController *pad =           // SDL3: SDL_Gamepad
+    SDL_GameControllerOpen(0);      // SDL_OpenGamepad
+if (SDL_GameControllerGetButton(
+        pad, SDL_CONTROLLER_BUTTON_A))
+    attack();
+</code></pre></details><h2 id=audio>Audio</h2><p>Open a device with an <code>SDL_AudioSpec</code>, feed it via callback or queue. SDL3 reworked this around <code>SDL_AudioStream</code>.</p><h3 id=sdl2-callback>SDL2: callback</h3><pre tabindex=0><code>void SDLCALL mix(void *ud, Uint8 *buf, int len) {
+    // write `len` bytes of samples into `buf`
+}
+
+SDL_AudioSpec spec = {0};
+spec.freq     = 44100;
+spec.format   = AUDIO_S16;
+spec.channels = 2;
+spec.samples  = 1024;
+spec.callback = mix;
+
+SDL_AudioDeviceID dev =
+    SDL_OpenAudioDevice(NULL, 0, &amp;spec, NULL, 0);
+SDL_PauseAudioDevice(dev, 0);   // unpause
+</code></pre><h3 id=sdl2-queue--sdl_loadwav>SDL2: queue + SDL_LoadWAV</h3><pre tabindex=0><code>Uint8 *wav; Uint32 wavlen;
+SDL_AudioSpec wavspec;
+SDL_LoadWAV(&#34;pop.wav&#34;, &amp;wavspec, &amp;wav, &amp;wavlen);
+
+SDL_QueueAudio(dev, wav, wavlen);
+while (SDL_GetQueuedAudioSize(dev) &gt; 0)
+    SDL_Delay(10);
+
+SDL_FreeWAV(wav);   // SDL3: SDL_free(wav)
+</code></pre><details><summary>SDL3 audio API changes</summary><blockquote><p><strong>3:</strong> <strong>SDL3 dropped the callback-first model.</strong> Bind an <code>SDL_AudioStream</code> to a device with <code>SDL_OpenAudioDeviceStream</code> and push data with <code>SDL_PutAudioStreamData</code>. <code>SDL_QueueAudio</code> is gone, and you must call <code>SDL_Init(SDL_INIT_AUDIO)</code> explicitly.</p></blockquote><pre tabindex=0><code>const SDL_AudioSpec spec = { SDL_AUDIO_S16, 2, 44100 };
+SDL_AudioStream *stream = SDL_OpenAudioDeviceStream(
+    SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &amp;spec, NULL, NULL);
+SDL_ResumeAudioDevice(SDL_GetAudioStreamDevice(stream));
+
+SDL_PutAudioStreamData(stream, wav, wavlen);  // was SDL_QueueAudio
+</code></pre></details><h2 id=surfaces>Surfaces & pixels</h2><p><code>SDL_Surface</code> is a plain CPU pixel buffer — load, blit, or lock it to write pixels directly.</p><h3 id=load--blit>Load & blit</h3><pre tabindex=0><code>SDL_Surface *img = SDL_LoadBMP(&#34;hero.bmp&#34;);
+SDL_Rect dst = { x, y, img-&gt;w, img-&gt;h };
+SDL_BlitSurface(img, NULL, screen, &amp;dst);
+SDL_DestroySurface(img);   // SDL2: SDL_FreeSurface
+</code></pre><h3 id=pixel-formats>Pixel formats</h3><pre tabindex=0><code>// 8 bits per channel, packed — stable names
+SDL_PIXELFORMAT_RGBA8888
+SDL_PIXELFORMAT_ARGB8888
+SDL_PIXELFORMAT_RGB565
+SDL_PIXELFORMAT_INDEX8
+
+// SDL2: surface-&gt;format is SDL_PixelFormat*
+Uint32 c = SDL_MapRGBA(img-&gt;format, 255, 0, 0, 255);
+// SDL3: surface-&gt;format is an enum value
+Uint32 c3 = SDL_MapRGBA(
+    SDL_GetPixelFormatDetails(img-&gt;format),
+    255, 0, 0, 255);
+</code></pre><h3 id=lock-pixels>Lock pixels</h3><pre tabindex=0><code>SDL_LockSurface(s);
+// s-&gt;pixels is the raw buffer, s-&gt;pitch its stride
+Uint32 *pixels = (Uint32 *)s-&gt;pixels;
+pixels[y * (s-&gt;pitch / 4) + x] =
+    SDL_MapRGBA(s-&gt;format, r, g, b, a);
+SDL_UnlockSurface(s);
+</code></pre><h2 id=timing>Timing & misc</h2><p>Measure time with ticks or performance counters, schedule work with timers, and keep your resolution independent with a logical size.</p><h3 id=ticks--counters>Ticks & counters</h3><pre tabindex=0><code>Uint64 ms = SDL_GetTicks64();   // SDL3: SDL_GetTicks()
+Uint64 ns = SDL_GetTicksNS();   // SDL3 only
+
+Uint64 c = SDL_GetPerformanceCounter();
+Uint64 f = SDL_GetPerformanceFrequency();
+double secs = (double)c / (double)f;
+</code></pre><h3 id=timers>Timers</h3><pre tabindex=0><code>Uint32 tick(Uint32 interval, void *ud) {
+    SDL_Event e = {0};
+    e.type = SDL_USEREVENT;
+    SDL_PushEvent(&amp;e);
+    return interval;      // repeat
+}
+SDL_TimerID id = SDL_AddTimer(100, tick, NULL);
+// ...
+SDL_RemoveTimer(id);
+</code></pre><h3 id=logical-size--threads>Logical size & threads</h3><pre tabindex=0><code>SDL_RenderSetLogicalSize(r, 320, 180);
+// SDL3: SDL_SetRenderLogicalPresentation(r,
+//   320, 180, SDL_LOGICAL_PRESENTATION_LETTERBOX);
+
+int worker(void *data) { return 0; }
+SDL_Thread *t = SDL_CreateThread(worker, &#34;w&#34;, data);
+int rc = 0; SDL_WaitThread(t, &amp;rc);
+</code></pre><h2 id=gotchas>Pitfalls</h2><p>The mistakes that bite everyone once, and the SDL2→SDL3 renames that trip up migrations.</p><blockquote><p><strong>⚠:</strong> <strong>Destroy everything you create, in reverse order.</strong> Textures before their renderer, the renderer before its window, and <code>SDL_Quit()</code> last. Leaked SDL objects hold GPU memory and can crash on exit.</p></blockquote><h3 id=init-order-matters>Init order matters</h3><pre tabindex=0><code>// 1. init subsystem   2. create window
+// 3. create renderer  4. load assets
+// 5. loop             6. destroy (reverse)
+// 7. SDL_Quit()
+if (SDL_Init(SDL_INIT_VIDEO) &lt; 0) {
+    SDL_Log(&#34;init failed: %s&#34;, SDL_GetError());
+    return 1;
+}
+// SDL3: SDL_Init()/SDL_InitSubSystem() return bool
+</code></pre><h3 id=texture-vs-renderer-lifetime>Texture vs renderer lifetime</h3><p>A texture belongs to the renderer that made it — never free the renderer first.</p><pre tabindex=0><code>SDL_DestroyTexture(tex);   // FIRST
+SDL_DestroyRenderer(r);    // then renderer
+SDL_DestroyWindow(w);      // then window
+SDL_Quit();                // last
+</code></pre><h3 id=pixel-format-endianness>Pixel format endianness</h3><p><code>SDL_PIXELFORMAT_RGBA8888</code> packs red in the most-significant byte (<code>0xRRGGBBAA</code>); on little-endian CPUs the bytes land in memory as <code>A,B,G,R</code>. Index bytes by hand and you&rsquo;ll get swapped channels — let SDL map them instead.</p><pre tabindex=0><code>Uint32 px = SDL_MapRGBA(s-&gt;format, 255, 0, 0, 255);
+</code></pre><h3 id=sdl2--sdl3-renames>SDL2 → SDL3 renames</h3><p><code>SDL_GetWindowSurface</code> exists in both versions (SDL3 re-added it in 3.2.0, paired with <code>SDL_DestroyWindowSurface</code>); most surfaces come from <code>SDL_CreateSurface</code>.</p><ul><li><code>SDL_bool</code> — bool (true / false)</li><li><code>SDL_Init(flags)</code> — SDL_InitSubSystem(flags)</li><li><code>SDL_QUIT</code> — SDL_EVENT_QUIT</li><li><code>SDL_CreateRGBSurface</code> — SDL_CreateSurface</li><li><code>SDL_FreeSurface</code> — SDL_DestroySurface</li><li><code>SDL_RenderCopy</code> — SDL_RenderTexture</li><li><code>SDL_RenderCopyEx</code> — SDL_RenderTextureRotated</li><li><code>SDL_GetTicks64</code> — SDL_GetTicks</li><li><code>SDL_RenderSetVSync</code> — SDL_SetRenderVSync</li><li><code>SDL_GameController</code> — SDL_Gamepad</li><li><code>SDL_QueueAudio</code> — SDL_PutAudioStreamData</li><li><code>AUDIO_S16</code> — SDL_AUDIO_S16</li><li><code>SDL_FreeWAV</code> — SDL_free</li></ul><h3 id=vsync-property-not-a-flag>Vsync: property, not a flag</h3><p><code>SDL_RENDERER_PRESENTVSYNC</code> is gone in SDL3. Ask for vsync with a renderer property at creation, or toggle it at runtime with <code>SDL_SetRenderVSync</code>.</p><pre tabindex=0><code>SDL_SetRenderVSync(r, 1);   // on; SDL2: SDL_RenderSetVSync(r, 1)
+SDL_SetRenderVSync(r, 0);   // off
+// SDL2: SDL_RENDERER_PRESENTVSYNC flag
+</code></pre><h3 id=dont-free-memory-sdl-owns>Don&rsquo;t free memory SDL owns</h3><p>In SDL3 the <code>SDL_EVENT_DROP_FILE</code> path and the surface from <code>SDL_GetWindowSurface</code> belong to SDL — copy them if you need to keep them, but never <code>SDL_free</code>/<code>SDL_DestroySurface</code> them yourself.</p><pre tabindex=0><code>// SDL_GetWindowSurface returns a surface owned
+// by the window — freed when the window dies
+</code></pre></div></article></div><footer class=foot><span>slop-stuff</span>
+<span class=muted>served under <code>makefunstuff.github.io/slop-stuff/&lt;folder>/</code></span>
+<a href=https://makefunstuff.github.io/slop-stuff/links/>links</a>
+<a href=https://github.com/makefunstuff/slop-stuff>repo</a></footer><script src=https://makefunstuff.github.io/slop-stuff/js/wiki.js defer></script></body></html>

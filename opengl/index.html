@@ -1,0 +1,144 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>OpenGL — slop-stuff</title><meta name=description content="Buffers, VAOs, shaders, textures, framebuffers, and the core profile."><link rel=canonical href=https://makefunstuff.github.io/slop-stuff/opengl/><link rel=stylesheet href=https://makefunstuff.github.io/slop-stuff/css/wiki.css><script>(function(){var t="slop-theme",e=localStorage.getItem(t);e||(e=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"),document.documentElement.setAttribute("data-theme",e)})()</script></head><body><header class=bar><a class=brand href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a>
+<span class="muted hide-narrow">cheatsheets & experiments</span><form class=seek role=search action=https://makefunstuff.github.io/slop-stuff/ method=get><input id=q type=search name=q placeholder="search guides…" autocomplete=off aria-label="Search guides"><div id=hits class=hits hidden></div></form><button type=button class=icon id=theme title="Toggle theme" aria-label="Toggle theme">◐</button>
+<a class=icon href=https://github.com/makefunstuff/slop-stuff rel=noreferrer>git</a></header><div class="wrap wrap-guide"><aside class=toc aria-label="On this page"><p class=toc-label>on this page</p><nav id=TableOfContents><ul><li><a href=#quickref>Quick reference</a></li><li><a href=#start>Init & context</a></li><li><a href=#buffers>Buffers & VAOs</a></li><li><a href=#shaders>Shaders</a></li><li><a href=#textures>Textures</a></li><li><a href=#framebuffers>Framebuffers</a></li><li><a href=#state>State & blending</a></li><li><a href=#modern>Modern techniques</a></li><li><a href=#gotchas>Pitfalls</a></li></ul></nav></aside><article class=doc><p class=crumb><a href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a> / Graphics</p><h1>OpenGL</h1><p class=lede>The graphics API that started it all.</p><p class="muted sub">Buffers, VAOs, shaders, textures, framebuffers, and the core profile.</p><p class=tags><span>graphics</span><span>VBO</span><span>VAO</span><span>framebuffer</span></p><div class=body><p>OpenGL is the cross-platform graphics API that shaped two decades of games and GPUs. The modern <code>core</code> profile throws away fixed-function state — you manage buffers, shaders, and pipeline state yourself. Spec work froze at <strong>OpenGL 4.6</strong> (2017); for new projects Khronos points to <strong>Vulkan</strong>, with <strong>WebGPU</strong> on the web.</p><h2 id=quickref>Quick reference</h2><p>The calls that carry most OpenGL programs, in roughly the order you use them. Everything below builds on these.</p><ul><li><code>glfwCreateWindow(…) · glfwMakeContextCurrent(win)</code> — open a window and make its GL context current for the calling thread</li><li><code>glGenBuffers · glBindBuffer · glBufferData</code> — create a VBO and upload vertex data to <code>GL_ARRAY_BUFFER</code></li><li><code>glGenVertexArrays · glVertexAttribPointer</code> — bind a VAO and map attributes onto shader locations</li><li><code>glCreateShader · glCompileShader · glLinkProgram</code> — build a shader program from GLSL sources, then <code>glUseProgram</code></li><li><code>glGenTextures · glTexImage2D · glActiveTexture</code> — create a texture, upload pixels, and bind it to a unit</li><li><code>glGenFramebuffers · glBindFramebuffer</code> — render off-screen; binding <code>0</code> targets the window again</li><li><code>glClearColor · glClear(GL_COLOR_BUFFER_BIT | …)</code> — clear the color / depth / stencil buffers each frame</li><li><code>glDrawArrays(…) · glDrawElements(…)</code> — issue a draw from a bound VAO — non-indexed vs indexed</li></ul><h2 id=start>Init & context</h2><p>Get a window with an OpenGL context, load the function pointers, then clear and swap every frame. GLFW is the common path; SDL2 works the same way.</p><h3 id=1-window--context>1. Window + context</h3><pre tabindex=0><code>glfwInit();
+glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+GLFWwindow* win = glfwCreateWindow(800, 600, &#34;GL&#34;, 0, 0);
+glfwMakeContextCurrent(win);
+</code></pre><h3 id=2-load-functions>2. Load functions</h3><pre tabindex=0><code>if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    /* loader failed */
+// SDL2: (GLADloadproc)SDL_GL_GetProcAddress
+</code></pre><h3 id=3-viewport>3. Viewport</h3><pre tabindex=0><code>glViewport(0, 0, 800, 600);
+// on resize: glViewport(0, 0, w, h)
+</code></pre><h3 id=4-clear>4. Clear</h3><pre tabindex=0><code>glClearColor(0.1f, 0.1f, 0.15f, 1.0f);
+glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+</code></pre><ol><li><strong>Create the context</strong> — <code>glfwCreateWindow</code> then <code>glfwMakeContextCurrent</code> makes the window&rsquo;s GL context current for the calling thread.</li><li><strong>Load the entry points</strong> — GLAD (or GLEW) fills every <code>gl*</code> symbol via the driver&rsquo;s <code>GetProcAddress</code>.</li><li><strong>Configure GL</strong> — Set the viewport with <code>glViewport</code> and the clear color with <code>glClearColor</code>.</li><li><strong>Loop, clear, swap</strong> — Each frame: <code>glClear</code>, draw, then <code>glfwSwapBuffers</code> to present.</li></ol><details><summary>SDL2 window instead of GLFW</summary><h4 id=sdl2-context>SDL2 context</h4><pre tabindex=0><code>SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+SDL_Window* w = SDL_CreateWindow(&#34;GL&#34;, 0, 0, 800, 600, SDL_WINDOW_OPENGL);
+SDL_GLContext ctx = SDL_GL_CreateContext(w);
+</code></pre><h4 id=swap-buffers>Swap buffers</h4><pre tabindex=0><code>// GLFW
+glfwSwapBuffers(win);
+glfwPollEvents();
+
+// SDL2
+SDL_GL_SwapWindow(w);
+</code></pre></details><blockquote><p><strong>4.6:</strong> <strong>OpenGL 4.6 is the final version.</strong> Spec work froze in 2017 — <code>#version 460 core</code> is the newest GLSL, though <code>#version 330 core</code> below remains the common teaching baseline. Windows and Linux drivers expose 4.6, but macOS caps at <strong>4.1 core</strong> (deprecated since 10.14). Khronos&rsquo;s successor is <strong>Vulkan</strong>.</p></blockquote><h2 id=buffers>Buffers & VAOs</h2><p>A VBO holds vertex data, an EBO holds indices, and a VAO records how those buffers map onto shader inputs. Bind the VAO, then draw.</p><h3 id=vbo--vertex-data>VBO — vertex data</h3><pre tabindex=0><code>unsigned int vbo;
+glGenBuffers(1, &amp;vbo);
+glBindBuffer(GL_ARRAY_BUFFER, vbo);
+glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
+</code></pre><h3 id=vao--layout>VAO — layout</h3><pre tabindex=0><code>unsigned int vao;
+glGenVertexArrays(1, &amp;vao);
+glBindVertexArray(vao);
+glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
+                      3 * sizeof(float), (void*)0);
+glEnableVertexAttribArray(0);
+</code></pre><h3 id=ebo--indices>EBO — indices</h3><pre tabindex=0><code>unsigned int ebo;
+glGenBuffers(1, &amp;ebo);
+glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(idx), idx, GL_STATIC_DRAW);
+</code></pre><p><strong>VBO</strong> (vertex data) → <strong>VAO</strong> (attribute layout) → <strong>Program</strong> (vertex + fragment) → <strong>Draw call</strong> (glDrawElements) → <strong>Framebuffer</strong> (pixels)</p><table><thead><tr><th>glVertexAttribPointer arg</th><th>Meaning</th><th>Typical value</th></tr></thead><tbody><tr><td><code>index</code></td><td>attribute location</td><td><code>0</code>, <code>1</code>, <code>2</code>…</td></tr><tr><td><code>size</code></td><td>components per vertex</td><td><code>3</code> for a <code>vec3</code></td></tr><tr><td><code>type</code></td><td>component type</td><td><code>GL_FLOAT</code></td></tr><tr><td><code>normalized</code></td><td>map ints to [0,1]</td><td><code>GL_FALSE</code></td></tr><tr><td><code>stride</code></td><td>bytes between vertices</td><td><code>sizeof(Vertex)</code></td></tr><tr><td><code>pointer</code></td><td>byte offset of this attribute</td><td><code>(void*)offsetof(Vertex, uv)</code></td></tr></tbody></table><blockquote><p><strong>KEY:</strong> <strong>Unbind in the right order.</strong> A VAO stores its <code>GL_ELEMENT_ARRAY_BUFFER</code> binding but not the <code>GL_ARRAY_BUFFER</code>. Unbind the VAO <em>before</em> unbinding the EBO, or the element binding is lost.</p></blockquote><h2 id=shaders>Shaders</h2><p>Compile a vertex and a fragment shader from GLSL source, link them into a program, set uniforms, then issue a draw call.</p><h3 id=compile-a-shader>Compile a shader</h3><pre tabindex=0><code>unsigned int vs = glCreateShader(GL_VERTEX_SHADER);
+glShaderSource(vs, 1, &amp;vsSrc, 0);
+glCompileShader(vs);
+// check GL_COMPILE_STATUS, read info log
+</code></pre><h3 id=link-the-program>Link the program</h3><pre tabindex=0><code>unsigned int prog = glCreateProgram();
+glAttachShader(prog, vs);
+glAttachShader(prog, fs);
+glLinkProgram(prog);
+glUseProgram(prog);
+</code></pre><h3 id=set-uniforms>Set uniforms</h3><pre tabindex=0><code>int loc = glGetUniformLocation(prog, &#34;uColor&#34;);
+glUniform4f(loc, 1.0f, 0.5f, 0.2f, 1.0f);
+</code></pre><h3 id=draw>Draw</h3><pre tabindex=0><code>glDrawArrays(GL_TRIANGLES, 0, 36);
+// or indexed:
+glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+</code></pre><ol><li><strong>Create</strong> — <code>glCreateShader(GL_VERTEX_SHADER)</code> and <code>GL_FRAGMENT_SHADER</code>.</li><li><strong>Source + compile</strong> — <code>glShaderSource</code> then <code>glCompileShader</code>. Compile status is silent — query it.</li><li><strong>Attach + link</strong> — <code>glAttachShader</code> each stage, then <code>glLinkProgram</code> into a program.</li><li><strong>Use + draw</strong> — <code>glUseProgram(prog)</code>, set uniforms, bind the VAO, and draw.</li></ol><h3 id=uniform-setters>Uniform setters</h3><ul><li><code>glUniform1f / 2f / 3f / 4f</code> — scalars and vectors.</li><li><code>glUniform1i</code> — int / sampler unit.</li><li><code>glUniform3fv / 4fv</code> — arrays of vectors.</li><li><code>glUniformMatrix4fv</code> — mat4 (count, transpose=false).</li></ul><h3 id=glsl-core-notes>GLSL core notes</h3><pre tabindex=0><code>#version 330 core
+layout(location = 0) in vec3 aPos;
+uniform mat4 uMVP;
+out vec2 vUV;
+
+void main() {
+    gl_Position = uMVP * vec4(aPos, 1.0);
+    vUV = aUV;
+}
+</code></pre><h2 id=textures>Textures</h2><p>Upload image data with <code>glTexImage2D</code>, bind the texture to a unit with <code>glActiveTexture</code>, and point a sampler uniform at that unit.</p><h3 id=create--upload>Create + upload</h3><pre tabindex=0><code>unsigned int tex;
+glGenTextures(1, &amp;tex);
+glBindTexture(GL_TEXTURE_2D, tex);
+glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0,
+             GL_RGB, GL_UNSIGNED_BYTE, data);
+</code></pre><h3 id=filter--wrap>Filter & wrap</h3><pre tabindex=0><code>glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+</code></pre><h3 id=mipmaps>Mipmaps</h3><pre tabindex=0><code>glGenerateMipmap(GL_TEXTURE_2D);
+// uses GL_TEXTURE_MIN_FILTER mipmap modes
+// GL_LINEAR_MIPMAP_LINEAR = trilinear
+</code></pre><h3 id=bind-to-a-unit--sample>Bind to a unit + sample</h3><pre tabindex=0><code>glActiveTexture(GL_TEXTURE0);
+glBindTexture(GL_TEXTURE_2D, tex);
+glUniform1i(glGetUniformLocation(prog, &#34;uTex&#34;), 0);
+</code></pre><h3 id=internal-formats>Internal formats</h3><p><code>GL_RGB8</code> <code>GL_RGBA8</code> <code>GL_RGBA16F</code> <code>GL_SRGB8_ALPHA8</code> <code>GL_DEPTH24_STENCIL8</code></p><p>Internal format = storage precision; the two formats in <code>glTexImage2D</code> are the source pixel layout.</p><table><thead><tr><th>Enum</th><th>Effect</th></tr></thead><tbody><tr><td><code>GL_NEAREST</code></td><td>No interpolation — crisp, blocky.</td></tr><tr><td><code>GL_LINEAR</code></td><td>Bilinear filtering between texels.</td></tr><tr><td><code>GL_LINEAR_MIPMAP_LINEAR</code></td><td>Trilinear — the usual choice for min filter.</td></tr><tr><td><code>GL_REPEAT</code></td><td>Tile the texture.</td></tr><tr><td><code>GL_MIRRORED_REPEAT</code></td><td>Tile with mirroring.</td></tr><tr><td><code>GL_CLAMP_TO_EDGE</code></td><td>Clamp UVs to the edge texel.</td></tr></tbody></table><h2 id=framebuffers>Framebuffers</h2><p>Render into an off-screen framebuffer object (FBO) instead of the window, then sample the result — the core of post-processing, shadow maps, and picking.</p><h3 id=fbo--color-texture>FBO + color texture</h3><pre tabindex=0><code>unsigned int fbo;
+glGenFramebuffers(1, &amp;fbo);
+glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                       GL_TEXTURE_2D, tex, 0);
+</code></pre><h3 id=depth--stencil>Depth / stencil</h3><pre tabindex=0><code>// renderbuffer for depth-stencil
+glFramebufferRenderbuffer(GL_FRAMEBUFFER,
+    GL_DEPTH_STENCIL_ATTACHMENT,
+    GL_RENDERBUFFER, rbo);
+</code></pre><h3 id=check-completeness>Check completeness</h3><pre tabindex=0><code>if (glCheckFramebufferStatus(GL_FRAMEBUFFER)
+    != GL_FRAMEBUFFER_COMPLETE)
+    /* incomplete — bad attachment */
+</code></pre><ol><li><strong>Bind the FBO</strong> — <code>glBindFramebuffer(GL_FRAMEBUFFER, fbo)</code> redirects all drawing.</li><li><strong>Render the scene</strong> — Draw normally — the color lands in the attached texture, depth in the renderbuffer.</li><li><strong>Back to default</strong> — <code>glBindFramebuffer(GL_FRAMEBUFFER, 0)</code> targets the window.</li><li><strong>Sample + draw quad</strong> — Bind the color texture and draw a fullscreen quad with a screen shader.</li></ol><blockquote><p><strong>⌁:</strong> <strong>Post-processing = two passes.</strong> Pass 1 renders the scene into the FBO&rsquo;s texture; pass 2 draws a fullscreen quad that samples that texture, applying tone mapping, blur, or vignette in the fragment shader.</p></blockquote><h2 id=state>State & blending</h2><p>OpenGL is a state machine: <code>glEnable</code> turns capabilities on, and they stay on until you disable them.</p><ul><li><strong>Depth test</strong> — <code>GL_DEPTH_TEST</code> — off by default; enable for 3D depth.</li><li><strong>Blend</strong> — <code>GL_BLEND</code> — off; enable for transparency.</li><li><strong>Cull face</strong> — <code>GL_CULL_FACE</code> — off; skip backfaces with <code>glCullFace(GL_BACK)</code>.</li><li><strong>Stencil</strong> — <code>GL_STENCIL_TEST</code> — off; needs a stencil attachment.</li></ul><table><thead><tr><th>Capability</th><th>Enables</th><th>Note</th></tr></thead><tbody><tr><td><code>GL_DEPTH_TEST</code></td><td>depth comparison</td><td>needs a depth attachment</td></tr><tr><td><code>GL_CULL_FACE</code></td><td>backface culling</td><td><code>glCullFace(GL_BACK)</code></td></tr><tr><td><code>GL_BLEND</code></td><td>alpha blending</td><td>set factors with <code>glBlendFunc</code></td></tr><tr><td><code>GL_STENCIL_TEST</code></td><td>stencil buffer ops</td><td>needs a stencil attachment</td></tr><tr><td><code>GL_SCISSOR_TEST</code></td><td>clip to a rectangle</td><td><code>glScissor(x, y, w, h)</code></td></tr></tbody></table><h3 id=enable--depth--cull>Enable / depth / cull</h3><pre tabindex=0><code>glEnable(GL_DEPTH_TEST);
+glDepthFunc(GL_LESS);      // default compare
+glEnable(GL_CULL_FACE);
+glCullFace(GL_BACK);
+</code></pre><h3 id=blend--clear-bits>Blend + clear bits</h3><pre tabindex=0><code>glEnable(GL_BLEND);
+glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+</code></pre><h2 id=modern>Modern techniques</h2><p>Beyond the basics: draw thousands of instances in one call, skip bindings with direct state access, and route driver errors to a callback.</p><h3 id=instancing>Instancing</h3><pre tabindex=0><code>glDrawArraysInstanced(GL_TRIANGLES, 0, 36, 1000);
+glDrawElementsInstanced(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0, 1000);
+// per-instance attribute advances once per instance:
+glVertexAttribDivisor(1, 1);
+</code></pre><h3 id=direct-state-access-dsa>Direct state access (DSA)</h3><pre tabindex=0><code>glCreateBuffers(1, &amp;vbo);
+glNamedBufferData(vbo, sizeof(verts), verts, GL_STATIC_DRAW);
+glTextureParameteri(tex, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+</code></pre><h3 id=debug-output>Debug output</h3><pre tabindex=0><code>glEnable(GL_DEBUG_OUTPUT);
+glDebugMessageCallback(msgCallback, 0);
+// KHR_debug: source, type, severity
+</code></pre><h3 id=vertex-layout-interleaved>Vertex layout (interleaved)</h3><pre tabindex=0><code>struct Vertex {
+    float pos[3];   // offset 0
+    float nrm[3];   // offset 12
+    float uv[2];    // offset 24
+};
+// stride = sizeof(Vertex) = 32 bytes
+</code></pre><details><summary>Reading shader compile / link logs</summary><h4 id=shader-compile-log>Shader compile log</h4><pre tabindex=0><code>int ok; glGetShaderiv(vs, GL_COMPILE_STATUS, &amp;ok);
+if (!ok) {
+    char log[512];
+    glGetShaderInfoLog(vs, 512, 0, log);
+    printf(&#34;%s\n&#34;, log);
+}
+</code></pre><h4 id=program-link-log>Program link log</h4><pre tabindex=0><code>glGetProgramiv(prog, GL_LINK_STATUS, &amp;ok);
+if (!ok) {
+    char log[512];
+    glGetProgramInfoLog(prog, 512, 0, log);
+    printf(&#34;%s\n&#34;, log);
+}
+</code></pre></details><h2 id=gotchas>Pitfalls</h2><p>The mistakes that turn a black screen into an hour of debugging. Most are silent — check, don&rsquo;t assume.</p><h3 id=core-vs-compatibility>Core vs compatibility</h3><p>The core profile removed <code>glBegin</code>/<code>glEnd</code>, <code>glMatrixMode</code>, and the fixed-function pipeline. Everything goes through VBOs, VAOs, and shaders.</p><pre tabindex=0><code>glBegin(GL_TRIANGLES);  // not in core profile
+</code></pre><h3 id=bind-before-you-use>Bind before you use</h3><p>Objects must be bound before configuring them. <code>glBufferData</code> targets whatever is currently bound — an unbound buffer is a silent no-op.</p><pre tabindex=0><code>glBindBuffer(GL_ARRAY_BUFFER, vbo); // first
+glBufferData(...);                   // then
+</code></pre><h3 id=texture-unit-confusion>Texture unit confusion</h3><p><code>glActiveTexture</code> picks the unit; <code>glBindTexture</code> binds into it. The sampler uniform takes the unit index (<code>0</code>), not the texture id.</p><pre tabindex=0><code>glActiveTexture(GL_TEXTURE0);
+glBindTexture(GL_TEXTURE_2D, tex);
+glUniform1i(uTex, 0);  // unit, not tex
+</code></pre><h3 id=attribute-location-mismatch>Attribute location mismatch</h3><p>The <code>index</code> in <code>glVertexAttribPointer</code> must match the shader&rsquo;s <code>location</code>. Fix it in GLSL or with <code>glBindAttribLocation</code> before linking.</p><pre tabindex=0><code>layout(location = 0) in vec3 aPos;
+glVertexAttribPointer(0, 3, ...); // index 0
+</code></pre><h3 id=bottom-left-origin>Bottom-left origin</h3><p>GL&rsquo;s NDC and texture coordinate origin is bottom-left; most image loaders produce top-left rows. Flip UVs or the image, or models appear upside down.</p><pre tabindex=0><code>// top-left → bottom-left: v = 1.0f - v
+</code></pre><h3 id=shader-errors-are-silent>Shader errors are silent</h3><p>Compile and link failures never throw. Always check <code>GL_COMPILE_STATUS</code> / <code>GL_LINK_STATUS</code> and print the info log, or you&rsquo;ll stare at a blank screen.</p><pre tabindex=0><code>glGetShaderiv(vs, GL_COMPILE_STATUS, &amp;ok);
+</code></pre><h3 id=mipmap-completeness--black>Mipmap completeness → black</h3><p>If the min filter requests mipmaps but you never call <code>glGenerateMipmap</code>, the texture is <em>incomplete</em> and every sample comes back black. Any mipmap filter mode requires the full chain to exist.</p><pre tabindex=0><code>glGenerateMipmap(GL_TEXTURE_2D); // required
+</code></pre><h3 id=macos-is-frozen-at-41>macOS is frozen at 4.1</h3><p>Apple deprecated OpenGL in macOS 10.14 (Mojave); the last supported version is <strong>4.1 core</strong>, so 4.2+ features like compute shaders and DSA never arrive there. Target Metal, MoltenVK, or WebGPU instead.</p><pre tabindex=0><code>glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1); // macOS
+</code></pre><h3 id=framebuffer--window-size>Framebuffer ≠ window size</h3><p>On Retina/high-DPI displays the framebuffer is larger than the window. Size the viewport from <code>glfwGetFramebufferSize</code>, not <code>glfwGetWindowSize</code>, or the scene renders into a blurry corner.</p><pre tabindex=0><code>int fbw, fbh; glfwGetFramebufferSize(win, &amp;fbw, &amp;fbh);
+glViewport(0, 0, fbw, fbh);
+</code></pre><blockquote><p><strong>!:</strong> <strong>Validate during development.</strong> A missing <code>glBindVertexArray</code> is valid state but produces nothing. Use <a href=https://renderdoc.org/>RenderDoc</a> or <code>GL_KHR_debug</code> to catch invalid operations early.</p></blockquote></div></article></div><footer class=foot><span>slop-stuff</span>
+<span class=muted>served under <code>makefunstuff.github.io/slop-stuff/&lt;folder>/</code></span>
+<a href=https://makefunstuff.github.io/slop-stuff/links/>links</a>
+<a href=https://github.com/makefunstuff/slop-stuff>repo</a></footer><script src=https://makefunstuff.github.io/slop-stuff/js/wiki.js defer></script></body></html>

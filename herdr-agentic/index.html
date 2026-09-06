@@ -1,0 +1,154 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Agentic patterns with Herdr — slop-stuff</title><meta name=description content="Orchestrator-worker, reviewer loops, parallel worktrees, and blocked-state handling for driving agents."><link rel=canonical href=https://makefunstuff.github.io/slop-stuff/herdr-agentic/><link rel=stylesheet href=https://makefunstuff.github.io/slop-stuff/css/wiki.css><script>(function(){var t="slop-theme",e=localStorage.getItem(t);e||(e=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"),document.documentElement.setAttribute("data-theme",e)})()</script></head><body><header class=bar><a class=brand href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a>
+<span class="muted hide-narrow">cheatsheets & experiments</span><form class=seek role=search action=https://makefunstuff.github.io/slop-stuff/ method=get><input id=q type=search name=q placeholder="search guides…" autocomplete=off aria-label="Search guides"><div id=hits class=hits hidden></div></form><button type=button class=icon id=theme title="Toggle theme" aria-label="Toggle theme">◐</button>
+<a class=icon href=https://github.com/makefunstuff/slop-stuff rel=noreferrer>git</a></header><div class="wrap wrap-guide"><aside class=toc aria-label="On this page"><p class=toc-label>on this page</p><nav id=TableOfContents><ul><li><a href=#quickref>Quick reference</a></li><li><a href=#start>Agent topology</a></li><li><a href=#orchestrator>Orchestrator-worker</a></li><li><a href=#reviewer>Reviewer loop</a></li><li><a href=#parallel>Parallel agents & worktrees</a></li><li><a href=#blocked>Blocked state & approvals</a></li><li><a href=#states>Lifecycle states</a></li><li><a href=#recipes>Copy-paste recipes</a></li><li><a href=#gotchas>Pitfalls</a></li></ul></nav></aside><article class=doc><p class=crumb><a href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a> / AI & agents</p><h1>Agentic patterns with Herdr</h1><p class=lede>Orchestrate agents as a system.</p><p class="muted sub">Orchestrator-worker, reviewer loops, parallel worktrees, and blocked-state handling for driving agents.</p><p class=tags><span>patterns</span><span>orchestrator</span><span>reviewer</span><span>worktree</span></p><div class=body><p>Herdr turns a terminal into a controllable multi-agent runtime. Script the topology, start named agents, drive them with prompts, and wait on lifecycle state — all from the CLI.</p><h2 id=quickref>Quick reference</h2><p>Eight commands cover most orchestration. Full recipes, wait semantics, and caveats live in the sections below.</p><h3 id=create-workspace>Create workspace</h3><pre tabindex=0><code>herdr workspace create \
+  --cwd . --label api --no-focus
+</code></pre><p>Reads <code>.result.root_pane.pane_id</code> — capture it with <code>jq</code>.</p><h3 id=split-a-pane>Split a pane</h3><pre tabindex=0><code>herdr pane split --current \
+  --direction right --no-focus
+</code></pre><p>New pane ID is at <code>.result.pane.pane_id</code>.</p><h3 id=start-an-agent>Start an agent</h3><pre tabindex=0><code>herdr agent start worker \
+  --kind codex --pane w1:p1
+</code></pre><p>Needs a free shell pane; 30s startup timeout. Args after <code>--</code> go to the agent.</p><h3 id=prompt--wait>Prompt & wait</h3><pre tabindex=0><code>herdr agent prompt worker &#34;…&#34; \
+  --wait --timeout 300000
+</code></pre><p><code>--wait</code> settles on <code>idle</code>/<code>done</code>/<code>blocked</code>; add <code>--until</code> to narrow.</p><h3 id=wait-for-a-state>Wait for a state</h3><pre tabindex=0><code>herdr agent wait worker \
+  --until blocked --timeout 60000
+</code></pre><p>Use <code>--until</code> for one exact lifecycle state.</p><h3 id=read-transcript>Read transcript</h3><pre tabindex=0><code>herdr agent read worker \
+  --source recent-unwrapped --lines 120
+</code></pre><p>Unwrapped logs/transcripts; <code>--format ansi</code> keeps colors.</p><h3 id=create-worktree>Create worktree</h3><pre tabindex=0><code>herdr worktree create \
+  --cwd . --branch feat/x \
+  --base main --label feat/x
+</code></pre><p>Opens an isolated checkout; the branch survives <code>worktree remove</code>.</p><h3 id=approve--dismiss>Approve / dismiss</h3><pre tabindex=0><code>herdr agent send-keys worker enter
+herdr agent send-keys worker esc
+</code></pre><p><code>ctrl+c</code> cancels; <code>escape</code> is an alias for <code>esc</code>.</p><blockquote><p><strong>KEY:</strong> <strong>Read IDs, don&rsquo;t guess them.</strong> Every create/split command prints JSON. Agent names must match <code>[a-z][a-z0-9_-]{0,31}</code> and stay unique among live agents — a bare kind label like <code>codex</code> is not a target.</p></blockquote><h2 id=start>Agent topology</h2><p>Build the shape first, then start agents inside it: a workspace owns tabs, tabs own panes, and each agent runs inside a pane.</p><p><strong>Workspace</strong> (one project) → <strong>Tab</strong> (one layout) → <strong>Pane</strong> (real terminal) → <strong>Agent</strong> (named process)</p><h3 id=1-workspace>1. Workspace</h3><pre tabindex=0><code>herdr workspace create \
+  --cwd ~/project --label api --focus
+</code></pre><h3 id=2-tab>2. Tab</h3><pre tabindex=0><code>herdr tab create --label tests
+</code></pre><h3 id=3-pane>3. Pane</h3><pre tabindex=0><code>herdr pane split --current \
+  --direction right --no-focus
+</code></pre><h3 id=4-agent>4. Agent</h3><pre tabindex=0><code>herdr agent start builder \
+  --kind omp --pane w1:p1
+</code></pre><blockquote><p><strong>KEY:</strong> <strong>Capture the IDs.</strong> <code>workspace create</code>, <code>tab create</code>, and <code>pane split</code> each print JSON with IDs. Parse them with <code>jq</code> so the next command targets the exact pane — the full recipe lives in <a href=https://makefunstuff.github.io/slop-stuff/herdr-agentic/#orchestrator>Orchestrator</a>.</p></blockquote><h2 id=orchestrator>Orchestrator-worker</h2><p>One controller shell drives many named agents: create topology, start workers, prompt, wait for a settled state, then read the transcript.</p><ol><li><strong>Create topology</strong> — <code>workspace create</code> then <code>pane split</code>; capture <code>root_pane.pane_id</code> from JSON.</li><li><strong>Start named agents</strong> — <code>agent start</code> launches a supported kind into an available shell pane.</li><li><strong>Prompt and wait</strong> — <code>agent prompt --wait</code> blocks until the agent settles on <code>idle</code>, <code>done</code>, or <code>blocked</code>.</li><li><strong>Read the result</strong> — <code>agent read --source recent-unwrapped</code> returns stable transcript text.</li></ol><h3 id=full-shell-recipe>Full shell recipe</h3><pre tabindex=0><code>created=$(herdr workspace create \
+  --cwd ~/project --label api --no-focus)
+
+root_pane=$(printf &#39;%s\n&#39; &#34;$created&#34; | \
+  jq -r &#39;.result.root_pane.pane_id&#39;)
+
+herdr agent start worker \
+  --kind codex --pane &#34;$root_pane&#34;
+
+herdr agent prompt worker \
+  &#34;Implement the ticket in TASK.md&#34; \
+  --wait --timeout 300000
+
+herdr agent read worker \
+  --source recent-unwrapped --lines 200
+</code></pre><h3 id=wait-semantics>Wait semantics</h3><p><code>--wait</code> blocks until the agent reaches a settled state or the timeout fires. The default settled set is <code>idle</code>, <code>done</code>, and <code>blocked</code> — repeat <code>--until</code> to narrow to exact states (or add <code>unknown</code>). On <code>agent prompt</code>, <code>--until</code> requires <code>--wait</code>.</p><table><thead><tr><th>Flag</th><th>Effect</th></tr></thead><tbody><tr><td><code>--wait</code></td><td>Block until a settled state (<code>idle</code>/<code>done</code>/<code>blocked</code>) or timeout.</td></tr><tr><td><code>--until done</code></td><td>Accept only the <code>done</code> state (repeatable).</td></tr><tr><td><code>--until blocked</code></td><td>Wait specifically for an approval prompt.</td></tr><tr><td><code>--timeout MS</code></td><td>Give up after MS milliseconds.</td></tr></tbody></table><blockquote><p><strong>KEY:</strong> <strong>One controller, many workers.</strong> The orchestrator never types inside an agent pane — it only runs <code>agent</code> commands from its own shell and reads output back. Keep it that way so state stays machine-readable.</p></blockquote><h2 id=reviewer>Reviewer loop</h2><p>Split a review pane beside the worker and start a second agent whose only job is to read the diff and report.</p><h3 id=split-and-start-the-reviewer>Split and start the reviewer</h3><pre tabindex=0><code>split=$(herdr pane split &#34;$root_pane&#34; \
+  --direction right --no-focus)
+
+review_pane=$(printf &#39;%s\n&#39; &#34;$split&#34; | \
+  jq -r &#39;.result.pane.pane_id&#39;)
+
+herdr agent start reviewer \
+  --kind codex --pane &#34;$review_pane&#34;
+</code></pre><h3 id=prompt-wait-read>Prompt, wait, read</h3><pre tabindex=0><code>herdr agent prompt reviewer \
+  &#34;Review the current diff&#34; \
+  --wait --timeout 120000
+
+herdr agent read reviewer \
+  --source recent-unwrapped --lines 120
+</code></pre><blockquote><p><strong>TIP:</strong> Any managed kind works as a reviewer — <code>codex</code> and <code>omp</code> are common picks. Split with <code>--no-focus</code> so the worker keeps keyboard focus while the reviewer runs beside it.</p></blockquote><h2 id=parallel>Parallel agents & worktrees</h2><p>Give each parallel agent its own Git worktree so their edits never collide, and address each by a unique name.</p><h3 id=create-an-isolated-worktree>Create an isolated worktree</h3><pre tabindex=0><code>herdr worktree create \
+  --cwd ~/project \
+  --branch feat/api-cache \
+  --base main \
+  --label api-cache \
+  --focus
+
+herdr worktree list --cwd ~/project
+</code></pre><h3 id=run-agents-side-by-side>Run agents side by side</h3><pre tabindex=0><code>herdr agent start cache \
+  --kind omp --pane w1:p1
+herdr agent start docs \
+  --kind codex --pane w2:p1
+
+herdr agent prompt cache &#34;…&#34; --wait
+herdr agent prompt docs &#34;…&#34; --wait
+</code></pre><table><thead><tr><th>Intent</th><th>Command</th><th>What it does</th></tr></thead><tbody><tr><td>Close Herdr state only</td><td><code>herdr workspace close &lt;workspace_id></code></td><td>Leaves the checkout and files on disk.</td></tr><tr><td>Delete the checkout</td><td><code>herdr worktree remove --workspace &lt;workspace_id></code></td><td>Removes the checkout through Git; the branch is never deleted.</td></tr></tbody></table><blockquote><p><strong>!:</strong> <strong>Avoid edit collisions.</strong> Two agents in the same checkout can overwrite each other&rsquo;s files. One worktree per parallel agent keeps each workspace&rsquo;s changes separate.</p></blockquote><h2 id=blocked>Blocked state & approvals</h2><p>When an agent hits an approval prompt it goes <code>blocked</code>. Detect it, approve with a key, then resume with a new prompt.</p><ul><li><strong>working</strong> — Mid-turn. Check back after <code>--wait</code>.</li><li><strong>blocked</strong> — Approval prompt detected. Act now.</li><li><strong>done</strong> — Turn settled after approval.</li><li><strong>idle</strong> — Ready for the next prompt.</li></ul><ol><li><strong>Detect</strong> — <code>herdr agent list</code> reports <code>blocked</code> — an approval prompt or question needs you.</li><li><strong>Approve</strong> — <code>herdr agent send-keys builder enter</code> accepts; <code>esc</code> dismisses, <code>ctrl+c</code> cancels.</li><li><strong>Resume</strong> — <code>herdr agent prompt builder "Continue" --wait</code> sends the next turn.</li><li><strong>Verify</strong> — <code>herdr agent read builder --source recent-unwrapped</code> for context.</li></ol><h3 id=approve-or-dismiss>Approve or dismiss</h3><pre tabindex=0><code>herdr agent send-keys builder enter    # approve
+herdr agent send-keys builder esc      # dismiss
+herdr agent send-keys builder ctrl+c   # cancel
+</code></pre><h3 id=resume-with-context>Resume with context</h3><pre tabindex=0><code>herdr agent read builder \
+  --source recent-unwrapped --lines 120
+
+herdr agent prompt builder \
+  &#34;Approved — continue.&#34; --wait
+</code></pre><blockquote><p><strong>!:</strong> <strong>Prompting a blocked agent bounces.</strong> <code>agent prompt --wait</code> on an already-<code>blocked</code> agent returns <code>agent_blocked</code> without sending input. Inspect the dialog and respond deliberately with <code>agent send-keys</code>.</p></blockquote><h2 id=states>Lifecycle states</h2><p>Five states describe an agent&rsquo;s lifecycle. <code>agent wait</code> blocks until the one you need; read before you act on <code>unknown</code>.</p><ul><li><strong>working</strong> — Actively processing or generating output.</li><li><strong>blocked</strong> — An approval prompt or question needs you.</li><li><strong>done</strong> — Background work completed in a tab you have not viewed yet.</li><li><strong>idle</strong> — Ready for another prompt and already seen in the focused UI.</li></ul><blockquote><p><strong>?:</strong> <code>unknown</code> means an agent exists but Herdr cannot classify its state confidently — not success. Read the pane before acting.</p></blockquote><h3 id=wait-for-a-state-1>Wait for a state</h3><pre tabindex=0><code># defaults to idle / done / blocked
+herdr agent wait builder \
+  --timeout 120000
+
+# or one exact state
+herdr agent wait builder \
+  --until blocked --timeout 60000
+</code></pre><h3 id=wait-then-act>Wait, then act</h3><pre tabindex=0><code>if herdr agent wait builder \
+     --until blocked --timeout 60000; then
+  herdr agent send-keys builder enter
+fi
+</code></pre><blockquote><p><strong>!:</strong> <strong><code>prompt --wait</code> tracks lifecycle, not turn ID.</strong> If the agent is already working, completion of that active work can satisfy the wait before your new prompt finishes.</p></blockquote><h2 id=recipes>Copy-paste recipes</h2><p>Four self-contained scripts. Each creates or targets explicit IDs so they are safe to paste and adapt.</p><details><summary>Service readiness: run and wait for output</summary><pre tabindex=0><code>herdr pane run w1:p3 &#34;npm run dev&#34;
+
+herdr pane wait-output w1:p3 \
+  --regex &#34;ready|listening|Local:&#34; \
+  --source recent-unwrapped \
+  --timeout 120000
+
+herdr pane read w1:p3 \
+  --source recent-unwrapped --lines 80
+</code></pre></details><details><summary>Full orchestrator script</summary><pre tabindex=0><code>set -euo pipefail
+
+created=$(herdr workspace create \
+  --cwd ~/project --label api --no-focus)
+root_pane=$(printf &#39;%s\n&#39; &#34;$created&#34; | \
+  jq -r &#39;.result.root_pane.pane_id&#39;)
+
+herdr agent start worker \
+  --kind codex --pane &#34;$root_pane&#34;
+
+herdr agent prompt worker &#34;Implement TASK.md&#34; \
+  --wait --timeout 300000
+
+herdr agent read worker \
+  --source recent-unwrapped --lines 200
+</code></pre></details><details><summary>Reviewer script</summary><pre tabindex=0><code>split=$(herdr pane split &#34;$root_pane&#34; \
+  --direction right --no-focus)
+review_pane=$(printf &#39;%s\n&#39; &#34;$split&#34; | \
+  jq -r &#39;.result.pane.pane_id&#39;)
+
+herdr agent start reviewer \
+  --kind omp --pane &#34;$review_pane&#34;
+herdr agent prompt reviewer \
+  &#34;Review the current diff&#34; \
+  --wait --timeout 120000
+herdr agent read reviewer \
+  --source recent-unwrapped --lines 120
+</code></pre></details><details><summary>Parallel worktree script</summary><pre tabindex=0><code>for branch in feat/api feat/web feat/db; do
+  herdr worktree create \
+    --cwd ~/project \
+    --branch &#34;$branch&#34; \
+    --base main \
+    --label &#34;$branch&#34; \
+    --no-focus
+done
+
+herdr worktree list --cwd ~/project
+
+# Remove one checkout (branch survives):
+herdr worktree remove --workspace &lt;workspace_id&gt;
+</code></pre><p>Start one agent per worktree with a unique name, then <code>agent prompt</code> each in parallel from your orchestrator shell.</p></details><h2 id=gotchas>Pitfalls</h2><p>Six behaviors that bite orchestrators once.</p><h3 id=targets-must-be-exact>Targets must be exact</h3><p>A target is a unique live agent name or the pane ID hosting it. A bare agent-kind label (like <code>codex</code>) is not a target, and names must match <code>[a-z][a-z0-9_-]{0,31}</code>.</p><pre tabindex=0><code>herdr agent prompt reviewer &#34;…&#34;   # name
+herdr agent prompt w1:p2 &#34;…&#34;       # pane ID
+</code></pre><h3 id=use-explicit-ids-in-scripts>Use explicit IDs in scripts</h3><p>Inside a pane, <code>--current</code> resolves via <code>HERDR_PANE_ID</code>; omitting a target can fall back to the UI-focused pane — fragile in automation.</p><pre tabindex=0><code>herdr pane split &#34;$root_pane&#34; \
+  --direction right --no-focus
+</code></pre><h3 id=reading-does-not-mark-done>Reading does not mark done</h3><p><code>agent read</code> returns transcript text but does not mark unseen background completion as seen. The state stays until you view it in the UI.</p><pre tabindex=0><code>herdr agent read worker \
+  --source recent-unwrapped
+</code></pre><h3 id=wait-is-not-a-turn-id>&ndash;wait is not a turn ID</h3><p><code>agent prompt --wait</code> can be satisfied by in-flight work: if the agent is already working, that completion may end the wait early. From another non-working state, Herdr must observe a lifecycle change within 5 s or it returns <code>agent_prompt_stalled</code>.</p><pre tabindex=0><code>herdr agent prompt worker &#34;…&#34; \
+  --wait --timeout 300000
+</code></pre><h3 id=agent-start-needs-a-free-pane>agent start needs a free pane</h3><p><code>agent start</code> never creates, splits, or moves layout. The pane must be sitting at its shell prompt, and startup detection times out after 30 s by default (<code>agent_not_ready</code> if it reports <code>blocked</code>).</p><pre tabindex=0><code>herdr agent start worker \
+  --kind codex --pane w1:p1
+</code></pre><h3 id=scrollback-has-limits>Scrollback has limits</h3><p>Full-screen agents render history on the alternate screen, not host scrollback. <code>agent read --lines N</code> returns <code>agent_not_idle</code> while <code>working</code>/<code>blocked</code>/<code>unknown</code> — wait for idle and retry, or use <code>--source visible</code>.</p><pre tabindex=0><code>herdr agent read worker \
+  --source visible --lines 80
+</code></pre></div></article></div><footer class=foot><span>slop-stuff</span>
+<span class=muted>served under <code>makefunstuff.github.io/slop-stuff/&lt;folder>/</code></span>
+<a href=https://makefunstuff.github.io/slop-stuff/links/>links</a>
+<a href=https://github.com/makefunstuff/slop-stuff>repo</a></footer><script src=https://makefunstuff.github.io/slop-stuff/js/wiki.js defer></script></body></html>

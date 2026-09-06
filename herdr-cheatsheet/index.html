@@ -1,0 +1,275 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Herdr — slop-stuff</title><meta name=description content="Persistent terminal workspaces, panes, agent states, remote sessions, automation, and plugins."><link rel=canonical href=https://makefunstuff.github.io/slop-stuff/herdr-cheatsheet/><link rel=stylesheet href=https://makefunstuff.github.io/slop-stuff/css/wiki.css><script>(function(){var t="slop-theme",e=localStorage.getItem(t);e||(e=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"),document.documentElement.setAttribute("data-theme",e)})()</script></head><body><header class=bar><a class=brand href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a>
+<span class="muted hide-narrow">cheatsheets & experiments</span><form class=seek role=search action=https://makefunstuff.github.io/slop-stuff/ method=get><input id=q type=search name=q placeholder="search guides…" autocomplete=off aria-label="Search guides"><div id=hits class=hits hidden></div></form><button type=button class=icon id=theme title="Toggle theme" aria-label="Toggle theme">◐</button>
+<a class=icon href=https://github.com/makefunstuff/slop-stuff rel=noreferrer>git</a></header><div class="wrap wrap-guide"><aside class=toc aria-label="On this page"><p class=toc-label>on this page</p><nav id=TableOfContents><ul><li><a href=#quickref>The ten commands you&rsquo;ll reach for</a></li><li><a href=#start>From zero to persistent workspace</a></li><li><a href=#model>Five boxes. One simple hierarchy.</a></li><li><a href=#use-cases>What are you trying to do?</a></li><li><a href=#mouse>You can learn Herdr without shortcuts.</a></li><li><a href=#keyboard>The complete daily keymap</a></li><li><a href=#agents>Know who is working—and who is waiting.</a></li><li><a href=#workflows>Copy-paste recipes for real work</a></li><li><a href=#cli>The command map</a></li><li><a href=#remote>Run Herdr where the code lives.</a></li><li><a href=#automation>Topology first. Agent second.</a></li><li><a href=#config>Change behavior without changing the model.</a></li><li><a href=#plugins>Package repeatable terminal workflows.</a></li><li><a href=#troubleshooting>Fast diagnosis</a></li></ul></nav></aside><article class=doc><p class=crumb><a href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a> / AI & agents</p><h1>Herdr</h1><p class=lede>Keep every agent in sight.</p><p class="muted sub">Persistent terminal workspaces, panes, agent states, remote sessions, automation, and plugins.</p><p class=tags><span>workspace</span><span>panes</span><span>agents</span><span>CLI</span></p><div class=body><p>Herdr is a persistent terminal workspace manager for coding agents. Organize projects, split real terminal panes, watch agent state, detach safely, and come back later.</p><h2 id=quickref>The ten commands you&rsquo;ll reach for</h2><p>The 80/20 of Herdr. Master these and the rest of this guide is detail.</p><ul><li><code>herdr</code> — Launch or attach to the default session; run again to reattach after detaching.</li><li><code>herdr --session work</code> — Launch or attach to a named session.</li><li><code>herdr agent list</code> — See every live agent and its state at a glance.</li><li><code>herdr agent prompt reviewer "…"</code> — Send a prompt to a named agent; add &ndash;wait to block for a state.</li><li><code>herdr agent read reviewer --source recent-unwrapped</code> — Read an agent&rsquo;s transcript text for scripting.</li><li><code>herdr pane split --current --direction right</code> — Split the focused pane; use down for a horizontal split.</li><li><code>herdr pane run &lt;pane> "npm run dev"</code> — Submit a shell command atomically (adds Enter for you).</li><li><code>herdr workspace create --cwd ~/api --label api</code> — Create a workspace (with its first tab and pane).</li><li><code>herdr worktree create --cwd ~/repo --branch feat/x</code> — Isolate parallel branch work in a Git worktree.</li><li><code>herdr status</code> — Inspect server and client state before debugging.</li></ul><blockquote><p><strong>KEY:</strong> <strong>Detach, don&rsquo;t stop.</strong> <kbd>prefix</kbd>+<kbd>q</kbd> disconnects only the client — agents keep running. <kbd>prefix</kbd>+<kbd>?</kbd> shows the live keymap; <kbd>prefix</kbd>+<kbd>c</kbd> opens a new tab.</p></blockquote><h2 id=start>From zero to persistent workspace</h2><p>Install Herdr, launch it in a project, start an agent normally, then detach without stopping anything.</p><h3 id=1-install>1. Install</h3><p>On this Mac, Homebrew is the shortest path.</p><pre tabindex=0><code>brew install herdr
+</code></pre><h3 id=2-launch>2. Launch</h3><p>Run from the directory where the work lives.</p><pre tabindex=0><code>cd ~/project
+herdr
+</code></pre><h3 id=3-run-an-agent>3. Run an agent</h3><p>Use the same CLI you already use. Herdr detects it.</p><pre tabindex=0><code>omp
+# or: claude, codex, opencode…
+</code></pre><h3 id=4-detach-safely>4. Detach safely</h3><p>Leave all panes and agents running in the server.</p><p><kbd>Ctrl</kbd>+<kbd>B</kbd> then <kbd>Q</kbd></p><pre tabindex=0><code>herdr  # reattach later
+</code></pre><blockquote><p><strong>KEY:</strong> <strong>Prefix notation:</strong> <code>prefix+c</code> means press <kbd>Ctrl</kbd> + <kbd>B</kbd>, release both, then press <kbd>C</kbd>. It is a sequence—not one three-key chord.</p></blockquote><details><summary>Other installation methods</summary><h4 id=linux--macos-installer>Linux / macOS installer</h4><pre tabindex=0><code>curl -fsSL https://herdr.dev/install.sh | sh
+</code></pre><h4 id=windows>Windows</h4><pre tabindex=0><code>curl.exe -fsSLo install.cmd https://herdr.dev/install.cmd &amp;&amp; install.cmd &amp;&amp; del install.cmd
+</code></pre><h4 id=mise>mise</h4><pre tabindex=0><code>mise use -g herdr
+</code></pre><h4 id=nix>Nix</h4><pre tabindex=0><code>nix profile install github:herdrdev/herdr/v0.x.y
+</code></pre></details><h2 id=model>Five boxes. One simple hierarchy.</h2><p>The server owns persistent sessions. A session contains project workspaces; workspaces contain tab layouts; tabs contain terminal panes; agents run inside panes.</p><p><strong>Session</strong> (persistent server) → <strong>Workspace</strong> (one project/context) → <strong>Tab</strong> (one pane layout) → <strong>Pane</strong> (real terminal) → <strong>Agent</strong> (detected process)</p><h3 id=session>Session</h3><p>A named background runtime. Attach many times; detach without killing processes. Use separate named sessions only when you need hard isolation.</p><pre tabindex=0><code>herdr --session work
+herdr session list
+</code></pre><h3 id=workspace--tab>Workspace + tab</h3><p>A workspace is usually one repository. Tabs are alternate layouts within it: coding, tests, logs, review.</p><pre tabindex=0><code>herdr workspace create --cwd ~/api --label api
+herdr tab create --label tests
+</code></pre><h3 id=pane--agent>Pane + agent</h3><p>A pane is the terminal itself. An agent is a recognized interactive process currently occupying that terminal.</p><pre tabindex=0><code>herdr pane split --current --direction right
+herdr agent list
+</code></pre><blockquote><p><strong>!:</strong> <strong>Detach is not stop.</strong> <code>prefix+q</code> disconnects only your client. <code>herdr server stop</code> ends the session and its panes. Closing a pane ends the process running in that pane.</p></blockquote><h2 id=use-cases>What are you trying to do?</h2><p>Pick the route that matches the job. The command surface is broad; daily work only needs a small part of it.</p><ul><li><strong>Keep a coding agent alive</strong> — Launch locally, detach, close the terminal, and reattach later.</li><li><strong>Watch several agents</strong> — Split panes or workspaces and use state labels to find the one needing input.</li><li><strong>Work on another machine</strong> — Run inside a normal SSH shell, from a phone, or attach with a local thin client.</li><li><strong>Isolate parallel branches</strong> — Create and group Git worktrees without mixing agent edits.</li><li><strong>Orchestrate agents</strong> — Create topology, launch named agents, prompt, wait, read results.</li><li><strong>Add reusable workflows</strong> — Install or link plugins with actions, hooks, logs, and managed panes.</li></ul><h2 id=mouse>You can learn Herdr without shortcuts.</h2><p>Herdr is mouse-native. Most layout management is discoverable through clicks, borders, and context menus.</p><h3 id=01-focus-and-switch>01. Focus and switch</h3><p>Click a pane, tab, workspace, or agent. Clicking an agent focuses the pane that hosts it.</p><h3 id=02-split-and-manage>02. Split and manage</h3><p>Right-click inside a pane for splits and pane actions. Right-click workspace and tab rows for their actions.</p><h3 id=03-resize>03. Resize</h3><p>Drag the divider between two panes. The split ratio updates immediately.</p><h3 id=04-copy-text>04. Copy text</h3><p>Drag-select to copy automatically. Double-click a token to copy it directly. No <code>Ctrl+C</code> required.</p><h3 id=05-open-links>05. Open links</h3><p>Ctrl-click OSC 8 links and visible HTTP(S) URLs. On macOS with mouse capture, use Ctrl-click rather than Cmd-click.</p><h3 id=06-pass-right-click-through>06. Pass right-click through</h3><p>For a mouse-aware pane app, choose <strong>Send right-clicks to pane</strong>. Right-click the pane frame to reopen Herdr’s menu.</p><h2 id=keyboard>The complete daily keymap</h2><p>Defaults are prefix-first so Herdr does not steal keys from shells, editors, or agents. Press <code>prefix+?</code> inside Herdr for the authoritative active map.</p><p>Example: split right
+<kbd>Ctrl</kbd>+<kbd>B</kbd> release, then <kbd>V</kbd>
+written as <code>prefix+v</code></p><h3 id=start-with-these-five>Start with these five</h3><ul><li>New tab — <kbd>prefix</kbd><kbd>C</kbd></li><li>Split right / down — <kbd>prefix</kbd><kbd>V</kbd>/<kbd>-</kbd></li><li>Move between panes — <kbd>prefix</kbd><kbd>H J K L</kbd></li><li>Workspace picker — <kbd>prefix</kbd><kbd>W</kbd></li><li>Detach — <kbd>prefix</kbd><kbd>Q</kbd></li></ul><h3 id=panes>Panes</h3><ul><li>Focus direction — <kbd>prefix</kbd><kbd>H/J/K/L</kbd></li><li>Cycle next / previous — <kbd>prefix</kbd><kbd>Tab</kbd>/<kbd>Shift Tab</kbd></li><li>Swap direction — <kbd>prefix</kbd><kbd>Shift H/J/K/L</kbd></li><li>Zoom — <kbd>prefix</kbd><kbd>Z</kbd></li><li>Resize mode — <kbd>prefix</kbd><kbd>R</kbd></li><li>Rename / close — <kbd>prefix</kbd><kbd>Shift P</kbd>/<kbd>X</kbd></li></ul><h3 id=tabs>Tabs</h3><ul><li>New tab — <kbd>prefix</kbd><kbd>C</kbd></li><li>Next / previous — <kbd>prefix</kbd><kbd>N</kbd>/<kbd>P</kbd></li><li>Jump to 1–9 — <kbd>prefix</kbd><kbd>1…9</kbd></li><li>Rename — <kbd>prefix</kbd><kbd>Shift T</kbd></li><li>Close — <kbd>prefix</kbd><kbd>Shift X</kbd></li></ul><h3 id=workspaces--ui>Workspaces + UI</h3><ul><li>New workspace — <kbd>prefix</kbd><kbd>Shift N</kbd></li><li>New worktree — <kbd>prefix</kbd><kbd>Shift G</kbd></li><li>Rename / close — <kbd>prefix</kbd><kbd>Shift W</kbd>/<kbd>Shift D</kbd></li><li>Session navigator — <kbd>prefix</kbd><kbd>G</kbd></li><li>Toggle sidebar — <kbd>prefix</kbd><kbd>B</kbd></li></ul><h3 id=help--text>Help + text</h3><ul><li>Keybinding help — <kbd>prefix</kbd><kbd>?</kbd></li><li>Settings — <kbd>prefix</kbd><kbd>S</kbd></li><li>Copy mode — <kbd>prefix</kbd><kbd>[</kbd></li><li>Edit scrollback — <kbd>prefix</kbd><kbd>E</kbd></li><li>Reload config — <kbd>prefix</kbd><kbd>Shift R</kbd></li><li>Open notification target — <kbd>prefix</kbd><kbd>O</kbd></li></ul><h3 id=copy-mode>Copy mode</h3><ul><li>Move — <kbd>H/J/K/L</kbd><kbd>W/B/E</kbd></li><li>Search forward/back — <kbd>/</kbd>/<kbd>?</kbd></li><li>Repeat search — <kbd>N</kbd>/<kbd>Shift N</kbd></li><li>Start selection — <kbd>V</kbd>or<kbd>Space</kbd></li><li>Copy — <kbd>Y</kbd>or<kbd>Enter</kbd></li><li>Exit — <kbd>Q</kbd>or<kbd>Esc</kbd></li></ul><h2 id=agents>Know who is working—and who is waiting.</h2><p>Herdr detects supported coding agents from terminal state and shows lifecycle status across every workspace.</p><ul><li><strong>working</strong> — The agent is actively processing or generating output.</li><li><strong>blocked</strong> — Herdr recognized an approval prompt or question that needs you.</li><li><strong>done</strong> — Background work completed in a tab you have not viewed yet.</li><li><strong>idle</strong> — Ready for another prompt and already seen in the focused UI.</li></ul><blockquote><p><strong>?:</strong> <code>unknown</code> means an agent exists but Herdr cannot classify its state confidently. It does <strong>not</strong> mean success. Read the pane before acting.</p></blockquote><h3 id=manual-launch>Manual launch</h3><p>Start an agent normally in a pane. Herdr detects it. Address unnamed agents by pane ID, or assign a readable name.</p><pre tabindex=0><code>omp
+herdr agent list
+herdr agent rename w1:p2 reviewer
+</code></pre><h3 id=managed-launch>Managed launch</h3><p>Create a shell pane first, then let Herdr start and name a supported agent in it.</p><pre tabindex=0><code>herdr agent start reviewer \
+  --kind omp \
+  --pane w1:p2
+</code></pre><h3 id=prompt-and-wait>Prompt and wait</h3><p>Send a prompt and optionally wait for a settled state. Specify exact acceptable states when correctness depends on them.</p><pre tabindex=0><code>herdr agent prompt reviewer \
+  &#34;Review the current diff&#34; \
+  --wait --until done --until idle \
+  --timeout 120000
+</code></pre><h3 id=inspect-and-interact>Inspect and interact</h3><p>Read unwrapped transcript text; use logical keys for approval or UI navigation.</p><pre tabindex=0><code>herdr agent read reviewer \
+  --source recent-unwrapped --lines 120
+
+herdr agent send-keys reviewer esc
+</code></pre><details><summary>Supported managed agent kinds</summary><p><code>pi</code> <code>claude</code> <code>codex</code> <code>gemini</code> <code>cursor</code> <code>devin</code> <code>agy</code> <code>cline</code> <code>omp</code> <code>mastracode</code> <code>opencode</code> <code>copilot</code> <code>kimi</code> <code>kiro</code> <code>droid</code> <code>amp</code> <code>grok</code> <code>hermes</code> <code>kilo</code> <code>qodercli</code> <code>qwen</code> <code>maki</code></p><p>Names must match <code>[a-z][a-z0-9_-]{0,31}</code> and be unique among live agents.</p></details><h2 id=workflows>Copy-paste recipes for real work</h2><p>These cover local development, named sessions, branch isolation, services, reviews, and shutdown.</p><details><summary>Daily local workflow: code, detach, return</summary><pre tabindex=0><code>cd ~/project
+herdr                         # launch/attach default session
+# Run your shell, editor, agent, dev server normally.
+# Detach in the UI: Ctrl+B, then Q
+herdr                         # reattach later
+herdr status                  # inspect server/client state
+herdr server stop             # only when you truly want to end it
+</code></pre></details><details><summary>Named sessions: hard separation between contexts</summary><pre tabindex=0><code>herdr --session work
+herdr --session personal
+
+herdr session list
+herdr session attach work
+herdr session stop work
+herdr session delete work
+</code></pre><p>Use workspaces inside one session for ordinary project separation. Named sessions are useful when you need independent servers or lifecycles.</p></details><details><summary>Parallel branch work with Git worktrees</summary><pre tabindex=0><code>herdr worktree create \
+  --cwd ~/project \
+  --branch feat/api-cache \
+  --base main \
+  --label api-cache \
+  --focus
+
+herdr worktree list --cwd ~/project
+herdr worktree open --cwd ~/project --branch feat/api-cache
+
+# Close Herdr state only:
+herdr workspace close &lt;workspace_id&gt;
+
+# Remove checkout; branch is never deleted:
+herdr worktree remove --workspace &lt;workspace_id&gt;
+</code></pre><p>If Git refuses to remove a dirty checkout, Herdr requires <code>--force</code>. Review uncommitted work first.</p></details><details><summary>Run a service and wait for readiness</summary><pre tabindex=0><code>herdr pane run w1:p3 &#34;npm run dev&#34;
+herdr pane wait-output w1:p3 \
+  --regex &#34;ready|listening|Local:&#34; \
+  --source recent-unwrapped \
+  --timeout 120000
+
+herdr pane read w1:p3 --source recent-unwrapped --lines 80
+</code></pre><p>Use pane output waits for servers, tests, and ordinary commands. Use <code>agent wait</code> for coding agents.</p></details><details><summary>Open a review pane beside the current agent</summary><pre tabindex=0><code>split=$(herdr pane split --current --direction right --no-focus)
+review_pane=$(printf &#39;%s\n&#39; &#34;$split&#34; | jq -r &#39;.result.pane.pane_id&#39;)
+
+herdr agent start reviewer --kind codex --pane &#34;$review_pane&#34;
+herdr agent prompt reviewer &#34;Review the current diff&#34; --wait --timeout 120000
+herdr agent read reviewer --source recent-unwrapped --lines 120
+</code></pre></details><details><summary>Safe shutdown and deletion choices</summary><table><thead><tr><th>Intent</th><th>Action</th><th>What survives</th></tr></thead><tbody><tr><td>Leave UI, keep everything running</td><td><code>prefix+q</code></td><td>Session, layouts, terminals, processes</td></tr><tr><td>Close one terminal</td><td><code>herdr pane close &lt;id></code></td><td>Other panes; target process ends</td></tr><tr><td>Close workspace state</td><td><code>herdr workspace close &lt;id></code></td><td>Repository files; worktree checkout remains</td></tr><tr><td>Stop a named session</td><td><code>herdr session stop &lt;name></code></td><td>Persisted session record may remain</td></tr><tr><td>Delete a session record</td><td><code>herdr session delete &lt;name></code></td><td>Unrelated sessions</td></tr><tr><td>End default server and panes</td><td><code>herdr server stop</code></td><td>Files on disk only</td></tr></tbody></table></details><h2 id=cli>The command map</h2><p>Most commands print JSON for deterministic scripting. CLI misuse exits 2; timeout/server errors emit JSON on stderr and exit 1.</p><details><summary>Launch, status, updates, completion, and API</summary><ul><li><code>herdr</code> — Launch or attach to the default session.</li><li><code>herdr --session work</code> — Launch or attach to a named session.</li><li><code>herdr --remote workbox</code> — Attach through SSH using local keybindings.</li><li><code>herdr --remote workbox --remote-keybindings server</code> — Use the remote server’s keybindings.</li><li><code>herdr --remote workbox --handoff</code> — Opt into supported live server handoff.</li><li><code>herdr --no-session</code> — Single-process escape hatch without persistence.</li><li><code>herdr status [server|client]</code> — Inspect overall, server, or client state.</li><li><code>herdr --default-config</code> — Print the full commented default config.</li><li><code>herdr update [--handoff]</code> — Update direct installs; package-manager installs update there.</li><li><code>herdr channel show|set stable|set preview</code> — Inspect or change direct-install update channel.</li><li><code>herdr completion zsh|bash|fish|powershell|elvish</code> — Print a shell completion script. <code>completions</code> is an alias.</li><li><code>herdr api schema [--json|--output PATH]</code> — Inspect or export the socket protocol schema.</li><li><code>herdr --version</code> — Print installed version.</li></ul></details><details><summary>Server, notifications, and sessions</summary><pre tabindex=0><code>herdr server
+herdr server stop
+herdr server reload-config
+herdr server agent-manifests [--json]
+herdr server update-agent-manifests [--json]
+herdr server reload-agent-manifests
+
+herdr notification show &lt;title&gt; \
+  [--body TEXT] \
+  [--position top-left|top-right|bottom-left|bottom-right] \
+  [--sound none|done|request]
+
+herdr session list [--json]
+herdr session attach &lt;name&gt;
+herdr session stop &lt;name&gt; [--json]
+herdr session delete &lt;name&gt; [--json]
+</code></pre></details><details><summary>Workspaces</summary><pre tabindex=0><code>herdr workspace list
+herdr workspace create [--cwd PATH] [--label TEXT] \
+  [--env KEY=VALUE] [--focus|--no-focus]
+herdr workspace get &lt;workspace_id&gt;
+herdr workspace focus &lt;workspace_id&gt;
+herdr workspace rename &lt;workspace_id&gt; &lt;label&gt;
+herdr workspace report-metadata &lt;workspace_id&gt; --source ID \
+  [--token NAME=VALUE] [--clear-token NAME] \
+  [--seq N] [--ttl-ms N]
+herdr workspace close &lt;workspace_id&gt;
+</code></pre><p>Creation returns workspace, first tab, and root pane IDs in JSON. Creation leaves focus unchanged unless <code>--focus</code> is supplied.</p></details><details><summary>Git worktrees</summary><pre tabindex=0><code>herdr worktree list [--workspace ID | --cwd PATH]
+herdr worktree create [--workspace ID | --cwd PATH] \
+  [--branch NAME] [--base REF] [--path PATH] [--label TEXT] \
+  [--focus|--no-focus]
+herdr worktree open [--workspace ID | --cwd PATH] \
+  (--path PATH | --branch NAME) [--label TEXT] [--focus|--no-focus]
+herdr worktree remove --workspace ID [--force]
+</code></pre><p><code>workspace close</code> only closes Herdr state. <code>worktree remove</code> deletes the checkout through Git but never deletes the branch.</p></details><details><summary>Tabs</summary><pre tabindex=0><code>herdr tab list [--workspace &lt;workspace_id&gt;]
+herdr tab create [--workspace &lt;workspace_id&gt;] [--cwd PATH] \
+  [--label TEXT] [--env KEY=VALUE] [--focus|--no-focus]
+herdr tab get &lt;tab_id&gt;
+herdr tab focus &lt;tab_id&gt;
+herdr tab rename &lt;tab_id&gt; &lt;label&gt;
+herdr tab close &lt;tab_id&gt;
+</code></pre><p>Closing a workspace’s last tab also closes that workspace.</p></details><details><summary>Pane topology and layout</summary><pre tabindex=0><code>herdr pane list [--workspace &lt;workspace_id&gt;]
+herdr pane current [--pane ID|--current]
+herdr pane get &lt;pane_id&gt;
+herdr pane layout [--pane ID|--current]
+herdr pane process-info [--pane ID|--current]
+herdr pane neighbor --direction left|right|up|down [--pane ID|--current]
+herdr pane edges [--pane ID|--current]
+herdr pane focus --direction left|right|up|down [--pane ID|--current]
+herdr pane resize --direction left|right|up|down [--amount FLOAT] [--pane ID|--current]
+herdr pane zoom [&lt;pane_id&gt;|--pane ID|--current] [--toggle|--on|--off]
+herdr pane rename &lt;pane_id&gt; &lt;label&gt;|--clear
+herdr pane input [&lt;pane_id&gt;|--pane ID|--current] --right-click herdr|pane
+herdr pane split [&lt;pane_id&gt;|--pane ID|--current] \
+  --direction right|down [--ratio FLOAT] [--cwd PATH] \
+  [--env KEY=VALUE] [--right-click herdr|pane] [--focus|--no-focus]
+herdr pane swap --direction left|right|up|down [--pane ID|--current]
+herdr pane swap --source-pane ID --target-pane ID
+herdr pane move &lt;pane_id&gt; --tab &lt;tab_id&gt; --split right|down \
+  [--target-pane ID] [--ratio FLOAT] [--focus|--no-focus]
+herdr pane move &lt;pane_id&gt; --new-tab [--workspace ID] [--label TEXT] [--focus|--no-focus]
+herdr pane move &lt;pane_id&gt; --new-workspace [--label TEXT] [--tab-label TEXT] [--focus|--no-focus]
+herdr pane close &lt;pane_id&gt;
+</code></pre><p>Inside Herdr, <code>--current</code> resolves from <code>HERDR_PANE_ID</code>. An omitted split target uses the UI-focused pane.</p></details><details><summary>Pane input, output, and waits</summary><pre tabindex=0><code>herdr pane read &lt;pane_id&gt; \
+  [--source visible|recent|recent-unwrapped|detection] \
+  [--lines N] [--format text|ansi] [--ansi] [--raw]
+
+herdr pane send-text &lt;pane_id&gt; &lt;text&gt;
+herdr pane send-keys &lt;pane_id&gt; &lt;key&gt; [key ...]
+herdr pane run &lt;pane_id&gt; &lt;command&gt;
+
+herdr pane wait-output &lt;pane_id&gt; \
+  (--match &lt;text&gt; | --regex &lt;pattern&gt;) \
+  [--source visible|recent|recent-unwrapped] \
+  [--lines N] [--timeout MS] [--raw]
+</code></pre><table><thead><tr><th>Read source</th><th>Best use</th></tr></thead><tbody><tr><td><code>visible</code></td><td>Current rendered screen; UI feedback loops.</td></tr><tr><td><code>recent</code></td><td>Recent scrollback with terminal wrapping.</td></tr><tr><td><code>recent-unwrapped</code></td><td>Logs, transcripts, and stable text parsing.</td></tr><tr><td><code>detection</code></td><td>Bottom-buffer snapshot used for agent-state detection.</td></tr></tbody></table><p><code>pane run</code> submits a command plus Enter atomically and is preferred over separate text/key sends.</p></details><details><summary>Agents</summary><pre tabindex=0><code>herdr agent list
+herdr agent get &lt;target&gt;
+herdr agent read &lt;target&gt; [--source visible|recent|recent-unwrapped|detection] \
+  [--lines N] [--format text|ansi] [--ansi]
+herdr agent send-keys &lt;target&gt; &lt;key&gt; [key ...]
+herdr agent prompt &lt;target&gt; &lt;text&gt; \
+  [--wait] [--until STATUS]... [--timeout MS]
+herdr agent rename &lt;target&gt; &lt;name&gt;|--clear
+herdr agent focus &lt;target&gt;
+herdr agent wait &lt;target&gt; [--until STATUS]... [--timeout MS]
+herdr agent attach &lt;target&gt; [--takeover]
+herdr agent start &lt;name&gt; --kind KIND --pane ID \
+  [--timeout MS] [-- &lt;agent-args...&gt;]
+herdr agent explain &lt;target&gt; [--json|--verbose]
+herdr agent explain --file PATH --agent LABEL [--json|--verbose]
+</code></pre><p>A target is a unique live agent name or the pane ID hosting it. Bare agent-kind labels are not targets.</p></details><details><summary>Direct terminal attach and streams</summary><pre tabindex=0><code>herdr terminal attach &lt;terminal_id&gt; [--takeover]
+herdr terminal session control &lt;target&gt; [--takeover] [--cols N] [--rows N]
+herdr terminal session observe &lt;target&gt; [--cols N] [--rows N]
+herdr terminal title set &lt;title&gt;
+herdr terminal title clear
+</code></pre><p>Detach from direct attach with <code>ctrl+b q</code>. Send a literal <code>ctrl+b</code> with <code>ctrl+b ctrl+b</code>. Observe streams are read-only; one controller owns writable control at a time.</p></details><details><summary>Integrations</summary><pre tabindex=0><code>herdr integration install &lt;agent&gt;
+herdr integration uninstall &lt;agent&gt;
+herdr integration status [--outdated-only]
+</code></pre><p>Install an integration for improved lifecycle accuracy. Supported install targets include <code>pi</code>, <code>omp</code>, <code>claude</code>, <code>codex</code>, <code>copilot</code>, <code>devin</code>, <code>droid</code>, <code>kimi</code>, <code>opencode</code>, <code>kilo</code>, <code>hermes</code>, <code>qodercli</code>, <code>qwen</code>, <code>cursor</code>, <code>mastracode</code>, and <code>grok</code>.</p></details><h2 id=remote>Run Herdr where the code lives.</h2><p>Choose between a normal remote shell and a local thin client. Both attach to the persistent Herdr server on the remote machine.</p><h3 id=plain-local-work>Plain local work</h3><p><code>Local machine</code></p><pre tabindex=0><code>cd ~/project
+herdr
+</code></pre><p>Best when code, credentials, agents, and terminal are all on one machine.</p><h3 id=normal-ssh-first>Normal SSH first</h3><p><code>SSH / phone</code></p><pre tabindex=0><code>ssh you@server
+herdr
+</code></pre><p>Simplest remote path. Herdr runs entirely on the server. Good for phone and tablet SSH clients.</p><h3 id=attach-from-local-terminal>Attach from local terminal</h3><p><code>Thin client</code></p><pre tabindex=0><code>herdr --remote workbox
+herdr --remote ssh://you@server:2222
+</code></pre><p>Remote agents, local rendering and keybindings. Can bridge local clipboard image paste.</p><table><thead><tr><th>Need</th><th>Use</th><th>Reason</th></tr></thead><tbody><tr><td>Existing SSH habit, phone, simplest setup</td><td><code>ssh host</code>, then <code>herdr</code></td><td>Everything runs remotely; behaves like a traditional multiplexer.</td></tr><tr><td>Remote work that feels local</td><td><code>herdr --remote host</code></td><td>Local thin client streams the remote session and keeps local keybindings.</td></tr><tr><td>Remote server keybindings</td><td><code>--remote-keybindings server</code></td><td>Overrides the default local-keybinding behavior.</td></tr><tr><td>Repeat host/user/port</td><td>SSH config alias</td><td>Use <code>Host workbox</code>, then attach by short name.</td></tr></tbody></table><blockquote><p><strong>SSH:</strong> Detach with <code>prefix+q</code> before ending the connection. A network drop also leaves the remote Herdr server and panes running.</p></blockquote><h2 id=automation>Topology first. Agent second.</h2><p>Herdr separates terminal layout from agent lifecycle. Create a workspace/pane, launch into an available shell, prompt, wait, then read.</p><ol><li><strong>Create topology</strong> — Use <code>workspace create</code>, <code>tab create</code>, and <code>pane split</code>. Capture returned IDs from JSON.</li><li><strong>Start and name an agent</strong> — <code>agent start</code> requires an available interactive shell pane and waits until the expected agent owns it.</li><li><strong>Send a prompt</strong> — <code>agent prompt</code> submits text safely. Add <code>--wait</code> only when you need a settled lifecycle state.</li><li><strong>Wait or react</strong> — Wait for <code>idle</code>, <code>done</code>, or <code>blocked</code>. Use exact <code>--until</code> states for machine decisions.</li><li><strong>Collect evidence</strong> — Read <code>recent-unwrapped</code> output. Reading does not mark unseen background completion as seen.</li></ol><h3 id=complete-orchestration-example>Complete orchestration example</h3><pre tabindex=0><code>created=$(herdr workspace create \
+  --cwd ~/project --label api --no-focus)
+
+pane_id=$(printf &#39;%s\n&#39; &#34;$created&#34; | \
+  jq -r &#39;.result.root_pane.pane_id&#39;)
+
+split=$(herdr pane split &#34;$pane_id&#34; \
+  --direction right --no-focus)
+
+review_pane=$(printf &#39;%s\n&#39; &#34;$split&#34; | \
+  jq -r &#39;.result.pane.pane_id&#39;)
+
+herdr agent start reviewer \
+  --kind codex --pane &#34;$review_pane&#34;
+
+herdr agent prompt reviewer \
+  &#34;Review the current diff&#34; \
+  --wait --timeout 120000
+
+herdr agent read reviewer \
+  --source recent-unwrapped --lines 120
+</code></pre><h3 id=choose-the-correct-primitive>Choose the correct primitive</h3><table><thead><tr><th>Goal</th><th>Command</th></tr></thead><tbody><tr><td>Submit shell command</td><td><code>pane run</code></td></tr><tr><td>Wait for server/test text</td><td><code>pane wait-output</code></td></tr><tr><td>Submit agent turn</td><td><code>agent prompt</code></td></tr><tr><td>Wait for lifecycle state</td><td><code>agent wait</code></td></tr><tr><td>Interact with terminal UI</td><td><code>agent send-keys</code></td></tr><tr><td>Read stable log text</td><td><code>agent read --source recent-unwrapped</code></td></tr><tr><td>Watch raw terminal stream</td><td><code>terminal session observe</code></td></tr></tbody></table><blockquote><p><strong>!:</strong> <code>agent prompt --wait</code> tracks lifecycle, not a unique turn ID. If the agent is already working, completion of that active work can satisfy the wait.</p></blockquote><h2 id=config>Change behavior without changing the model.</h2><p>Herdr works without a config file. Add one for custom keys, shell behavior, remote policy, themes, sidebar, notifications, and metadata.</p><h3 id=config-locations>Config locations</h3><pre tabindex=0><code># Linux and macOS
+~/.config/herdr/config.toml
+
+# Windows
+%APPDATA%\herdr\config.toml
+</code></pre><pre tabindex=0><code>herdr --default-config
+herdr server reload-config
+</code></pre><h3 id=useful-environment-variables>Useful environment variables</h3><table><thead><tr><th><code>HERDR_CONFIG_PATH</code></th><th>Override config path.</th></tr></thead><tbody><tr><td><code>HERDR_SESSION</code></td><td>Select session for CLI calls.</td></tr><tr><td><code>HERDR_PANE_ID</code></td><td>Current managed pane.</td></tr><tr><td><code>HERDR_TAB_ID</code></td><td>Current tab.</td></tr><tr><td><code>HERDR_WORKSPACE_ID</code></td><td>Current workspace.</td></tr><tr><td><code>HERDR_LOG</code></td><td>Log filter, e.g. <code>herdr=debug</code>.</td></tr><tr><td><code>HERDR_DISABLE_SOUND</code></td><td>Disable all sound playback.</td></tr></tbody></table><details><summary>A practical starter config</summary><pre tabindex=0><code>onboarding = false
+
+[terminal]
+shell_mode = &#34;auto&#34;
+new_cwd = &#34;follow&#34;
+
+[worktrees]
+directory = &#34;~/.herdr/worktrees&#34;
+
+[remote]
+manage_ssh_config = true
+
+[keys]
+prefix = &#34;ctrl+b&#34;
+help = &#34;prefix+?&#34;
+new_tab = &#34;prefix+c&#34;
+next_tab = &#34;prefix+n&#34;
+previous_tab = &#34;prefix+p&#34;
+focus_pane_left = [&#34;prefix+h&#34;, &#34;ctrl+alt+h&#34;]
+focus_pane_down = [&#34;prefix+j&#34;, &#34;ctrl+alt+j&#34;]
+focus_pane_up = [&#34;prefix+k&#34;, &#34;ctrl+alt+k&#34;]
+focus_pane_right = [&#34;prefix+l&#34;, &#34;ctrl+alt+l&#34;]
+split_vertical = [&#34;prefix+v&#34;, &#34;ctrl+alt+d&#34;]
+split_horizontal = [&#34;prefix+minus&#34;, &#34;ctrl+alt+shift+d&#34;]
+zoom = [&#34;prefix+z&#34;, &#34;ctrl+alt+z&#34;]
+</code></pre><p>Direct <code>ctrl+alt</code> chords are broadly terminal-safe, but check operating-system and terminal bindings. Keep the prefix alternatives until the direct map is proven.</p></details><details><summary>Shell completions</summary><pre tabindex=0><code># Temporary zsh completion
+source &lt;(herdr completion zsh)
+
+# Persistent zsh completion
+mkdir -p ~/.zfunc
+herdr completion zsh &gt; ~/.zfunc/_herdr
+
+# Add before compinit in ~/.zshrc:
+fpath=(~/.zfunc $fpath)
+autoload -Uz compinit
+compinit
+</code></pre></details><details><summary>Reset old custom keys to current defaults</summary><pre tabindex=0><code>herdr config reset-keys
+herdr server reload-config
+</code></pre><p>Herdr backs up <code>config.toml</code>, removes custom key tables, and returns to built-in v2 defaults.</p></details><details><summary>What's new in 0.8.2</summary><p>This guide reflects the latest stable release (v0.8.2). Notable additions: <code>ui.window_title</code> keeps the outer terminal window title in sync with the active workspace and host; optional <code>keys.move_tab_previous</code> / <code>keys.move_tab_next</code> reorder the active tab; and the desktop tab bar accepts configurable right-aligned status entries. Qwen Code detection was also added. Exact syntax lives in <code>herdr --default-config</code>.</p></details><h2 id=plugins>Package repeatable terminal workflows.</h2><p>Plugins are trusted local executables described by a manifest. They can expose actions, event hooks, managed panes, link handlers, and logs.</p><h3 id=install-and-manage>Install and manage</h3><pre tabindex=0><code>herdr plugin install owner/repo[/subdir] [--ref REF] [--yes]
+herdr plugin list [--plugin ID] [--json]
+herdr plugin enable &lt;plugin_id&gt;
+herdr plugin disable &lt;plugin_id&gt;
+herdr plugin uninstall &lt;plugin_id|owner/repo/subdir&gt;
+</code></pre><p>Install accepts GitHub shorthand only and shows a trust preview in interactive terminals.</p><h3 id=local-development>Local development</h3><pre tabindex=0><code>herdr plugin link &lt;path&gt; [--disabled]
+herdr plugin unlink &lt;plugin_id&gt;
+herdr plugin config-dir &lt;plugin_id&gt;
+</code></pre><p>Link a directory containing <code>herdr-plugin.toml</code> or a direct manifest path. Unlink leaves source files untouched.</p><h3 id=actions-and-logs>Actions and logs</h3><pre tabindex=0><code>herdr plugin action list [--plugin ID]
+herdr plugin action invoke &lt;action_id&gt; [--plugin ID]
+herdr plugin log list [--plugin ID] [--limit N]
+</code></pre><h3 id=managed-terminal-panes>Managed terminal panes</h3><pre tabindex=0><code>herdr plugin pane open \
+  --plugin ID --entrypoint ID \
+  [--placement overlay|popup|split|tab|zoomed] \
+  [--width SIZE] [--height SIZE] \
+  [--workspace ID] [--target-pane PANE] \
+  [--direction right|down] [--cwd PATH] \
+  [--env KEY=VALUE] [--focus|--no-focus]
+
+herdr plugin pane focus &lt;pane_id&gt;
+herdr plugin pane close &lt;pane_id&gt;
+</code></pre><h2 id=troubleshooting>Fast diagnosis</h2><p>Start with state, then inspect the exact pane or agent. Avoid restarting the server until you know a reload cannot solve it.</p><details><summary>“My agent disappeared when I closed the terminal.”</summary><p>Run <code>herdr</code> again. Closing the client normally leaves the background server alive. If the session is absent, check <code>herdr status server</code> and <code>herdr session list</code>. <code>--no-session</code> is intentionally non-persistent.</p></details><details><summary>“A shortcut types into my shell instead.”</summary><p>Prefix bindings are sequential: <kbd>Ctrl</kbd>+<kbd>B</kbd>, release, then the action key. Open <code>prefix+?</code> to inspect the active map. If a direct chord fails, the OS or outer terminal may consume it before Herdr sees it.</p></details><details><summary>“Agent state is wrong or unknown.”</summary><pre tabindex=0><code>herdr integration status --outdated-only
+herdr server agent-manifests --json
+herdr server update-agent-manifests --json
+herdr agent explain &lt;target&gt; --verbose
+</code></pre><p>Install the official integration for that agent when available. Use <code>agent explain</code> to inspect the rule and evidence that produced the state.</p></details><details><summary>“A config edit had no effect.”</summary><pre tabindex=0><code>herdr server reload-config
+</code></pre><p>Most UI settings reload live; startup-only settings require a session restart. Invalid values fall back safely and produce a startup warning.</p></details><details><summary>“A command targeted the wrong pane.”</summary><p>Use explicit IDs in scripts. Inside a Herdr-managed pane, <code>--current</code> resolves through <code>HERDR_PANE_ID</code>. Omitting a target can use the UI-focused pane, which is convenient interactively but fragile in automation.</p></details><details><summary>“Worktree removal refuses.”</summary><p>Git found modified or untracked files. Inspect them before using <code>herdr worktree remove --workspace ID --force</code>. Removal deletes the checkout, never the branch.</p></details><details><summary>“Remote attach cannot use my local clipboard image.”</summary><p>If you SSH first and run Herdr remotely, the process cannot access your local desktop clipboard. Use <code>herdr --remote host</code> so a local thin client can bridge image paste.</p></details><details><summary>“I updated but the version did not change.”</summary><p><code>herdr update</code> only applies to direct installs made with the shell installer. Homebrew, mise, and Nix installs update through their own package manager. Check the channel with <code>herdr channel show</code> and the installed build with <code>herdr --version</code>.</p></details><details><summary>“I cannot stop or delete the default session.”</summary><p>Pass the literal name <code>default</code>: <code>herdr session stop default</code> or <code>herdr session delete default</code>. Bare <code>herdr</code> attaches to the default session, but the stop and delete verbs need an explicit name.</p></details><details><summary>“agent prompt --wait returned before my prompt finished.”</summary><p><code>--wait</code> watches lifecycle state, not a unique turn. If the agent was already working, that active work can satisfy the wait. Use exact <code>--until</code> states plus a <code>--timeout</code>, then confirm the result with <code>agent read</code> rather than trusting the wait alone.</p></details></div></article></div><footer class=foot><span>slop-stuff</span>
+<span class=muted>served under <code>makefunstuff.github.io/slop-stuff/&lt;folder>/</code></span>
+<a href=https://makefunstuff.github.io/slop-stuff/links/>links</a>
+<a href=https://github.com/makefunstuff/slop-stuff>repo</a></footer><script src=https://makefunstuff.github.io/slop-stuff/js/wiki.js defer></script></body></html>

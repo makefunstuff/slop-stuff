@@ -1,0 +1,117 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Data-Oriented Design — slop-stuff</title><meta name=description content="Cache-friendly SoA vs AoS, data locality, ECS, and layout patterns."><link rel=canonical href=https://makefunstuff.github.io/slop-stuff/dop/><link rel=stylesheet href=https://makefunstuff.github.io/slop-stuff/css/wiki.css><script>(function(){var t="slop-theme",e=localStorage.getItem(t);e||(e=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"),document.documentElement.setAttribute("data-theme",e)})()</script></head><body><header class=bar><a class=brand href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a>
+<span class="muted hide-narrow">cheatsheets & experiments</span><form class=seek role=search action=https://makefunstuff.github.io/slop-stuff/ method=get><input id=q type=search name=q placeholder="search guides…" autocomplete=off aria-label="Search guides"><div id=hits class=hits hidden></div></form><button type=button class=icon id=theme title="Toggle theme" aria-label="Toggle theme">◐</button>
+<a class=icon href=https://github.com/makefunstuff/slop-stuff rel=noreferrer>git</a></header><div class="wrap wrap-guide"><aside class=toc aria-label="On this page"><p class=toc-label>on this page</p><nav id=TableOfContents><ul><li><a href=#quickref>Quick reference</a></li><li><a href=#start>The mindset</a></li><li><a href=#soa>SoA vs AoS</a></li><li><a href=#locality>Cache & locality</a></li><li><a href=#entities>Entities & components</a></li><li><a href=#layout>Data layout patterns</a></li><li><a href=#transform>Transformation & batching</a></li><li><a href=#gotchas>Pitfalls</a></li></ul></nav></aside><article class=doc><p class=crumb><a href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a> / Systems & CS</p><h1>Data-Oriented Design</h1><p class=lede>Design for the cache, not the objects.</p><p class="muted sub">Cache-friendly SoA vs AoS, data locality, ECS, and layout patterns.</p><p class=tags><span>systems</span><span>SoA</span><span>cache</span><span>ECS</span></p><div class=body><p>Data-oriented design (DOD) optimizes around how the CPU actually reads memory: keep the fields you touch together, in the order you touch them. It&rsquo;s how fast games and simulations stay fast at scale.</p><h2 id=quickref>Quick reference</h2><p>The moves you reach for most — the layout decision, the cache line, and the swaps that matter. One line each.</p><ul><li><code>SoA vs AoS</code> — split by <em>field</em> (SoA) when a loop reads a subset; keep whole records together (AoS) when each is consumed entirely.</li><li><code>cache line</code> — 64 B on x86/ARM, 128 B on Apple Silicon — touching one byte pulls the whole line.</li><li><code>locality</code> — walk arrays forward (stride-1) so the hardware prefetcher runs ahead; avoid pointer chasing in hot loops.</li><li><code>hot / cold split</code> — <code>struct UnitHot { x,y,hp };</code> + <code>struct UnitCold { name[32] };</code> — keep cold fields out of the hot loop.</li><li><code>ECS</code> — Entity = id, Component = plain data in arrays, System = loop over those arrays.</li><li><code>indices > pointers</code> — <code>uint32_t index</code> (or id + generation) instead of <code>Node*</code> — dense arrays, no dangling handles.</li><li><code>false sharing</code> — pad per-thread counters to their own line with <code>alignas(64)</code>.</li><li><code>measure first</code> — <code>perf stat -e cache-misses,cache-references ./prog</code> — restructure the one hot loop, not the other 99%.</li></ul><h2 id=start>The mindset</h2><p>Every memory read you make goes through a hierarchy of caches. The further down you go, the more cycles you pay — so <strong>data layout</strong>, not the number of instructions, usually decides how fast your loop runs.</p><h3 id=1-l1-cache>1. L1 cache</h3><p>≈4 cycles · ~1 ns. 32–64 KB, per core. Touching it is nearly free.</p><h3 id=2-l2-cache>2. L2 cache</h3><p>≈12 cycles · ~4 ns. 256 KB–1 MB, per core.</p><h3 id=3-l3-cache>3. L3 cache</h3><p>≈40 cycles · ~12 ns. 4–32 MB, shared across cores.</p><h3 id=4-main-ram>4. Main RAM</h3><p>≈200–400 cycles · ~60–100 ns. Gigabytes. A miss here stalls everything.</p><ol><li><strong>Decide the data</strong> — List the fields and how often each is read vs written.</li><li><strong>Group by access</strong> — Separate hot (every frame) from cold (rarely used) fields.</li><li><strong>Lay out contiguously</strong> — Store each group in packed, parallel arrays — SoA where it helps.</li></ol><h3 id=instructions-are-cheap>Instructions are cheap</h3><p>A modern CPU retires several instructions per cycle, but one RAM miss stalls for hundreds of cycles. You can often trade a dozen instructions to save a single miss and still come out ahead.</p><h3 id=the-dod-checklist>The DOD checklist</h3><pre tabindex=0><code>1. what data?        → list fields + access
+2. how is it read?   → hot vs cold, seq vs random
+3. where does it go? → pack, split, align
+</code></pre><blockquote><p><strong>KEY:</strong> <strong>Think data first, objects second.</strong> Start from the data you process and the order you touch it, then shape the code around that. A &ldquo;clean&rdquo; object model that jumps around memory can be orders of magnitude slower than a flat array a cache line at a time.</p></blockquote><h2 id=soa>SoA vs AoS</h2><p>Array of structs interleaves every field of one object; struct of arrays keeps each field in its own contiguous array. Split by <em>access pattern</em>, not by object.</p><h3 id=array-of-structs-aos>Array of structs (AoS)</h3><pre tabindex=0><code>struct Particle {          // interleaved
+  float x, y, z;
+  float vx, vy, vz;
+  float mass;
+};
+Particle p[N];             // xyz vxvyvz m xyz …
+// update x only → still drags y,z,vx… in
+</code></pre><h3 id=struct-of-arrays-soa>Struct of arrays (SoA)</h3><pre tabindex=0><code>struct Particles {         // split by field
+  float* x,  *y,  *z;
+  float* vx, *vy, *vz;
+  float* mass;
+};
+// update x only → touches x[] alone
+for (int i = 0; i &lt; N; ++i)
+  x[i] += vx[i] * dt;
+</code></pre><p><strong>x[0..N]</strong> (all x values) → <strong>y[0..N]</strong> (all y values) → <strong>z[0..N]</strong> (all z values)</p><blockquote><p><strong>✓:</strong> <strong>When each wins.</strong> <strong>SoA</strong>: the hot loop reads a <em>subset</em> of fields, and you want SIMD/vectorization — every byte of a cache line is a field you actually use. <strong>AoS</strong>: a record is always consumed whole and fits in one cache line, or you need random access to single records.</p></blockquote><details><summary>Hot/cold splitting — the classic example</summary><h4 id=before-aos-cold-dragged-in>Before (AoS, cold dragged in)</h4><pre tabindex=0><code>struct Unit {
+  float x, y;           // hot: every frame
+  char  name[32];       // cold: read rarely
+  int   hp;             // hot
+};
+// moving a unit pulls 40+ bytes of
+// name[] into cache you never read
+</code></pre><h4 id=after-hotcold-split>After (hot/cold split)</h4><pre tabindex=0><code>struct UnitHot  { float x, y; int hp; };
+struct UnitCold { char name[32]; };
+
+UnitHot  hot[N];        // tight, all hot
+UnitCold cold[N];       // touched only when needed
+</code></pre></details><h2 id=locality>Cache & locality</h2><p>The CPU moves memory in fixed-size <strong>cache lines</strong> — 64 bytes on x86 and most ARM cores, 128 bytes on Apple Silicon (M-series). Sequential access is cheap because hardware prefetchers run ahead; pointer chasing defeats them.</p><table><thead><tr><th>Concept</th><th>Rule of thumb</th></tr></thead><tbody><tr><td><code>cache line</code></td><td>64 bytes (x86/ARM), 128 on Apple Silicon — touching one byte pulls the whole line.</td></tr><tr><td><code>sequential</code></td><td>Walk arrays forward (stride-1); the prefetcher reads ahead.</td></tr><tr><td><code>prefetch</code></td><td><code>__builtin_prefetch(p)</code> hides latency for data you&rsquo;ll need soon.</td></tr><tr><td><code>pointer chasing</code></td><td>Linked lists / trees jump to a new cache line every hop.</td></tr><tr><td><code>data locality</code></td><td>Group data touched together so one line serves many accesses.</td></tr><tr><td><code>instruction locality</code></td><td>Hot loops stay in the I-cache; cold code paths cost I-misses.</td></tr></tbody></table><h3 id=sequential-access>Sequential access</h3><pre tabindex=0><code>// cache-friendly: stride-1, forward
+float sum = 0;
+for (int i = 0; i &lt; N; ++i)
+  sum += a[i];          // prefetcher runs ahead
+</code></pre><h3 id=pointer-chasing>Pointer chasing</h3><pre tabindex=0><code>// cache-hostile: one miss per hop
+for (Node* n = head; n; n = n-&gt;next)
+  sum += n-&gt;value;      // node may live anywhere
+</code></pre><blockquote><p><strong>!:</strong> <strong>A linked list is a cache miss generator.</strong> In a hot loop, prefer a packed array and an integer index over a <code>next</code> pointer. Reserve pointer-chasing structures for cold, rarely-traversed data.</p></blockquote><details><summary>Prefetching & stream processing</summary><p>Hardware prefetchers handle stride-1 access automatically; software prefetch helps for strided or irregular access you can predict in advance.</p><pre tabindex=0><code>// strided access the HW prefetcher may miss
+for (int i = 0; i &lt; N; i += STRIDE) {
+  __builtin_prefetch(&amp;a[i + STRIDE]);
+  sum += a[i];
+}
+</code></pre></details><h2 id=entities>Entities & components</h2><p>Entity-Component-System (ECS) is DOD applied to game objects: entities are ids, components are plain data in contiguous arrays, and systems are code that loops over those arrays.</p><h3 id=the-ecs-split>The ECS split</h3><ul><li><code>Entity</code> — an id / handle — no data, no methods.</li><li><code>Component</code> — plain old data, stored in arrays.</li><li><code>System</code> — a function that iterates components.</li><li><code>Archetype</code> — a group sharing the same component set.</li></ul><h3 id=contiguous-components>Contiguous components</h3><pre tabindex=0><code>struct Transform { float x, y, z; };
+struct Velocity  { float vx, vy, vz; };
+
+Transform pos[MAX_N];    // parallel arrays,
+Velocity vel[MAX_N];     // one entity per index
+
+for (uint32_t e = 0; e &lt; count; ++e)
+  pos[e].x += vel[e].vx * dt;
+</code></pre><blockquote><p><strong>KEY:</strong> <strong>Indices and handles, not pointers.</strong> A handle is an <code>index</code> plus a <code>generation</code> counter: <code>id = index | (gen &lt;&lt; 24)</code>. The generation detects stale handles after a slot is recycled — so a dead entity can never dangle a pointer into a reused slot.</p></blockquote><ol><li><strong>Input</strong> — Read player/network input into a small packed buffer.</li><li><strong>Simulate</strong> — Systems loop component arrays in dependency order.</li><li><strong>Render</strong> — Copy only visible transforms into a draw buffer.</li></ol><details><summary>Iteration order matters</summary><p>Walk component arrays in memory order (index <code>0 → N</code>), and swap-remove dead entities so the live set stays dense and prefix-packed — no holes for the prefetcher to skip over.</p><pre tabindex=0><code>// swap-remove keeps arrays dense (no holes)
+void remove(uint32_t i) {
+  uint32_t last = --count;
+  pos[i] = pos[last];
+  vel[i] = vel[last];
+  // backref[last] = i  — update moved id
+}
+</code></pre></details><h2 id=layout>Data layout patterns</h2><p>The same logical data can sit in memory many ways. Each pattern trades flexibility for cache behavior — pick by how the data is read.</p><ul><li><code>packed array</code> — contiguous values, no per-element heap alloc — the default win.</li><li><code>interleaved (AoS)</code> — related fields of one record together — access the whole record.</li><li><code>columnar (SoA)</code> — one field per array — hot loop touches only what it needs.</li><li><code>hot / cold split</code> — frequently-used fields together, rarely-used fields elsewhere.</li><li><code>bitfield / bitset</code> — pack many booleans into one word — dense flags, branch-free tests.</li><li><code>alignment</code> — <code>alignas(16/32/64)</code> so SIMD loads don&rsquo;t straddle lines.</li></ul><h3 id=hot--cold-split>Hot / cold split</h3><pre tabindex=0><code>struct Unit {
+  float x, y;           // hot: read every frame
+  char  name[32];       // cold: read rarely
+};
+// split them apart:
+float pos_x[N], pos_y[N];
+char  name[N][32];      // kept out of the hot loop
+</code></pre><h3 id=alignment--bitfields>Alignment & bitfields</h3><pre tabindex=0><code>alignas(32) float x[N]; // 32-byte SIMD loads
+uint32_t flags[N];      // 32 bools in one word
+#define IS_ALIVE (1u &lt;&lt; 0)
+#define IS_DIRTY (1u &lt;&lt; 1)
+if (flags[e] &amp; IS_ALIVE) { /* … */ }
+</code></pre><details><summary>Choosing a layout</summary><p>Ask two questions: which fields does the hot loop touch, and is access sequential or random?</p><table><thead><tr><th>Access pattern</th><th>Layout</th></tr></thead><tbody><tr><td>Hot loop reads a subset of fields</td><td>SoA / columnar</td></tr><tr><td>Record is always consumed whole</td><td>AoS / interleaved</td></tr><tr><td>Random lookup by id</td><td>packed array + index</td></tr><tr><td>Many booleans per entity</td><td>bitset / bitfield</td></tr><tr><td>SIMD math over one field</td><td>SoA + <code>alignas(16/32)</code></td></tr></tbody></table></details><h2 id=transform>Transformation & batching</h2><p>Process data in batches over homogeneous arrays. Run one loop per data stream, keep updates in place, and avoid per-object virtual calls and branches.</p><h3 id=per-object-virtual-slow>Per-object virtual (slow)</h3><pre tabindex=0><code>// vtable lookup + branch per object,
+// plus a cache miss on each object
+for (auto* e : objects)
+  e-&gt;update(dt);
+</code></pre><h3 id=batched-transform-fast>Batched transform (fast)</h3><pre tabindex=0><code>// one loop per component stream
+for (int i = 0; i &lt; N; ++i)
+  pos[i] += vel[i] * dt;
+for (int i = 0; i &lt; N; ++i)
+  health[i] -= damage[i];
+</code></pre><h3 id=minimize-branches>Minimize branches</h3><pre tabindex=0><code>// branchy: a different path per element
+for (int i = 0; i &lt; N; ++i)
+  if (type[i] == UNIT)  update_unit(i);
+  else if (type[i] == TOWER) update_tower(i);
+
+// branch-free: bucket by type first,
+// then one loop per bucket
+</code></pre><h3 id=in-place-updates>In-place updates</h3><pre tabindex=0><code>// mutate the same array instead of
+// allocating a new one each frame
+for (int i = 0; i &lt; N; ++i)
+  pos[i].x += vel[i].vx * dt;
+// reuse buffers across frames — no
+// malloc/free in the hot path
+</code></pre><blockquote><p><strong>✓:</strong> <strong>Separate your transforms.</strong> Split logic into systems that each touch the fewest fields possible (<code>move</code>, <code>damage</code>, <code>render</code>). A system that only needs position should never load <code>name</code> or <code>texture</code> into cache.</p></blockquote><ol><li><strong>Bucket</strong> — Sort/partition entities by type so each batch is homogeneous.</li><li><strong>Transform</strong> — Run one straight-line loop over each bucket&rsquo;s arrays.</li><li><strong>Commit</strong> — Write results back in place; reuse buffers next frame.</li></ol><h2 id=gotchas>Pitfalls</h2><p>The ways DOD goes wrong: optimizing before measuring, chasing pointers in hot loops, false sharing, and abstractions that quietly wreck locality.</p><h3 id=premature-optimization>Premature optimization</h3><p>Rewriting to SoA before you&rsquo;ve measured is guesswork. Profile first, then restructure the one hot loop.</p><pre tabindex=0><code>perf stat -e cache-misses,       \
+          cache-references ./prog
+# misses/references &gt; a few %?
+#   → investigate your layout
+</code></pre><h3 id=pointer-chasing-1>Pointer chasing</h3><p>Linked lists, trees, and graphs hop to a new cache line per step. In hot paths, replace them with arrays + indices.</p><pre tabindex=0><code>// slow: Node* next, one miss per hop
+// fast: uint32_t next[MAX_N];  // index
+</code></pre><h3 id=false-sharing>False sharing</h3><p>Two cores writing different variables in the same cache line ping-pong the line between their caches — it reads as contention but is just bad placement.</p><pre tabindex=0><code>// fix: pad each to its own line (C++17 portable)
+alignas(std::hardware_destructive_interference_size) int a;
+alignas(std::hardware_destructive_interference_size) int b;
+// thread 1: a++   thread 2: b++
+// line = 64 B on x86, 128 B on Apple Silicon
+</code></pre><h3 id=pointer-instability>Pointer instability</h3><p>Pointers/references into a <code>std::vector</code> dangle the moment it reallocates (or swap-removes). Indices and id+generation handles stay valid across growth.</p><pre tabindex=0><code>// bad: T* p = &amp;v[i];  // invalid after push_back
+// good: uint32_t id = i;  // index survives growth
+//       v[id]  — re-resolve each use
+</code></pre><h3 id=over-engineering>Over-engineering</h3><p>A flat packed array usually beats a clever hierarchy of interfaces. Don&rsquo;t build an ECS for ten objects — a <code>std::vector&lt;T></code> is the right call until profiling says otherwise.</p><h3 id=readability-vs-speed>Readability vs speed</h3><p>Write the simple, readable version first. Measure, then optimize only the loop that shows up. Keep the optimized part small and documented.</p><pre tabindex=0><code>// clear code that&#39;s 90% as fast
+// beats unreadable code that&#39;s 100%
+for (auto&amp; p : particles) p.move(dt);
+</code></pre><h3 id=cache-unfriendly-abstractions>Cache-unfriendly abstractions</h3><p><code>std::vector&lt;Base*></code> plus virtual methods is pointer chasing plus a branch per call — the opposite of DOD.</p><pre tabindex=0><code>// bad: vector&lt;Base*&gt; + e-&gt;update()
+// good: vector&lt;T&gt; + one loop per T
+//   (or a tag + switch on the batch)
+</code></pre><blockquote><p><strong>!:</strong> <strong>Measure before you restructure.</strong> <code>perf stat</code>, <code>cachegrind</code>, or your profiler will name the actual hot loop. Data-oriented rewrites pay off on the 1% of code that dominates runtime — not on the other 99%.</p></blockquote></div></article></div><footer class=foot><span>slop-stuff</span>
+<span class=muted>served under <code>makefunstuff.github.io/slop-stuff/&lt;folder>/</code></span>
+<a href=https://makefunstuff.github.io/slop-stuff/links/>links</a>
+<a href=https://github.com/makefunstuff/slop-stuff>repo</a></footer><script src=https://makefunstuff.github.io/slop-stuff/js/wiki.js defer></script></body></html>

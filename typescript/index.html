@@ -1,0 +1,314 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>TypeScript — slop-stuff</title><meta name=description content="Types, interfaces, generics, narrowing, and utility types."><link rel=canonical href=https://makefunstuff.github.io/slop-stuff/typescript/><link rel=stylesheet href=https://makefunstuff.github.io/slop-stuff/css/wiki.css><script>(function(){var t="slop-theme",e=localStorage.getItem(t);e||(e=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"),document.documentElement.setAttribute("data-theme",e)})()</script></head><body><header class=bar><a class=brand href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a>
+<span class="muted hide-narrow">cheatsheets & experiments</span><form class=seek role=search action=https://makefunstuff.github.io/slop-stuff/ method=get><input id=q type=search name=q placeholder="search guides…" autocomplete=off aria-label="Search guides"><div id=hits class=hits hidden></div></form><button type=button class=icon id=theme title="Toggle theme" aria-label="Toggle theme">◐</button>
+<a class=icon href=https://github.com/makefunstuff/slop-stuff rel=noreferrer>git</a></header><div class="wrap wrap-guide"><aside class=toc aria-label="On this page"><p class=toc-label>on this page</p><nav id=TableOfContents><ul><li><a href=#quickref>Quick reference</a></li><li><a href=#start>Setup & compile</a></li><li><a href=#primitives>Types & annotations</a></li><li><a href=#interfaces>Interfaces & type aliases</a></li><li><a href=#functions>Functions & generics</a></li><li><a href=#classes>Classes & objects</a></li><li><a href=#narrowing>Narrowing & type guards</a></li><li><a href=#utilities>Utility & mapped types</a></li><li><a href=#tooling>Tooling & config</a></li></ul></nav></aside><article class=doc><p class=crumb><a href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a> / Languages</p><h1>TypeScript</h1><p class=lede>Types that catch bugs early.</p><p class="muted sub">Types, interfaces, generics, narrowing, and utility types.</p><p class=tags><span>language</span><span>generic</span><span>narrowing</span><span>utility</span></p><div class=body><p>TypeScript is JavaScript with types: annotate once and the compiler catches whole classes of bugs before they ship. This is the daily surface — types, interfaces, generics, narrowing, and the tooling around <code>tsc</code>.</p><h2 id=quickref>Quick reference</h2><p>The daily surface on one screen: the commands, type operators, and built-ins you reach for constantly. Everything here is expanded in the sections below.</p><ul><li><code>tsc --noEmit</code> — type-check only — emit no JavaScript</li><li><code>interface User { name: string }</code> — object shape (mergeable); <code>type</code> also covers unions & tuples</li><li><code>function f&lt;T>(x: T): T { return x }</code> — generic — <code>T</code> is inferred from the call</li><li><code>type Id = string | number</code> — union type; literals give <code>"on" | "off"</code></li><li><code>if (typeof x === "string") …</code> — narrow a union — also <code>instanceof</code> and <code>"k" in obj</code></li><li><code>Partial&lt;T> · Pick&lt;T, K> · Omit&lt;T, K></code> — built-in utility types for reshaping objects</li><li><code>const x = { a: 1 } as const</code> — deep readonly + literal types preserved</li><li><code>const c = { … } satisfies Config</code> — check against a type without widening</li><li><code>keyof T · T[K]</code> — key union + indexed access — the mapped-type machinery</li><li><code>function id&lt;const T>(x: T): T</code> — const type parameter (TS 5.8) — keeps literal types</li></ul><h2 id=start>Setup & compile</h2><p><code>tsc</code> checks your types and emits plain JavaScript. A single <code>tsconfig.json</code> drives every flag and file.</p><h3 id=1-install>1. Install</h3><pre tabindex=0><code>npm i -g typescript    # global CLI
+tsc --version          # → Version 5.x.x
+# or project-local:
+npm i -D typescript
+</code></pre><h3 id=2-compile-a-file>2. Compile a file</h3><pre tabindex=0><code>tsc app.ts          # → app.js
+tsc src/*.ts        # compile a set
+tsc --watch         # recompile on save
+</code></pre><h3 id=3-init--config>3. Init & config</h3><pre tabindex=0><code>tsc --init          # write tsconfig.json
+tsc -p tsconfig.json
+tsc --noEmit        # type-check only
+tsc --strict        # full strictness
+</code></pre><h3 id=4-run-node--bun>4. Run (node / bun)</h3><pre tabindex=0><code>tsc app.ts &amp;&amp; node app.js
+npx tsx app.ts      # run TS directly
+bun run app.ts      # bun runs TS natively
+</code></pre><ol><li><strong>Write</strong> — <code>app.ts</code> — annotated source.</li><li><strong>Type-check</strong> — <code>tsc --noEmit</code> — find errors.</li><li><strong>Transpile</strong> — <code>tsc</code> — strip types, emit <code>.js</code>.</li><li><strong>Run</strong> — <code>node app.js</code> or <code>bun app.ts</code>.</li></ol><blockquote><p><strong>KEY:</strong> <strong>Type-check ≠ build.</strong> <code>tsc</code> both checks and emits JavaScript; <code>tsc --noEmit</code> checks only. <code>--strict</code> turns on the whole strictness family at once (and is on by default in the generated <code>tsconfig.json</code>).</p></blockquote><h2 id=primitives>Types & annotations</h2><p>The building blocks: primitives, arrays, tuples, and the operators that combine them.</p><h3 id=primitives--annotations>Primitives & annotations</h3><pre tabindex=0><code>let age: number = 36;
+let name: string = &#34;Ada&#34;;
+let ok: boolean = true;
+let big: bigint = 100n;
+let none: null = null;
+let undef: undefined = undefined;
+let sym: symbol = Symbol(&#34;id&#34;);
+</code></pre><h3 id=arrays--tuples>Arrays & tuples</h3><pre tabindex=0><code>let nums: number[] = [1, 2, 3];
+let names: Array&lt;string&gt; = [&#34;a&#34;, &#34;b&#34;];
+let pair: [string, number] = [&#34;Ada&#34;, 36];
+let ro: readonly string[] = [&#34;x&#34;];
+
+// array of objects
+let users: { id: number }[] = [];
+</code></pre><h3 id=union--intersection>Union & intersection</h3><pre tabindex=0><code>let id: string | number = &#34;u1&#34;;
+let maybe: string | null = null;
+
+type Draggable = { drag(): void };
+type Resizable = { resize(): void };
+type Widget = Draggable &amp; Resizable;
+// has BOTH drag() and resize()
+</code></pre><h3 id=literal-types--aliases>Literal types & aliases</h3><pre tabindex=0><code>type Mode = &#34;on&#34; | &#34;off&#34;;
+type Status = &#34;idle&#34; | &#34;loading&#34; | &#34;done&#34;;
+type ID = string | number;
+type Point = { x: number; y: number };
+
+let mode: Mode = &#34;on&#34;;   // ✓
+// mode = &#34;maybe&#34;;       // ✗ error
+</code></pre><h3 id=unknown-vs-any-vs-never>unknown vs any vs never</h3><pre tabindex=0><code>let a: any = risky();     // opts out of checking
+a.nope().still.fine();     // no error — dangerous
+
+let u: unknown = risky();  // safe: must narrow
+if (typeof u === &#34;string&#34;) console.log(u.length);
+
+function fail(): never { throw new Error(&#34;boom&#34;); }
+</code></pre><p><code>any = opt out of checking</code> <code>unknown = safe, narrow before use</code> <code>never = function never returns</code></p><blockquote><p><strong>!:</strong> <strong>Avoid <code>any</code>.</strong> It silently disables checking and lets type errors through. Prefer <code>unknown</code> and narrow with <code>typeof</code> / <code>in</code> before using the value.</p></blockquote><h2 id=interfaces>Interfaces & type aliases</h2><p>Interfaces describe object shapes; type aliases describe any shape — and both compose.</p><h3 id=interface-vs-type>interface vs type</h3><pre tabindex=0><code>interface User { name: string }
+type User = { name: string };
+
+type ID = string | number;   // type: unions
+type Pair = [string, number];// type: tuples
+
+interface A { a: number }
+interface A { b: string }    // interface: merges
+</code></pre><h3 id=optional--readonly>Optional & readonly</h3><pre tabindex=0><code>interface User {
+  readonly id: number;
+  name: string;
+  email?: string;        // optional
+}
+
+const u: User = { id: 1, name: &#34;Ada&#34; };
+// u.id = 2;             // ✗ readonly
+</code></pre><h3 id=extends>extends</h3><pre tabindex=0><code>interface Animal { name: string }
+interface Dog extends Animal {
+  breed: string;
+}
+interface A extends B, C {} // multiple
+
+// type aliases extend via &amp;
+type Dog2 = Animal &amp; { breed: string };
+</code></pre><h3 id=index-signatures>Index signatures</h3><pre tabindex=0><code>interface Scores {
+  [key: string]: number;
+}
+let s: Scores = { math: 90, art: 88 };
+
+interface Dict&lt;T&gt; {
+  [key: string]: T;
+}
+let d: Dict&lt;boolean&gt; = { active: true };
+</code></pre><h3 id=function-types>Function types</h3><pre tabindex=0><code>type Fn = (x: number) =&gt; string;
+const f: Fn = (x) =&gt; String(x);
+
+type Callback = (err: Error | null, data?: string) =&gt; void;
+</code></pre><h3 id=call-signatures>Call signatures</h3><pre tabindex=0><code>interface Comparator {
+  (a: string, b: string): number;
+}
+const byLen: Comparator = (a, b) =&gt; a.length - b.length;
+
+byLen(&#34;a&#34;, &#34;bbb&#34;);   // -2
+</code></pre><blockquote><p><strong>KEY:</strong> <strong>Interface for object shapes, type for everything else.</strong> A <code>type</code> alias can express unions, primitives, and tuples; an <code>interface</code> can be reopened and merged later. For plain object shapes the two are interchangeable — pick one and stay consistent.</p></blockquote><h2 id=functions>Functions & generics</h2><p>Annotate parameters and returns, then make functions reusable across types with generics.</p><h3 id=parameters--return>Parameters & return</h3><pre tabindex=0><code>function add(a: number, b: number): number {
+  return a + b;
+}
+const sub = (a: number, b: number): number =&gt; a - b;
+
+function log(msg: string): void {
+  console.log(msg);
+}
+</code></pre><h3 id=generics>Generics <t></h3><pre tabindex=0><code>function identity&lt;T&gt;(x: T): T { return x; }
+
+identity&lt;string&gt;(&#34;hi&#34;);   // T = string
+identity(42);            // T = number (inferred)
+
+function first&lt;T&gt;(arr: T[]): T | undefined {
+  return arr[0];
+}
+</code></pre><h3 id=generic-constraints>Generic constraints</h3><pre tabindex=0><code>function longest&lt;T extends { length: number }&gt;(a: T, b: T): T {
+  return a.length &gt;= b.length ? a : b;
+}
+longest(&#34;ab&#34;, &#34;cde&#34;);     // &#34;cde&#34;
+longest([1], [1, 2, 3]);  // [1, 2, 3]
+
+function get&lt;T, K extends keyof T&gt;(obj: T, key: K): T[K] {
+  return obj[key];
+}
+</code></pre><h3 id=const-type-params-58>const type params (5.8)</h3><pre tabindex=0><code>function id&lt;const T&gt;(x: T): T { return x; }
+const a = id(&#34;hi&#34;);    // &#34;hi&#34; — literal kept
+const b = id([1, 2]);  // readonly [1, 2]
+
+// before 5.8 you&#39;d write: id(&#34;hi&#34; as const)
+// the &lt;const&gt; saves the call-site cast
+</code></pre><h3 id=function-overloads>Function overloads</h3><pre tabindex=0><code>function parse(x: string): number;
+function parse(x: number): string;
+function parse(x: string | number): number | string {
+  return typeof x === &#34;string&#34; ? Number(x) : String(x);
+}
+parse(&#34;42&#34;);   // number
+parse(42);     // string
+</code></pre><h3 id=rest--default-params>Rest & default params</h3><pre tabindex=0><code>function sum(...nums: number[]): number {
+  return nums.reduce((a, b) =&gt; a + b, 0);
+}
+sum(1, 2, 3);   // 6
+
+function greet(name: string, greeting = &#34;hi&#34;) {
+  return `${greeting}, ${name}`;
+}
+</code></pre><h3 id=return-types-void--never>Return types: void & never</h3><pre tabindex=0><code>function log(msg: string): void {
+  console.log(msg);       // returns nothing
+}
+function fail(msg: string): never {
+  throw new Error(msg);   // never returns
+}
+function loop(): never {
+  while (true) {}         // never returns
+}
+</code></pre><blockquote><p><strong>KEY:</strong> <strong>Let inference do the work.</strong> <code>identity(42)</code> infers <code>T = number</code> — you rarely write <code>&lt;number></code> by hand. Constraints (<code>&lt;T extends …></code>) let you promise a capability while keeping the exact type.</p></blockquote><blockquote><p><strong>!:</strong> <strong>In <code>.tsx</code> files, give generic arrows a trailing comma:</strong> <code>const f = &lt;T,>(x: T) => x</code>. Without the comma, <code>&lt;T></code> is parsed as a JSX tag and the compiler errors.</p></blockquote><h2 id=classes>Classes & objects</h2><p>Classes add visibility and inheritance; parameter properties cut the boilerplate.</p><h3 id=class--constructor>class & constructor</h3><pre tabindex=0><code>class Point {
+  x: number;
+  y: number;
+  constructor(x: number, y: number) {
+    this.x = x;
+    this.y = y;
+  }
+}
+const p = new Point(3, 4);
+p.x;   // 3
+</code></pre><h3 id=parameter-properties>Parameter properties</h3><pre tabindex=0><code>class Point {
+  constructor(public x: number, public y: number) {}
+}
+// shorthand for: declare the field
+// AND assign it in the constructor
+
+const p = new Point(3, 4);
+p.x;   // 3
+</code></pre><h3 id=visibility>Visibility</h3><pre tabindex=0><code>class Account {
+  public id: string;        // default
+  private balance = 0;      // this class only
+  protected owner: string;  // + subclasses
+  readonly created: Date;   // assign once
+}
+
+// a.balance;   // ✗ private
+// a.owner;     // ✗ protected
+</code></pre><h3 id=abstract>abstract</h3><pre tabindex=0><code>abstract class Shape {
+  abstract area(): number;   // subclass must implement
+  describe() {
+    return `area ${this.area()}`;
+  }
+}
+class Square extends Shape {
+  constructor(private s: number) { super(); }
+  area() { return this.s * this.s; }
+}
+</code></pre><h3 id=implements>implements</h3><pre tabindex=0><code>interface Named { name: string }
+interface Greeter { greet(): string }
+
+class Person implements Named, Greeter {
+  constructor(public name: string) {}
+  greet() { return `hi ${this.name}`; }
+}
+</code></pre><h3 id=enums>Enums</h3><pre tabindex=0><code>enum Direction { Up, Down, Left, Right }
+Direction.Up;     // 0
+Direction[1];     // &#34;Down&#34;
+
+enum Status { Ok = 200, NotFound = 404 }
+
+const enum Color { Red, Green }
+// inlined at compile time — no runtime object
+</code></pre><blockquote><p><strong>!:</strong> <strong>Enums are runtime objects</strong>; a <code>const enum</code> is inlined and emits nothing — but it&rsquo;s incompatible with <code>isolatedModules</code> (and the newer <code>erasableSyntaxOnly</code>), so bundlers like Vite discourage it. For simple finite sets, a union of string literals (<code>"on" | "off"</code>) is often lighter and easier to extend.</p></blockquote><h2 id=narrowing>Narrowing & type guards</h2><p>A union is only useful after you shrink it to one branch — these are the tools that do it.</p><h3 id=typeof>typeof</h3><pre tabindex=0><code>function len(x: string | number) {
+  if (typeof x === &#34;string&#34;) {
+    return x.length;         // string here
+  }
+  return String(x).length;   // number here
+}
+// narrows: string number boolean
+// symbol bigint undefined object function
+</code></pre><h3 id=instanceof>instanceof</h3><pre tabindex=0><code>function message(e: Error | string) {
+  if (e instanceof Error) {
+    return e.message;   // Error here
+  }
+  return e;             // string here
+}
+</code></pre><h3 id=in>in</h3><pre tabindex=0><code>type Bird = { fly(): void };
+type Fish = { swim(): void };
+
+function move(a: Bird | Fish) {
+  if (&#34;fly&#34; in a) a.fly();
+  else a.swim();
+}
+</code></pre><h3 id=discriminated-unions>Discriminated unions</h3><pre tabindex=0><code>type Shape =
+  | { kind: &#34;circle&#34;; r: number }
+  | { kind: &#34;rect&#34;; w: number; h: number };
+
+function area(s: Shape) {
+  switch (s.kind) {
+    case &#34;circle&#34;: return Math.PI * s.r ** 2;
+    case &#34;rect&#34;:   return s.w * s.h;
+  }
+}
+</code></pre><h3 id=type-predicates>Type predicates</h3><pre tabindex=0><code>function isFish(pet: Bird | Fish): pet is Fish {
+  return (pet as Fish).swim !== undefined;
+}
+
+if (isFish(pet)) {
+  pet.swim();   // narrowed to Fish
+} else {
+  pet.fly();    // narrowed to Bird
+}
+</code></pre><h3 id=satisfies--as-const>satisfies & as const</h3><pre tabindex=0><code>const palette = { red: &#34;#f00&#34;, green: &#34;#0f0&#34; } as const;
+// palette.red: &#34;#f00&#34; — a literal, not string
+
+const config = { port: 8080 } satisfies ServerConfig;
+// keeps the exact type AND checks it
+// against ServerConfig
+</code></pre><blockquote><p><strong>KEY:</strong> <code>satisfies</code> validates without widening — your literal types survive. <code>as const</code> makes a value deeply readonly and keeps its literals, the backbone of discriminated unions.</p></blockquote><h2 id=utilities>Utility & mapped types</h2><p>Built-in type transformers for reshaping existing types, plus the <code>keyof</code> machinery behind them.</p><table><thead><tr><th>Utility</th><th>What it does</th></tr></thead><tbody><tr><td><code>Partial&lt;T></code></td><td>makes every property optional</td></tr><tr><td><code>Required&lt;T></code></td><td>makes every property required</td></tr><tr><td><code>Readonly&lt;T></code></td><td>makes every property readonly</td></tr><tr><td><code>Pick&lt;T, K></code></td><td>keeps only the keys <code>K</code></td></tr><tr><td><code>Omit&lt;T, K></code></td><td>drops the keys <code>K</code></td></tr><tr><td><code>Record&lt;K, V></code></td><td>maps keys <code>K</code> to the value type <code>V</code></td></tr><tr><td><code>ReturnType&lt;F></code></td><td>return type of function <code>F</code></td></tr><tr><td><code>Parameters&lt;F></code></td><td>tuple of function <code>F</code>&rsquo;s parameters</td></tr><tr><td><code>NonNullable&lt;T></code></td><td>removes <code>null</code> and <code>undefined</code></td></tr><tr><td><code>Awaited&lt;T></code></td><td>the resolved type of a promise</td></tr><tr><td><code>Exclude&lt;T, U></code></td><td>types in <code>T</code> not in <code>U</code></td></tr><tr><td><code>Extract&lt;T, U></code></td><td>types in <code>T</code> also in <code>U</code></td></tr></tbody></table><h3 id=keyof--indexed-access>keyof & indexed access</h3><pre tabindex=0><code>type User = { id: number; name: string };
+type K = keyof User;          // &#34;id&#34; | &#34;name&#34;
+type Name = User[&#34;name&#34;];     // string
+
+function get&lt;T, K extends keyof T&gt;(obj: T, key: K): T[K] {
+  return obj[key];
+}
+get(user, &#34;name&#34;);   // string (checked key)
+</code></pre><h3 id=mapped-types>Mapped types</h3><pre tabindex=0><code>type Flags&lt;T&gt; = { [K in keyof T]: boolean };
+type UserFlags = Flags&lt;User&gt;;
+// { id: boolean; name: boolean }
+
+// the built-ins, from scratch:
+type Partial&lt;T&gt; = { [K in keyof T]?: T[K] };
+type Readonly&lt;T&gt; = { readonly [K in keyof T]: T[K] };
+
+type Pick&lt;T, K extends keyof T&gt; = { [P in K]: T[P] };
+</code></pre><blockquote><p><strong>KEY:</strong> <code>keyof</code> + mapped types are the building blocks — <code>Partial</code>, <code>Readonly</code>, <code>Pick</code>, and <code>Omit</code> are all implemented this way in the standard library.</p></blockquote><blockquote><p><strong>!:</strong> <strong><code>Object.keys(obj)</code> returns <code>string[]</code>, not <code>keyof T</code>.</strong> The runtime keys aren&rsquo;t proven to be typed keys, so indexing with them needs a guard or a cast.</p></blockquote><h2 id=tooling>Tooling & config</h2><p>Configure the compiler, ship declaration files, and wire up linting and direct execution.</p><h3 id=tsconfigjson>tsconfig.json</h3><pre tabindex=0><code>{
+  &#34;compilerOptions&#34;: {
+    &#34;target&#34;: &#34;es2022&#34;,
+    &#34;module&#34;: &#34;esnext&#34;,
+    &#34;strict&#34;: true,
+    &#34;outDir&#34;: &#34;./dist&#34;,
+    &#34;rootDir&#34;: &#34;./src&#34;
+  },
+  &#34;include&#34;: [&#34;src&#34;]
+}
+</code></pre><h3 id=strict-flags>Strict flags</h3><pre tabindex=0><code>&#34;strict&#34;: true                  // all below ON
+&#34;noImplicitAny&#34;: true
+&#34;strictNullChecks&#34;: true
+&#34;noUncheckedIndexedAccess&#34;: true
+&#34;exactOptionalPropertyTypes&#34;: true
+&#34;noImplicitReturns&#34;: true
+</code></pre><h3 id=declaration-files>Declaration files</h3><pre tabindex=0><code>declare const API_URL: string;   // ambient value
+declare module &#34;*.css&#34;;          // wildcard module
+
+// types.d.ts — types only, ships no JS
+export interface Config { port: number }
+
+tsc --declaration       // emit .d.ts for your code
+</code></pre><h3 id=tsx--ts-node>tsx & ts-node</h3><pre tabindex=0><code>npm i -D tsx
+npx tsx app.ts        # run TS directly
+
+npm i -D ts-node
+npx ts-node app.ts
+
+# types in one-off scripts:
+npx tsx -e &#39;const n: number = 2&#39;
+</code></pre><h3 id=eslint--typescript-eslint>ESLint + typescript-eslint</h3><pre tabindex=0><code>npm i -D eslint typescript-eslint
+
+// eslint.config.mjs
+import tseslint from &#34;typescript-eslint&#34;;
+export default tseslint.config(
+  ...tseslint.configs.recommended,
+);
+
+npx eslint .
+</code></pre><h3 id=vite--bundlers>Vite / bundlers</h3><pre tabindex=0><code># Vite runs TS with no build step
+npm create vite@latest my-app -- --template vanilla-ts
+npm run dev
+
+# esbuild strips types instantly
+esbuild src/app.ts --bundle --outfile=dist/app.js
+</code></pre><h4 id=tsc--check--build>tsc — check & build</h4><ul><li>Type-check only — <kbd>tsc &ndash;noEmit</kbd></li><li>Watch mode — <kbd>tsc &ndash;watch</kbd></li><li>Init config — <kbd>tsc &ndash;init</kbd></li></ul><h4 id=tsc--emit>tsc — emit</h4><ul><li>Output dir — <kbd>tsc &ndash;outDir dist</kbd></li><li>Declaration files — <kbd>tsc &ndash;declaration</kbd></li><li>Use a project — <kbd>tsc -p tsconfig.json</kbd></li></ul><h4 id=run-directly>run directly</h4><ul><li>tsx — <kbd>npx tsx app.ts</kbd></li><li>ts-node — <kbd>npx ts-node app.ts</kbd></li><li>bun — <kbd>bun run app.ts</kbd></li></ul><blockquote><p><strong>KEY:</strong> <strong>Current release: TypeScript 5.9</strong> (Aug 2025). Highlights: <code>import defer</code> (deferred module evaluation), a minimal <code>tsc --init</code> that now defaults to <code>module: "nodenext"</code> and <code>target: "esnext"</code>, and — from 5.8 — <code>const</code> type parameters and the <code>--erasableSyntaxOnly</code> flag.</p></blockquote><blockquote><p><strong>!:</strong> <strong>Declaration files (<code>.d.ts</code>) are types only.</strong> They are stripped from the emitted JavaScript and exist so other projects (and your editor) can consume your public types.</p></blockquote></div></article></div><footer class=foot><span>slop-stuff</span>
+<span class=muted>served under <code>makefunstuff.github.io/slop-stuff/&lt;folder>/</code></span>
+<a href=https://makefunstuff.github.io/slop-stuff/links/>links</a>
+<a href=https://github.com/makefunstuff/slop-stuff>repo</a></footer><script src=https://makefunstuff.github.io/slop-stuff/js/wiki.js defer></script></body></html>

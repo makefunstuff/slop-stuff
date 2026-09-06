@@ -1,0 +1,249 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Embedded dev — slop-stuff</title><meta name=description content="Bare-metal and RTOS: registers, interrupts, timers, FreeRTOS, RP2040/Pico, and debugging."><link rel=canonical href=https://makefunstuff.github.io/slop-stuff/embedded/><link rel=stylesheet href=https://makefunstuff.github.io/slop-stuff/css/wiki.css><script>(function(){var t="slop-theme",e=localStorage.getItem(t);e||(e=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"),document.documentElement.setAttribute("data-theme",e)})()</script></head><body><header class=bar><a class=brand href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a>
+<span class="muted hide-narrow">cheatsheets & experiments</span><form class=seek role=search action=https://makefunstuff.github.io/slop-stuff/ method=get><input id=q type=search name=q placeholder="search guides…" autocomplete=off aria-label="Search guides"><div id=hits class=hits hidden></div></form><button type=button class=icon id=theme title="Toggle theme" aria-label="Toggle theme">◐</button>
+<a class=icon href=https://github.com/makefunstuff/slop-stuff rel=noreferrer>git</a></header><div class="wrap wrap-guide"><aside class=toc aria-label="On this page"><p class=toc-label>on this page</p><nav id=TableOfContents><ul><li><a href=#quickref>Quick reference</a></li><li><a href=#start>Toolchain & build</a></li><li><a href=#registers>Registers & MMIO</a></li><li><a href=#interrupts>Interrupts & ISRs</a></li><li><a href=#timers>Timers & peripherals</a></li><li><a href=#memory>Memory map & sections</a></li><li><a href=#rtos>RTOS basics</a></li><li><a href=#debug>Debugging</a></li><li><a href=#rp2040>RP2040 & Raspberry Pi Pico</a></li><li><a href=#gotchas>Pitfalls</a></li></ul></nav></aside><article class=doc><p class=crumb><a href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a> / Embedded & hardware</p><h1>Embedded dev</h1><p class=lede>Code that talks to hardware.</p><p class="muted sub">Bare-metal and RTOS: registers, interrupts, timers, FreeRTOS, RP2040/Pico, and debugging.</p><p class=tags><span>embedded</span><span>FreeRTOS</span><span>PIO</span><span>interrupts</span></p><div class=body><p>Bare-metal and RTOS development on ARM Cortex-M: memory-mapped registers, interrupts and timers, linker scripts and boot code, FreeRTOS, and SWD debugging — from first flash to HardFault.</p><h2 id=quickref>Quick reference</h2><p>The commands and idioms you reach for most — the fast path into every section below.</p><h3 id=compile>Compile</h3><pre tabindex=0><code>arm-none-eabi-gcc -mcpu=cortex-m4 \
+  -mthumb -Os -ffreestanding \
+  -c main.c -o main.o
+</code></pre><h3 id=mmio-register>MMIO register</h3><pre tabindex=0><code>#define GPIOA_ODR \
+  (*(volatile uint32_t *)0x40020014UL)
+GPIOA_ODR |= (1UL &lt;&lt; 5);    // set pin
+GPIOA_ODR &amp;= ~(1UL &lt;&lt; 5);  // clear pin
+</code></pre><h3 id=interrupt--nvic>Interrupt & NVIC</h3><pre tabindex=0><code>void USART1_IRQHandler(void) {
+  if (USART1-&gt;SR &amp; USART_SR_RXNE)
+    rx_byte = USART1-&gt;DR;  // read clears
+}
+NVIC_EnableIRQ(USART1_IRQn);
+</code></pre><h3 id=linker-sections>Linker sections</h3><pre tabindex=0><code>MEMORY {
+  FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 512K
+  RAM  (rwx): ORIGIN = 0x20000000, LENGTH = 128K
+}
+SECTIONS {
+  .text : { *(.text*) } &gt; FLASH
+  .data : { *(.data*) } &gt; RAM AT&gt; FLASH
+  .bss  : { *(.bss*) }  &gt; RAM
+}
+</code></pre><h3 id=freertos-task>FreeRTOS task</h3><pre tabindex=0><code>xTaskCreate(task, &#34;blink&#34;, 256, NULL, 1, NULL);
+vTaskStartScheduler();
+void task(void *arg) {
+  while (1) {
+    toggle_led();
+    vTaskDelay(pdMS_TO_TICKS(500));
+  }
+}
+</code></pre><h3 id=swd--gdb>SWD + GDB</h3><pre tabindex=0><code>openocd -f interface/stlink.cfg \
+  -f target/stm32f4x.cfg
+arm-none-eabi-gdb firmware.elf
+(gdb) target remote :3333
+(gdb) monitor reset halt
+(gdb) load
+</code></pre><h3 id=inspect-binary>Inspect binary</h3><pre tabindex=0><code>arm-none-eabi-size firmware.elf       # sizes
+arm-none-eabi-objdump -h firmware.elf # sections
+arm-none-eabi-nm firmware.elf         # symbols
+</code></pre><h3 id=systick-1-ms>SysTick 1 ms</h3><pre tabindex=0><code>SysTick_Config(SystemCoreClock / 1000);
+void SysTick_Handler(void) { ms_ticks++; }
+</code></pre><blockquote><p><strong>REF:</strong> <strong>Everything here is expanded below.</strong> Compile flags in <a href=https://makefunstuff.github.io/slop-stuff/embedded/#start>Toolchain</a>, MMIO in <a href=https://makefunstuff.github.io/slop-stuff/embedded/#registers>Registers</a>, ISRs in <a href=https://makefunstuff.github.io/slop-stuff/embedded/#interrupts>Interrupts</a>, sections in <a href=https://makefunstuff.github.io/slop-stuff/embedded/#memory>Memory</a>, tasks in <a href=https://makefunstuff.github.io/slop-stuff/embedded/#rtos>RTOS</a>, and flashing in <a href=https://makefunstuff.github.io/slop-stuff/embedded/#debug>Debug</a>.</p></blockquote><h2 id=start>Toolchain & build</h2><p>One cross-toolchain compiles, links, inspects, and flashes firmware for any Cortex-M target. The same four tools appear in every workflow.</p><h3 id=1-cross-compile>1. Cross-compile</h3><pre tabindex=0><code>arm-none-eabi-gcc \
+  -mcpu=cortex-m4 -mthumb \
+  -Os -ffreestanding \
+  -c main.c -o main.o
+</code></pre><h3 id=2-inspect-the-binary>2. Inspect the binary</h3><pre tabindex=0><code>arm-none-eabi-objdump -h firmware.elf   # sections
+arm-none-eabi-objdump -d firmware.elf   # disasm
+arm-none-eabi-nm firmware.elf           # symbols
+arm-none-eabi-size firmware.elf         # text/data/bss
+</code></pre><h3 id=3-linker-script>3. Linker script</h3><pre tabindex=0><code>/* stm32f4.ld */
+MEMORY {
+  FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 512K
+  RAM  (rwx): ORIGIN = 0x20000000, LENGTH = 128K
+}
+</code></pre><h3 id=4-flash-it>4. Flash it</h3><pre tabindex=0><code>openocd -f interface/stlink.cfg \
+  -f target/stm32f4x.cfg \
+  -c &#34;program firmware.elf verify reset exit&#34;
+
+st-flash write firmware.bin 0x8000000
+</code></pre><blockquote><p><strong>KEY:</strong> <strong>Startup runs before <code>main()</code>.</strong> The vector table&rsquo;s <code>Reset_Handler</code> (in <code>startup_stm32f4xx.s</code>) sets the stack pointer, copies <code>.data</code> from flash to RAM, zeroes <code>.bss</code>, then calls <code>main()</code>. Your <code>main</code> never returns.</p></blockquote><h3 id=make>Make</h3><p>Recipes need a real <kbd>Tab</kbd>, not spaces.</p><pre tabindex=0><code>CC = arm-none-eabi-gcc
+CFLAGS = -mcpu=cortex-m4 -mthumb -Os
+
+firmware.elf: main.o startup.o
+	$(CC) -T stm32f4.ld $^ -o $@
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $&lt; -o $@
+</code></pre><h3 id=cmake>CMake</h3><p>Cross-compile by naming a generic target.</p><pre tabindex=0><code>set(CMAKE_SYSTEM_NAME Generic)
+set(CMAKE_SYSTEM_PROCESSOR arm)
+set(CMAKE_C_COMPILER arm-none-eabi-gcc)
+set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
+
+add_executable(firmware main.c startup.s)
+target_compile_options(firmware PRIVATE
+  -mcpu=cortex-m4 -mthumb -Os)
+target_link_options(firmware PRIVATE
+  -T ${CMAKE_SOURCE_DIR}/stm32f4.ld)
+</code></pre><blockquote><p><strong>VER:</strong> <strong>Current toolchain.</strong> <code>arm-none-eabi-gcc</code> tracks upstream GCC — the Arm GNU Toolchain ships 14.x (<code>14.2.rel1</code>) in 2025. Prefer <code>-mcpu=cortex-m4</code> over <code>-march</code> (it pulls the right multilib), keep <code>-ffreestanding</code>, and match <code>-mfloat-abi</code> to your core&rsquo;s FPU. The same targets build in Rust: <code>embedded-hal</code> 1.0 + <code>probe-rs</code> (see the <a href=https://makefunstuff.github.io/slop-stuff/rust/>Rust guide</a>).</p></blockquote><h2 id=registers>Registers & MMIO</h2><p>Peripherals live at fixed addresses. You talk to them by casting an address to a <code>volatile</code> pointer and reading or writing it.</p><h3 id=memory-mapped-register>Memory-mapped register</h3><p>Cast the peripheral address once, then use it like a variable.</p><pre tabindex=0><code>#define GPIOA_ODR (*(volatile uint32_t *)0x40020014UL)
+
+GPIOA_ODR = 0x20;            // write pin 5
+uint32_t v = GPIOA_ODR;      // read it back
+</code></pre><h3 id=read-modify-write>Read-modify-write</h3><p>Change one bit without disturbing its neighbors.</p><pre tabindex=0><code>GPIOA_ODR |=  (1UL &lt;&lt; 5);   // set bit 5
+GPIOA_ODR &amp;= ~(1UL &lt;&lt; 5);   // clear bit 5
+GPIOA_ODR ^=  (1UL &lt;&lt; 5);   // toggle bit 5
+</code></pre><table><thead><tr><th>Goal</th><th>Idiom</th></tr></thead><tbody><tr><td>Set bit n</td><td><code>reg |= (1UL &lt;&lt; n)</code></td></tr><tr><td>Clear bit n</td><td><code>reg &= ~(1UL &lt;&lt; n)</code></td></tr><tr><td>Toggle bit n</td><td><code>reg ^= (1UL &lt;&lt; n)</code></td></tr><tr><td>Test bit n</td><td><code>if (reg & (1UL &lt;&lt; n))</code></td></tr><tr><td>Write a bit field</td><td><code>reg = (reg & ~MASK) | (val &lt;&lt; SHIFT)</code></td></tr></tbody></table><h3 id=define-macros>#define macros</h3><p>Each register is a named, typed pointer. Simple and fast, but verbose for many registers.</p><pre tabindex=0><code>#define GPIOA_ODR (*(volatile uint32_t *)0x40020014UL)
+#define LED_PIN   (1UL &lt;&lt; 5)
+
+GPIOA_ODR |= LED_PIN;
+</code></pre><h3 id=struct-overlay>Struct overlay</h3><p>One struct mirrors the peripheral&rsquo;s layout; a pointer maps it over the base address.</p><pre tabindex=0><code>typedef struct {
+  volatile uint32_t MODER;   // 0x00 mode
+  volatile uint32_t OTYPER;  // 0x04 type
+  volatile uint32_t OSPEEDR; // 0x08 speed
+  volatile uint32_t PUPDR;   // 0x0C pull
+  volatile uint32_t IDR;     // 0x10 input
+  volatile uint32_t ODR;     // 0x14 output
+} GPIO_TypeDef;
+
+#define GPIOA ((GPIO_TypeDef *)0x40020000UL)
+GPIOA-&gt;ODR |= (1U &lt;&lt; 5);
+</code></pre><p><code>volatile</code> <code>MMIO</code> <code>overlay</code> <code>Cortex-M</code></p><blockquote><p><strong>!:</strong> <strong><code>volatile</code> stops the optimizer.</strong> Without it, the compiler may cache a register read, delete a “redundant” write, or reorder accesses. Read-modify-write is also <strong>not atomic</strong>: an ISR touching the same register mid-sequence can lose a bit — guard shared registers with a critical section.</p></blockquote><h2 id=interrupts>Interrupts & ISRs</h2><p>A peripheral raises an IRQ; the NVIC runs the matching handler. Keep ISRs short, signal through volatile flags, and mask interrupts only for the smallest window.</p><ol><li><strong>Peripheral event</strong> — The UART receives a byte and sets its <code>RXNE</code> flag in <code>SR</code>.</li><li><strong>NVIC pends the IRQ</strong> — The flag maps to an interrupt line; the NVIC compares its priority against whatever is running.</li><li><strong>ISR entry</strong> — The CPU pushes context (R0–R3, R12, LR, PC, xPSR) and jumps to the vector-table entry.</li><li><strong>Clear + signal</strong> — The ISR reads <code>DR</code> (which clears <code>RXNE</code>), sets a volatile flag, and returns to the main loop.</li></ol><table><thead><tr><th>Task</th><th>CMSIS call</th></tr></thead><tbody><tr><td>Enable an IRQ</td><td><code>NVIC_EnableIRQ(USART1_IRQn)</code></td></tr><tr><td>Disable an IRQ</td><td><code>NVIC_DisableIRQ(USART1_IRQn)</code></td></tr><tr><td>Set priority</td><td><code>NVIC_SetPriority(USART1_IRQn, 3)</code> — 0 is highest</td></tr><tr><td>Force it pending</td><td><code>NVIC_SetPendingIRQ(USART1_IRQn)</code></td></tr><tr><td>Global gate</td><td><code>__enable_irq()</code> / <code>__disable_irq()</code></td></tr></tbody></table><h3 id=volatile-flag-isr>Volatile-flag ISR</h3><p>The ISR does the minimum; <code>main</code> does the work.</p><pre tabindex=0><code>volatile uint8_t rx_byte;
+volatile int    rx_ready = 0;
+
+void USART1_IRQHandler(void) {
+  if (USART1-&gt;SR &amp; USART_SR_RXNE) {
+    rx_byte  = USART1-&gt;DR;   // read clears the flag
+    rx_ready = 1;
+  }
+}
+
+int main(void) {
+  while (1) {
+    if (rx_ready) {
+      rx_ready = 0;
+      /* handle rx_byte quickly */
+    }
+  }
+}
+</code></pre><h3 id=critical-section>Critical section</h3><p>Mask interrupts around a non-atomic read-modify-write.</p><pre tabindex=0><code>__disable_irq();          // suspend all IRQs
+shared |= (1U &lt;&lt; 3);     // now atomic
+__enable_irq();
+
+// Cortex-M priority masking:
+__set_PRIMASK(1);         // block everything
+__set_BASEPRI(2 &lt;&lt; 5);   // block ≤ priority 2
+</code></pre><blockquote><p><strong>!:</strong> <strong>ISR rules:</strong> short, no blocking calls, no <code>printf</code> to a slow UART, no <code>delay()</code>. Set a flag or queue an event and let the main loop finish the job. Use <code>volatile</code> for anything shared with main code, and clear the peripheral&rsquo;s flag before returning.</p></blockquote><h2 id=timers>Timers & peripherals</h2><p>SysTick gives you a millisecond heartbeat; hardware timers generate PWM; the UART and ADC move bytes and samples in or out of the chip.</p><h3 id=systick-1-ms-tick>SysTick 1 ms tick</h3><p>The core timer fires an interrupt every millisecond.</p><pre tabindex=0><code>volatile uint32_t ms_ticks = 0;
+
+void SysTick_Handler(void) { ms_ticks++; }
+
+int main(void) {
+  SysTick_Config(SystemCoreClock / 1000);
+  while (1) {
+    uint32_t now = ms_ticks;
+    /* count elapsed milliseconds */
+  }
+}
+</code></pre><h3 id=pwm-via-a-timer>PWM via a timer</h3><p>Prescaler + auto-reload set the frequency; the capture/compare register sets the duty cycle.</p><pre tabindex=0><code>TIM2-&gt;PSC  = 84 - 1;          // 84 MHz → 1 MHz
+TIM2-&gt;ARR  = 1000 - 1;        // 1 kHz period
+TIM2-&gt;CCR1 = 500;             // 50% duty on CH1
+TIM2-&gt;CCMR1 |= TIM_CCMR1_OC1M_PWM1;
+TIM2-&gt;CCER  |= TIM_CCER_CC1E;
+TIM2-&gt;CR1   |= TIM_CR1_CEN;
+</code></pre><table><thead><tr><th>UART method</th><th>How it works</th><th>Best for</th></tr></thead><tbody><tr><td>Polling</td><td>loop while <code>!(SR & RXNE)</code>, then read <code>DR</code></td><td>simple, blocking code</td></tr><tr><td>Interrupt</td><td>enable <code>RXNEIE</code>; the ISR reads <code>DR</code></td><td>low latency, event-driven</td></tr><tr><td>DMA</td><td>a DMA channel streams <code>DR</code> → buffer</td><td>bulk, CPU-free transfer</td></tr></tbody></table><h3 id=adc-single-conversion>ADC single conversion</h3><p>Software-trigger one sample and wait for end-of-conversion.</p><pre tabindex=0><code>ADC1-&gt;CR2 |= ADC_CR2_ADON;        // power on
+ADC1-&gt;SQR3 = 0;                   // channel 0 first
+ADC1-&gt;CR2 |= ADC_CR2_SWSTART;     // start
+while (!(ADC1-&gt;SR &amp; ADC_SR_EOC)); // wait
+uint16_t v = ADC1-&gt;DR;            // 12-bit result
+</code></pre><h3 id=dma-basics>DMA basics</h3><p>Point a stream at source, destination, and count, then enable it.</p><pre tabindex=0><code>DMA1_Stream0-&gt;PAR  = (uint32_t)src;
+DMA1_Stream0-&gt;M0AR = (uint32_t)dst;
+DMA1_Stream0-&gt;NDTR = N;          // count
+DMA1_Stream0-&gt;CR   = DMA_SxCR_MINC
+                   | DMA_SxCR_TCIE
+                   | DMA_SxCR_EN;
+</code></pre><blockquote><p><strong>⌁:</strong> <strong>Timer math:</strong> output frequency = <code>timer_clk / (PSC + 1) / (ARR + 1)</code>. On an 84 MHz STM32, <code>PSC = 83</code> and <code>ARR = 999</code> give a clean 1 kHz, and <code>CCR1</code> sets the duty as a fraction of <code>ARR + 1</code>.</p></blockquote><h2 id=memory>Memory map & sections</h2><p>Code lives in flash, variables in RAM. The linker script decides what goes where; the startup code makes it true before <code>main()</code> runs.</p><p><strong>FLASH</strong> (0x08000000) → <strong>.text</strong> (code + .rodata) → <strong>.data</strong> (init globals) → <strong>.bss</strong> (zero globals) → <strong>stack & heap</strong> (grow toward each other)</p><table><thead><tr><th>Section</th><th>Holds</th><th>Initialized by</th></tr></thead><tbody><tr><td><code>.text</code></td><td>machine instructions</td><td>flashed</td></tr><tr><td><code>.rodata</code></td><td>consts, string literals</td><td>flashed</td></tr><tr><td><code>.data</code></td><td>initialized globals/statics</td><td>startup copies from flash</td></tr><tr><td><code>.bss</code></td><td>zero-initialized globals</td><td>startup zeroes</td></tr><tr><td>stack</td><td>locals, call frames</td><td>SP set at reset</td></tr><tr><td>heap</td><td><code>malloc()</code> / <code>new</code></td><td>runtime</td></tr></tbody></table><h3 id=startup-copy-data>Startup: copy .data</h3><p>Initial values are stored in flash and copied into RAM at boot.</p><pre tabindex=0><code>extern uint32_t _sidata, _sdata, _edata;
+uint32_t *src = &amp;_sidata;
+uint32_t *dst = &amp;_sdata;
+while (dst &lt; &amp;_edata) {
+  *dst++ = *src++;
+}
+</code></pre><h3 id=startup-zero-bss>Startup: zero .bss</h3><p>Uninitialized globals must start at zero, never garbage.</p><pre tabindex=0><code>extern uint32_t _sbss, _ebss;
+for (uint32_t *p = &amp;_sbss; p &lt; &amp;_ebss; p++) {
+  *p = 0;
+}
+</code></pre><blockquote><p><strong>!:</strong> <strong>The stack grows down from the top of RAM; the heap grows up.</strong> When they meet you get silent corruption, not a clean error. Size <code>.stack</code> in the linker script, keep a watermark, and use the MPU to trap overflow on parts that have one.</p></blockquote><h2 id=rtos>RTOS basics</h2><p>A scheduler runs tasks by priority and preempts lower ones. Semaphores, mutexes, and queues synchronize them without busy-waiting.</p><ul><li><strong>Running</strong> — The highest-priority ready task, actually on the CPU. Only one at a time.</li><li><strong>Ready</strong> — Waiting for CPU time; runs when nothing higher-priority is ready.</li><li><strong>Blocked</strong> — Waiting on a queue, semaphore, or <code>vTaskDelay()</code>. Consumes no CPU.</li><li><strong>Suspended</strong> — Explicitly paused with <code>vTaskSuspend()</code>; only <code>vTaskResume()</code> wakes it.</li></ul><h3 id=create--delay-a-task>Create + delay a task</h3><p>Every task is a function that never returns, plus a stack.</p><pre tabindex=0><code>void task(void *arg) {
+  while (1) {
+    toggle_led();
+    vTaskDelay(pdMS_TO_TICKS(500));
+  }
+}
+
+xTaskCreate(task, &#34;blink&#34;, 256, NULL, 1, NULL);
+vTaskStartScheduler();
+</code></pre><h3 id=mutex-semaphore-queue>Mutex, semaphore, queue</h3><p>Mutexes protect shared state; queues pass data between tasks.</p><pre tabindex=0><code>SemaphoreHandle_t m = xSemaphoreCreateMutex();
+if (xSemaphoreTake(m, pdMS_TO_TICKS(100))) {
+  /* critical region */
+  xSemaphoreGive(m);
+}
+
+QueueHandle_t q = xQueueCreate(8, sizeof(int));
+xQueueSend(q, &amp;val, portMAX_DELAY);
+xQueueReceive(q, &amp;val, portMAX_DELAY);
+</code></pre><ul><li><code>xTaskCreate(fn, name, stack, arg, prio, handle)</code> — create a task.</li><li><code>vTaskDelay(pdMS_TO_TICKS(ms))</code> — block for a time.</li><li><code>xSemaphoreTake / xSemaphoreGive</code> — mutex lock / unlock.</li><li><code>xQueueSend / xQueueReceive</code> — message passing.</li><li><code>taskENTER_CRITICAL / taskEXIT_CRITICAL</code> — disable scheduler preemption.</li><li><code>vTaskStartScheduler()</code> — start the tick and scheduler.</li></ul><details><summary>More FreeRTOS</summary><h4 id=software-timers>Software timers</h4><p>One-shot or periodic callbacks that run in the timer task, not yours.</p><pre tabindex=0><code>xTimerCreate(&#34;t&#34;, pdMS_TO_TICKS(1000), pdTRUE,
+             NULL, onTick);
+xTimerStart(t, 0);
+</code></pre><h4 id=event-groups--task-notifications>Event groups & task notifications</h4><p>Wait for a set of flags, or wake one task directly without a queue.</p><pre tabindex=0><code>xEventGroupWaitBits(g, BIT_READY, pdFALSE,
+                    pdTRUE, portMAX_DELAY);
+xTaskNotifyGive(task);           // signal
+ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+</code></pre><h4 id=isr-safe-calls>ISR-safe calls</h4><p>From an ISR, only the <code>…FromISR</code> variants are legal — they never block.</p><pre tabindex=0><code>xSemaphoreGiveFromISR(m, &amp;woken);
+xQueueSendFromISR(q, &amp;v, &amp;woken);
+portYIELD_FROM_ISR(woken);
+</code></pre><h4 id=binary-semaphore-vs-mutex>Binary semaphore vs mutex</h4><p>A mutex has ownership + priority inheritance; a binary semaphore is just a signal. Never use a semaphore as a mutex.</p><pre tabindex=0><code>xSemaphoreCreateBinary();  // signal
+xSemaphoreCreateMutex();   // lock
+</code></pre></details><blockquote><p><strong>!:</strong> <strong>Priority inversion:</strong> a low-priority task holding a mutex blocks a high-priority task, which then waits behind the medium tasks. Fix it by using a <strong>mutex with priority inheritance</strong> — never a binary semaphore — for resources shared across priority levels.</p></blockquote><blockquote><p><strong>V11:</strong> <strong>FreeRTOS Kernel is now V11.</strong> V11 added official <strong>SMP</strong> scheduling so the same <code>xTaskCreate</code> API runs tasks across cores (RP2040, ESP32). Recent releases use date-based tags (e.g. <code>v202411.00</code>). The single-core API above is unchanged and still the right starting point; SMP is opt-in via <code>configNUMBER_OF_CORES</code>.</p></blockquote><h2 id=debug>Debugging</h2><p>SWD gives you a hardware debugger: breakpoints, watchpoints, and register inspection — without touching production code.</p><h3 id=openocd--gdb>OpenOCD + GDB</h3><p>One terminal hosts the probe; another drives the target.</p><pre tabindex=0><code># terminal 1
+openocd -f interface/stlink.cfg \
+  -f target/stm32f4x.cfg
+
+# terminal 2
+arm-none-eabi-gdb firmware.elf
+(gdb) target remote :3333
+(gdb) monitor reset halt
+(gdb) load
+</code></pre><h3 id=hardfault-handler>HardFault handler</h3><p>Recover the faulting PC from the stacked frame on the MSP.</p><pre tabindex=0><code>void HardFault_Handler(void) {
+  uint32_t *msp = (uint32_t *)__get_MSP();
+  uint32_t pc   = msp[6];   // stacked PC
+  uint32_t lr   = msp[5];   // stacked LR
+  (void)pc; (void)lr;
+  __asm volatile(&#34;bkpt #0&#34;); // trap for GDB
+}
+</code></pre><ul><li><code>break main</code> — stop at main.</li><li><code>continue</code> — run to the next breakpoint.</li><li><code>next / step</code> — step over / into.</li><li><code>print x</code> — print a variable.</li><li><code>info registers</code> — dump CPU registers.</li><li><code>x/10wx 0x20000000</code> — dump 10 words of RAM.</li><li><code>monitor reset halt</code> — reset and halt via OpenOCD.</li><li><code>watch x</code> — break when x changes.</li></ul><details><summary>printf vs semihosting</summary><p>A UART <code>printf</code> needs a driver and is slow; <strong>semihosting</strong> routes syscalls to the host GDB through a breakpoint instruction — no extra hardware, but it stalls whenever no debugger is attached. Use semihosting for development, a buffered UART/DMA logger in production.</p></details><details><summary>Logic analyzer</summary><p>For timing bugs — bit-banged protocols, PWM edges, bus contention — capture GPIO transitions with a logic analyzer (Saleae, DSLogic). A scope shows analog shape; a logic analyzer shows digital state and timing at MHz.</p></details><blockquote><p><strong>SWD:</strong> <strong>SWD beats JTAG on modern parts:</strong> two pins (<code>SWDIO</code> + <code>SWCLK</code>) plus power and ground, versus four or five for JTAG (<code>TMS/TCK/TDI/TDO</code>). Both expose the same debug access; SWD is the default on Cortex-M.</p></blockquote><h2 id=rp2040>RP2040 & Raspberry Pi Pico</h2><p>The RP2040 is a dual-core Cortex-M0+ with a standout trick: PIO — tiny programmable state machines that bit-bang any protocol without touching the CPU.</p><h3 id=pico-sdk-setup>Pico SDK setup</h3><pre tabindex=0><code>cmake_minimum_required(VERSION 3.13)
+include(pico_sdk_import.cmake)
+pico_sdk_init()
+add_executable(blink blink.c)
+target_link_libraries(blink pico_stdlib)
+pico_add_extra_outputs(blink)
+</code></pre><h3 id=gpio>GPIO</h3><pre tabindex=0><code>gpio_init(25);
+gpio_set_dir(25, GPIO_OUT);
+gpio_put(25, 1);
+gpio_pull_up(2);
+gpio_set_irq_enabled_with_callback(
+  2, GPIO_IRQ_EDGE_FALL, true, &amp;cb);
+</code></pre><h3 id=pwm--adc>PWM & ADC</h3><pre tabindex=0><code>pwm_set_wrap(slice, 65535);
+pwm_set_gpio_level(25, 32768);
+pwm_set_enabled(slice, true);
+adc_select_input(0);
+uint16_t v = adc_read();
+</code></pre><h3 id=pio--bit-bang-anything>PIO — bit-bang anything</h3><p>8 state machines, each a tiny program that toggles pins with deterministic timing, independent of the cores. Perfect for WS2812, DPI, or custom one-wire protocols.</p><pre tabindex=0><code># PIO asm: square wave
+set pindirs, 1
+.wrap_target
+  set pins, 1
+  set pins, 0
+.wrap
+</code></pre><h3 id=uart--i2c--spi--dma>UART / I2C / SPI / DMA</h3><pre tabindex=0><code>uart_init(uart0, 115200);
+uart_puts(uart0, &#34;hi\n&#34;);
+i2c_init(i2c0, 100 * 1000);
+spi_init(spi0, 1 * 1000 * 1000);
+// DMA moves memory ↔ peripheral
+dma_channel_configure(...)
+</code></pre><blockquote><p><strong>KEY:</strong> <strong>PIO is the RP2040&rsquo;s superpower.</strong> Two modest M0+ cores, but eight PIO state machines with deterministic timing. When a protocol is too fast or too weird for the CPU — WS2812 LEDs, VGA, DVI, odd one-wire buses — throw it at PIO.</p></blockquote><h2 id=gotchas>Pitfalls</h2><p>Nine failures that look like hardware problems but are almost always software.</p><details><summary>Missing volatile</summary><p>The compiler caches a register read or deletes a write it thinks is redundant. Mark every MMIO pointer and every variable shared with an ISR <code>volatile</code>.</p><pre tabindex=0><code>volatile uint32_t *const REG = (uint32_t *)0x40021000UL;
+volatile int flag;   // shared with an ISR
+</code></pre></details><details><summary>Non-atomic read-modify-write</summary><p><code>REG |= (1 &lt;&lt; 3)</code> reads, modifies, and writes. If an ISR writes the same register in between, its change is lost. Wrap shared RMW in a critical section (<code>__disable_irq()</code> / <code>__enable_irq()</code>).</p><pre tabindex=0><code>__disable_irq();
+REG |= (1U &lt;&lt; 3);   // load-modify-store, now safe
+__enable_irq();
+</code></pre></details><details><summary>Stack overflow</summary><p>Deep recursion, large locals, or a too-small <code>.stack</code> overruns into <code>.data</code>/heap and faults elsewhere. Raise the stack, avoid deep recursion, and add a watermark or MPU guard.</p></details><details><summary>ISR latency</summary><p>A long or blocking ISR delays every other interrupt and can overflow a queue. Keep ISRs tiny — set a flag, queue an event, return — and do the work in the main loop or a task.</p></details><details><summary>Watchdog resets</summary><p>The independent watchdog (IWDG) resets the chip when its counter isn&rsquo;t fed. Kick it from the main loop after real progress, not from inside an ISR, so a hung loop still trips the reset.</p></details><details><summary>Uninitialized memory</summary><p><code>.bss</code> is zeroed at boot, but stack memory is not — a local variable holds whatever was there before. Initialize every variable before reading it, or make it <code>static</code> to get guaranteed zero-init.</p><pre tabindex=0><code>uint32_t x;         // stack: garbage
+static uint32_t y;  // .bss: zeroed at boot
+</code></pre></details><details><summary>Volatile is not atomic or ordered</summary><p><code>volatile</code> stops the optimizer from caching or dropping that single access, but it does <strong>not</strong> make a read-modify-write atomic, and it gives no ordering guarantee across cores or against DMA. Guard shared RMW with a critical section, use <code>__DSB()</code>/<code>__DMB()</code> for ordering, or C11 atomics where the toolchain supports them.</p></details><details><summary>Unhandled IRQ = silent hang</summary><p>Enable an interrupt but forget its handler and the vector table points at a default handler that loops forever — the chip looks dead with no clue why. Every <code>IRQn</code> you enable needs a matching <code>IRQHandler</code>; make the default handler trap with <code>__asm volatile("bkpt #0")</code> instead of <code>while(1)</code>.</p></details><details><summary>Priority bits are shifted</summary><p>On Cortex-M, lower numeric priority is higher urgency, and the NVIC only reads the top <code>configPRIO_BITS</code> bits of the 8-bit priority field (often 4). Write an unshifted value and your “low” priority reads as 0 (highest). Stick to <code>NVIC_SetPriority()</code>, which shifts for you, and remember 0 = highest.</p></details></div></article></div><footer class=foot><span>slop-stuff</span>
+<span class=muted>served under <code>makefunstuff.github.io/slop-stuff/&lt;folder>/</code></span>
+<a href=https://makefunstuff.github.io/slop-stuff/links/>links</a>
+<a href=https://github.com/makefunstuff/slop-stuff>repo</a></footer><script src=https://makefunstuff.github.io/slop-stuff/js/wiki.js defer></script></body></html>

@@ -1,0 +1,225 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>ESPHome — slop-stuff</title><meta name=description content="YAML-defined firmware, sensors, and home automation for ESP devices."><link rel=canonical href=https://makefunstuff.github.io/slop-stuff/esphome/><link rel=stylesheet href=https://makefunstuff.github.io/slop-stuff/css/wiki.css><script>(function(){var t="slop-theme",e=localStorage.getItem(t);e||(e=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"),document.documentElement.setAttribute("data-theme",e)})()</script></head><body><header class=bar><a class=brand href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a>
+<span class="muted hide-narrow">cheatsheets & experiments</span><form class=seek role=search action=https://makefunstuff.github.io/slop-stuff/ method=get><input id=q type=search name=q placeholder="search guides…" autocomplete=off aria-label="Search guides"><div id=hits class=hits hidden></div></form><button type=button class=icon id=theme title="Toggle theme" aria-label="Toggle theme">◐</button>
+<a class=icon href=https://github.com/makefunstuff/slop-stuff rel=noreferrer>git</a></header><div class="wrap wrap-guide"><aside class=toc aria-label="On this page"><p class=toc-label>on this page</p><nav id=TableOfContents><ul><li><a href=#quickref>Quick reference</a></li><li><a href=#start>What ESPHome is</a></li><li><a href=#config>Configuration</a></li><li><a href=#sensors>Sensors & components</a></li><li><a href=#gpio>GPIO & switches</a></li><li><a href=#integrations>Integrations</a></li><li><a href=#lambda>Lambdas & automations</a></li><li><a href=#cli>CLI & flashing</a></li><li><a href=#gotchas>Pitfalls</a></li><li><a href=#related>Keep exploring</a></li></ul></nav></aside><article class=doc><p class=crumb><a href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a> / Embedded & hardware</p><h1>ESPHome</h1><p class=lede>ESP firmware from YAML.</p><p class="muted sub">YAML-defined firmware, sensors, and home automation for ESP devices.</p><p class=tags><span>embedded</span><span>YAML</span><span>sensor</span><span>Home Assistant</span></p><div class=body><p>ESPHome turns a few-dollar ESP32 or ESP8266 into a Home Assistant–native sensor, switch, or light — described entirely in YAML, compiled locally, and flashed over USB or Wi-Fi.</p><h2 id=quickref>Quick reference</h2><p>The handful of lines and commands you&rsquo;ll reach for most often.</p><h3 id=minimal-device-yaml>Minimal device YAML</h3><p>Everything a node needs to phone home and be discoverable.</p><pre tabindex=0><code>esphome:
+  name: livingroom
+  friendly_name: Living Room
+
+esp32:
+  board: esp32dev
+
+wifi:
+  ssid: &#34;my-wifi&#34;
+  password: !secret wifi_password
+
+api:          # HA discovery, port 6053
+ota:          # wireless updates
+</code></pre><h3 id=most-used-commands>Most-used commands</h3><p>Build, flash, and watch a node from the terminal.</p><ul><li><code>esphome dashboard config/</code> — web UI · http://localhost:6052</li><li><code>esphome run livingroom.yaml</code> — compile + upload + logs</li><li><code>esphome compile livingroom.yaml</code> — build the binary only</li><li><code>esphome upload livingroom.yaml</code> — flash USB, then OTA</li><li><code>esphome logs livingroom.yaml</code> — stream serial logs</li><li><code>esphome config livingroom.yaml</code> — validate the YAML</li></ul><blockquote><p><strong>⌁:</strong> <strong>Common sensors:</strong> <code>dht</code> (temp + humidity) · <code>bme280</code> (temp + humidity + pressure, I2C) · <code>ultrasonic</code> (distance) · <code>adc</code> (0–3.3 V) · <code>gpio</code> binary (button / PIR). <strong>Boards:</strong> <code>esp32dev</code> · <code>esp32-c3-devkitm-1</code> · <code>nodemcuv2</code> · <code>d1_mini</code>. <strong>Ports:</strong> API <code>6053</code> · dashboard <code>6052</code> · web <code>80</code>.</p></blockquote><h2 id=start>What ESPHome is</h2><p>ESPHome is firmware-as-YAML: you describe what the board does, it compiles a binary, and Home Assistant discovers the device automatically.</p><h3 id=1-what-it-is>1. What it is</h3><p>A YAML config per device compiles into firmware for <code>esp32:</code> / <code>esp8266:</code>. No C++ required — unless you want it.</p><h3 id=2-install>2. Install</h3><pre tabindex=0><code>pip install esphome
+esphome version   # sanity check
+
+# or Docker:
+docker run --rm -v &#34;${PWD}&#34;:/config -it \
+  ghcr.io/esphome/esphome version
+</code></pre><h3 id=3-first-config>3. First config</h3><pre tabindex=0><code># livingroom.yaml
+esphome:
+  name: livingroom
+
+esp32:
+  board: esp32dev
+
+wifi:
+  ssid: &#34;my-wifi&#34;
+  password: &#34;secret&#34;
+</code></pre><h3 id=4-compile--flash>4. Compile & flash</h3><pre tabindex=0><code>esphome run livingroom.yaml
+# = compile + upload + logs
+
+esphome dashboard config/
+</code></pre><blockquote><p><strong>KEY:</strong> <strong>One YAML file per device.</strong> Every node has its own <code>esphome:</code> name, one board, and at least <code>wifi:</code> to phone home. Add <code>api:</code> so Home Assistant discovers it with a single click.</p></blockquote><h2 id=config>Configuration</h2><p>Every node is one YAML file. The top-level blocks below are the only ones a minimal setup needs.</p><pre tabindex=0><code>esphome:
+  name: livingroom
+  friendly_name: Living Room
+
+esp32:
+  board: esp32dev
+  # ESP8266 instead:
+  # esp8266:
+  #   board: nodemcuv2
+
+wifi:
+  ssid: &#34;my-wifi&#34;
+  password: !secret wifi_password
+  ap:                        # fallback hotspot
+    ssid: &#34;Livingroom Fallback&#34;
+    password: &#34;setup1234&#34;
+
+api:                         # native HA integration
+  encryption:
+    key: !secret api_key
+
+ota:                         # over-the-air updates
+  - platform: esphome
+    password: !secret ota_password
+
+captive_portal:              # wifi setup page in fallback-AP mode
+
+logger:                      # serial logs
+
+sensor:
+  - platform: dht
+    pin: GPIO4
+    temperature:
+      name: &#34;Living Room Temp&#34;
+</code></pre><h3 id=boards>Boards</h3><p>The board string selects the pin map and flash layout. ESP8266 needs a matching <code>esp8266:</code> block.</p><pre tabindex=0><code>esp32:
+  board: esp32dev
+  #   esp32-c3-devkitm-1
+  #   wemos_d1_mini32
+
+esp8266:
+  board: nodemcuv2
+  #   d1_mini / esp01_1m
+</code></pre><h3 id=wi-fi--fallback-ap>Wi-Fi & fallback AP</h3><p>If the station can&rsquo;t connect, the board starts the <code>ap:</code> hotspot; add <code>captive_portal:</code> to get a web setup page when you join it.</p><pre tabindex=0><code>wifi:
+  ssid: &#34;my-wifi&#34;
+  password: !secret wifi_password
+  ap:
+    ssid: &#34;Node Fallback&#34;
+    password: &#34;12345678&#34;
+
+captive_portal:
+</code></pre><blockquote><p><strong>⌁:</strong> <strong><code>api:</code> and <code>ota:</code> make ESPHome feel native.</strong> <code>api:</code> opens port <code>6053</code> for the Home Assistant integration (auto-discovered over mDNS); <code>ota:</code> lets you push new firmware over Wi-Fi. Pull every password from <code>secrets.yaml</code> via <code>!secret</code>.</p></blockquote><h2 id=sensors>Sensors & components</h2><p>Components read the physical world and expose it to Home Assistant as entities. Each is a <code>platform</code> under a top-level key.</p><table><thead><tr><th>Component</th><th>Measures</th><th>Example config</th></tr></thead><tbody><tr><td><code>sensor</code> · dht</td><td>temperature + humidity</td><td><code>platform: dht</code> · <code>pin: GPIO4</code></td></tr><tr><td><code>sensor</code> · bme280</td><td>temperature, humidity, pressure</td><td><code>address: 0x76</code> (I2C)</td></tr><tr><td><code>sensor</code> · ultrasonic</td><td>distance (HC-SR04)</td><td><code>trigger_pin</code> + <code>echo_pin</code></td></tr><tr><td><code>sensor</code> · adc</td><td>voltage 0–3.3 V</td><td><code>attenuation: auto</code></td></tr><tr><td><code>binary_sensor</code> · gpio</td><td>button / PIR high–low</td><td><code>pin</code> + <code>mode: INPUT_PULLUP</code></td></tr><tr><td><code>text_sensor</code> · wifi_info</td><td>IP, SSID, BSSID</td><td>no config needed</td></tr><tr><td><code>sensor</code> · uptime</td><td>seconds since boot</td><td><code>update_interval: 60s</code></td></tr><tr><td><code>switch</code> · gpio</td><td>relay on/off (see §4)</td><td><code>pin</code> + <code>restore_mode</code></td></tr></tbody></table><details><summary>Full sensor examples</summary><h4 id=dht22-on-one-wire>DHT22 on one wire</h4><pre tabindex=0><code>sensor:
+  - platform: dht
+    pin: GPIO4
+    model: DHT22          # default: AUTO_DETECT
+    temperature:
+      name: &#34;Living Room Temp&#34;
+    humidity:
+      name: &#34;Living Room Humidity&#34;
+    update_interval: 60s
+</code></pre><h4 id=bme280-over-i2c>BME280 over I2C</h4><pre tabindex=0><code>i2c:
+  sda: GPIO21
+  scl: GPIO22
+  scan: true
+
+sensor:
+  - platform: bme280
+    address: 0x76
+    temperature:
+      name: &#34;BME Temp&#34;
+    humidity:
+      name: &#34;BME Humidity&#34;
+    pressure:
+      name: &#34;BME Pressure&#34;
+</code></pre></details><p><code>dht</code> <code>bme280</code> <code>hc-sr04</code> <code>adc</code> <code>gpio</code> <code>wifi_info</code> <code>uptime</code></p><h2 id=gpio>GPIO & switches</h2><p>These turn pins into outputs (relays, dimmers, lights) and inputs (buttons, PIRs) with a few lines of YAML.</p><h3 id=switch-relay>switch (relay)</h3><p>Simple on/off output. <code>restore_mode</code> sets the state after reboot.</p><pre tabindex=0><code>switch:
+  - platform: gpio
+    pin: GPIO26
+    name: &#34;Relay&#34;
+    id: relay1
+    restore_mode: ALWAYS_OFF
+</code></pre><h3 id=output--light-pwm>output + light (PWM)</h3><p><code>ledc</code> gives hardware PWM on any pin; a <code>light</code> wraps it for Home Assistant.</p><pre tabindex=0><code>output:
+  - platform: ledc
+    pin: GPIO5
+    frequency: 1000Hz
+    id: led_pwm
+
+light:
+  - platform: monochromatic
+    output: led_pwm
+    name: &#34;Dimmer&#34;
+</code></pre><h3 id=binary_sensor--button>binary_sensor + button</h3><p>Inputs read high/low and can run automations with <code>on_press</code>.</p><pre tabindex=0><code>binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO13
+      mode: INPUT_PULLUP
+    name: &#34;Button&#34;
+    on_press:
+      - switch.toggle: relay1
+</code></pre><blockquote><p><strong>!:</strong> <strong>Drive relays through a transistor or optocoupler</strong> — never straight from a GPIO. For low-active relay boards set <code>inverted: true</code>. Keep strapping pins <code>GPIO0</code>/<code>GPIO2</code>/<code>GPIO15</code> free (see §8).</p></blockquote><h2 id=integrations>Integrations</h2><p>ESPHome talks to Home Assistant natively, but can also speak MQTT, host a web UI, update over the air, and proxy Bluetooth.</p><p><strong>YAML</strong> (config files) → <strong>ESP device</strong> (compiled firmware) → <strong>Home Assistant</strong> (native API :6053) → <strong>MQTT broker</strong> (pub/sub topics)</p><h3 id=home-assistant-api>Home Assistant API</h3><p>Zero-config discovery. Entities appear in HA as soon as the node boots.</p><pre tabindex=0><code>api:
+  encryption:
+    key: !secret api_key
+# auto-discovered via mDNS
+# encrypted on port 6053
+</code></pre><h3 id=mqtt>MQTT</h3><p>Publish state and listen for commands through a broker; <code>discovery</code> auto-creates HA entities.</p><pre tabindex=0><code>mqtt:
+  broker: 192.168.1.10
+  username: !secret mqtt_user
+  password: !secret mqtt_pass
+  discovery: true
+</code></pre><h3 id=web-server>Web server</h3><p>A local UI at <code>http://&lt;device-ip>/</code> for reading state and toggling without HA.</p><pre tabindex=0><code>web_server:
+  port: 80
+  auth:
+    username: admin
+    password: !secret web_pass
+</code></pre><h3 id=ota>OTA</h3><p>Wireless firmware updates from the dashboard or CLI. Keep a password on it.</p><pre tabindex=0><code>ota:
+  - platform: esphome
+    password: !secret ota_password
+# &#34;Wirelessly update&#34; in dashboard
+</code></pre><details><summary>Bluetooth proxy (ESP32)</summary><p>A cheap ESP32 becomes a remote Bluetooth antenna for Home Assistant, relaying BLE advertisements (trackers, sensors, locks) back to the hub.</p><pre tabindex=0><code>esp32_ble_tracker:
+
+bluetooth_proxy:
+  active: true
+</code></pre></details><h2 id=lambda>Lambdas & automations</h2><p>Automations run when a trigger fires. When YAML isn&rsquo;t enough, a <code>lambda:</code> drops into raw C++.</p><pre tabindex=0><code>sensor:
+  - platform: dht
+    pin: GPIO4
+    temperature:
+      name: &#34;Temp&#34;
+      on_value:
+        then:
+          - if:
+              condition:
+                lambda: &#39;return x &gt; 30.0;&#39;
+              then:
+                - switch.turn_on: relay_fan
+                - logger.log: &#34;Cooling on&#34;
+          - else:
+              - switch.turn_off: relay_fan
+</code></pre><ol><li><strong>Trigger</strong> — <code>on_boot</code>, <code>on_value</code>, <code>on_press</code>, <code>interval</code>, or <code>time</code> fires the automation.</li><li><strong>Condition</strong> — <code>if:</code> with <code>and:</code>, <code>or:</code>, <code>not:</code>, or a <code>lambda:</code> gates the action.</li><li><strong>Action</strong> — <code>then:</code> runs <code>switch.turn_on</code>, <code>light.toggle</code>, <code>homeassistant.service</code>…</li><li><strong>Lambda</strong> — A <code>lambda:</code> executes raw C++ for anything the YAML actions can&rsquo;t express.</li></ol><h3 id=common-triggers>Common triggers</h3><ul><li><code>on_boot</code> — once at startup (priority).</li><li><code>on_value</code> — a sensor&rsquo;s value changes.</li><li><code>on_press</code> — a binary_sensor goes on.</li><li><code>on_click</code> — tap / double-tap / long-press.</li><li><code>interval</code> — every N seconds.</li><li><code>time</code> — cron-style schedule.</li></ul><h3 id=lambda-c-helpers>Lambda C++ helpers</h3><p><code>x</code> is the current value; reach other entities by <code>id()</code>.</p><pre tabindex=0><code>id(relay_fan).turn_on();
+id(temp).state;                 // read
+return id(temp).state &gt; 25.0;   // condition
+</code></pre><h2 id=cli>CLI & flashing</h2><p>The <code>esphome</code> command and the web dashboard both build and flash; <code>secrets.yaml</code> keeps credentials out of the config.</p><ul><li><code>esphome dashboard config/</code> — web UI on http://localhost:6052.</li><li><code>esphome run livingroom.yaml</code> — compile + upload + stream logs.</li><li><code>esphome compile livingroom.yaml</code> — build the binary only.</li><li><code>esphome upload livingroom.yaml</code> — flash only (USB, then OTA later).</li><li><code>esphome logs livingroom.yaml</code> — stream serial logs at 115200.</li><li><code>esphome config livingroom.yaml</code> — validate the YAML, print the merged config.</li><li><code>esphome wizard livingroom.yaml</code> — interactive scaffold.</li><li><code>esphome rename old.yaml new.yaml</code> — rename a node.</li><li><code>esphome upload … --device /dev/ttyUSB0</code> — target a specific serial port.</li><li><code>esphome run … --no-logs</code> — compile + flash, skip the log tail.</li></ul><p><code>esphome</code> <code>command</code>
+<code>config.yaml</code> <code>node</code>
+<code>--device /dev/ttyUSB0</code> <code>flag</code></p><details><summary>secrets.yaml</summary><p>Keep every password here and reference it with <code>!secret key</code>. Commit the config, never this file.</p><pre tabindex=0><code># secrets.yaml — never commit
+wifi_password: &#34;super-secret&#34;
+api_key: &#34;rXlP6…base64-32-bytes…&#34;
+ota_password: &#34;another-secret&#34;
+
+# in the config:
+#   password: !secret wifi_password
+</code></pre></details><h2 id=gotchas>Pitfalls</h2><p>The mistakes that cost the most debugging time — all avoidable up front.</p><h3 id=yaml-indentation>YAML indentation</h3><p>Two spaces, never tabs. A list item one space off silently nests under the wrong key.</p><pre tabindex=0><code># ✗ pin indented under platform
+sensor:
+  - platform: dht
+      pin: GPIO4
+
+# ✓ two spaces deeper than the dash
+sensor:
+  - platform: dht
+    pin: GPIO4
+</code></pre><h3 id=pin-conflicts>Pin conflicts</h3><p>Strapping pins are sampled at reset — leave them alone or the board won&rsquo;t boot right.</p><pre tabindex=0><code># GPIO0  low at boot = flash mode
+# GPIO2  must be high at boot
+# GPIO15 must be low at boot
+</code></pre><h3 id=secrets-not-found>Secrets not found</h3><p>A <code>!secret</code> that has no matching key fails the compile with a clear error — check the key name.</p><pre tabindex=0><code>password: !secret wifi_password  # ✓
+password: !secret wifi_password  # ✗ typo
+</code></pre><h3 id=boot-loops>Boot loops</h3><p>Watch the log first — it usually prints the panic and backtrace.</p><pre tabindex=0><code>esphome logs livingroom.yaml
+# erase + reflash as a last resort:
+esphome run livingroom.yaml \
+  --device /dev/ttyUSB0
+</code></pre><h3 id=flashing-without-usb>Flashing without USB</h3><p>The first flash needs USB. After that, any config that keeps <code>ota:</code> updates wirelessly.</p><pre tabindex=0><code># first: USB cable
+esphome run livingroom.yaml
+# later: over the air
+esphome upload livingroom.yaml
+</code></pre><h3 id=wi-fi-fallback-ap>Wi-Fi fallback AP</h3><p>If the station won&rsquo;t connect, the board hosts the <code>ap:</code> hotspot — join it to fix <code>ssid</code>/<code>password</code>.</p><pre tabindex=0><code>wifi:
+  ssid: &#34;my-wifi&#34;
+  ap:
+    ssid: &#34;Node Fallback&#34;
+    password: &#34;12345678&#34;
+</code></pre><h3 id=ota-brick--safe-mode>OTA brick → safe mode</h3><p>Safe mode is on by default: after repeated failed boots, the node drops to a minimal firmware (OTA + API only) so you can push a fix wirelessly.</p><pre tabindex=0><code>safe_mode:              # defaults shown
+  num_attempts: 5       # failed boots to trigger
+  reboot_timeout: 5min  # window to count
+
+button:
+  - platform: safe_mode
+    name: &#34;Safe Mode Boot&#34;
+</code></pre><h3 id=rotated-the-api-key>Rotated the API key</h3><p>Change the <code>api:</code> encryption key and Home Assistant shows the node offline until you re-approve it — the old key no longer matches.</p><pre tabindex=0><code>api:
+  encryption:
+    key: !secret api_key
+# HA → Settings → Devices:
+# re-add after any key change
+</code></pre><blockquote><p><strong>!:</strong> <strong>3.3 V logic only.</strong> ESP32/ESP8266 GPIOs are not 5 V tolerant. Level-shift 5 V sensors, and never power a relay coil straight from a pin.</p></blockquote><h2 id=related>Keep exploring</h2><p>Neighboring cheatsheets for the same workbench.</p><h3 id=esp32>ESP32</h3><p>Bare-metal ESP32 development — IDF, pin maps, Wi-Fi, and low-level APIs.</p><p>ESP32 guide →</p><h3 id=embedded-dev>Embedded dev</h3><p>Cross-platform embedded fundamentals, toolchains, and workflows.</p><p>Embedded dev →</p><h3 id=hardware-list>Hardware list</h3><p>Boards, sensors, and parts to stock the physical build.</p><p>Hardware list →</p></div></article></div><footer class=foot><span>slop-stuff</span>
+<span class=muted>served under <code>makefunstuff.github.io/slop-stuff/&lt;folder>/</code></span>
+<a href=https://makefunstuff.github.io/slop-stuff/links/>links</a>
+<a href=https://github.com/makefunstuff/slop-stuff>repo</a></footer><script src=https://makefunstuff.github.io/slop-stuff/js/wiki.js defer></script></body></html>

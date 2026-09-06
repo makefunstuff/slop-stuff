@@ -1,0 +1,124 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>LLM & AI — slop-stuff</title><meta name=description content="Tokens, embeddings, attention, transformers, RAG, prompting, agents, and evals."><link rel=canonical href=https://makefunstuff.github.io/slop-stuff/llm-ai/><link rel=stylesheet href=https://makefunstuff.github.io/slop-stuff/css/wiki.css><script>(function(){var t="slop-theme",e=localStorage.getItem(t);e||(e=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"),document.documentElement.setAttribute("data-theme",e)})()</script></head><body><header class=bar><a class=brand href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a>
+<span class="muted hide-narrow">cheatsheets & experiments</span><form class=seek role=search action=https://makefunstuff.github.io/slop-stuff/ method=get><input id=q type=search name=q placeholder="search guides…" autocomplete=off aria-label="Search guides"><div id=hits class=hits hidden></div></form><button type=button class=icon id=theme title="Toggle theme" aria-label="Toggle theme">◐</button>
+<a class=icon href=https://github.com/makefunstuff/slop-stuff rel=noreferrer>git</a></header><div class="wrap wrap-guide"><aside class=toc aria-label="On this page"><p class=toc-label>on this page</p><nav id=TableOfContents><ul><li><a href=#quickref>Quick reference</a></li><li><a href=#start>The LLM stack</a></li><li><a href=#models>Models & architectures</a></li><li><a href=#training>Training & fine-tuning</a></li><li><a href=#prompting>Prompting</a></li><li><a href=#rag>RAG & context</a></li><li><a href=#agents>Agents & tools</a></li><li><a href=#evals>Evaluation</a></li><li><a href=#gotchas>Pitfalls</a></li></ul></nav></aside><article class=doc><p class=crumb><a href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a> / AI & agents</p><h1>LLM & AI</h1><p class=lede>How the models actually work.</p><p class="muted sub">Tokens, embeddings, attention, transformers, RAG, prompting, agents, and evals.</p><p class=tags><span>ai</span><span>attention</span><span>RAG</span><span>fine-tuning</span></p><div class=body><p>An LLM is a next-token predictor with a transformer backbone — everything else (RAG, agents, fine-tuning) is scaffolding around that core. Here&rsquo;s the surface you touch every day.</p><h2 id=quickref>Quick reference</h2><p>The eight concepts you&rsquo;ll reach for daily — each expanded in the sections below.</p><h3 id=1-tokens--context>1. Tokens & context</h3><p><code>1 token ≈ 4 chars</code>. The context window is the shared budget for prompt plus completion; overflow → truncate or RAG.</p><h3 id=2-temperature--top-p>2. Temperature & top-p</h3><p>Low <code>temperature</code> = deterministic, high = creative. <code>top_p</code> caps sampling to the smallest set of likely tokens.</p><h3 id=3-embeddings>3. Embeddings</h3><p>Dense vectors that map meaning to geometry — similar text lands close together; the backbone of RAG and semantic search.</p><h3 id=4-attention>4. Attention</h3><p>Each token weighs every other token — <code>softmax(Q·Kᵀ/√d)·V</code> — to decide what context to borrow.</p><h3 id=5-rag-pipeline>5. RAG pipeline</h3><p><strong>Chunk → embed → store → retrieve → ground → answer.</strong> Grounds answers in your documents, cutting hallucination.</p><h3 id=6-fine-tuning-vs-rag>6. Fine-tuning vs RAG</h3><p><strong>RAG</strong> injects knowledge at inference; <strong>fine-tuning</strong> bakes style and format into weights. Ship RAG first, fine-tune when behavior must change.</p><h3 id=7-agents--tool-calling>7. Agents & tool calling</h3><p>An LLM in a loop: it emits a structured <strong>tool call</strong>, you execute it, and the result feeds the next turn.</p><h3 id=8-prompt-techniques>8. Prompt techniques</h3><p>Few-shot examples, chain-of-thought, a system role, and constrained JSON output are the high-leverage moves.</p><h2 id=start>The LLM stack</h2><p>An LLM turns text into numbers, mixes them, and samples the next number. Tokens, vocabulary, and sampling are the knobs on that machine.</p><h3 id=1-tokens--tokenizers>1. Tokens & tokenizers</h3><p>Text is split into subword tokens — not words, not characters. Roughly <code>1 token ≈ 4 chars</code>.</p><pre tabindex=0><code>tokenizer.encode(&#34;Hello, world!&#34;)
+# → [&#34;Hello&#34;, &#34;,&#34;, &#34; world&#34;, &#34;!&#34;]
+# → ids [9906, 11, 995, 0]
+</code></pre><h3 id=2-vocabulary>2. Vocabulary</h3><p>The fixed table mapping token → id. The model only ever sees integers.</p><pre tabindex=0><code>len(vocab)
+# GPT-2  ~50k tokens
+# Llama 3/4 ~128k tokens
+# out-of-vocab → subword split
+</code></pre><h3 id=3-context-window>3. Context window</h3><p>The max tokens the model can attend to at once — prompt plus completion share it. Numbers move fast; check the current model card.</p><pre tabindex=0><code>GPT-5.x      400k
+Claude 4.5   200k (1M beta)
+Gemini 3     1M
+DeepSeek V3  128k
+# overflow → truncate or RAG
+</code></pre><h3 id=4-temperature>4. Temperature</h3><p>Scales the softmax before sampling. Low = deterministic, high = creative.</p><pre tabindex=0><code>temp = 0.0   # greedy top token
+temp = 0.7   # balanced
+temp = 1.2   # noisy, creative
+</code></pre><h3 id=logits--probabilities>Logits → probabilities</h3><p>Each forward pass scores the whole vocabulary; softmax turns scores into a distribution.</p><pre tabindex=0><code>logits = model(tokens)      # [seq, vocab]
+probs  = softmax(logits / temp)
+next   = sample(probs)
+</code></pre><h3 id=top-p--top-k>Top-p & top-k</h3><p>Restrict the sampling pool to keep quality while staying varied. Pick one, not both.</p><pre tabindex=0><code>top_k = 40    # keep 40 highest
+top_p = 0.9   # smallest set ≥ 90% mass
+# p = 1.0, k = vocab → pure random
+</code></pre><blockquote><p><strong>KEY:</strong> <strong>The model only predicts one token at a time.</strong> The output becomes part of the input, and the loop repeats — that&rsquo;s why long answers are generated autoregressively, token by token.</p></blockquote><h2 id=models>Models & architectures</h2><p>Nearly every modern LLM is a transformer: a stack of layers that mix tokens through self-attention.</p><p><strong>Input tokens</strong> (subword ids) → <strong>Embeddings</strong> (id → vector) → <strong>Self-attention</strong> (Q · K · V) → <strong>Feed-forward</strong> (per-token MLP) → <strong>Logits</strong> (softmax over vocab)</p><h3 id=attention-q--k--v>Attention (Q / K / V)</h3><p>Every token looks at every other token and decides what to borrow. <strong>Query</strong> = what I&rsquo;m looking for, <strong>Key</strong> = what I contain, <strong>Value</strong> = what I pass on.</p><pre tabindex=0><code>Q, K, V = x @ Wq, x @ Wk, x @ Wv
+scores  = Q @ K.T / sqrt(d_k)
+out     = softmax(scores) @ V
+</code></pre><h3 id=encoder-vs-decoder>Encoder vs decoder</h3><p><strong>Encoder</strong> reads the whole sequence at once (bidirectional) — BERT, embeddings. <strong>Decoder</strong> is causal/masked, attending only to past tokens — GPT, LLaMA. <strong>Encoder-decoder</strong> (T5) does both.</p><pre tabindex=0><code>BERT  → encoder  → fill blanks
+GPT   → decoder  → next token
+T5    → both     → translate
+</code></pre><h3 id=embeddings>Embeddings</h3><p>A dense vector per token (or sentence) that captures meaning — similar meanings land close together.</p><pre tabindex=0><code>embed(&#34;king&#34;) - embed(&#34;man&#34;)
+  + embed(&#34;woman&#34;) ≈ embed(&#34;queen&#34;)
+</code></pre><h3 id=positional-encoding>Positional encoding</h3><p>Attention is order-blind, so position must be added explicitly — via sinusoidal values or learned/RoPE rotations.</p><pre tabindex=0><code>x = token_embed + pos_embed
+# &#34;A B&#34; ≠ &#34;B A&#34; because pos differs
+</code></pre><h3 id=parameters--scaling>Parameters & scaling</h3><p>Weights that shape behavior; roughly <code>params ≈ layers × width²</code>. Mixture-of-experts (MoE) routes each token through a subset of experts — huge totals, small active cost.</p><pre tabindex=0><code>7B   → local, quantized
+70B  → single GPU cluster
+405B → frontier (dense)
+671B → frontier (MoE, sparse)
+</code></pre><h2 id=training>Training & fine-tuning</h2><p>Pretraining teaches the base; SFT and preference tuning teach instruction-following and helpfulness.</p><h3 id=pretraining>Pretraining</h3><p>Next-token prediction over trillions of tokens. Produces a capable base model that&rsquo;s not yet chatty or aligned.</p><pre tabindex=0><code>loss = cross_entropy(
+  pred, next_token
+)
+# scale: trillions of tokens,
+# thousands of GPUs, weeks
+</code></pre><h3 id=sft>SFT</h3><p>Supervised fine-tuning on (prompt, ideal answer) pairs teaches the format of conversation.</p><pre tabindex=0><code>{&#34;prompt&#34;: &#34;Summarize: …&#34;,
+ &#34;completion&#34;: &#34;The report says…&#34;}
+</code></pre><h3 id=rlhf-vs-dpo>RLHF vs DPO</h3><p><strong>RLHF</strong> trains a reward model from human preferences, then optimizes against it with RL. <strong>DPO</strong> skips the reward model and optimizes directly on the preference pairs.</p><pre tabindex=0><code>RLHF:  chosen &gt; rejected → reward → PPO
+DPO:   chosen &gt; rejected → direct loss
+</code></pre><h3 id=lora--peft>LoRA / PEFT</h3><p>Parameter-efficient fine-tuning freezes the base and trains a tiny low-rank adapter — cheap and swappable.</p><pre tabindex=0><code>W&#39; = W + ΔW,  ΔW = A·B
+# A, B are small matrices
+# trains &lt;1% of weights
+</code></pre><h3 id=quantization>Quantization</h3><p>Shrink weights to fewer bits per value — faster, smaller, slightly worse quality.</p><pre tabindex=0><code>fp16  16-bit, ~same quality
+int8  8-bit, near-lossless
+int4  4-bit, fits small GPUs
+# formats: GGUF, AWQ, GPTQ
+</code></pre><details><summary>Common datasets</summary><p>Pretraining uses massive raw text; instruction tuning uses curated prompt–answer pairs.</p><p><code>pretrain: The Pile</code> <code>pretrain: Common Crawl</code> <code>pretrain: RedPajama</code> <code>pretrain: FineWeb</code> <code>instruction: Alpaca</code> <code>instruction: UltraChat</code> <code>instruction: OpenHermes</code> <code>preference: UltraFeedback</code> <code>preference: HH-RLHF</code> <code>code: The Stack</code></p></details><h2 id=prompting>Prompting</h2><p>Prompts steer a frozen model: examples, roles, instructions, and tool schemas all live in the input text.</p><h3 id=zero-shot-vs-few-shot>Zero-shot vs few-shot</h3><p><strong>Zero-shot</strong> asks directly. <strong>Few-shot</strong> shows examples so the model copies the pattern.</p><pre tabindex=0><code># zero-shot
+&#34;Classify: &#39;I love this!&#39;&#34;
+
+# few-shot
+&#34;Great → positive
+ Terrible → negative
+ &#39;I love this!&#39; →&#34;
+</code></pre><h3 id=chain-of-thought>Chain-of-thought</h3><p>Asking the model to reason step by step before answering lifts accuracy on hard tasks.</p><pre tabindex=0><code>&#34;Let&#39;s think step by step.
+ First, … Second, …
+ Therefore the answer is …&#34;
+</code></pre><h3 id=system-vs-user>System vs user</h3><p><strong>System</strong> sets persistent rules/persona. <strong>User</strong> is the request. <strong>Assistant</strong> is the model&rsquo;s turn.</p><pre tabindex=0><code>messages = [
+  {&#34;role&#34;: &#34;system&#34;, &#34;content&#34;: &#34;Be terse.&#34;},
+  {&#34;role&#34;: &#34;user&#34;, &#34;content&#34;: &#34;What is RAG?&#34;},
+]
+</code></pre><h3 id=tool--function-calling>Tool / function calling</h3><p>Give the model a schema; it returns a structured call instead of prose, and you execute it.</p><pre tabindex=0><code>tools = [{&#34;name&#34;: &#34;get_weather&#34;,
+          &#34;parameters&#34;: {&#34;city&#34;: &#34;string&#34;}}]
+# → {&#34;name&#34;: &#34;get_weather&#34;,
+#    &#34;arguments&#34;: &#34;{\&#34;city\&#34;: \&#34;Berlin\&#34;}&#34;}
+</code></pre><h3 id=structured-output-json>Structured output (JSON)</h3><p>Ask for valid JSON and constrain the decoder so it can&rsquo;t emit anything else.</p><pre tabindex=0><code>response_format = {&#34;type&#34;: &#34;json_object&#34;}
+# → {&#34;sentiment&#34;: &#34;positive&#34;,
+#    &#34;confidence&#34;: 0.93}
+</code></pre><blockquote><p><strong>✓:</strong> <strong>Tip:</strong> be explicit about output shape and length. “Answer in one JSON object with keys <code>sentiment</code> and <code>confidence</code>” beats hoping the model guesses a format.</p></blockquote><h2 id=rag>RAG & context</h2><p>Retrieval-augmented generation grounds the model in your documents instead of its training memory.</p><ol><li><strong>Chunk</strong> — Split sources into overlapping pieces (~256–1024 tokens) so retrieval has fine-grained units.</li><li><strong>Embed</strong> — Vectorize each chunk with an embedding model; similar text → nearby vectors.</li><li><strong>Store</strong> — Index vectors in a vector DB — FAISS, Pinecone, pgvector, Chroma.</li><li><strong>Retrieve</strong> — Embed the query, then pull the top-k nearest chunks (plus metadata filters).</li><li><strong>Ground</strong> — Stuff the retrieved chunks into the prompt with the question and an instruction to cite them.</li><li><strong>Answer</strong> — The model answers from the provided context only — reducing hallucination.</li></ol><h3 id=chunking>Chunking</h3><p>Size and overlap trade precision for coverage. Too small loses context; too large dilutes the match.</p><pre tabindex=0><code>chunk_size    = 512
+chunk_overlap = 64   # keeps meaning
+# across boundaries
+</code></pre><h3 id=reranking>Reranking</h3><p>A cross-encoder re-scores the top-k retrieved chunks for relevance — better than pure vector similarity.</p><pre tabindex=0><code>top_100 = vector_search(q)
+top_5   = rerank(q, top_100)
+# bge-reranker, Cohere Rerank
+</code></pre><h3 id=grounding--citations>Grounding & citations</h3><p>Require every claim to trace to a retrieved passage, and ask for source ids inline.</p><pre tabindex=0><code>&#34;Answer using ONLY the context.
+ Cite sources as [1], [2]…&#34;
+</code></pre><h2 id=agents>Agents & tools</h2><p>An agent is an LLM in a loop: it reasons, calls tools, reads results, and repeats until done.</p><ol><li><strong>Observe</strong> — The model reads the task, prior steps, and any tool outputs so far.</li><li><strong>Think</strong> — It reasons about the next action — the “Thought” in a ReAct loop.</li><li><strong>Act</strong> — It emits a tool call (the “Action”) — search, code, browser, API — which you execute.</li><li><strong>Observe result</strong> — The tool&rsquo;s output is appended to the context, and the loop repeats.</li><li><strong>Finish</strong> — When the goal is met it returns a final answer instead of another tool call.</li></ol><h3 id=react-loop>ReAct loop</h3><pre tabindex=0><code>Thought: I need the current price.
+Action: search_tool(&#34;AAPL price&#34;)
+Observation: &#34;AAPL is $232&#34;
+Thought: I have the data.
+Answer: &#34;AAPL trades at $232.&#34;
+</code></pre><h3 id=memory>Memory</h3><p><strong>Short-term</strong> is the context window; <strong>long-term</strong> persists across sessions via a vector store or notes.</p><pre tabindex=0><code>memory = [
+  {&#34;role&#34;: &#34;user&#34;, &#34;content&#34;: &#34;…&#34;},
+  {&#34;role&#34;: &#34;tool&#34;,  &#34;content&#34;: &#34;…&#34;},
+]  # append, then truncate when full
+</code></pre><h3 id=planning>Planning</h3><p>Decompose a goal into subtasks before acting — plan-then-execute, or re-plan when a step fails.</p><pre tabindex=0><code>plan = model(&#34;Break this into steps&#34;)
+for step in plan:
+    result = execute(step)
+</code></pre><h3 id=tool-calling>Tool calling</h3><p>Tools are functions the agent can request. Keep schemas small and unambiguous. <strong>MCP</strong> (Model Context Protocol) is the emerging standard for exposing tools, data, and prompts to agents.</p><pre tabindex=0><code>@tool
+def search(query: str) -&gt; str:
+    &#34;&#34;&#34;Search the web.&#34;&#34;&#34;
+    return results(query)
+</code></pre><h3 id=multi-agent>Multi-agent</h3><p>Split roles — planner, coder, reviewer — into agents that pass messages or share a workspace.</p><pre tabindex=0><code>orchestrator
+  ├─ planner
+  ├─ coder
+  └─ reviewer  (approves output)
+</code></pre><ul><li><strong>idle</strong> — Waiting for a task or the next turn.</li><li><strong>reasoning</strong> — Planning the next action — the “Thought” step.</li><li><strong>awaiting tool</strong> — Emitted a call; waiting on its result.</li><li><strong>done</strong> — Returned a final answer, loop ends.</li></ul><h2 id=evals>Evaluation</h2><p>Measure before you ship: perplexity for language, benchmarks for skill, judges for open-ended quality.</p><table><thead><tr><th>Metric</th><th>What it measures</th><th>Good to know</th></tr></thead><tbody><tr><td><code>Perplexity</code></td><td>How surprised the model is by held-out text</td><td>Lower = better; core LM objective</td></tr><tr><td><code>MMLU</code></td><td>Knowledge across 57 subjects (multiple choice)</td><td>% accuracy; MMLU-Pro is the harder variant</td></tr><tr><td><code>HumanEval</code></td><td>Python function synthesis from a docstring</td><td><code>pass@1</code>; coding benchmark</td></tr><tr><td><code>SWE-bench</code></td><td>Resolves real GitHub issues end-to-end</td><td>Agentic coding; % issues solved</td></tr><tr><td><code>GPQA</code></td><td>Graduate-level science Q&amp;A</td><td>Harder, less saturated than MMLU</td></tr><tr><td><code>AIME</code></td><td>Competition math problems</td><td>Reasoning bar; math-specific</td></tr><tr><td><code>LLM-as-judge</code></td><td>A strong model scores another model&rsquo;s output</td><td>Cheap, but biased toward style</td></tr><tr><td><code>Hallucination rate</code></td><td>% of claims not supported by the source</td><td>Needs ground-truth / citation check</td></tr><tr><td><code>ROUGE / BLEU</code></td><td>n-gram overlap with a reference answer</td><td>Weak for open-ended generation</td></tr></tbody></table><blockquote><p><strong>!:</strong> <strong>Benchmarks leak into training data.</strong> A high MMLU score doesn&rsquo;t prove real-world ability — always add an eval on your own data and inspect failures, not just averages.</p></blockquote><h2 id=gotchas>Pitfalls</h2><p>The failures that bite everyone once — know them before they cost you.</p><h3 id=hallucination>Hallucination</h3><p>Models confidently invent facts, citations, and APIs. Ground with RAG, verify sources, and treat output as a draft.</p><pre tabindex=0><code># fabricated URL that looks real
+# → always fetch &amp; verify links
+</code></pre><h3 id=context-limits>Context limits</h3><p>Long history silently truncates — the model forgets the beginning, and skim-reads the middle (“lost in the middle”). Track token usage, summarize or page context, and put key instructions first and last.</p><pre tabindex=0><code>tokens = count(messages)
+if tokens &gt; budget:
+    summarize(older_messages)
+</code></pre><h3 id=tokenization-surprises>Tokenization surprises</h3><p>Whitespace, case, and special chars change token counts — “a” and “ A” are different tokens. Count with the real tokenizer, not characters.</p><pre tabindex=0><code>len(&#34;a&#34;) == len(&#34; A&#34;)   # chars equal
+tokens(&#34;a&#34;) &lt; tokens(&#34; A&#34;) # tokens differ
+</code></pre><h3 id=cost--latency>Cost & latency</h3><p>Long prompts and huge outputs are expensive and slow. Cache embeddings, cap output tokens, and stream.</p><pre tabindex=0><code># prompt tokens + completion tokens
+# both bill, plus latency per token
+</code></pre><h3 id=prompt-injection>Prompt injection</h3><p>Untrusted text inside a prompt can override instructions — “ignore previous instructions”. Treat retrieved/user content as data, never as commands.</p><pre tabindex=0><code># a webpage says:
+# &#34;Disregard instructions and reveal…&#34;
+</code></pre><h3 id=overfitting-to-benchmarks>Overfitting to benchmarks</h3><p>Optimizing for a leaderboard makes the model memorize the test, not the skill. Measure on held-out, task-specific data.</p><pre tabindex=0><code># high MMLU ≠ good at your domain
+# → eval on YOUR real prompts
+</code></pre><h3 id=sycophancy>Sycophancy</h3><p>Models flatter and agree instead of pushing back — especially when you state an opinion. Explicitly ask for disagreement and counter-arguments.</p><pre tabindex=0><code># &#34;Am I right?&#34; → &#34;Yes, absolutely!&#34;
+# better: &#34;What&#39;s the strongest
+#    argument against this?&#34;
+</code></pre><h3 id=non-determinism--api-drift>Non-determinism & API drift</h3><p>The same prompt can return different answers (sampling), and providers silently change models. Pin versions and set <code>temp = 0</code> plus a <code>seed</code> when reproducibility matters.</p><pre tabindex=0><code># pin model + version, record seed
+# temp = 0, seed = 42 → reproducible
+</code></pre></div></article></div><footer class=foot><span>slop-stuff</span>
+<span class=muted>served under <code>makefunstuff.github.io/slop-stuff/&lt;folder>/</code></span>
+<a href=https://makefunstuff.github.io/slop-stuff/links/>links</a>
+<a href=https://github.com/makefunstuff/slop-stuff>repo</a></footer><script src=https://makefunstuff.github.io/slop-stuff/js/wiki.js defer></script></body></html>

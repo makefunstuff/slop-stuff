@@ -1,0 +1,113 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Kafka — slop-stuff</title><meta name=description content="Topics, partitions, producers, consumers, offsets, and operations."><link rel=canonical href=https://makefunstuff.github.io/slop-stuff/kafka/><link rel=stylesheet href=https://makefunstuff.github.io/slop-stuff/css/wiki.css><script>(function(){var t="slop-theme",e=localStorage.getItem(t);e||(e=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"),document.documentElement.setAttribute("data-theme",e)})()</script></head><body><header class=bar><a class=brand href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a>
+<span class="muted hide-narrow">cheatsheets & experiments</span><form class=seek role=search action=https://makefunstuff.github.io/slop-stuff/ method=get><input id=q type=search name=q placeholder="search guides…" autocomplete=off aria-label="Search guides"><div id=hits class=hits hidden></div></form><button type=button class=icon id=theme title="Toggle theme" aria-label="Toggle theme">◐</button>
+<a class=icon href=https://github.com/makefunstuff/slop-stuff rel=noreferrer>git</a></header><div class="wrap wrap-guide"><aside class=toc aria-label="On this page"><p class=toc-label>on this page</p><nav id=TableOfContents><ul><li><a href=#quickref>Quick reference</a></li><li><a href=#start>The model</a></li><li><a href=#topics>Topics & partitions</a></li><li><a href=#producers>Producers</a></li><li><a href=#consumers>Consumers & groups</a></li><li><a href=#cli>CLI operations</a></li><li><a href=#config>Key configs</a></li><li><a href=#ops>Operations</a></li><li><a href=#gotchas>Pitfalls</a></li></ul></nav></aside><article class=doc><p class=crumb><a href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a> / Data & databases</p><h1>Kafka</h1><p class=lede>A distributed log.</p><p class="muted sub">Topics, partitions, producers, consumers, offsets, and operations.</p><p class=tags><span>streaming</span><span>topic</span><span>partition</span><span>consumer group</span></p><div class=body><p>Apache Kafka is a distributed, append-only commit log. Producers append records to topics; consumers read them back in order, at their own pace — the shared buffer that decouples your services.</p><h2 id=quickref>Quick reference</h2><p>The daily surface on one screen — create, produce, consume, and watch lag. Every command takes <code>--bootstrap-server localhost:9092</code>; each is expanded below.</p><ul><li><code>kafka-topics --list</code> — Every topic on the cluster.</li><li><code>kafka-topics --create --topic orders --partitions 6 --replication-factor 3</code> — Create a topic — 6 partitions, 3 replicas.</li><li><code>kafka-topics --describe --topic orders</code> — Leader, replicas, and ISR for each partition.</li><li><code>kafka-console-producer --topic orders</code> — Type records on stdin, one per line.</li><li><code>kafka-console-consumer --topic orders --from-beginning</code> — Replay every record from offset 0.</li><li><code>kafka-console-consumer --topic orders --group billing</code> — Consume as a group — committed offsets persist.</li><li><code>kafka-consumer-groups --list</code> — All consumer groups.</li><li><code>kafka-consumer-groups --describe --group billing</code> — Current offset, log-end offset, and LAG.</li><li><code>kafka-consumer-groups --group billing --reset-offsets --to-earliest --execute --topic orders</code> — Rewind a group to the oldest offset.</li><li><code>kafka-topics --alter --topic orders --partitions 12</code> — Grow partitions — they can only increase.</li></ul><h2 id=start>The model</h2><p>Kafka is a distributed commit log. Producers append records to topics; each topic is split into partitions, and each partition is replicated across brokers for durability.</p><p><strong>producer</strong> (writes records) → <strong>topic</strong> (orders · 3 partitions) → <strong>partition</strong> (append-only log) → <strong>replica</strong> (broker ×3) → <strong>consumer</strong> (reads offsets)</p><h3 id=1-topic>1. Topic</h3><p>A named stream of records — like a table or a queue, but append-only.</p><pre tabindex=0><code>kafka-topics --create \
+  --topic orders \
+  --partitions 3
+</code></pre><h3 id=2-partition>2. Partition</h3><p>An ordered, immutable sequence of records. Each record gets a sequential <code>offset</code>.</p><pre tabindex=0><code>offset:  0  1  2  3  4
+          [A][B][C][D][E] …
+</code></pre><h3 id=3-broker>3. Broker</h3><p>A server that stores partitions, serves reads/writes, and replicates data.</p><pre tabindex=0><code>broker-1: p0 leader
+broker-2: p0 follower
+broker-3: p0 follower
+</code></pre><h3 id=4-replication>4. Replication</h3><p>Each partition is copied to <code>replication.factor</code> brokers: one leader, the rest followers.</p><pre tabindex=0><code>replication.factor=3
+min.insync.replicas=2
+</code></pre><blockquote><p><strong>LOG:</strong> <strong>Append-only.</strong> Records are never edited or deleted in place. The <code>offset</code> — a record&rsquo;s position in its partition — is how consumers track what they&rsquo;ve read. Retention removes whole segments later, never individual records.</p></blockquote><blockquote><p><strong>KR:</strong> <strong>KRaft, not ZooKeeper.</strong> Apache Kafka 4.0 (2025) made KRaft the only metadata mode — ZooKeeper was deprecated in 3.5 and removed in 4.0. Cluster metadata now lives in an internal <code>__cluster_metadata</code> topic managed by a quorum of controller nodes, so there is no separate ZK ensemble to run. Every command here uses <code>--bootstrap-server</code>; the legacy <code>--zookeeper</code> flags are gone.</p></blockquote><h2 id=topics>Topics & partitions</h2><p>Create, inspect, and delete topics. Partitions are the unit of parallelism — set them up front because they can only grow.</p><h3 id=create>Create</h3><pre tabindex=0><code>kafka-topics --bootstrap-server localhost:9092 \
+  --create --topic orders \
+  --partitions 6 \
+  --replication-factor 3
+</code></pre><h3 id=describe--list>Describe & list</h3><pre tabindex=0><code>kafka-topics --bootstrap-server localhost:9092 \
+  --describe --topic orders
+
+kafka-topics --bootstrap-server localhost:9092 --list
+</code></pre><h3 id=delete>Delete</h3><pre tabindex=0><code>kafka-topics --bootstrap-server localhost:9092 \
+  --delete --topic orders
+</code></pre><h3 id=add-partitions>Add partitions</h3><pre tabindex=0><code>kafka-topics --bootstrap-server localhost:9092 \
+  --alter --topic orders \
+  --partitions 12
+</code></pre><p>Partitions can only be increased — never removed.</p><table><thead><tr><th>Setting</th><th>Meaning</th><th>Default</th></tr></thead><tbody><tr><td><code>replication.factor</code></td><td>Copies of each partition across brokers</td><td>1</td></tr><tr><td><code>partitions</code></td><td>Number of partitions (parallelism)</td><td>1</td></tr><tr><td><code>retention.ms</code></td><td>How long records are kept</td><td>604800000 (7 days)</td></tr><tr><td><code>segment.bytes</code></td><td>Size at which a log segment rolls</td><td>1073741824 (1 GB)</td></tr><tr><td><code>cleanup.policy</code></td><td><code>delete</code> (by age) or <code>compact</code> (keep latest per key)</td><td>delete</td></tr><tr><td><code>min.insync.replicas</code></td><td>Replicas that must ACK before a write is accepted</td><td>1</td></tr></tbody></table><blockquote><p><strong>!:</strong> <strong>Partitions are permanent.</strong> You can raise the count but never lower it without recreating the topic. Ordering is only guaranteed <em>within</em> a partition, so choose partition count — and your keying strategy — with ordering in mind.</p></blockquote><h2 id=producers>Producers</h2><p>Producers append records to a topic. The record&rsquo;s key picks its partition; <code>acks</code> decides how durable that write is.</p><h3 id=produce-console>Produce (console)</h3><pre tabindex=0><code>echo &#39;{&#34;id&#34;:1,&#34;sku&#34;:&#34;A1&#34;}&#39; \
+  | kafka-console-producer \
+    --bootstrap-server localhost:9092 \
+    --topic orders
+</code></pre><h3 id=keys-pick-the-partition>Keys pick the partition</h3><p>Kafka hashes the key and maps it to a partition: <code>partition = hash(key) % num_partitions</code>. Same key ⇒ same partition ⇒ ordered.</p><pre tabindex=0><code>echo &#39;alice:{&#34;qty&#34;:2}&#39; \
+  | kafka-console-producer \
+    --property parse.key=true \
+    --property key.separator=: \
+    --topic orders
+</code></pre><h3 id=producer-api-java>Producer API (Java)</h3><pre tabindex=0><code>props.put(&#34;acks&#34;, &#34;all&#34;);
+props.put(&#34;key.serializer&#34;,
+  StringSerializer.class);
+props.put(&#34;value.serializer&#34;,
+  StringSerializer.class);
+new KafkaProducer&lt;&gt;(props);
+</code></pre><table><thead><tr><th><code>acks</code></th><th>Guarantee</th><th>Risk / cost</th></tr></thead><tbody><tr><td><code>0</code></td><td>No ack — fire and forget</td><td>Fastest; records can be lost</td></tr><tr><td><code>1</code></td><td>Leader acks the write</td><td>Lost if leader fails before replication</td></tr><tr><td><code>all</code></td><td>All in-sync replicas ack</td><td>Durable; requires <code>min.insync.replicas</code></td></tr></tbody></table><h3 id=batching>Batching</h3><p>Producers buffer records and send them in batches for throughput.</p><pre tabindex=0><code>linger.ms=5
+batch.size=16384
+compression.type=lz4
+</code></pre><h3 id=idempotence>Idempotence</h3><p>Retries can duplicate records. Idempotent producers dedupe by producer id + sequence number.</p><pre tabindex=0><code>enable.idempotence=true
+acks=all
+max.in.flight.requests=5
+</code></pre><h3 id=serialization>Serialization</h3><p>The producer converts keys/values to bytes. Pick a serializer and keep a schema registry.</p><pre tabindex=0><code>key.serializer
+value.serializer
+# Avro → Schema Registry
+# JSON → Jackson / JSON
+</code></pre><h2 id=consumers>Consumers & groups</h2><p>Consumers read partitions and commit offsets. In a group, each partition is assigned to exactly one member — that&rsquo;s how you scale out.</p><h3 id=consumer-groups>Consumer groups</h3><p>Every partition is read by exactly one consumer in a group. Add consumers to scale; more consumers than partitions means some idle.</p><pre tabindex=0><code>kafka-console-consumer \
+  --bootstrap-server localhost:9092 \
+  --topic orders --group billing
+</code></pre><h3 id=offsets--commit>Offsets & commit</h3><p>The offset is each consumer&rsquo;s position in a partition. Committed offsets are stored in the <code>__consumer_offsets</code> topic.</p><pre tabindex=0><code>enable.auto.commit=false
+consumer.commitSync();   // manual
+consumer.commitAsync();  // fire &amp; forget
+</code></pre><ol><li><strong>Subscribe</strong> — <code>consumer.subscribe(List.of("orders"))</code> — join the group and get assigned partitions.</li><li><strong>Poll</strong> — <code>consumer.poll(Duration.ofMillis(500))</code> — fetch a batch of records from the broker.</li><li><strong>Process</strong> — Handle each record idempotently — after a rebalance or retry your code may run more than once.</li><li><strong>Commit</strong> — <code>consumer.commitSync()</code> — persist the offset <em>after</em> processing to get at-least-once delivery.</li></ol><ul><li><strong>At-most-once</strong> — Commit before processing. Fast, but a crash loses unprocessed records.</li><li><strong>At-least-once</strong> — Process then commit. The safe default — expect duplicates, stay idempotent.</li><li><strong>Exactly-once</strong> — Idempotent producer + transactions + idempotent consumers. Powerful, complex.</li><li><strong>Rebalance</strong> — Partitions reassign when a consumer joins or leaves. <code>max.poll.interval.ms</code> guards slow processing.</li></ul><blockquote><p><strong>GROUP:</strong> <strong>One consumer per partition.</strong> Partitions are the unit of parallelism: 12 partitions ⇒ at most 12 active consumers in a group. Give every new topic enough partitions to feed its busiest group.</p></blockquote><h2 id=cli>CLI operations</h2><p>The four tools you&rsquo;ll run daily. Add <code>--bootstrap-server localhost:9092</code> to every command.</p><ul><li><code>kafka-topics --list</code> — All topics on the cluster.</li><li><code>kafka-topics --describe --topic orders</code> — Partition, leader, replicas, and ISR per partition.</li><li><code>kafka-topics --create --topic orders --partitions 6 --replication-factor 3</code> — Create a topic.</li><li><code>kafka-console-producer --topic orders</code> — Type records on stdin, one per line.</li><li><code>kafka-console-consumer --topic orders --from-beginning</code> — Read all records from the start.</li><li><code>kafka-console-consumer --topic orders --group billing</code> — Read as a group (persists committed offsets).</li><li><code>kafka-consumer-groups --list</code> — All consumer groups.</li><li><code>kafka-consumer-groups --describe --group billing</code> — Per-partition offset, log-end offset, and LAG.</li><li><code>kafka-consumer-groups --group billing --reset-offsets --to-earliest --execute --topic orders</code> — Rewind a group to the oldest offset.</li><li><code>kafka-consumer-groups --group billing --reset-offsets --to-latest --execute --topic orders</code> — Skip ahead to the newest offset.</li></ul><details><summary>More: reset offsets & peek</summary><h4 id=reset-to-a-timestamp>Reset to a timestamp</h4><pre tabindex=0><code>kafka-consumer-groups \
+  --group billing \
+  --reset-offsets \
+  --to-datetime 2024-01-01T00:00:00.000 \
+  --topic orders --execute
+</code></pre><h4 id=peek-with-a-throwaway-group>Peek with a throwaway group</h4><pre tabindex=0><code>kafka-console-consumer \
+  --bootstrap-server localhost:9092 \
+  --topic orders \
+  --group debug-$(date +%s) \
+  --max-messages 10
+</code></pre></details><h2 id=config>Key configs</h2><p>These few settings determine durability, throughput, and retention. Set them at the broker or topic level.</p><table><thead><tr><th>Config</th><th>What it controls</th><th>Where</th><th>Typical</th></tr></thead><tbody><tr><td><code>replication.factor</code></td><td>Copies of each partition</td><td>topic</td><td>3</td></tr><tr><td><code>min.insync.replicas</code></td><td>Minimum replicas that must ACK a write</td><td>topic / broker</td><td>2</td></tr><tr><td><code>acks</code></td><td>Producer acknowledgment level</td><td>producer</td><td>all</td></tr><tr><td><code>retention.ms</code></td><td>How long records are kept</td><td>topic / broker</td><td>604800000</td></tr><tr><td><code>segment.bytes</code></td><td>Log segment roll size</td><td>topic / broker</td><td>1073741824</td></tr><tr><td><code>num.partitions</code></td><td>Default partitions for auto-created topics</td><td>broker</td><td>3</td></tr><tr><td><code>auto.offset.reset</code></td><td>Where to start when no committed offset exists</td><td>consumer</td><td>earliest / latest</td></tr><tr><td><code>enable.auto.commit</code></td><td>Whether offsets commit automatically</td><td>consumer</td><td>false</td></tr></tbody></table><blockquote><p><strong>CFG:</strong> <strong>Durability rule of thumb:</strong> <code>replication.factor=3</code> + <code>min.insync.replicas=2</code> + <code>acks=all</code> survives one broker loss without dropping acknowledged writes. The cluster tolerates at most <code>replication.factor - min.insync.replicas</code> failures.</p></blockquote><h2 id=ops>Operations</h2><p>Day-two work: move partitions, watch consumer lag, keep the ISR healthy, and handle leader failure.</p><h3 id=reassign-partitions>Reassign partitions</h3><p>Rebalance partition placement across brokers with a JSON plan.</p><pre tabindex=0><code>kafka-reassign-partitions \
+  --bootstrap-server localhost:9092 \
+  --reassignment-json-file plan.json \
+  --execute
+
+kafka-reassign-partitions \
+  --bootstrap-server localhost:9092 \
+  --verify
+</code></pre><h3 id=monitor-consumer-lag>Monitor consumer lag</h3><p>Lag is how far a group is behind the end of each partition. Growing lag means consumers can&rsquo;t keep up.</p><pre tabindex=0><code>kafka-consumer-groups \
+  --bootstrap-server localhost:9092 \
+  --describe --group billing
+# watch the LAG column
+</code></pre><h3 id=isr-health>ISR health</h3><p>The in-sync replica set is the followers that are caught up. A follower that falls behind drops out of the ISR.</p><pre tabindex=0><code>kafka-topics \
+  --bootstrap-server localhost:9092 \
+  --describe --topic orders
+# ISR column: 0,1,2 vs 0,1
+</code></pre><h3 id=leader-failure>Leader failure</h3><p>When a partition leader dies, the controller picks a new leader from the ISR — automatically, in seconds.</p><pre tabindex=0><code># leader broker 1 dies:
+Partition: 0  Leader: 1 → 2
+# controller promotes an
+# in-sync follower
+</code></pre><ol><li><strong>Check topic health</strong> — <code>kafka-topics --describe --topic orders</code> — look at the Leader and ISR columns for every partition.</li><li><strong>Check the ISR</strong> — If the ISR shrank below <code>min.insync.replicas</code>, producers with <code>acks=all</code> start failing — find and fix the lagging broker.</li><li><strong>Check consumer lag</strong> — <code>kafka-consumer-groups --describe</code> — rising LAG means slow consumers or a hot partition.</li><li><strong>Reset or scale</strong> — Reset offsets to skip poison records, or scale the consumer group up toward the partition count.</li></ol><blockquote><p><strong>!:</strong> <strong>Never take the last replica offline.</strong> If you lose every in-sync replica of a partition, acknowledged data can be unrecoverable. Keep <code>unclean.leader.election.enable=false</code> (the default) to refuse an out-of-sync leader and surface the problem instead of losing data.</p></blockquote><h2 id=gotchas>Pitfalls</h2><p>The failure modes that surprise teams in production — and how to avoid them.</p><h3 id=hot-partitions-key-skew>Hot partitions (key skew)</h3><p>If one key dominates — say every event keyed by <code>"all"</code> — that partition gets all the traffic while others idle. Ordering is per-key; throughput is per-partition.</p><pre tabindex=0><code># bad: every record keyed by &#34;all&#34;
+# good: key by user_id or shard id
+</code></pre><h3 id=offset-reset-surprises>Offset reset surprises</h3><p><code>auto.offset.reset=latest</code> silently skips everything produced before a new consumer starts; <code>earliest</code> replays the whole history.</p><pre tabindex=0><code>auto.offset.reset=earliest
+# → reads from offset 0
+auto.offset.reset=latest
+# → reads only new records
+</code></pre><h3 id=rebalance-storms>Rebalance storms</h3><p>Slow processing trips <code>max.poll.interval.ms</code>, the consumer is kicked out, and partitions shuffle — over and over. Tune the poll loop, not just the interval.</p><pre tabindex=0><code>max.poll.interval.ms=300000
+max.poll.records=500
+</code></pre><h3 id=retention-vs-slow-consumers>Retention vs slow consumers</h3><p>A consumer paused longer than <code>retention.ms</code> comes back to missing offsets — the broker already deleted them.</p><pre tabindex=0><code># LAG outgrew the retention window
+# → OffsetOutOfRangeException
+# fix: longer retention, or
+# consume faster / catch up
+</code></pre><h3 id=leader-loss>Leader loss</h3><p>A partition is briefly unavailable while the controller elects a new leader. With <code>acks=all</code> and a healthy ISR, no acknowledged data is lost.</p><pre tabindex=0><code>replication.factor=3
+min.insync.replicas=2
+acks=all
+</code></pre><h3 id=partitions-are-forever>Partitions are forever</h3><p>You can add partitions but not remove them. Re-keying or re-partitioning a live topic means migrating to a new one.</p><pre tabindex=0><code># plan partition count up front:
+partitions ≈ peak consumers
+</code></pre><h3 id=zookeeper-is-gone-kraft>ZooKeeper is gone (KRaft)</h3><p>Kafka 4.0 removed ZooKeeper entirely. Brokers carrying the old <code>zookeeper.connect</code> won&rsquo;t start, and the <code>--zookeeper</code> CLI flags were dropped — migrate to KRaft before upgrading.</p><pre tabindex=0><code># 4.0: no zookeeper.connect
+process.roles=broker,controller
+controller.quorum.voters=1@h1:9093
+</code></pre><h3 id=log-compaction--delete>Log compaction ≠ delete</h3><p><code>cleanup.policy=compact</code> keeps the latest record per key, not a time window. Every message needs a key, and deleting a key writes a tombstone (<code>null</code> value) held for <code>delete.retention.ms</code>.</p><pre tabindex=0><code>cleanup.policy=compact
+delete.retention.ms=86400000
+# null value = tombstone
+</code></pre><blockquote><p><strong>!:</strong> <strong>Watch the ISR before the disk.</strong> Most &ldquo;Kafka is down&rdquo; incidents are really <code>min.insync.replicas</code> not being met because a follower fell out of the ISR — check <code>kafka-topics --describe</code> before restarting brokers.</p></blockquote></div></article></div><footer class=foot><span>slop-stuff</span>
+<span class=muted>served under <code>makefunstuff.github.io/slop-stuff/&lt;folder>/</code></span>
+<a href=https://makefunstuff.github.io/slop-stuff/links/>links</a>
+<a href=https://github.com/makefunstuff/slop-stuff>repo</a></footer><script src=https://makefunstuff.github.io/slop-stuff/js/wiki.js defer></script></body></html>

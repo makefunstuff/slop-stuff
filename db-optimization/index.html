@@ -1,0 +1,139 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Database optimization — slop-stuff</title><meta name=description content="Indexes, query plans, normalization, Redis caching, and tuning."><link rel=canonical href=https://makefunstuff.github.io/slop-stuff/db-optimization/><link rel=stylesheet href=https://makefunstuff.github.io/slop-stuff/css/wiki.css><script>(function(){var t="slop-theme",e=localStorage.getItem(t);e||(e=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"),document.documentElement.setAttribute("data-theme",e)})()</script></head><body><header class=bar><a class=brand href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a>
+<span class="muted hide-narrow">cheatsheets & experiments</span><form class=seek role=search action=https://makefunstuff.github.io/slop-stuff/ method=get><input id=q type=search name=q placeholder="search guides…" autocomplete=off aria-label="Search guides"><div id=hits class=hits hidden></div></form><button type=button class=icon id=theme title="Toggle theme" aria-label="Toggle theme">◐</button>
+<a class=icon href=https://github.com/makefunstuff/slop-stuff rel=noreferrer>git</a></header><div class="wrap wrap-guide"><aside class=toc aria-label="On this page"><p class=toc-label>on this page</p><nav id=TableOfContents><ul><li><a href=#quickref>Quick reference</a></li><li><a href=#start>The optimization loop</a></li><li><a href=#indexes>Indexes</a></li><li><a href=#plans>Query plans</a></li><li><a href=#queries>Query tuning</a></li><li><a href=#joins>Joins & subqueries</a></li><li><a href=#schema>Schema design</a></li><li><a href=#caching>Caching & connections</a></li><li><a href=#redis>Redis as a cache & store</a></li><li><a href=#gotchas>Pitfalls</a></li></ul></nav></aside><article class=doc><p class=crumb><a href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a> / Data & databases</p><h1>Database optimization</h1><p class=lede>Make the database fast again.</p><p class="muted sub">Indexes, query plans, normalization, Redis caching, and tuning.</p><p class=tags><span>database</span><span>index</span><span>EXPLAIN</span><span>Redis</span></p><div class=body><p>Slow queries are rarely mysterious — they show up in the plan as a full scan, a missing index, or an N+1 loop. This guide is the loop: measure, explain, index, re-measure.</p><h2 id=quickref>Quick reference</h2><p>The highest-leverage moves in one glance — measure, index, seek, and only then denormalize.</p><ul><li><code>EXPLAIN (ANALYZE, BUFFERS) SELECT …</code> — Run the plan for real — actual rows, time, and page I/O. Trust actual, not cost.</li><li><code>CREATE INDEX ON t (a, b) INCLUDE (c);</code> — B-tree is the default; composite order = filter order; INCLUDE makes it covering (index-only scan).</li><li><code>WHERE col = x</code> — Sargable: keep the column bare — no function, arithmetic, or implicit cast, or the index is skipped.</li><li><code>WHERE id > :last ORDER BY id LIMIT 50</code> — Keyset pagination seeks straight to the page; OFFSET scans and discards every earlier row.</li><li><code>SELECT u.id, u.name FROM users u;</code> — Name the columns you use — SELECT * drags data and defeats covering indexes.</li><li><code>JOIN … ON o.user_id = u.id</code> — Index the join keys. Nested loop = small + indexed, hash = large, merge = both sorted.</li><li><code>Normalize writes · denormalize reads</code> — Normalize to remove redundancy; denormalize hot read paths to drop joins.</li><li><code>ANALYZE table;</code> — Refresh statistics when estimates drift — a bad plan usually means stale stats.</li></ul><h2 id=start>The optimization loop</h2><p>Don&rsquo;t guess. Measure, find the slow query, read the plan, add an index, and measure again — every fix starts and ends with data.</p><ol><li><strong>Measure first</strong> — Profile real traffic. Enable the slow query log or <code>pg_stat_statements</code> so you&rsquo;re optimizing what actually runs.</li><li><strong>Find the slow query</strong> — Rank by total time, not single latency: <code>total_time = calls × avg_time</code>. A query run a million times beats a one-off.</li><li><strong>EXPLAIN it</strong> — Read the plan. Is it a seq scan on a big table? A nested loop over millions of rows? Find the step that costs the most.</li><li><strong>Add an index / rewrite</strong> — Add the missing index, or rewrite the predicate so the optimizer can use one (make it sargable).</li><li><strong>Re-measure</strong> — Confirm the plan changed and rows scanned dropped. Keep only the change that measurably helped.</li></ol><h3 id=1-turn-on-logging>1. Turn on logging</h3><pre tabindex=0><code>-- PostgreSQL
+log_min_duration_statement = 250
+-- MySQL
+slow_query_log = ON
+long_query_time = 0.25
+</code></pre><h3 id=2-rank-by-total-time>2. Rank by total time</h3><pre tabindex=0><code>SELECT query, calls,
+       total_exec_time,
+       mean_exec_time
+FROM pg_stat_statements
+ORDER BY total_exec_time DESC
+LIMIT 10;
+</code></pre><h3 id=3-read-the-plan>3. Read the plan</h3><pre tabindex=0><code>EXPLAIN ANALYZE
+SELECT * FROM orders
+WHERE user_id = 42
+  AND created_at &gt; now() - interval &#39;30 days&#39;;
+</code></pre><h3 id=4-fix--verify>4. Fix + verify</h3><pre tabindex=0><code>CREATE INDEX idx_orders_uid_ts
+  ON orders (user_id, created_at);
+ANALYZE orders; -- refresh stats
+</code></pre><blockquote><p><strong>KEY:</strong> <strong>Measure before and after.</strong> <code>EXPLAIN</code> only estimates; <code>EXPLAIN ANALYZE</code> actually runs the query and reports real rows and time. Trust the <code>actual</code> numbers over the cost estimate, and keep only the change that measurably helped.</p></blockquote><h2 id=indexes>Indexes</h2><p>Indexes trade write cost for read speed. Match the index to the query&rsquo;s <code>WHERE</code>, <code>JOIN</code>, and <code>ORDER BY</code>.</p><table><thead><tr><th>Index</th><th>Shines at</th><th>Example</th></tr></thead><tbody><tr><td>B-tree</td><td>Equality, ranges, and sort — the default</td><td><code>CREATE INDEX idx ON users (email);</code></td></tr><tr><td>Hash</td><td>Equality only (<code>=</code>), no range or sort — crash-safe since PG 10, but B-tree usually wins</td><td><code>CREATE INDEX idx ON users USING hash (email);</code></td></tr><tr><td>Composite</td><td>Multi-column filters + sort</td><td><code>CREATE INDEX idx ON orders (user_id, created_at);</code></td></tr><tr><td>Covering</td><td>Reading a few columns with no table hop (<code>INCLUDE</code> is Postgres syntax; InnoDB auto-covers via the PK)</td><td><code>CREATE INDEX idx ON orders (user_id) INCLUDE (total);</code></td></tr><tr><td>Partial</td><td>A hot subset of rows</td><td><code>CREATE INDEX idx ON users (email) WHERE deleted_at IS NULL;</code></td></tr><tr><td>Unique</td><td>Uniqueness constraint + index in one</td><td><code>CREATE UNIQUE INDEX idx ON users (email);</code></td></tr></tbody></table><h3 id=leftmost-prefix-rule>Leftmost prefix rule</h3><p>A composite index <code>(a, b, c)</code> serves queries filtering on <code>a</code>, <code>a + b</code>, or <code>a + b + c</code> — but not <code>b</code> alone. Order columns by how you filter.</p><pre tabindex=0><code>-- index (a, b, c) helps:
+WHERE a = 1
+WHERE a = 1 AND b = 2
+-- but NOT:
+WHERE b = 2          -- skips a
+</code></pre><h3 id=when-indexes-hurt>When indexes hurt</h3><p>Every <code>INSERT</code>/<code>UPDATE</code>/<code>DELETE</code> must maintain every index. Too many indexes cause write amplification, more storage, and slower writes.</p><pre tabindex=0><code>-- find unused indexes (PostgreSQL)
+SELECT schemaname, relname, indexrelname
+FROM pg_stat_user_indexes
+WHERE idx_scan = 0;
+</code></pre><blockquote><p><strong>⚠:</strong> <strong>Add an index for the queries you run, not the ones you might.</strong> One well-chosen composite index usually beats five single-column indexes — combining several single-column indexes (BitmapAnd/BitmapOr) is costlier than one index that already matches.</p></blockquote><h2 id=plans>Query plans</h2><p><code>EXPLAIN</code> shows the plan the optimizer chose. The shape of the plan — scan type and join method — tells you where the time goes.</p><ul><li><code>EXPLAIN SELECT …</code> — Estimate only; does not run the query.</li><li><code>EXPLAIN ANALYZE SELECT …</code> — Runs it; adds actual time + rows.</li><li><code>EXPLAIN (ANALYZE, BUFFERS) SELECT …</code> — Adds cache / page I/O (shared, hit).</li><li><code>EXPLAIN (FORMAT JSON) SELECT …</code> — Machine-readable plan tree.</li><li><code>ANALYZE table;</code> — Refresh statistics the planner uses.</li><li><code>SET enable_seqscan = off;</code> — Debug: force an index scan to compare.</li></ul><table><thead><tr><th>Operator</th><th>What it does</th><th>Watch for</th></tr></thead><tbody><tr><td>Seq Scan</td><td>Reads every row of the table in order</td><td>Fine for small tables; suspect on big ones.</td></tr><tr><td>Index Scan</td><td>Looks up rows in an index, then fetches them from the table</td><td>Good; check it isn&rsquo;t fetching most of the table.</td></tr><tr><td>Index Only Scan</td><td>Serves the query entirely from the index (covering)</td><td>Fastest; needs a covering index.</td></tr><tr><td>Bitmap Heap Scan</td><td>Collects matches in a bitmap, then reads matching pages</td><td>Often beats an index scan for many matches.</td></tr><tr><td>Nested Loop</td><td>For each outer row, probe the inner side</td><td>Great with a small outer set + indexed inner key.</td></tr><tr><td>Hash Join</td><td>Hashes the smaller side, probes with the other</td><td>Best for large, unsorted joins.</td></tr><tr><td>Merge Join</td><td>Sorts both sides, then merges them</td><td>Best when both sides are already sorted.</td></tr></tbody></table><blockquote><p><strong>KEY:</strong> <strong>cost is <code>startup..total</code> in arbitrary units</strong> — useful for comparing plans, not for predicting wall-clock time. <code>EXPLAIN ANALYZE</code> reports <code>actual time</code> and <code>rows</code>; when those differ wildly from the estimate, statistics are stale — run <code>ANALYZE table;</code>.</p></blockquote><h2 id=queries>Query tuning</h2><p>The optimizer can only use an index when the predicate is <em>sargable</em> — keep the column bare on the left side of comparisons.</p><table><thead><tr><th>Sargable — uses the index</th><th>Non-sargable — forces a scan</th></tr></thead><tbody><tr><td><code>WHERE created_at > now() - interval '1 day'</code></td><td><code>WHERE age(created_at) &lt; 1</code> — function on the column.</td></tr><tr><td><code>WHERE id = 42</code></td><td><code>WHERE id + 1 = 43</code> — arithmetic on the column.</td></tr><tr><td><code>WHERE email = 'ada@example.com'</code></td><td><code>WHERE lower(email) = 'ada@example.com'</code> — function (unless indexed).</td></tr><tr><td><code>WHERE status IN ('new','open')</code></td><td><code>WHERE status || '' = 'new'</code> — expression on the column.</td></tr><tr><td><code>WHERE deleted_at IS NULL</code></td><td><code>WHERE COALESCE(deleted_at, now()) = now()</code> — function on the column.</td></tr><tr><td><code>WHERE user_id = 42</code> on an INT column</td><td><code>WHERE code = 42</code> on a TEXT column — implicit cast.</td></tr></tbody></table><h3 id=limit--keyset-pagination>LIMIT & keyset pagination</h3><p><code>OFFSET</code> scans and discards every earlier row, so deep pages get slower. Seek directly with a keyset.</p><pre tabindex=0><code>-- slow: scans + discards 10000 rows
+SELECT * FROM events
+ORDER BY id
+LIMIT 50 OFFSET 10000;
+
+-- fast: seeks straight to the page
+SELECT * FROM events
+WHERE id &gt; :last_id
+ORDER BY id
+LIMIT 50;
+</code></pre><h3 id=select-only-what-you-need>Select only what you need</h3><p><code>SELECT *</code> pulls every column and defeats covering indexes. Name the columns you use.</p><pre tabindex=0><code>SELECT u.id, u.name, u.email
+FROM users u;
+-- not: SELECT *  (pulls every column,
+-- defeats covering indexes)
+</code></pre><blockquote><p><strong>⌁:</strong> <strong>Need a function on a column?</strong> Add an expression index for that exact expression: <code>CREATE INDEX idx ON users (lower(email));</code>. Implicit casts and wrappers are the #1 reason an index is ignored.</p></blockquote><h2 id=joins>Joins & subqueries</h2><p>The optimizer picks the join method; your job is to give it indexes on the join keys and to pick the right structure for the question.</p><table><thead><tr><th>Join</th><th>What it returns</th><th>Use when</th></tr></thead><tbody><tr><td><code>INNER JOIN</code></td><td>Only rows that match in both tables</td><td>The default relationship.</td></tr><tr><td><code>LEFT JOIN</code></td><td>All left rows + matches (NULLs when no match)</td><td>Keep rows even without a match.</td></tr><tr><td><code>RIGHT JOIN</code></td><td>All right rows + matches</td><td>Rare — usually rewritten as LEFT.</td></tr><tr><td><code>FULL OUTER JOIN</code></td><td>All rows from both sides</td><td>Find unmatched rows on both sides.</td></tr><tr><td><code>CROSS JOIN</code></td><td>Cartesian product</td><td>Generate combinations; usually a bug.</td></tr><tr><td><code>EXISTS</code> / <code>NOT EXISTS</code></td><td>Semi/anti join — membership test, no duplicate rows</td><td><code>WHERE EXISTS (SELECT 1 …)</code>.</td></tr></tbody></table><h3 id=exists-vs-in>EXISTS vs IN</h3><pre tabindex=0><code>-- prefer EXISTS: short-circuits,
+-- NULL-safe, no duplicate rows
+SELECT id FROM users u
+WHERE EXISTS (
+  SELECT 1 FROM orders o
+  WHERE o.user_id = u.id
+);
+
+-- IN returns duplicates; NULLs in the
+-- subquery can surprise you
+SELECT id FROM users
+WHERE id IN (SELECT user_id FROM orders);
+</code></pre><h3 id=subquery-vs-join-vs-cte>Subquery vs JOIN vs CTE</h3><pre tabindex=0><code>-- JOIN pairs rows; can multiply them
+SELECT u.name, o.id FROM users u
+JOIN orders o ON o.user_id = u.id;
+
+-- CTE: readable, reusable block
+WITH recent AS (
+  SELECT * FROM orders
+  WHERE created_at &gt; now() - interval &#39;7 days&#39;
+)
+SELECT u.name, r.total FROM users u
+JOIN recent r ON r.user_id = u.id;
+</code></pre><blockquote><p><strong>KEY:</strong> <strong>Denormalize when a hot read path joins tables that rarely change</strong> — e.g. cache <code>orders.total</code> or <code>users.order_count</code>. Pay the write cost once, keep it consistent with a trigger, or accept a bounded window of staleness.</p></blockquote><h2 id=schema>Schema design</h2><p>Normalize to eliminate redundancy; denormalize to eliminate joins. The schema is a cache-invalidation problem — pick the shape that matches your access patterns.</p><table><thead><tr><th>Normal form</th><th>Rule</th><th>Example</th></tr></thead><tbody><tr><td>1NF</td><td>Atomic cells, no repeating groups</td><td>One email per row; split tags into a join table.</td></tr><tr><td>2NF</td><td>1NF + no partial key dependencies</td><td>Every non-key column depends on the whole composite key.</td></tr><tr><td>3NF</td><td>2NF + no transitive dependencies</td><td>Store <code>city_id</code>, not <code>city_name</code> (which depends on the city).</td></tr></tbody></table><h3 id=denormalization-trade-offs>Denormalization trade-offs</h3><p>Denormalize for reads: fewer joins, faster <code>SELECT</code>s. You pay with larger rows, write amplification, and the risk of inconsistent duplicates that must be kept in sync.</p><h3 id=data-types-matter>Data types matter</h3><p>Use the smallest exact type. <code>INT</code> not <code>BIGINT</code> unless needed; <code>DATE</code>/<code>TIMESTAMPTZ</code> not <code>VARCHAR</code>; <code>BOOLEAN</code> not <code>INT</code>. Smaller rows = more rows per page = fewer pages read.</p><pre tabindex=0><code>-- prefer these
+id INTEGER NOT NULL,
+created_at TIMESTAMPTZ,
+active BOOLEAN
+-- over VARCHAR dates and 0/1 flags
+</code></pre><ul><li><code>PARTITION BY RANGE (created_at)</code> — Split one table into many by key; prunes scans.</li><li><code>PARTITION BY HASH (user_id)</code> — Even spread across partitions.</li><li><code>DETACH PARTITION p_old</code> — Drop a whole partition instantly.</li><li><code>Sharding</code> — Split rows across servers by a key; horizontal scale.</li></ul><blockquote><p><strong>⚠:</strong> <strong>Partition on the column you filter and delete by.</strong> A partition key that never appears in your <code>WHERE</code> adds overhead without pruning anything. Sharding buys scale but makes cross-shard joins and transactions much harder.</p></blockquote><h2 id=caching>Caching & connections</h2><p>The fastest query is the one you never run. Cache at the right layer, and never open a connection per request.</p><h3 id=connection-pooling>Connection pooling</h3><p>Opening a connection is expensive (handshake, auth, memory). A pool reuses a fixed set of connections across requests instead of one per request.</p><pre tabindex=0><code># pgbouncer.ini
+[databases]
+app = host=dbhost dbname=app
+
+[pgbouncer]
+pool_mode = transaction
+max_client_conn = 1000
+default_pool_size = 20
+</code></pre><h3 id=query--result-cache>Query & result cache</h3><p>Cache slow, rarely-changing results in Redis/memcached. Invalidate on write or set a TTL. Never cache user-specific data without a per-user key.</p><pre tabindex=0><code>key = &#34;dashboard:stats&#34;
+val = redis.get(key)
+if val is None:
+    val = run_slow_query()
+    redis.set(key, val, ex=60)
+</code></pre><h3 id=read-replicas>Read replicas</h3><p>Route reads to replicas, writes to the primary. Reads scale horizontally, but accept replication lag — don&rsquo;t read your own write from a replica.</p><pre tabindex=0><code># write to primary
+conn_primary.execute(...)
+# read from replica
+conn_replica.query(&#34;SELECT …&#34;)
+</code></pre><h3 id=materialized-views>Materialized views</h3><p>Precompute a heavy aggregate into a table; refresh on a schedule. Stale by design, instant to read.</p><pre tabindex=0><code>CREATE MATERIALIZED VIEW mv_sales AS
+  SELECT user_id, sum(total) s
+  FROM orders GROUP BY user_id;
+
+REFRESH MATERIALIZED VIEW CONCURRENTLY mv_sales;
+</code></pre><blockquote><p><strong>KEY:</strong> <strong>Cache invalidation is the hard part.</strong> Every cache needs a TTL and a path to rebuild. Cache the final result only if the query is genuinely slow and reads vastly outnumber writes — and always know how you&rsquo;ll invalidate it.</p></blockquote><h2 id=redis>Redis as a cache & store</h2><p>In-memory data structures on a key-value model — the default answer for caching, rate limits, queues, and fast counters in front of a SQL database.</p><table><thead><tr><th>Type</th><th>What it stores</th><th>Core commands</th></tr></thead><tbody><tr><td><code>STRING</code></td><td>One value per key</td><td><code>SET / GET / INCR / EXPIRE</code></td></tr><tr><td><code>HASH</code></td><td>Field/value pairs</td><td><code>HSET / HGET / HGETALL</code></td></tr><tr><td><code>LIST</code></td><td>Ordered list (queue/stack)</td><td><code>LPUSH / RPUSH / LPOP / BRPOP</code></td></tr><tr><td><code>SET</code></td><td>Unique members</td><td><code>SADD / SMEMBERS / SISMEMBER</code></td></tr><tr><td><code>ZSET</code></td><td>Scored, sorted members</td><td><code>ZADD / ZRANGE / ZRANK</code></td></tr><tr><td><code>STREAM</code></td><td>Append-only event log</td><td><code>XADD / XREAD / XRANGE</code></td></tr></tbody></table><h3 id=cache-aside-the-usual>Cache-aside (the usual)</h3><p>Read through to the DB on a miss, write the result back with a TTL. Invalidate on write.</p><pre tabindex=0><code>val = redis.get(key)
+if val is None:
+    val = db.query(...)
+    redis.set(key, val, ex=300)
+return val
+</code></pre><h3 id=common-patterns>Common patterns</h3><pre tabindex=0><code>INCR counter              # fast counter
+SETEX rate:u1 60 1        # rate-limit TTL
+LPUSH queue job
+BRPOP queue 0             # blocking queue
+SADD online:room1 user42  # membership
+ZADD lb 42 &#34;player&#34;       # leaderboard
+</code></pre><table><thead><tr><th>Setting</th><th>What it controls</th></tr></thead><tbody><tr><td><code>RDB</code></td><td>Point-in-time snapshot; fast recovery, can lose recent writes.</td></tr><tr><td><code>AOF</code></td><td>Append-only log of every write; safer, larger, slower restart.</td></tr><tr><td><code>maxmemory-policy</code></td><td>Eviction: <code>allkeys-lru</code>, <code>volatile-lru</code>, <code>noeviction</code>.</td></tr><tr><td><code>EXPIRE</code></td><td>TTL in seconds; <code>TTL key</code> shows what&rsquo;s left.</td></tr></tbody></table><blockquote><p><strong>!:</strong> <strong>Redis is not a durable system of record.</strong> It&rsquo;s in-memory and, under <code>noeviction</code> with full memory, new writes fail. Treat it as a cache or a queue with an acknowledgment path — keep the source of truth in Postgres/Kafka, and know your eviction policy before you hit maxmemory.</p></blockquote><h2 id=gotchas>Pitfalls</h2><p>The bugs that survive to production are the quiet ones: an N+1 here, a type coercion there. Here&rsquo;s what to watch for.</p><h3 id=n1-queries>N+1 queries</h3><p>One query to list N rows, then one query per row. Collapse it into a single <code>JOIN</code> or <code>IN</code>.</p><pre tabindex=0><code>-- ❌ one query per user
+SELECT * FROM orders WHERE user_id = 1;
+SELECT * FROM orders WHERE user_id = 2;
+
+-- ✅ one query, one join
+SELECT o.* FROM orders o
+JOIN users u ON u.id = o.user_id
+WHERE u.active;
+</code></pre><h3 id=over-indexing>Over-indexing</h3><p>Every index is rebuilt on every write. A table with twelve indexes pays for all twelve on every <code>INSERT</code>.</p><pre tabindex=0><code>-- find unused indexes (PostgreSQL)
+SELECT schemaname, relname, indexrelname
+FROM pg_stat_user_indexes
+WHERE idx_scan = 0;
+</code></pre><h3 id=implicit-type-conversion>Implicit type conversion</h3><p>Comparing unlike types forces a cast on the column, which defeats the index.</p><pre tabindex=0><code>-- ❌ code is TEXT: casts the column
+SELECT * FROM orders WHERE code = 42;
+
+-- ✅ compare with the right type
+SELECT * FROM orders WHERE code = &#39;42&#39;;
+</code></pre><h3 id=lock-contention>Lock contention</h3><p>Long transactions hold row locks and block everyone. Keep transactions short, lock in a consistent order, and don&rsquo;t run reads inside a write transaction you don&rsquo;t need.</p><pre tabindex=0><code>BEGIN;
+SELECT * FROM jobs WHERE id = 5 FOR UPDATE;
+UPDATE jobs SET status = &#39;done&#39; WHERE id = 5;
+COMMIT;  -- release immediately
+</code></pre><h3 id=dead-tuples--bloat>Dead tuples & bloat</h3><p>In PostgreSQL, <code>UPDATE</code>/<code>DELETE</code> leave dead tuples that occupy space until <code>VACUUM</code> reaps them. Bloat slows scans, bloats indexes, and wastes cache.</p><pre tabindex=0><code>-- find tables with the most dead tuples
+SELECT relname, n_live_tup, n_dead_tup
+FROM pg_stat_user_tables
+ORDER BY n_dead_tup DESC;
+
+-- reclaim space
+VACUUM (VERBOSE) orders;
+</code></pre><h3 id=stale-statistics>Stale statistics</h3><p>The planner picks a plan from table statistics. After bulk writes — or when a plan suddenly gets worse — the stats have drifted. Refresh them before changing anything else.</p><pre tabindex=0><code>ANALYZE orders;
+-- or just the columns a query filters
+ANALYZE orders (user_id, created_at);
+</code></pre><blockquote><p><strong>⚠:</strong> <strong>Don&rsquo;t optimize until you&rsquo;ve measured it being slow.</strong> Adding indexes and denormalizing on a hunch is how you get twelve-index tables and buggy caches. Profile first, fix the top offender, re-measure.</p></blockquote></div></article></div><footer class=foot><span>slop-stuff</span>
+<span class=muted>served under <code>makefunstuff.github.io/slop-stuff/&lt;folder>/</code></span>
+<a href=https://makefunstuff.github.io/slop-stuff/links/>links</a>
+<a href=https://github.com/makefunstuff/slop-stuff>repo</a></footer><script src=https://makefunstuff.github.io/slop-stuff/js/wiki.js defer></script></body></html>

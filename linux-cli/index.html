@@ -1,0 +1,160 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Linux CLI essentials — slop-stuff</title><meta name=description content="sed, awk, grep, find, xargs, sort, tar, git, and networking."><link rel=canonical href=https://makefunstuff.github.io/slop-stuff/linux-cli/><link rel=stylesheet href=https://makefunstuff.github.io/slop-stuff/css/wiki.css><script>(function(){var t="slop-theme",e=localStorage.getItem(t);e||(e=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"),document.documentElement.setAttribute("data-theme",e)})()</script></head><body><header class=bar><a class=brand href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a>
+<span class="muted hide-narrow">cheatsheets & experiments</span><form class=seek role=search action=https://makefunstuff.github.io/slop-stuff/ method=get><input id=q type=search name=q placeholder="search guides…" autocomplete=off aria-label="Search guides"><div id=hits class=hits hidden></div></form><button type=button class=icon id=theme title="Toggle theme" aria-label="Toggle theme">◐</button>
+<a class=icon href=https://github.com/makefunstuff/slop-stuff rel=noreferrer>git</a></header><div class="wrap wrap-guide"><aside class=toc aria-label="On this page"><p class=toc-label>on this page</p><nav id=TableOfContents><ul><li><a href=#quickref>Quick reference</a></li><li><a href=#start>The daily loop</a></li><li><a href=#sed>sed</a></li><li><a href=#awk>awk</a></li><li><a href=#grep>grep & ripgrep</a></li><li><a href=#find>find & xargs</a></li><li><a href=#text>Text tools</a></li><li><a href=#archiving>Files & archives</a></li><li><a href=#processes>Processes & system</a></li><li><a href=#git>Git & version control</a></li><li><a href=#networking>Networking & TCP/IP</a></li><li><a href=#gotchas>Gotchas</a></li></ul></nav></aside><article class=doc><p class=crumb><a href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a> / CLI & shell</p><h1>Linux CLI essentials</h1><p class=lede>The toolbox for text & files.</p><p class="muted sub">sed, awk, grep, find, xargs, sort, tar, git, and networking.</p><p class=tags><span>shell</span><span>sed</span><span>awk</span><span>git</span></p><div class=body><p>Everyday Linux command-line tools — sed, awk, grep, find, sort, git, and networking — in one copy-paste reference. Pipe text in, transform it, ship it out.</p><h2 id=quickref>Quick reference</h2><p>The eight commands you&rsquo;ll reach for most. Memorize these and you can solve the majority of day-to-day text and file problems.</p><ul><li><code>grep -rE 'pattern' dir</code> — Recursive extended-regex search.</li><li><code>sed -i 's/old/new/g' file</code> — Edit a file in place.</li><li><code>awk '{print $1}' file</code> — Print the first column.</li><li><code>find . -name '*.log' -exec rm {} \;</code> — Find files, then act on each match.</li><li><code>sort f | uniq -c | sort -rn</code> — Count duplicates, most common first.</li><li><code>find . -print0 | xargs -0 cmd</code> — Pass names safely (spaces & newlines).</li><li><code>tar czf archive.tgz dir</code> — Create a gzipped tarball.</li><li><code>ps aux</code> — List every running process.</li></ul><h2 id=start>The daily loop</h2><p>Move around, chain commands, and read the manual. These six habits carry most of the rest.</p><h3 id=1-navigate>1. Navigate</h3><pre tabindex=0><code>cd ~/projects    # go to projects
+ls -la           # all files + details
+pwd              # print working dir
+</code></pre><h3 id=2-pipe>2. Pipe</h3><pre tabindex=0><code>cat f.txt | grep err | wc -l
+# stdout → stdin of the next cmd
+</code></pre><h3 id=3-redirect>3. Redirect</h3><pre tabindex=0><code>ls &gt; files.txt        # overwrite
+echo hi &gt;&gt; log        # append
+cmd 2&gt;/dev/null       # drop stderr
+</code></pre><h3 id=4-help--history>4. Help & history</h3><pre tabindex=0><code>man ls
+ls --help
+history | tail -20
+!!                    # rerun last command
+</code></pre><blockquote><p><strong>&&:</strong> <strong>Chain with <code>&&</code> and <code>||</code>.</strong> <code>a && b</code> runs <code>b</code> only if <code>a</code> succeeds; <code>a || b</code> runs <code>b</code> only if <code>a</code> fails. Combine them: <code>make && make install || echo "build failed"</code>.</p></blockquote><h2 id=sed>sed</h2><p>A stream editor: apply substitutions and filters to text line by line, without opening an editor.</p><table><thead><tr><th>Expression</th><th>Meaning</th><th>Example</th></tr></thead><tbody><tr><td><code>s/old/new/</code></td><td>Replace first match on each line</td><td><code>sed 's/foo/bar/' f</code></td></tr><tr><td><code>s/old/new/g</code></td><td>Replace every match on the line</td><td><code>sed 's/foo/bar/g' f</code></td></tr><tr><td><code>/pattern/d</code></td><td>Delete matching lines</td><td><code>sed '/^$/d' f</code></td></tr><tr><td><code>-n '5p'</code></td><td>Print only line 5</td><td><code>sed -n '5p' f</code></td></tr><tr><td><code>-n '2,5p'</code></td><td>Print lines 2 through 5</td><td><code>sed -n '2,5p' f</code></td></tr><tr><td><code>-i</code></td><td>Edit the file in place</td><td><code>sed -i 's/a/b/' f</code></td></tr><tr><td><code>-E</code></td><td>Extended regex (<code>+</code>, <code>|</code>, <code>()</code> unescaped)</td><td><code>sed -E 's/a+/b/' f</code></td></tr><tr><td><code>-e '…'</code></td><td>Apply multiple commands</td><td><code>sed -e 's/a/b/' -e 's/c/d/' f</code></td></tr><tr><td><code>-z</code></td><td>Treat NUL as the record separator (whole file)</td><td><code>sed -z 's/foo/bar/g' f</code></td></tr></tbody></table><h3 id=capture-groups>Capture groups</h3><p>Wrap part of a match and replay it with <code>\1</code>, <code>\2</code>… Use plain parens with <code>-E</code>, escaped parens in basic regex.</p><pre tabindex=0><code>sed -E &#39;s/(foo)(bar)/\2\1/&#39;    # ERE → barfoo
+sed &#39;s/\(foo\)\(bar\)/\2\1/&#39;   # BRE → barfoo
+</code></pre><h3 id=in-place-editing>In-place editing</h3><p>GNU and BSD disagree on <code>-i</code>: GNU takes an optional backup suffix, BSD requires an empty argument.</p><pre tabindex=0><code>sed -i.bak &#39;s/old/new/g&#39; file  # GNU: backup
+sed -i &#39;&#39; &#39;s/old/new/g&#39; file    # macOS/BSD
+</code></pre><h2 id=awk>awk</h2><p>A tiny programming language for columns and rows — the fastest way to slice, sum, and reshape tabular text.</p><table><thead><tr><th>Variable</th><th>Meaning</th></tr></thead><tbody><tr><td><code>$0</code></td><td>The whole line</td></tr><tr><td><code>$1, $2, …</code></td><td>Fields (split on whitespace by default)</td></tr><tr><td><code>NF</code></td><td>Number of fields in the line</td></tr><tr><td><code>NR</code></td><td>Line (record) number so far</td></tr><tr><td><code>FS</code></td><td>Input field separator (default whitespace)</td></tr><tr><td><code>OFS</code></td><td>Output field separator</td></tr><tr><td><code>BEGIN</code></td><td>Block that runs once before input</td></tr><tr><td><code>END</code></td><td>Block that runs once after input</td></tr></tbody></table><ul><li><code>awk '{print $2}' file</code> — Print column 2.</li><li><code>awk -F: '{print $1}' /etc/passwd</code> — Split on <code>:</code> and print usernames.</li><li><code>awk '{s += $1} END {print s}' file</code> — Sum of column 1.</li><li><code>awk '{s += $1; n++} END {print s/n}' file</code> — Average of column 1.</li><li><code>awk '$3 > 100' file</code> — Lines where column 3 exceeds 100.</li><li><code>awk 'END {print NR}' file</code> — Count lines.</li><li><code>awk '{print $NF}' file</code> — Last field of each line.</li><li><code>awk 'BEGIN {OFS=","} {print $1, $3}' file</code> — Rearrange columns, comma-joined.</li><li><code>gawk --csv '{print $2}' data.csv</code> — Parse CSV with quoting rules (gawk 5.3+).</li></ul><details><summary>More awk recipes</summary><h4 id=skip-the-header-row>Skip the header row</h4><pre tabindex=0><code>awk &#39;NR&gt;1 {print $1}&#39; file
+</code></pre><h4 id=number-the-lines>Number the lines</h4><pre tabindex=0><code>awk &#39;{print NR &#34;: &#34; $0}&#39; file
+</code></pre><h4 id=find-long-lines>Find long lines</h4><pre tabindex=0><code>awk &#39;length($0) &gt; 80&#39; file
+</code></pre><h4 id=swap-field-order>Swap field order</h4><pre tabindex=0><code>awk &#39;{print $3, $1}&#39; file
+</code></pre></details><h2 id=grep>grep & ripgrep</h2><p>Find lines that match a pattern. ripgrep (<code>rg</code>) does the same faster and respects <code>.gitignore</code>.</p><table><thead><tr><th>Flag</th><th>Effect</th></tr></thead><tbody><tr><td><code>-E</code></td><td>Extended regex (<code>+</code>, <code>|</code>, <code>()</code> without escaping)</td></tr><tr><td><code>-F</code></td><td>Fixed string — literal text, no regex</td></tr><tr><td><code>-r</code></td><td>Recursive search through directories</td></tr><tr><td><code>-v</code></td><td>Invert — show lines that do NOT match</td></tr><tr><td><code>-i</code></td><td>Case-insensitive matching</td></tr><tr><td><code>-l</code></td><td>Only filenames that contain a match</td></tr><tr><td><code>-n</code></td><td>Show line numbers</td></tr><tr><td><code>-c</code></td><td>Count matches per file</td></tr><tr><td><code>-o</code></td><td>Print only the matching part, one per line</td></tr><tr><td><code>-A N</code> / <code>-B N</code> / <code>-C N</code></td><td>Show N lines after / before / around each match</td></tr><tr><td><code>-m N</code></td><td>Stop after N matches per file</td></tr><tr><td><code>-P</code></td><td>PCRE — Perl-compatible regex (GNU only, not BSD/macOS)</td></tr></tbody></table><h3 id=ripgrep-equivalents--extras>ripgrep equivalents & extras</h3><pre tabindex=0><code>grep -r &#34;foo&#34; .     →  rg &#34;foo&#34;
+grep -rn &#34;foo&#34; .    →  rg -n &#34;foo&#34;
+grep -rl &#34;foo&#34; .    →  rg -l &#34;foo&#34;
+grep -v &#34;foo&#34; f     →  rg -v &#34;foo&#34; f
+# rg-only (ripgrep 14+):
+rg --hidden &#34;foo&#34; .     # search dotfiles
+rg -uuu &#34;foo&#34; .         # also binary + ignore
+rg --files -g &#39;*.js&#39;    # list matching files
+rg -t js &#34;foo&#34;          # by file type
+</code></pre><h3 id=typical-pipelines>Typical pipelines</h3><pre tabindex=0><code>grep -rn &#34;TODO&#34; src/
+grep -oE &#39;[0-9]+\.[0-9]+&#39; log
+grep -A2 -B1 &#34;error&#34; log
+ps aux | grep nginx
+rg &#34;TODO&#34; -g &#39;*.js&#39;
+</code></pre><details><summary>grep recipes</summary><h4 id=exclude-a-directory>Exclude a directory</h4><pre tabindex=0><code>grep -rn &#34;foo&#34; --exclude-dir=node_modules .
+</code></pre><h4 id=whole-word-match>Whole-word match</h4><pre tabindex=0><code>grep -w &#34;err&#34; log
+</code></pre><h4 id=count-across-files>Count across files</h4><pre tabindex=0><code>grep -rc &#34;foo&#34; src/
+</code></pre><h4 id=search-inside-gzipd-logs>Search inside gzip&rsquo;d logs</h4><pre tabindex=0><code>zgrep &#34;foo&#34; access.log.gz
+</code></pre></details><h2 id=find>find & xargs</h2><p>Locate files by name, type, age, or size, then act on them — safely — with <code>xargs</code>.</p><table><thead><tr><th>Expression</th><th>Meaning</th></tr></thead><tbody><tr><td><code>-name '*.log'</code></td><td>Match filename pattern (quote the glob!)</td></tr><tr><td><code>-iname '*.log'</code></td><td>Case-insensitive name match</td></tr><tr><td><code>-type f</code> / <code>-type d</code></td><td>Files only / directories only</td></tr><tr><td><code>-mtime +7</code></td><td>Modified more than 7 days ago</td></tr><tr><td><code>-mtime -1</code></td><td>Modified within the last day</td></tr><tr><td><code>-size +100M</code></td><td>Larger than 100 MB</td></tr><tr><td><code>-exec cmd {} \;</code></td><td>Run <code>cmd</code> on each match</td></tr><tr><td><code>-delete</code></td><td>Delete matches (careful!)</td></tr><tr><td><code>-print0</code></td><td>NUL-separated output (for <code>xargs -0</code>)</td></tr></tbody></table><h3 id=-exec-vs--delete>-exec vs -delete</h3><pre tabindex=0><code>find . -name &#39;*.tmp&#39; -delete
+find . -name &#39;*.log&#39; -exec rm {} \;
+find . -name &#39;*.log&#39; -print0 | xargs -0 rm
+</code></pre><h3 id=batch-with-xargs>Batch with xargs</h3><p><code>xargs</code> turns stdin into arguments; <code>-0</code> pairs with <code>-print0</code> to survive spaces and newlines.</p><pre tabindex=0><code>echo a b c | xargs mkdir
+find . -name &#39;*.txt&#39; -print0 | xargs -0 wc -l
+</code></pre><blockquote><p><strong>!:</strong> <strong>Quote your patterns.</strong> <code>find . -name *.log</code> lets the shell expand <code>*.log</code> first. Write <code>find . -name '*.log'</code> so <code>find</code> does the matching.</p></blockquote><h2 id=text>Text tools</h2><p>The small tools that sort, split, count, and compare text, ready to pipe together.</p><table><thead><tr><th>sort flag</th><th>Effect</th></tr></thead><tbody><tr><td><code>-n</code></td><td>Numeric sort (10 comes after 9)</td></tr><tr><td><code>-r</code></td><td>Reverse order</td></tr><tr><td><code>-k 2</code></td><td>Sort by column 2</td></tr><tr><td><code>-u</code></td><td>Unique — drop duplicate adjacent lines</td></tr><tr><td><code>-t,</code></td><td>Field separator used with <code>-k</code></td></tr><tr><td><code>-h</code></td><td>Human-readable sizes (1K, 2M)</td></tr></tbody></table><h3 id=cut--tr>cut & tr</h3><pre tabindex=0><code>cut -d, -f1 file      # field 1, comma
+cut -c1-10 file       # characters 1–10
+tr &#39;a-z&#39; &#39;A-Z&#39; &lt; f    # uppercase
+tr -d &#39;\r&#39; &lt; f        # strip CRLF
+</code></pre><h3 id=uniq--wc>uniq & wc</h3><pre tabindex=0><code>sort f | uniq -c      # count each line
+sort f | uniq         # dedupe (sort first!)
+wc -l file            # line count
+wc -w -c file         # words, bytes
+</code></pre><h3 id=head-tail-diff-comm-paste-join>head, tail, diff, comm, paste, join</h3><pre tabindex=0><code>head -5 f; tail -5 f
+comm -12 a b          # lines in both
+diff -u a b           # unified diff
+paste a b             # columns side by side
+join a b              # merge on common field
+</code></pre><details><summary>More pipelines</summary><h4 id=top-5-most-common-lines>Top 5 most common lines</h4><pre tabindex=0><code>sort f | uniq -c | sort -rn | head -5
+</code></pre><h4 id=column-total>Column total</h4><pre tabindex=0><code>cut -d, -f3 f | paste -sd+ | bc
+</code></pre><h4 id=unique-values-in-a-column>Unique values in a column</h4><pre tabindex=0><code>cut -d, -f1 f | sort -u
+</code></pre><h4 id=merge-sorted-files>Merge sorted files</h4><pre tabindex=0><code>sort -m a b | uniq
+</code></pre></details><h2 id=archiving>Files & archives</h2><p>Bundle, compress, sync, and move files, and keep an eye on disk space.</p><h3 id=tar>tar</h3><pre tabindex=0><code>tar czf a.tgz dir     # create
+tar xzf a.tgz         # extract
+tar tzf a.tgz         # list
+</code></pre><h3 id=gzip--zstd>gzip & zstd</h3><pre tabindex=0><code>gzip file             # → file.gz
+gunzip file.gz
+zstd file             # faster modern
+unzstd file.zst
+</code></pre><h3 id=zip>zip</h3><pre tabindex=0><code>zip -r out.zip dir
+unzip out.zip
+unzip -l out.zip      # list
+</code></pre><h3 id=rsync>rsync</h3><pre tabindex=0><code>rsync -av src/ dst/
+rsync -av --delete src/ dst/
+rsync -av host:src/ ./
+</code></pre><h3 id=copy--move>Copy & move</h3><pre tabindex=0><code>cp -r src dst         # recursive
+cp -a src dst         # preserve attrs
+mv old new            # rename / move
+</code></pre><h3 id=disk--space>Disk & space</h3><pre tabindex=0><code>du -sh dir            # dir size
+du -h --max-depth=1   # one level
+df -h                 # free space
+</code></pre><h3 id=dd-chmod-chown>dd, chmod, chown</h3><pre tabindex=0><code>dd if=img.iso of=/dev/sdb bs=4M status=progress
+chmod +x script.sh
+chmod 644 file
+chown user:group file
+</code></pre><h2 id=processes>Processes & system</h2><p>See what&rsquo;s running, stop it, follow its logs, and inspect its ports and files.</p><h3 id=ps--top>ps & top</h3><pre tabindex=0><code>ps aux                # all processes
+ps aux | grep nginx
+top                   # live view
+htop                  # nicer live view
+</code></pre><h3 id=kill>kill</h3><pre tabindex=0><code>kill 1234             # SIGTERM
+kill -9 1234          # SIGKILL
+pkill -f &#34;node app&#34;
+pgrep -l node
+</code></pre><h3 id=systemctl>systemctl</h3><pre tabindex=0><code>systemctl status nginx
+systemctl restart nginx
+systemctl enable nginx
+journalctl -u nginx -f
+</code></pre><h3 id=network--files>Network & files</h3><pre tabindex=0><code>ss -tulpn             # listening ports
+lsof -i :80           # who owns port 80
+lsof -p 1234          # files a PID has open
+which python3; type ls
+</code></pre><blockquote><p><strong>15:</strong> <strong>Signals: SIGTERM first, SIGKILL last.</strong> <code>kill 1234</code> sends SIGTERM (a polite request the process may handle); <code>kill -9 1234</code> sends SIGKILL, which nothing can catch — use it only when a process ignores SIGTERM.</p></blockquote><h2 id=git>Git & version control</h2><p>Track every change, branch without fear, and rewind any mistake. The daily commands, plus the safe ways out.</p><h3 id=1-start-a-repo>1. Start a repo</h3><pre tabindex=0><code>git init
+git clone git@github.com:user/repo.git
+git remote add origin URL
+</code></pre><h3 id=2-see-what-changed>2. See what changed</h3><pre tabindex=0><code>git status -s
+git diff            # unstaged
+git diff --staged   # staged
+git log --oneline --graph
+</code></pre><h3 id=3-stage--commit>3. Stage & commit</h3><pre tabindex=0><code>git add file     # one file
+git add -p       # pick hunks
+git commit -m &#34;msg&#34;
+git commit --amend
+</code></pre><h3 id=4-share>4. Share</h3><pre tabindex=0><code>git push origin main
+git pull --rebase
+git fetch --all
+git remote -v
+</code></pre><h3 id=branch--switch>Branch & switch</h3><pre tabindex=0><code>git branch feature
+git switch feature       # or: git checkout
+git switch -c fix        # create + switch
+git merge feature
+git rebase main
+git branch -d feature
+</code></pre><h3 id=undo>Undo</h3><pre tabindex=0><code>git restore file         # discard changes
+git restore --staged f   # unstage
+git reset --soft HEAD~1  # undo commit, keep staged
+git reset --hard HEAD~1  # undo commit + changes
+git revert abc123        # new commit that undoes
+</code></pre><ul><li><code>git log --oneline --all --graph</code> — the whole history as a graph.</li><li><code>git reflog</code> — everything HEAD has done — your undo safety net.</li><li><code>git stash</code> — park changes; <code>git stash pop</code> brings them back.</li><li><code>git cherry-pick abc123</code> — copy one commit onto this branch.</li><li><code>git tag -a v1.0 -m "release"</code> — mark a release point.</li><li><code>git blame file</code> — who changed each line.</li></ul><blockquote><p><strong>KEY:</strong> <strong>reflog saves you.</strong> Almost anything you &ldquo;lose&rdquo; is still in <code>git reflog</code> for ~90 days. <code>git reset --hard</code> before checking reflog is the only truly destructive move.</p></blockquote><h2 id=networking>Networking & TCP/IP</h2><p>From sockets and ports to DNS and packet captures — the CLI tools that answer &ldquo;why can&rsquo;t this talk to that?&rdquo;</p><table><thead><tr><th>Tool</th><th>What it answers</th><th>Example</th></tr></thead><tbody><tr><td><code>ss</code></td><td>Listening sockets & connections</td><td><code>ss -tulpn</code></td></tr><tr><td><code>ip</code></td><td>Interfaces, addresses, routes</td><td><code>ip a; ip route</code></td></tr><tr><td><code>ping</code></td><td>Reachability & latency</td><td><code>ping -c 4 1.1.1.1</code></td></tr><tr><td><code>dig</code></td><td>DNS resolution</td><td><code>dig +short example.com</code></td></tr><tr><td><code>curl</code></td><td>HTTP requests</td><td><code>curl -sS -I https://example.com</code></td></tr><tr><td><code>nc</code></td><td>Raw TCP/UDP poke</td><td><code>nc -zv host 443</code></td></tr><tr><td><code>traceroute</code></td><td>Path across hops</td><td><code>traceroute 8.8.8.8</code></td></tr><tr><td><code>tcpdump</code></td><td>Packets on the wire</td><td><code>tcpdump -ni eth0 port 443</code></td></tr></tbody></table><h3 id=tcpip-layers>TCP/IP layers</h3><pre tabindex=0><code>Application  HTTP, DNS, SSH
+Transport    TCP, UDP (+ ports)
+Network      IP (routing)
+Link         Ethernet, Wi-Fi (MAC)
+</code></pre><h3 id=handy-checks>Handy checks</h3><pre tabindex=0><code>curl -v https://host   # full handshake
+nc -zv host 22         # is the port open?
+ss -tn state established
+dig MX example.com     # mail server
+</code></pre><h3 id=common-ports>Common ports</h3><pre tabindex=0><code>22  SSH      53  DNS
+80  HTTP    443 HTTPS
+5432 Postgres  6379 Redis
+3306 MySQL  27017 MongoDB
+</code></pre><blockquote><p><strong>KEY:</strong> <strong>Test in layers.</strong> Can you resolve the name (<code>dig</code>)? Can you reach the host (<code>ping</code> / <code>nc</code>)? Is the port open (<code>ss</code> / <code>nc -z</code>)? Is the app responding (<code>curl -v</code>)? Walk the stack and the culprit shows itself.</p></blockquote><h2 id=gotchas>Gotchas</h2><p>Behaviors that silently change results — quoting, shell expansion, portability, and spaces in filenames.</p><h3 id=quote-your-variables>Quote your variables</h3><p>Unquoted <code>$var</code> word-splits on spaces and globs. Always double-quote in scripts.</p><pre tabindex=0><code>for f in *.txt; do echo &#34;$f&#34;; done
+cat &#34;$file&#34;          # not cat $file
+</code></pre><h3 id=the-shell-expands-first>The shell expands first</h3><p>Globs, <code>$var</code>, and <code>$(…)</code> are expanded by the shell before the command ever runs.</p><pre tabindex=0><code>echo *.txt           # shell expands glob
+echo &#34;*.txt&#34;         # literal asterisk
+find . -name &#39;*.txt&#39; # find does the matching
+</code></pre><h3 id=gnu-vs-bsd-macos>GNU vs BSD (macOS)</h3><p>macOS ships BSD tools with different flags.</p><pre tabindex=0><code># GNU:  sed -i &#39;s/a/b/&#39; f
+# BSD:  sed -i &#39;&#39; &#39;s/a/b/&#39; f
+# GNU has grep -P; BSD doesn&#39;t
+brew install coreutils
+</code></pre><h3 id=grep-exit-codes-vs-set--e>grep exit codes vs <code>set -e</code></h3><p><code>grep</code> returns <code>0</code> on match, <code>1</code> on no match, <code>2</code> on error. Under <code>set -e</code>, a &ldquo;no match&rdquo; silently kills the script.</p><pre tabindex=0><code>grep -q &#34;err&#34; log || true
+if grep -q &#34;err&#34; log; then
+  echo &#34;found&#34;
+fi
+</code></pre><h3 id=sort-is-locale-aware-uniq-needs-sorted-input>sort is locale-aware; uniq needs sorted input</h3><p><code>sort</code> order changes with <code>LC_COLLATE</code>; pin byte order with <code>LC_ALL=C</code>. <code>uniq</code> only drops <em>adjacent</em> duplicates — sort first.</p><pre tabindex=0><code>LC_ALL=C sort -u f
+sort f | uniq -c
+</code></pre><h3 id=fail-fast-with-set--euo-pipefail>Fail fast with <code>set -euo pipefail</code></h3><p>Put it at the top of scripts: <code>-e</code> exits on error, <code>-u</code> errors on unset variables, <code>-o pipefail</code> makes the pipeline reflect any failing command.</p><pre tabindex=0><code>set -euo pipefail
+false | true   # non-zero with pipefail
+</code></pre><blockquote><p><strong>!:</strong> <strong>Spaces in filenames break naive pipelines.</strong> <code>for f in $(ls)</code> and unquoted <code>xargs</code> split on whitespace. Use <code>find -print0 | xargs -0</code> or a <code>while read</code> loop to stay safe.</p></blockquote></div></article></div><footer class=foot><span>slop-stuff</span>
+<span class=muted>served under <code>makefunstuff.github.io/slop-stuff/&lt;folder>/</code></span>
+<a href=https://makefunstuff.github.io/slop-stuff/links/>links</a>
+<a href=https://github.com/makefunstuff/slop-stuff>repo</a></footer><script src=https://makefunstuff.github.io/slop-stuff/js/wiki.js defer></script></body></html>

@@ -1,0 +1,177 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Bash — slop-stuff</title><meta name=description content="Variables, quoting, loops, conditionals, functions, and expansion."><link rel=canonical href=https://makefunstuff.github.io/slop-stuff/bash/><link rel=stylesheet href=https://makefunstuff.github.io/slop-stuff/css/wiki.css><script>(function(){var t="slop-theme",e=localStorage.getItem(t);e||(e=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"),document.documentElement.setAttribute("data-theme",e)})()</script></head><body><header class=bar><a class=brand href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a>
+<span class="muted hide-narrow">cheatsheets & experiments</span><form class=seek role=search action=https://makefunstuff.github.io/slop-stuff/ method=get><input id=q type=search name=q placeholder="search guides…" autocomplete=off aria-label="Search guides"><div id=hits class=hits hidden></div></form><button type=button class=icon id=theme title="Toggle theme" aria-label="Toggle theme">◐</button>
+<a class=icon href=https://github.com/makefunstuff/slop-stuff rel=noreferrer>git</a></header><div class="wrap wrap-guide"><aside class=toc aria-label="On this page"><p class=toc-label>on this page</p><nav id=TableOfContents><ul><li><a href=#quickref>The daily surface, at a glance</a></li><li><a href=#start>Scripts & running</a></li><li><a href=#variables>Variables & expansion</a></li><li><a href=#quoting>Quoting & word splitting</a></li><li><a href=#control>Conditionals & loops</a></li><li><a href=#functions>Functions</a></li><li><a href=#strings>String & parameter manipulation</a></li><li><a href=#io>Redirection & pipes</a></li><li><a href=#gotchas>Gotchas</a></li></ul></nav></aside><article class=doc><p class=crumb><a href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a> / CLI & shell</p><h1>Bash</h1><p class=lede>The shell that runs everything.</p><p class="muted sub">Variables, quoting, loops, conditionals, functions, and expansion.</p><p class=tags><span>shell</span><span>quoting</span><span>loop</span><span>expansion</span></p><div class=body><p>Bash is the glue language of Unix: variables, conditionals, loops, and pipelines you can read off the page. Here is the daily surface — quoted, tested, and copy-paste ready.</p><h2 id=quickref>The daily surface, at a glance</h2><p>The patterns you reach for most, on one screen. Each block is copy-paste ready — string a few together and you&rsquo;ve written most shell scripts.</p><h3 id=shebang--strict-mode>Shebang + strict mode</h3><pre tabindex=0><code>#!/usr/bin/env bash
+set -euo pipefail
+</code></pre><h3 id=variables--defaults>Variables & defaults</h3><pre tabindex=0><code>name=&#34;Ada&#34;
+echo &#34;$name&#34; &#34;${name}s&#34;
+echo &#34;${1:-none}&#34;   # default
+</code></pre><h3 id=quoting>Quoting</h3><pre tabindex=0><code>echo &#39;$HOME&#39;      # literal
+echo &#34;$HOME&#34;      # expands
+echo &#34;$var&#34;       # no split
+</code></pre><h3 id=tests>Tests</h3><pre tabindex=0><code>[[ -f &#34;$f&#34; ]] &amp;&amp; echo file
+[[ -n &#34;$x&#34; &amp;&amp; &#34;$x&#34; == y ]]
+[[ $n -gt 0 ]]
+</code></pre><h3 id=loops>Loops</h3><pre tabindex=0><code>for f in *.txt; do echo &#34;$f&#34;; done
+while read -r l; do :; done &lt; f
+</code></pre><h3 id=command-substitution>Command substitution</h3><pre tabindex=0><code>now=$(date)
+files=$(find . -name &#39;*.sh&#39;)
+</code></pre><h3 id=redirection>Redirection</h3><pre tabindex=0><code>cmd &gt; out 2&gt;&amp;1   # both
+cmd &gt;&gt; log         # append
+cmd 2&gt;/dev/null     # drop err
+</code></pre><h3 id=exit-status>Exit status</h3><pre tabindex=0><code>cmd || echo &#34;failed&#34;
+echo &#34;$?&#34;          # last status
+exit 0             # signal result
+</code></pre><blockquote><p><strong>KEY:</strong> <strong>Quote every expansion, then run ShellCheck.</strong> <code>"$var"</code> and <code>"$@"</code> keep values whole, and <code>[[ ]]</code> needs no extra quoting. These eight patterns cover most day-to-day shell work.</p></blockquote><h2 id=start>Scripts & running</h2><p>Every script starts with a shebang, a permission bit, and — for real scripts — strict mode. Nail these and most bugs die early.</p><h3 id=1-shebang>1. Shebang</h3><pre tabindex=0><code>#!/usr/bin/env bash
+# portable: finds bash via $PATH
+</code></pre><h3 id=2-make-executable>2. Make executable</h3><pre tabindex=0><code>chmod +x script.sh
+./script.sh
+</code></pre><h3 id=3-strict-mode>3. Strict mode</h3><pre tabindex=0><code>set -euo pipefail
+# -e exit on error
+# -u error on unset var
+# -o pipefail fail on pipe error
+</code></pre><h3 id=4-source-a-file>4. Source a file</h3><pre tabindex=0><code>source ./lib.sh   # run in THIS shell
+. ./lib.sh        # same, POSIX
+</code></pre><h3 id=exit-codes>Exit codes</h3><p><code>0</code> means success; anything else means failure. Signal a result with <code>exit</code>.</p><pre tabindex=0><code>exit 0   # success
+exit 1   # failure
+command || echo &#34;failed&#34;
+</code></pre><h3 id=--last-status>$? — last status</h3><p><code>$?</code> holds the exit status of the most recent command. Read it once, right away.</p><pre tabindex=0><code>true; echo $?    # → 0
+false; echo $?   # → 1
+</code></pre><ol><li><strong>Write the script</strong> — A shebang line, then commands — one per line, in order.</li><li><strong>chmod +x</strong> — Add the execute bit so the kernel will run it directly.</li><li><strong>Run it</strong> — <code>./script.sh</code> starts a new bash process under the shebang.</li><li><strong>Read $?</strong> — The process exits with a status your caller can inspect.</li></ol><blockquote><p><strong>KEY:</strong> <strong>Strict mode is not optional for new scripts.</strong> <code>set -euo pipefail</code> turns silent failures into loud ones: errors abort, unset variables abort, and a failing command inside a pipeline aborts. It will catch bugs you didn&rsquo;t know you had.</p></blockquote><h2 id=variables>Variables & expansion</h2><p>Assign with no spaces around <code>=</code>, read with <code>$</code>, and reach for braces when the name runs into text or you want a default.</p><h3 id=assign--expand>Assign & expand</h3><pre tabindex=0><code>name=&#34;Ada&#34;
+echo &#34;$name&#34;        # → Ada
+echo &#34;${name}s&#34;     # → Adas (braces)
+</code></pre><h3 id=default-value>Default value</h3><pre tabindex=0><code>echo &#34;${1:-none}&#34;   # none if $1 unset
+: &#34;${cfg:=default}&#34; # assign if unset
+</code></pre><h3 id=arithmetic>Arithmetic</h3><pre tabindex=0><code>n=$(( 6 * 7 ))      # → 42
+n=$(( n + 1 ))      # increment
+</code></pre><table><thead><tr><th>Syntax</th><th>Meaning</th><th>Example</th></tr></thead><tbody><tr><td><code>${var}</code></td><td>Expand variable (braces disambiguate)</td><td><code>echo "${x}_suffix"</code></td></tr><tr><td><code>${var:-dflt}</code></td><td>default if unset or empty</td><td><code>echo "${1:-none}"</code></td></tr><tr><td><code>${var:=dflt}</code></td><td>assign default if unset or empty</td><td><code>: "${name:=guest}"</code></td></tr><tr><td><code>${var:?msg}</code></td><td>error and exit if unset or empty</td><td><code>: "${cfg:?missing}"</code></td></tr><tr><td><code>$(cmd)</code></td><td>command substitution</td><td><code>now=$(date)</code></td></tr><tr><td><code>$(( expr ))</code></td><td>arithmetic expansion</td><td><code>n=$(( a + b ))</code></td></tr><tr><td><code>$0</code></td><td>script name</td><td><code>echo "$0"</code></td></tr><tr><td><code>$1 … $9</code></td><td>positional arguments</td><td><code>echo "$1"</code></td></tr><tr><td><code>$@</code></td><td>all arguments (each quoted)</td><td><code>for a in "$@"</code></td></tr><tr><td><code>$#</code></td><td>argument count</td><td><code>echo "got $# args"</code></td></tr></tbody></table><blockquote><p><strong>KEY:</strong> <strong>Always quote expansions.</strong> <code>"$var"</code> keeps one value intact; unquoted <code>$var</code> word-splits on whitespace and expands globs. When in doubt, put it in double quotes.</p></blockquote><h2 id=quoting>Quoting & word splitting</h2><p>Quotes decide when Bash splits and expands. Single quotes are literal, double quotes expand, and unquoted variables split on whitespace.</p><h3 id=single-quotes-literal>Single quotes (literal)</h3><pre tabindex=0><code>echo &#39;$HOME&#39;        # → $HOME
+echo &#39;it&#39;\&#39;&#39;s&#39;      # → it&#39;s
+</code></pre><h3 id=double-quotes-expand>Double quotes (expand)</h3><pre tabindex=0><code>echo &#34;$HOME&#34;        # → /home/you
+name=&#34;Ada&#34;
+echo &#34;hi $name&#34;     # → hi Ada
+</code></pre><h3 id=backslash-escape>Backslash escape</h3><pre tabindex=0><code>echo \$HOME         # → $HOME
+echo &#34;a\&#34;b&#34;         # → a&#34;b
+</code></pre><h3 id=arrays>Arrays</h3><p>Arrays hold multiple values; index from 0 and expand with <code>[@]</code>.</p><pre tabindex=0><code>arr=(a b &#34;c d&#34;)
+echo &#34;${arr[0]}&#34;    # → a
+echo &#34;${arr[@]}&#34;    # → a b c d
+echo &#34;${#arr[@]}&#34;   # → 3
+</code></pre><h3 id=-vs->&ldquo;$@&rdquo; vs $@</h3><p><code>"$@"</code> keeps every argument intact — always use it. Bare <code>$@</code> re-splits and breaks args containing spaces.</p><pre tabindex=0><code># correct: each arg stays whole
+for f in &#34;$@&#34;; do echo &#34;$f&#34;; done
+
+# wrong: splits &#34;a b&#34; into two
+for f in $@; do echo &#34;$f&#34;; done
+</code></pre><details><summary>Globbing patterns</summary><h4 id=wildcards>Wildcards</h4><pre tabindex=0><code>*.txt         # every .txt file
+file?.md      # one-char names
+[abc]*.log    # a/b/c prefix
+</code></pre><h4 id=unmatched-globs>Unmatched globs</h4><pre tabindex=0><code>echo *.nonexistent    # stays literal
+shopt -s nullglob     # → empty instead
+shopt -u nullglob     # back to literal
+</code></pre></details><blockquote><p><strong>⚠:</strong> <strong>Unquoted variables split on whitespace.</strong> <code>files="a b.txt"</code> unquoted becomes two words (<code>a</code> and <code>b.txt</code>); <code>"$files"</code> stays one. Quote every expansion unless you specifically want splitting.</p></blockquote><h2 id=control>Conditionals & loops</h2><p>Test with <code>[[ ]]</code>, branch with <code>if</code>/<code>case</code>, and iterate with <code>for</code>/<code>while</code>/<code>until</code>. Semicolons before <code>then</code> and <code>do</code> are required on one line.</p><h3 id=if--elif--else>if / elif / else</h3><pre tabindex=0><code>if [[ -f &#34;$f&#34; ]]; then
+  echo &#34;file&#34;
+elif [[ -d &#34;$f&#34; ]]; then
+  echo &#34;dir&#34;
+else
+  echo &#34;nope&#34;
+fi
+</code></pre><h3 id=case>case</h3><pre tabindex=0><code>case &#34;$1&#34; in
+  start) echo &#34;go&#34;;;
+  stop)  echo &#34;stop&#34;;;
+  *)     echo &#34;usage: $0 start|stop&#34;;;
+esac
+</code></pre><table><thead><tr><th>Test</th><th>True when</th><th>Example</th></tr></thead><tbody><tr><td><code>-f file</code></td><td>exists and is a regular file</td><td><code>[[ -f "$f" ]]</code></td></tr><tr><td><code>-d dir</code></td><td>exists and is a directory</td><td><code>[[ -d "$d" ]]</code></td></tr><tr><td><code>-e path</code></td><td>exists (any type)</td><td><code>[[ -e "$p" ]]</code></td></tr><tr><td><code>-z str</code></td><td>string is empty</td><td><code>[[ -z "$x" ]]</code></td></tr><tr><td><code>-n str</code></td><td>string is non-empty</td><td><code>[[ -n "$x" ]]</code></td></tr><tr><td><code>a == b</code></td><td>strings equal</td><td><code>[[ "$a" == "$b" ]]</code></td></tr><tr><td><code>a != b</code></td><td>strings differ</td><td><code>[[ "$a" != "$b" ]]</code></td></tr><tr><td><code>n -eq m</code></td><td>integers equal</td><td><code>[[ $n -eq 0 ]]</code></td></tr><tr><td><code>n -lt m</code> / <code>-gt</code></td><td>integer less / greater</td><td><code>[[ $n -gt 10 ]]</code></td></tr><tr><td><code>! test</code></td><td>negation</td><td><code>[[ ! -f "$f" ]]</code></td></tr><tr><td><code>&&</code> / <code>||</code></td><td>and / or inside [[ ]]</td><td><code>[[ -f "$f" && -s "$f" ]]</code></td></tr></tbody></table><h3 id=for>for</h3><pre tabindex=0><code>for f in *.txt; do
+  echo &#34;$f&#34;
+done
+</code></pre><h3 id=while--until>while / until</h3><pre tabindex=0><code>while read -r line; do
+  echo &#34;$line&#34;
+done &lt; input.txt
+
+until ping -c1 host &amp;&gt;/dev/null; do
+  sleep 1
+done
+</code></pre><h3 id=break--continue>break / continue</h3><pre tabindex=0><code>for f in *; do
+  [[ -d &#34;$f&#34; ]] &amp;&amp; continue
+  echo &#34;$f&#34;
+  [[ $f == stop.txt ]] &amp;&amp; break
+done
+</code></pre><blockquote><p><strong>KEY:</strong> <strong>Prefer <code>[[ ]]</code> over <code>[ ]</code>.</strong> <code>[[ ]]</code> is a bash keyword: no word splitting, supports <code>&&</code>/<code>||</code> and <code>=~</code> regex. The <code>[</code> form is a command and needs quoting plus <code>-a</code>/<code>-o</code>. For arithmetic conditions, use <code>(( n > 0 ))</code>.</p></blockquote><h2 id=functions>Functions</h2><p>Functions get their own positional arguments, can local their variables, and return an exit status. Define once, call many times.</p><h3 id=define--call>Define & call</h3><pre tabindex=0><code>greet() {
+  echo &#34;hello, $1&#34;
+}
+greet &#34;Ada&#34;   # → hello, Ada
+</code></pre><h3 id=arguments>Arguments</h3><p>Inside a function, <code>$1</code> is the first argument and <code>$@</code> is all of them.</p><pre tabindex=0><code>print_args() {
+  echo &#34;first: $1&#34;
+  echo &#34;all:   $@&#34;
+}
+print_args a b c
+</code></pre><h3 id=local-variables>local variables</h3><p><code>local</code> scopes a variable to the function so it doesn&rsquo;t leak into the caller.</p><pre tabindex=0><code>run() {
+  local tmp
+  tmp=$(mktemp)
+  echo &#34;$tmp&#34;
+}
+# $tmp is empty out here
+</code></pre><h3 id=return--exit-status>return / exit status</h3><p><code>return</code> sets the function&rsquo;s status; <code>(( ))</code> returns <code>0</code>/<code>1</code>.</p><pre tabindex=0><code>is_even() {
+  (( $1 % 2 == 0 ))
+}
+if is_even 4; then echo even; fi
+</code></pre><details><summary>trap cleanup</summary><p><code>trap</code> runs a command when the script receives a signal or exits — the standard way to clean up temp files and lockfiles.</p><pre tabindex=0><code>tmp=$(mktemp)
+cleanup() { rm -f &#34;$tmp&#34;; }
+trap cleanup EXIT
+
+trap &#39;echo &#34;interrupted&#34;; exit 1&#39; INT
+# common traps: EXIT INT TERM ERR
+</code></pre></details><blockquote><p><strong>KEY:</strong> <strong>Return statuses are 0–255.</strong> <code>return 1</code> (or the status of the last command) signals failure; <code>return</code> alone returns the last command&rsquo;s status. Only <code>exit</code> ends the whole script.</p></blockquote><h2 id=strings>String & parameter manipulation</h2><p>Bash string surgery happens through parameter expansion — no <code>sed</code> needed for trim, replace, case, and substring.</p><table><thead><tr><th>Syntax</th><th>What it does</th><th>Example</th></tr></thead><tbody><tr><td><code>${#name}</code></td><td>string length</td><td><code>echo "${#name}"</code> → 11</td></tr><tr><td><code>${name:0:5}</code></td><td>substring (offset : length)</td><td><code>${name:0:5}</code> → hello</td></tr><tr><td><code>${name/hello/hi}</code></td><td>replace first match</td><td>→ hi world</td></tr><tr><td><code>${name//l/L}</code></td><td>replace all matches</td><td>→ heLLo worLd</td></tr><tr><td><code>${name^^}</code></td><td>uppercase all</td><td>→ HELLO WORLD</td></tr><tr><td><code>${name,,}</code></td><td>lowercase all</td><td>→ hello world</td></tr><tr><td><code>${path##*/}</code></td><td>basename (strip longest prefix)</td><td>→ tool</td></tr><tr><td><code>${path%/*}</code></td><td>dirname (strip shortest suffix)</td><td>→ /usr/local/bin</td></tr></tbody></table><h3 id=dirname--basename>dirname & basename</h3><pre tabindex=0><code>path=&#34;/usr/local/bin/tool&#34;
+dir=&#34;${path%/*}&#34;        # /usr/local/bin
+base=&#34;${path##*/}&#34;      # tool
+</code></pre><h3 id=substring--replace>substring & replace</h3><pre tabindex=0><code>name=&#34;hello world&#34;
+echo &#34;${name:0:5}&#34;      # hello
+echo &#34;${name/hello/hi}&#34; # hi world
+echo &#34;${name//l/L}&#34;     # heLLo worLd
+</code></pre><blockquote><p><strong>KEY:</strong> <strong>Negative offsets need a space.</strong> <code>${var: -3}</code> takes the last three characters; <code>${var:-3}</code> is a default value of <code>3</code>. The space disambiguates substring from default.</p></blockquote><h2 id=io>Redirection & pipes</h2><p>File descriptors: <code>0</code> stdin, <code>1</code> stdout, <code>2</code> stderr. Redirect them with <code>></code> <code>>></code> <code>&lt;</code>, merge with <code>2>&amp;1</code>, and chain commands with <code>|</code>.</p><p><strong>stdin</strong> (fd 0 · read) → <strong>command</strong> (the process) → <strong>stdout</strong> (fd 1 · results) → <strong>pipe / file</strong> (destination) → <strong>stderr</strong> (fd 2 · errors)</p><table><thead><tr><th>Syntax</th><th>Effect</th><th>Example</th></tr></thead><tbody><tr><td><code>cmd > file</code></td><td>stdout → file (truncate)</td><td><code>echo hi > out.txt</code></td></tr><tr><td><code>cmd >> file</code></td><td>stdout → file (append)</td><td><code>echo hi >> log</code></td></tr><tr><td><code>cmd &lt; file</code></td><td>stdin ← file</td><td><code>wc -l &lt; data.txt</code></td></tr><tr><td><code>2> file</code></td><td>stderr → file</td><td><code>ls bad 2> err.txt</code></td></tr><tr><td><code>2>&amp;1</code></td><td>stderr → wherever stdout goes</td><td><code>ls bad > out 2>&amp;1</code></td></tr><tr><td><code>&> file</code></td><td>stdout + stderr → file</td><td><code>ls bad &> out</code></td></tr><tr><td><code>2>/dev/null</code></td><td>discard stderr</td><td><code>curl -s URL 2>/dev/null</code></td></tr><tr><td><code>a | b</code></td><td>pipe a&rsquo;s stdout into b</td><td><code>ps aux | grep bash</code></td></tr></tbody></table><h3 id=pipes>Pipes</h3><pre tabindex=0><code>ps aux | grep bash | wc -l
+cat data.txt | sort | uniq -c
+</code></pre><h3 id=process-substitution>Process substitution</h3><p>Feed a command&rsquo;s output where a file is expected.</p><pre tabindex=0><code>diff &lt;(sort a.txt) &lt;(sort b.txt)
+grep -f &lt;(printf &#39;a\nb\n&#39;) data.txt
+</code></pre><details><summary>Heredocs</summary><h4 id=expand-variables>Expand variables</h4><pre tabindex=0><code>cat &lt;&lt;EOF
+hello $USER
+EOF
+</code></pre><h4 id=literal-quoted>Literal (quoted)</h4><pre tabindex=0><code>cat &lt;&lt;&#39;EOF&#39;
+literal $USER
+EOF
+</code></pre></details><blockquote><p><strong>KEY:</strong> <strong>Order matters.</strong> <code>2>&amp;1</code> must come after the stdout redirect it should follow: <code>cmd > file 2>&amp;1</code> sends both to the file, while <code>cmd 2>&amp;1 > file</code> sends stderr to the terminal and stdout to the file.</p></blockquote><h2 id=gotchas>Gotchas</h2><p>Behaviors that bite experienced scripters — usually silently.</p><h3 id=word-splitting>Word splitting</h3><p>Unquoted variables split on whitespace into multiple words.</p><pre tabindex=0><code>files=&#34;a b.txt&#34;
+for f in $files; do    # → a, b.txt (2 words)
+  echo &#34;$f&#34;
+done
+for f in &#34;$files&#34;; do  # → 1 word
+  echo &#34;$f&#34;
+done
+</code></pre><h3 id=always-quote->Always quote &ldquo;$@&rdquo;</h3><p>Bare <code>$@</code> re-splits arguments that contain spaces; <code>"$@"</code> passes them through intact.</p><pre tabindex=0><code>cp $@ dest     # wrong: splits names
+cp &#34;$@&#34; dest   # right: args intact
+</code></pre><h3 id=set--e-pitfalls>set -e pitfalls</h3><p><code>set -e</code> skips commands in conditions and after <code>||</code>; a bare failing command still exits.</p><pre tabindex=0><code>set -e
+grep foo file || true      # ok
+if grep foo file; then     # ok
+  :
+fi
+grep foo file              # exits if no match
+</code></pre><h3 id=-vs--1>[[ vs [</h3><p><code>[[ ]]</code> doesn&rsquo;t split or glob; <code>[ ]</code> is a command and needs quoting and a single <code>=</code>.</p><pre tabindex=0><code>[[ $a == $b ]]      # safe
+[ &#34;$a&#34; = &#34;$b&#34; ]     # must quote
+[[ $s =~ ^[0-9]+$ ]]  # regex
+</code></pre><h3 id=globbing-surprises>Globbing surprises</h3><p>Unmatched globs stay literal, and <code>*</code> never matches hidden dotfiles.</p><pre tabindex=0><code>echo *.nonexistent    # → *.nonexistent
+ls *                  # skips .hidden
+shopt -s nullglob     # unmatched → empty
+</code></pre><h3 id=subshells--pipelines>Subshells & pipelines</h3><p><code>( )</code> and pipeline stages run in subshells; their variable changes don&rsquo;t reach the parent.</p><pre tabindex=0><code>x=1
+( x=2 )           # subshell
+echo &#34;$x&#34;         # → 1
+
+n=0
+cat f | while read l; do n=$((n+1)); done
+echo &#34;$n&#34;         # → 0 (lost)
+</code></pre><h3 id=read-without--r>read without -r</h3><p>Bare <code>read</code> treats <code>\</code> as an escape and mangles trailing backslashes. Use <code>-r</code> for raw input.</p><pre tabindex=0><code>read -r line        # raw, keeps \
+read line           # \n → n, trailing \ lost
+while read -r l; do :; done &lt; f
+</code></pre><h3 id=local-masks-exit-status>local masks exit status</h3><p><code>local x=$(cmd)</code> returns <code>local</code>&rsquo;s own status (<code>0</code>), not <code>cmd</code>&rsquo;s — so it defeats <code>set -e</code>. Split the assignment.</p><pre tabindex=0><code># wrong: failure invisible to set -e
+local x=$(false)
+
+# right: status preserved
+local x
+x=$(false)
+</code></pre><blockquote><p><strong>⚠:</strong> <strong>Quote everything, then run ShellCheck.</strong> Most of these gotchas are one unquoted variable away. <code>shellcheck script.sh</code> catches word splitting, <code>set -e</code> traps, and quoting mistakes before you ship.</p></blockquote></div></article></div><footer class=foot><span>slop-stuff</span>
+<span class=muted>served under <code>makefunstuff.github.io/slop-stuff/&lt;folder>/</code></span>
+<a href=https://makefunstuff.github.io/slop-stuff/links/>links</a>
+<a href=https://github.com/makefunstuff/slop-stuff>repo</a></footer><script src=https://makefunstuff.github.io/slop-stuff/js/wiki.js defer></script></body></html>

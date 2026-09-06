@@ -1,0 +1,125 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Algorithms — slop-stuff</title><meta name=description content="Complexity classes, sorting, searching, data structures, and graphs."><link rel=canonical href=https://makefunstuff.github.io/slop-stuff/algorithms/><link rel=stylesheet href=https://makefunstuff.github.io/slop-stuff/css/wiki.css><script>(function(){var t="slop-theme",e=localStorage.getItem(t);e||(e=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"),document.documentElement.setAttribute("data-theme",e)})()</script></head><body><header class=bar><a class=brand href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a>
+<span class="muted hide-narrow">cheatsheets & experiments</span><form class=seek role=search action=https://makefunstuff.github.io/slop-stuff/ method=get><input id=q type=search name=q placeholder="search guides…" autocomplete=off aria-label="Search guides"><div id=hits class=hits hidden></div></form><button type=button class=icon id=theme title="Toggle theme" aria-label="Toggle theme">◐</button>
+<a class=icon href=https://github.com/makefunstuff/slop-stuff rel=noreferrer>git</a></header><div class="wrap wrap-guide"><aside class=toc aria-label="On this page"><p class=toc-label>on this page</p><nav id=TableOfContents><ul><li><a href=#quickref>Quick reference</a></li><li><a href=#start>Complexity & big-O</a></li><li><a href=#sorting>Sorting</a></li><li><a href=#search>Searching</a></li><li><a href=#structures>Data structures</a></li><li><a href=#graph>Graph algorithms</a></li><li><a href=#dp>Divide & conquer / DP</a></li><li><a href=#techniques>Common techniques</a></li><li><a href=#gotchas>Pitfalls</a></li></ul></nav></aside><article class=doc><p class=crumb><a href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a> / Systems & CS</p><h1>Algorithms</h1><p class=lede>The patterns behind fast code.</p><p class="muted sub">Complexity classes, sorting, searching, data structures, and graphs.</p><p class=tags><span>cs</span><span>big-O</span><span>sort</span><span>graph</span></p><div class=body><p>Big-O tells you how an algorithm scales before you write a line of it. This is the map: the complexity classes that matter, the sorts and searches you&rsquo;ll actually reach for, and the structures and graph algorithms behind them.</p><h2 id=quickref>Quick reference</h2><p>The eight items you&rsquo;ll reach for most — scan this before anything else.</p><ul><li><code>O(1) &lt; O(log n) &lt; O(n) &lt; O(n log n) &lt; O(n²) &lt; O(2ⁿ)</code> — <strong>Big-O ladder.</strong> Constant → logarithmic → linear → linearithmic → quadratic → exponential: how cost scales with <code>n</code>.</li><li><code>O(n log n)</code> — <strong>Sorting.</strong> Quicksort: in-place, <code>O(n log n)</code> avg / <code>O(n²)</code> worst, unstable. Mergesort: <code>O(n log n)</code> always, stable, <code>O(n)</code> space.</li><li><code>mid = lo + (hi - lo) // 2</code> — <strong>Binary search.</strong> <code>O(log n)</code> on a sorted array — the <code>lo + (hi - lo)</code> midpoint form avoids integer overflow.</li><li><code>dict / set</code> — <strong>Hash table.</strong> <code>O(1)</code> avg insert, lookup, delete — <code>O(n)</code> worst under collisions. No ordering.</li><li><code>BFS = queue · DFS = stack</code> — <strong>Graph traversal.</strong> Both <code>O(V + E)</code>. BFS gives shortest unweighted paths; DFS handles reachability, cycles, topological sort.</li><li><code>pq = [(0, start)]</code> — <strong>Dijkstra.</strong> <code>O((V + E) log V)</code> shortest paths with non-negative weights — use Bellman-Ford when edges go negative.</li><li><code>memo[n] = fib(n-1) + fib(n-2)</code> — <strong>DP / memoization.</strong> Cache overlapping subproblems to go from exponential to polynomial: naive fib <code>O(2ⁿ)</code> → memoized <code>O(n)</code>.</li><li><code>Ω(n log n)</code> — <strong>Sorting floor.</strong> Comparison sorts can&rsquo;t beat <code>Ω(n log n)</code>; beat it with counting/radix sort, or skip sorting and hash instead.</li></ul><h2 id=start>Complexity & big-O</h2><p>Big-O describes how cost grows with input size <code>n</code> — the one number that decides if an algorithm will survive real data.</p><table><thead><tr><th>Class</th><th>Name</th><th>Typical example</th><th>Scales like</th></tr></thead><tbody><tr><td><code>O(1)</code></td><td>Constant</td><td>array index, hash lookup</td><td>Same cost no matter how big <code>n</code> gets.</td></tr><tr><td><code>O(log n)</code></td><td>Logarithmic</td><td>binary search, balanced-tree ops</td><td>One more step each time <code>n</code> doubles.</td></tr><tr><td><code>O(n)</code></td><td>Linear</td><td>linear scan, summing an array</td><td>One step per element.</td></tr><tr><td><code>O(n log n)</code></td><td>Linearithmic</td><td>mergesort, heapsort, quicksort (avg)</td><td><code>n</code> elements across <code>log n</code> levels.</td></tr><tr><td><code>O(n²)</code></td><td>Quadratic</td><td>nested loop, insertion-sort worst</td><td><code>n × n</code> comparisons.</td></tr><tr><td><code>O(2ⁿ)</code></td><td>Exponential</td><td>brute-force subsets, naive fib</td><td>Doubles with each added element.</td></tr></tbody></table><h3 id=best--average--worst>Best / average / worst</h3><p>Big-O usually names the <strong>worst case</strong>; quote the case that matters. Quicksort is <code>O(n log n)</code> average but <code>O(n²)</code> worst — random or median-of-three pivots keep it fast.</p><h3 id=amortized>Amortized</h3><p>Rare expensive steps spread over many cheap ones. A dynamic array&rsquo;s <code>push</code> is <code>O(1)</code> amortized: doubling capacity is paid back by the inserts that follow.</p><h3 id=space-complexity>Space complexity</h3><p>Extra memory beyond the input. Mergesort needs <code>O(n)</code> auxiliary space, quicksort <code>O(log n)</code> for its stack, and in-place sorts like heapsort need <code>O(1)</code>.</p><blockquote><p><strong>KEY:</strong> <strong><code>n log n</code> is the floor.</strong> Any comparison-based sort needs at least <code>Ω(n log n)</code> comparisons. To beat it you must exploit structure — counting, radix, or bucket sort — or skip sorting and hash instead.</p></blockquote><h2 id=sorting>Sorting</h2><p>Quicksort, mergesort, heapsort, and insertion — plus stability, which decides when equal keys keep their order.</p><table><thead><tr><th>Algorithm</th><th>Average</th><th>Worst</th><th>Space</th><th>Stable</th></tr></thead><tbody><tr><td>Quicksort</td><td><code>O(n log n)</code></td><td><code>O(n²)</code></td><td><code>O(log n)</code></td><td>No</td></tr><tr><td>Mergesort</td><td><code>O(n log n)</code></td><td><code>O(n log n)</code></td><td><code>O(n)</code></td><td>Yes</td></tr><tr><td>Heapsort</td><td><code>O(n log n)</code></td><td><code>O(n log n)</code></td><td><code>O(1)</code></td><td>No</td></tr><tr><td>Insertion sort</td><td><code>O(n²)</code></td><td><code>O(n²)</code></td><td><code>O(1)</code></td><td>Yes</td></tr><tr><td>Timsort (built-in)</td><td><code>O(n log n)</code></td><td><code>O(n log n)</code></td><td><code>O(n)</code></td><td>Yes</td></tr></tbody></table><h3 id=quicksort--in-place-default>Quicksort — in-place default</h3><p>Cache-friendly and usually fastest on arrays, but not stable. Use it when order among equal keys doesn&rsquo;t matter.</p><h3 id=mergesort--stable--guaranteed>Mergesort — stable & guaranteed</h3><p>Guaranteed <code>O(n log n)</code> and stable; the choice for linked lists and external/disk sorts that need extra space anyway.</p><h3 id=heapsort--tight-memory>Heapsort — tight memory</h3><p><code>O(1)</code> extra space and no recursion. Use when memory is constrained; it&rsquo;s also the engine inside a priority queue.</p><h3 id=insertion-sort--tiny-or-sorted>Insertion sort — tiny or sorted</h3><p>Runs in <code>O(n)</code> on nearly-sorted input. Real quicksort and Timsort switch to it below ~10–50 elements.</p><h3 id=quicksort-simple-not-in-place>Quicksort (simple, not in-place)</h3><pre tabindex=0><code>def quicksort(a):
+    if len(a) &lt;= 1:
+        return a
+    pivot = a[len(a) // 2]
+    left  = [x for x in a if x &lt; pivot]
+    mid   = [x for x in a if x == pivot]
+    right = [x for x in a if x &gt; pivot]
+    return quicksort(left) + mid + quicksort(right)
+</code></pre><h3 id=mergesort>Mergesort</h3><pre tabindex=0><code>def mergesort(a):
+    if len(a) &lt;= 1:
+        return a
+    m = len(a) // 2
+    L, R = mergesort(a[:m]), mergesort(a[m:])
+    out, i, j = [], 0, 0
+    while i &lt; len(L) and j &lt; len(R):
+        if L[i] &lt;= R[j]: out.append(L[i]); i += 1
+        else:            out.append(R[j]); j += 1
+    return out + L[i:] + R[j:]
+</code></pre><blockquote><p><strong>⌁:</strong> <strong>Stable</strong> sorts keep equal keys in their original order. You need that when sorting by a secondary key after a primary sort — otherwise the first ordering gets scrambled.</p></blockquote><h2 id=search>Searching</h2><p>Linear scan, binary search, hashing, tree lookup, and indexes — match the method to the data&rsquo;s shape.</p><table><thead><tr><th>Method</th><th>Lookup</th><th>Requires</th><th>Notes</th></tr></thead><tbody><tr><td>Linear search</td><td><code>O(n)</code></td><td>nothing</td><td>Unsorted or tiny data; scan until found.</td></tr><tr><td>Binary search</td><td><code>O(log n)</code></td><td>sorted array</td><td>Halve the range each step.</td></tr><tr><td>Hash table</td><td><code>O(1)</code> avg</td><td>hash function</td><td>Collisions degrade to <code>O(n)</code>.</td></tr><tr><td>BST lookup</td><td><code>O(log n)</code> avg</td><td>balanced tree</td><td>Unbalanced → <code>O(n)</code>; keeps sorted order.</td></tr><tr><td>Database index</td><td><code>O(log n)</code></td><td>B-tree / hash index</td><td>Disk-friendly, supports range scans.</td></tr></tbody></table><h3 id=binary-search>Binary search</h3><pre tabindex=0><code>def binary_search(a, target):
+    lo, hi = 0, len(a) - 1
+    while lo &lt;= hi:
+        mid = lo + (hi - lo) // 2   # no overflow
+        if a[mid] == target:
+            return mid
+        elif a[mid] &lt; target:
+            lo = mid + 1
+        else:
+            hi = mid - 1
+    return -1                       # not found
+</code></pre><h3 id=hash-for-membership>Hash for membership</h3><p>Build a set once, then every check is <code>O(1)</code>. Repeated linear scans would be <code>O(n²)</code>.</p><pre tabindex=0><code>def linear_search(a, target):
+    for i, x in enumerate(a):
+        if x == target:
+            return i
+    return -1
+
+seen = set(a)            # O(n) build
+if target in seen: ...   # O(1) lookups
+</code></pre><h2 id=structures>Data structures</h2><p>The operation costs that decide which container fits your problem.</p><table><thead><tr><th>Structure</th><th>Access</th><th>Search</th><th>Insert</th><th>Delete</th><th>Use for</th></tr></thead><tbody><tr><td>Array</td><td><code>O(1)</code></td><td><code>O(n)</code></td><td><code>O(n)</code></td><td><code>O(n)</code></td><td>Random access, cache locality.</td></tr><tr><td>Linked list</td><td><code>O(n)</code></td><td><code>O(n)</code></td><td><code>O(1)</code>*</td><td><code>O(1)</code>*</td><td>Insert/delete at a known node. *at head/tail.</td></tr><tr><td>Stack / queue</td><td><code>O(n)</code></td><td><code>O(n)</code></td><td><code>O(1)</code></td><td><code>O(1)</code></td><td>LIFO / FIFO; the plumbing of DFS / BFS.</td></tr><tr><td>Hash table</td><td>—</td><td><code>O(1)</code> avg</td><td><code>O(1)</code> avg</td><td><code>O(1)</code> avg</td><td>Key → value, unordered; <code>O(n)</code> worst.</td></tr><tr><td>Balanced BST</td><td><code>O(log n)</code></td><td><code>O(log n)</code></td><td><code>O(log n)</code></td><td><code>O(log n)</code></td><td>Sorted, dynamic, range queries.</td></tr><tr><td>Heap</td><td><code>O(1)</code> peek</td><td><code>O(n)</code></td><td><code>O(log n)</code></td><td><code>O(log n)</code></td><td>Priority queue: min/max always on top.</td></tr><tr><td>Graph (adj list)</td><td>—</td><td><code>O(V + E)</code></td><td><code>O(1)</code></td><td><code>O(1)</code></td><td>Sparse graphs, iterating neighbors.</td></tr></tbody></table><h3 id=hash-table-caveats>Hash table caveats</h3><p>Worst case is <code>O(n)</code> when everything collides — a good hash function plus rehashing keeps it <code>O(1)</code>. It has no ordering; for sorted ranges reach for a tree.</p><h3 id=heap--priority-queue>Heap = priority queue</h3><p>Peek is <code>O(1)</code>, push/pop are <code>O(log n)</code>. Use it for Dijkstra, top-k, and scheduling. Finding an arbitrary element is still <code>O(n)</code>.</p><h3 id=stack--queue>Stack & queue</h3><pre tabindex=0><code>stack = []
+stack.append(&#34;a&#34;)   # push
+stack.pop()         # pop (LIFO)
+
+from collections import deque
+q = deque()
+q.append(&#34;a&#34;)       # enqueue
+q.popleft()         # dequeue (FIFO)
+</code></pre><h3 id=heap-in-python>Heap in Python</h3><pre tabindex=0><code>import heapq
+h = []
+heapq.heappush(h, 3)   # O(log n)
+heapq.heappush(h, 1)
+heapq.heappop(h)       # 1 — O(log n)
+h[0]                   # peek — O(1)
+</code></pre><h2 id=graph>Graph algorithms</h2><p>Traversals, shortest paths, and spanning trees — and how you store the graph in the first place.</p><table><thead><tr><th>Algorithm</th><th>Solves</th><th>Complexity</th><th>Key ingredient</th></tr></thead><tbody><tr><td>BFS</td><td>Shortest path in unweighted graphs, level order</td><td><code>O(V + E)</code></td><td>queue</td></tr><tr><td>DFS</td><td>Reachability, cycle detection, topological sort</td><td><code>O(V + E)</code></td><td>stack / recursion</td></tr><tr><td>Dijkstra</td><td>Shortest path with non-negative weights</td><td><code>O((V + E) log V)</code></td><td>priority queue</td></tr><tr><td>A*</td><td>Shortest path guided by a heuristic</td><td>problem-dependent</td><td>priority queue + <code>h(n)</code></td></tr><tr><td>Topological sort</td><td>Order a DAG&rsquo;s dependencies</td><td><code>O(V + E)</code></td><td>DFS / Kahn&rsquo;s algorithm</td></tr><tr><td>Kruskal</td><td>Minimum spanning tree</td><td><code>O(E log E)</code></td><td>sort edges + union-find</td></tr><tr><td>Prim</td><td>Minimum spanning tree</td><td><code>O((V + E) log V)</code></td><td>priority queue</td></tr></tbody></table><h3 id=adjacency-list>Adjacency list</h3><p><code>O(V + E)</code> space and fast neighbor iteration. The default for sparse graphs — most real-world graphs are sparse.</p><pre tabindex=0><code>graph = {
+  &#34;a&#34;: [&#34;b&#34;, &#34;c&#34;],
+  &#34;b&#34;: [&#34;a&#34;, &#34;d&#34;],
+}
+</code></pre><h3 id=adjacency-matrix>Adjacency matrix</h3><p><code>O(V²)</code> space but <code>O(1)</code> edge checks. Only worth it for dense graphs or when you query edges constantly.</p><pre tabindex=0><code># matrix[i][j] = 1 means edge i→j
+matrix = [[0,1,1],
+          [1,0,1],
+          [0,0,0]]
+</code></pre><h3 id=bfs--shortest-path-unweighted>BFS — shortest path, unweighted</h3><pre tabindex=0><code>from collections import deque
+
+def bfs(graph, start):
+    seen = {start}
+    q = deque([start])
+    while q:
+        node = q.popleft()
+        for nxt in graph[node]:
+            if nxt not in seen:
+                seen.add(nxt)
+                q.append(nxt)
+    return seen
+</code></pre><h3 id=dijkstra--non-negative-weights>Dijkstra — non-negative weights</h3><pre tabindex=0><code>import heapq
+
+def dijkstra(graph, start):
+    dist = {start: 0}
+    pq = [(0, start)]
+    while pq:
+        d, node = heapq.heappop(pq)
+        if d &gt; dist.get(node, float(&#34;inf&#34;)):
+            continue
+        for nxt, w in graph[node]:
+            nd = d + w
+            if nd &lt; dist.get(nxt, float(&#34;inf&#34;)):
+                dist[nxt] = nd
+                heapq.heappush(pq, (nd, nxt))
+    return dist
+</code></pre><blockquote><p><strong>!:</strong> <strong>Dijkstra breaks on negative edges</strong> — use Bellman-Ford there. And A* is only correct if its heuristic never overestimates the true remaining cost (it must be <em>admissible</em>).</p></blockquote><h2 id=dp>Divide & conquer / DP</h2><p>Recursion, reuse, and greed — the three ways to turn a big problem into small ones.</p><ol><li><strong>State</strong> — What changes as you solve? An index, remaining capacity, two string positions…</li><li><strong>Recurrence</strong> — Express the answer in terms of smaller subproblems.</li><li><strong>Base cases</strong> — The smallest inputs you can answer directly.</li><li><strong>Order</strong> — Memoize top-down, or fill a table bottom-up in dependency order.</li></ol><h3 id=divide--conquer>Divide & conquer</h3><p>Split into independent pieces, solve each, combine. Mergesort, quicksort, binary search. Recurrence <code>T(n) = 2T(n/2) + O(n)</code> → <code>O(n log n)</code>.</p><h3 id=memoization-top-down>Memoization (top-down)</h3><p>Cache results by their inputs. Turns overlapping-subproblem recursion from exponential into polynomial — the fix for naive Fibonacci.</p><h3 id=dynamic-programming>Dynamic programming</h3><p>Memoization&rsquo;s bottom-up sibling: fill a table when subproblems overlap and you can order them. Knapsack, edit distance, longest common subsequence.</p><h3 id=greedy>Greedy</h3><p>Take the locally best choice and never backtrack. Dijkstra, Prim, Huffman, activity selection. Correct only when a local optimum is also global.</p><h3 id=naive-recursion--o2ⁿ>Naive recursion — O(2ⁿ)</h3><pre tabindex=0><code>def fib(n):
+    return n if n &lt; 2 else fib(n-1) + fib(n-2)
+</code></pre><h3 id=memoized--on>Memoized — O(n)</h3><pre tabindex=0><code>memo = {0: 0, 1: 1}
+def fib(n):
+    if n not in memo:
+        memo[n] = fib(n-1) + fib(n-2)
+    return memo[n]
+</code></pre><h2 id=techniques>Common techniques</h2><p>Five patterns that solve a surprising share of real and interview problems.</p><ul><li><code>i, j = 0, len(a) - 1</code> — <strong>Two pointers.</strong> Walk from both ends (or both from the start) to find sorted pairs, palindromes, or partitions in <code>O(n)</code>.</li><li><code>win = sum(a[l:r])</code> — <strong>Sliding window.</strong> Grow and shrink a window to track subarrays under a constraint — no re-scanning the window each step.</li><li><code>pre[i] = pre[i-1] + a[i]</code> — <strong>Prefix sums.</strong> Any range sum <code>a[l:r] = pre[r+1] - pre[l]</code> in <code>O(1)</code> after one <code>O(n)</code> pass.</li><li><code>while lo &lt; hi: mid = (lo+hi)//2</code> — <strong>Binary search on answer.</strong> Search the value range, not the array, when a monotonic <code>check(x)</code> tells you if <code>x</code> is feasible.</li><li><code>def search(path): …</code> — <strong>Backtracking.</strong> Choose, recurse, undo. Prune branches that can&rsquo;t lead to a solution before exploring them.</li></ul><h3 id=prefix-sums-in-practice>Prefix sums in practice</h3><pre tabindex=0><code>pre = [0]
+for x in a:
+    pre.append(pre[-1] + x)
+# sum of a[l:r] (inclusive r) is:
+pre[r + 1] - pre[l]
+</code></pre><h3 id=binary-search-on-answer>Binary search on answer</h3><pre tabindex=0><code>def ok(x): return can_make(x)   # monotonic
+lo, hi = 0, max_val
+while lo &lt; hi:
+    mid = (lo + hi + 1) // 2
+    if ok(mid): lo = mid
+    else:       hi = mid - 1
+return lo   # largest feasible value
+</code></pre><h3 id=two-pointers--palindrome>Two pointers — palindrome</h3><pre tabindex=0><code>def is_palindrome(s):
+    i, j = 0, len(s) - 1
+    while i &lt; j:
+        if s[i] != s[j]:
+            return False
+        i, j = i + 1, j - 1
+    return True
+</code></pre><h3 id=sliding-window--max-sum-of-size-k>Sliding window — max sum of size k</h3><pre tabindex=0><code>def max_subarray_sum(a, k):
+    win = sum(a[:k])
+    best = win
+    for i in range(k, len(a)):
+        win += a[i] - a[i - k]   # slide
+        best = max(best, win)
+    return best
+</code></pre><h2 id=gotchas>Pitfalls</h2><p>The classic ways correct-looking code goes wrong.</p><h3 id=off-by-one>Off-by-one</h3><p>Closed <code>[lo, hi]</code> vs half-open <code>[lo, hi)</code> change the loop condition and the <code>- 1</code>s. Pick half-open ranges everywhere and the fenceposts disappear.</p><h3 id=integer-overflow>Integer overflow</h3><p><code>(lo + hi) / 2</code> overflows when <code>lo + hi</code> exceeds the int range — use <code>lo + (hi - lo) / 2</code>. Watch 32-bit ints; arbitrary-precision languages sidestep it.</p><h3 id=wrong-structure>Wrong structure</h3><p>An <code>O(n)</code> list membership inside a loop becomes <code>O(n²)</code>; a set makes it <code>O(n)</code>. Choose the structure for the operation you repeat.</p><h3 id=constant-factors>Constant factors</h3><p>Big-O hides constants: a tight <code>O(n²)</code> can beat <code>O(n log n)</code> on small <code>n</code>. Profile real data before &ldquo;optimizing&rdquo; to a worse practical choice.</p><h3 id=caching--locality>Caching / locality</h3><p>Sequential array access is far faster than pointer-chasing a linked list — locality often beats asymptotics on modern CPUs. Arrays are the default for a reason.</p><h3 id=recursion-depth>Recursion depth</h3><p>Deep recursion overflows the call stack. Convert to an explicit stack or loop, or use iterative bottom-up DP for linear/quadratic space.</p><h3 id=stability-assumed>Stability assumed</h3><p>Not every sort is stable: quicksort and heapsort reorder equal keys. Sorting by a secondary key after a primary sort silently scrambles the first ordering unless the sort is stable.</p><h3 id=floating-point-comparisons>Floating-point comparisons</h3><p>Comparing floats with <code>==</code> — or using them as binary-search bounds — can loop forever or miss the target. Prefer integer arithmetic, or compare against a tolerance <code>abs(a - b) &lt; eps</code>.</p><blockquote><p><strong>!:</strong> <strong>Premature optimization is the trap.</strong> Get the algorithm right first, then measure. Big-O picks the strategy; a profiler picks the implementation.</p></blockquote></div></article></div><footer class=foot><span>slop-stuff</span>
+<span class=muted>served under <code>makefunstuff.github.io/slop-stuff/&lt;folder>/</code></span>
+<a href=https://makefunstuff.github.io/slop-stuff/links/>links</a>
+<a href=https://github.com/makefunstuff/slop-stuff>repo</a></footer><script src=https://makefunstuff.github.io/slop-stuff/js/wiki.js defer></script></body></html>

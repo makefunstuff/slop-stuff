@@ -1,0 +1,107 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>kubectl — slop-stuff</title><meta name=description content="Inspect, run, edit, debug, and switch Kubernetes contexts from the shell."><link rel=canonical href=https://makefunstuff.github.io/slop-stuff/kubectl/><link rel=stylesheet href=https://makefunstuff.github.io/slop-stuff/css/wiki.css><script>(function(){var t="slop-theme",e=localStorage.getItem(t);e||(e=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"),document.documentElement.setAttribute("data-theme",e)})()</script></head><body><header class=bar><a class=brand href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a>
+<span class="muted hide-narrow">cheatsheets & experiments</span><form class=seek role=search action=https://makefunstuff.github.io/slop-stuff/ method=get><input id=q type=search name=q placeholder="search guides…" autocomplete=off aria-label="Search guides"><div id=hits class=hits hidden></div></form><button type=button class=icon id=theme title="Toggle theme" aria-label="Toggle theme">◐</button>
+<a class=icon href=https://github.com/makefunstuff/slop-stuff rel=noreferrer>git</a></header><div class="wrap wrap-guide"><aside class=toc aria-label="On this page"><p class=toc-label>on this page</p><nav id=TableOfContents><ul><li><a href=#quickref>Quick reference</a></li><li><a href=#start>Contexts & config</a></li><li><a href=#inspect>Inspect resources</a></li><li><a href=#run>Run & apply</a></li><li><a href=#edit>Edit & update</a></li><li><a href=#debug>Debug & access</a></li><li><a href=#yaml>Resource YAML</a></li><li><a href=#contexts>Multi-cluster & namespaces</a></li><li><a href=#gotchas>Flags & gotchas</a></li></ul></nav></aside><article class=doc><p class=crumb><a href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a> / Cloud, DevOps & observability</p><h1>kubectl</h1><p class=lede>Drive a cluster from the shell.</p><p class="muted sub">Inspect, run, edit, debug, and switch Kubernetes contexts from the shell.</p><p class=tags><span>cloud</span><span>get</span><span>apply</span><span>rollout</span></p><div class=body><p>kubectl is the Kubernetes command line: one binary to inspect, run, edit, and debug every resource in a cluster. No dashboard required.</p><h2 id=quickref>Quick reference</h2><p>The commands you&rsquo;ll type a hundred times a day, scannable at a glance — everything else on this page is the depth behind them.</p><ul><li><code>kubectl get pods -n NAMESPACE</code> — List pods; <code>-A</code> for every namespace.</li><li><code>kubectl describe pod NAME</code> — Status, conditions, and recent events.</li><li><code>kubectl logs -f deploy/NAME</code> — Follow logs from a deployment.</li><li><code>kubectl apply -f manifest.yaml</code> — Create or update from YAML.</li><li><code>kubectl exec -it pod/NAME -- sh</code> — Open a shell inside a pod.</li><li><code>kubectl port-forward svc/NAME 8080:80</code> — Forward a local port to a service.</li><li><code>kubectl rollout restart deploy/NAME</code> — Cycle pods to pick up changes.</li><li><code>kubectl get pods -o yaml</code> — Full object as YAML.</li><li><code>kubectl config use-context NAME</code> — Switch clusters.</li><li><code>kubectl config current-context</code> — Which cluster am I on?</li></ul><blockquote><p><strong>KEY:</strong> <strong>Namespace and context shape everything.</strong> <code>-n NAMESPACE</code> scopes one command; <code>kubectl config set-context --current --namespace=team-a</code> sets the default; <code>--context NAME</code> targets another cluster without switching.</p></blockquote><h2 id=start>Contexts & config</h2><p>Everything starts with a kubeconfig: clusters, users, and the context that ties them together. Switch context and you&rsquo;re talking to a different cluster.</p><h3 id=1-list-contexts>1. List contexts</h3><pre tabindex=0><code>kubectl config get-contexts
+</code></pre><h3 id=2-switch-context>2. Switch context</h3><pre tabindex=0><code>kubectl config use-context minikube
+</code></pre><h3 id=3-current-context>3. Current context</h3><pre tabindex=0><code>kubectl config current-context
+</code></pre><h3 id=4-cluster-info>4. Cluster info</h3><pre tabindex=0><code>kubectl cluster-info
+</code></pre><h3 id=scope-a-namespace>Scope a namespace</h3><pre tabindex=0><code>kubectl get pods -n kube-system
+kubectl get pods -A
+kubectl config set-context --current \
+  --namespace=team-a
+</code></pre><h3 id=point-at-a-context>Point at a context</h3><pre tabindex=0><code>kubectl --context prod get pods
+KUBECONFIG=~/.kube/prod.yaml \
+  kubectl get pods
+</code></pre><blockquote><p><strong>KEY:</strong> <strong>Config lives in <code>~/.kube/config</code>.</strong> A context binds a cluster, a user, and a namespace. Scope any command with <code>-n NAMESPACE</code> or <code>--context NAME</code>; set <code>KUBECONFIG</code> to point at a different file. See <code>kubectl get namespaces</code> for what&rsquo;s available.</p></blockquote><h2 id=inspect>Inspect resources</h2><p><code>get</code> lists resources, <code>describe</code> narrates their state, and <code>events</code> tell you what just happened.</p><ul><li><code>kubectl get pods</code> — List pods in the current namespace.</li><li><code>kubectl get pods -o wide</code> — Add node, IP, and container columns.</li><li><code>kubectl get pods -o yaml</code> — Full object as YAML.</li><li><code>kubectl get pods -o json</code> — Full object as JSON.</li><li><code>kubectl get pods --watch</code> — Stream changes as they happen.</li><li><code>kubectl get deploy,svc,cm</code> — Several kinds in one shot.</li><li><code>kubectl describe pod web-abc123</code> — Events, conditions, mounts, status.</li><li><code>kubectl get events --sort-by=.metadata.creationTimestamp</code> — Recent cluster events, newest last.</li><li><code>kubectl events --for pod/web-abc123</code> — Watch events for one resource (1.30+).</li><li><code>kubectl api-resources</code> — Every kind this cluster knows.</li><li><code>kubectl explain pod.spec.containers</code> — Field-by-field documentation.</li></ul><h3 id=custom-columns>Custom columns</h3><pre tabindex=0><code>kubectl get pods \
+  -o custom-columns=NAME:.metadata.name,IP:.status.podIP
+</code></pre><h3 id=sort-by-a-field>Sort by a field</h3><pre tabindex=0><code>kubectl get pods \
+  --sort-by=.metadata.creationTimestamp
+kubectl get events \
+  --sort-by=.lastTimestamp
+</code></pre><blockquote><p><strong>⌁:</strong> <strong>get vs describe:</strong> <code>get</code> is a table; <code>describe</code> is the story. Use <code>-o wide</code> for a few extra columns, <code>-o yaml</code> for the exact spec, and <code>--watch</code> to tail a resource.</p></blockquote><h2 id=run>Run & apply</h2><p><code>apply</code> reconciles manifests, <code>create</code> is one-shot, and <code>run</code> spins up a single workload fast.</p><ul><li><code>kubectl apply -f deploy.yaml</code> — Create or update from a manifest.</li><li><code>kubectl create -f deploy.yaml</code> — Create only — errors if it exists.</li><li><code>kubectl apply -k ./overlays/prod</code> — Apply a kustomize directory.</li><li><code>kubectl run nginx --image=nginx</code> — Quick pod in a single line.</li><li><code>kubectl expose deploy web --port=80 --target-port=8080</code> — Create a Service for a deployment.</li><li><code>kubectl delete -f deploy.yaml</code> — Delete resources from a manifest.</li><li><code>kubectl delete pod web-abc123 --grace-period=0 --force</code> — Hard-delete a stuck pod.</li><li><code>kubectl apply -f app.yaml --dry-run=client -o yaml</code> — Preview without touching the cluster.</li><li><code>kubectl diff -f app.yaml</code> — Show exactly what apply would change.</li></ul><h3 id=generate-a-manifest>Generate a manifest</h3><pre tabindex=0><code>kubectl create deploy web \
+  --image=nginx \
+  --dry-run=client -o yaml
+</code></pre><h3 id=preview-an-apply>Preview an apply</h3><pre tabindex=0><code>kubectl apply -f app.yaml \
+  --dry-run=client -o yaml
+</code></pre><blockquote><p><strong>⚠:</strong> <strong>apply vs create:</strong> <code>apply</code> merges with live state and can update in place; <code>create</code> refuses if the resource already exists. Prefer <code>apply -f</code> for anything you&rsquo;ll re-run, and dry-run first when you&rsquo;re not sure.</p></blockquote><h2 id=edit>Edit & update</h2><p>Most changes are one-liners: set an image, scale replicas, or restart a rollout. <code>edit</code> and <code>patch</code> handle the rest.</p><ul><li><code>kubectl set image deploy/web web=nginx:1.27</code> — Swap the container image in place.</li><li><code>kubectl scale deploy/web --replicas=5</code> — Change how many replicas run.</li><li><code>kubectl rollout restart deploy/web</code> — Cycle pods to pick up new config.</li><li><code>kubectl rollout status deploy/web</code> — Block until the rollout finishes.</li><li><code>kubectl rollout undo deploy/web</code> — Roll back to the previous revision.</li><li><code>kubectl rollout history deploy/web</code> — List rollout revisions.</li><li><code>kubectl edit deploy/web</code> — Open the live object in $EDITOR.</li><li><code>kubectl label deploy/web env=prod</code> — Add or change a label.</li><li><code>kubectl annotate deploy/web owner=platform</code> — Attach non-identifying metadata.</li></ul><h3 id=patch--strategic-merge>Patch — strategic merge</h3><pre tabindex=0><code>kubectl patch deploy/web \
+  -p &#39;{&#34;spec&#34;:{&#34;replicas&#34;:3}}&#39;
+</code></pre><h3 id=patch--json>Patch — JSON</h3><pre tabindex=0><code>kubectl patch deploy/web \
+  --type=json \
+  -p=&#39;[{&#34;op&#34;:&#34;replace&#34;,&#34;path&#34;:&#34;/spec/replicas&#34;,&#34;value&#34;:3}]&#39;
+</code></pre><blockquote><p><strong>⚠:</strong> <strong>Edit vs apply:</strong> <code>edit</code> and <code>patch</code> mutate the live object but leave your git file untouched. If the change matters, put it in a manifest and <code>apply -f</code> — that&rsquo;s the source of truth.</p></blockquote><h2 id=debug>Debug & access</h2><p>Follow logs, open a shell inside a pod, forward a port, or drop a <code>debug</code> container into a running pod or node.</p><ul><li><code>kubectl logs deploy/web</code> — Logs from a deployment&rsquo;s pods.</li><li><code>kubectl logs pod/web-abc123 -f</code> — Follow logs live.</li><li><code>kubectl logs pod/web-abc123 --tail=50</code> — Just the last 50 lines.</li><li><code>kubectl logs pod/web-abc123 -c sidecar</code> — One specific container.</li><li><code>kubectl exec -it pod/web-abc123 -- sh</code> — Open a shell inside the pod.</li><li><code>kubectl exec pod/web-abc123 -- env</code> — Run one command, no TTY.</li><li><code>kubectl port-forward svc/web 8080:80</code> — Forward local 8080 → service 80.</li><li><code>kubectl cp pod/web-abc123:/app/out.txt ./out.txt</code> — Copy a file out of a pod.</li><li><code>kubectl top pods</code> — CPU/memory (needs metrics-server).</li><li><code>kubectl attach pod/web-abc123</code> — Attach to a container&rsquo;s stdio.</li><li><code>kubectl debug node/worker-1 -it --image=busybox</code> — Run a debug pod on a node.</li><li><code>kubectl debug pod/web-abc123 -it --image=busybox --target=web</code> — Ephemeral container sharing the pod&rsquo;s namespaces.</li></ul><h3 id=crashed-container-logs>Crashed container logs</h3><pre tabindex=0><code>kubectl logs pod/web-abc123 \
+  --previous
+kubectl logs pod/web-abc123 \
+  -c sidecar --previous
+</code></pre><h3 id=forward-a-pod-directly>Forward a pod directly</h3><pre tabindex=0><code>kubectl port-forward \
+  pod/web-abc123 8080:80
+# expose to the network:
+kubectl port-forward \
+  pod/web-abc123 8080:80 \
+  --address=0.0.0.0
+</code></pre><blockquote><p><strong>KEY:</strong> <strong>exec needs <code>--</code>.</strong> Everything after <code>--</code> goes to the container, not kubectl: <code>kubectl exec -it POD -- sh</code>. <code>port-forward</code> runs in the foreground — append <code>&</code> to background it.</p></blockquote><h2 id=yaml>Resource YAML</h2><p>Four fields frame every manifest: <code>apiVersion</code>, <code>kind</code>, <code>metadata</code>, <code>spec</code>. Labels select; specs describe.</p><h3 id=pod>Pod</h3><pre tabindex=0><code>apiVersion: v1
+kind: Pod
+metadata:
+  name: web
+  labels:
+    app: web
+spec:
+  containers:
+    - name: web
+      image: nginx:1.27
+      ports:
+        - containerPort: 80
+</code></pre><h3 id=deployment>Deployment</h3><pre tabindex=0><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.27
+</code></pre><h3 id=service>Service</h3><pre tabindex=0><code>apiVersion: v1
+kind: Service
+metadata:
+  name: web
+spec:
+  selector:
+    app: web
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
+</code></pre><h3 id=configmap>ConfigMap</h3><pre tabindex=0><code>apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  LOG_LEVEL: info
+  app.yaml: |
+    retries: 3
+</code></pre><blockquote><p><strong>KEY:</strong> <strong>Labels wire things together.</strong> <code>metadata.labels</code> on a pod is matched by a Service&rsquo;s <code>spec.selector</code> and a Deployment&rsquo;s <code>matchLabels</code> to decide what belongs to what. <code>apiVersion</code> + <code>kind</code> pick the type; <code>metadata</code> names it; <code>spec</code> describes it.</p></blockquote><h2 id=contexts>Multi-cluster & namespaces</h2><p>One kubectl, many clusters: contexts switch the target, namespaces partition it, and RBAC decides what you may do.</p><ul><li><code>kubectl config get-contexts</code> — List every context in kubeconfig.</li><li><code>kubectl config use-context prod</code> — Switch the active cluster.</li><li><code>kubectl config current-context</code> — Which cluster am I on?</li><li><code>kubectl config set-context prod --namespace=team-a</code> — Pin a namespace to a context.</li><li><code>kubectl get namespaces</code> — List namespaces.</li><li><code>kubectl create namespace team-a</code> — Make a new namespace.</li><li><code>kubectl get pods -n kube-system</code> — Scope a single command.</li><li><code>kubectl config set-context --current --namespace=team-a</code> — Change the default namespace for now.</li></ul><h3 id=can-i-auth-can-i>Can I? (auth can-i)</h3><pre tabindex=0><code>kubectl auth can-i create pods
+kubectl auth can-i delete deployments \
+  -n team-a
+</code></pre><h3 id=as-another-identity>As another identity</h3><pre tabindex=0><code>kubectl auth can-i get secrets \
+  --as=system:serviceaccount:team-a:default
+kubectl auth can-i &#39;*&#39; &#39;*&#39;
+</code></pre><blockquote><p><strong>⚠:</strong> <strong>RBAC is allow-only:</strong> no rules means no access. Roles grant permissions inside a namespace; ClusterRoles grant them cluster-wide. Bind them with RoleBinding / ClusterRoleBinding. The default namespace is just a convention, not a sandbox.</p></blockquote><details><summary>RBAC verbs at a glance</summary><p>Read verbs: <code>get</code>, <code>list</code>, <code>watch</code>. Write verbs: <code>create</code>, <code>update</code>, <code>patch</code>, <code>delete</code>, <code>deletecollection</code>. <code>*</code> matches everything. Verbs are scoped to <code>apiGroups</code> and <code>resources</code> inside a Role or ClusterRole.</p></details><h2 id=gotchas>Flags & gotchas</h2><p>Output format, namespace scope, and selectors change everything about what a command returns.</p><ul><li><code>kubectl get pods -o wide</code> — Add IP + node columns.</li><li><code>kubectl get pods -o yaml</code> — The whole object, YAML.</li><li><code>kubectl get pods -A</code> — Every namespace at once.</li><li><code>kubectl get pods -l app=web</code> — Label selector (equality).</li><li><code>kubectl get pods -l 'env in (prod,staging)'</code> — Label selector (set-based).</li><li><code>kubectl get nodes -o jsonpath='{.items[*].status.addresses[0].address}'</code> — JSONPath extraction.</li><li><code>kubectl get pods -o json | jq '.items[].metadata.name'</code> — Pipe structured output to jq.</li></ul><h3 id=jsonpath>JSONPath</h3><pre tabindex=0><code>kubectl get pods \
+  -o jsonpath=&#39;{.items[*].metadata.name}&#39;
+
+kubectl get nodes \
+  -o jsonpath=&#39;{range .items[*]}{.metadata.name}{&#34;\t&#34;}{.status.capacity.cpu}{&#34;\n&#34;}{end}&#39;
+</code></pre><h3 id=pipe-to-jq>Pipe to jq</h3><pre tabindex=0><code>kubectl get pods -o json | \
+  jq -r &#39;.items[] | [.metadata.name, .status.phase] | @tsv&#39;
+
+kubectl get pods -A -o json | \
+  jq &#39;.items | length&#39;
+</code></pre><blockquote><p><strong>⚠:</strong> <strong>Scope is silent.</strong> kubectl defaults to the current namespace, so <code>get pods</code> quietly ignores pods elsewhere. Pass <code>-A</code> / <code>-n NAME</code> to see them. <code>-l</code> filters by label; JSONPath and <code>jq</code> shape the output.</p></blockquote><details><summary>More gotchas</summary><p><code>kubectl run</code> creates a bare Pod, not a Deployment — use <code>kubectl create deploy</code> for a managed workload. <code>kubectl cp</code> needs <code>tar</code> inside the container image. <code>logs</code> and <code>exec</code> target one pod; pass <code>deploy/NAME</code> to fan out across its replicas. A context switch is global and sticky — <code>kubectl config use-context prod</code> stays until you switch back, so check <code>current-context</code> before destructive commands. <code>delete</code> waits for graceful shutdown; add <code>--now</code> (<code>--grace-period=0 --force</code>) to skip it. Raw <code>-o yaml</code> includes <code>managedFields</code> noise — strip it with <code>jq 'del(.metadata.managedFields)'</code> when you want a clean manifest.</p></details></div></article></div><footer class=foot><span>slop-stuff</span>
+<span class=muted>served under <code>makefunstuff.github.io/slop-stuff/&lt;folder>/</code></span>
+<a href=https://makefunstuff.github.io/slop-stuff/links/>links</a>
+<a href=https://github.com/makefunstuff/slop-stuff>repo</a></footer><script src=https://makefunstuff.github.io/slop-stuff/js/wiki.js defer></script></body></html>

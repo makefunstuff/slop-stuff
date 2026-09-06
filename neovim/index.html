@@ -1,0 +1,126 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Neovim — slop-stuff</title><meta name=description content="Modes, motions, operators, text objects, config, and LSP."><link rel=canonical href=https://makefunstuff.github.io/slop-stuff/neovim/><link rel=stylesheet href=https://makefunstuff.github.io/slop-stuff/css/wiki.css><script>(function(){var t="slop-theme",e=localStorage.getItem(t);e||(e=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"),document.documentElement.setAttribute("data-theme",e)})()</script></head><body><header class=bar><a class=brand href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a>
+<span class="muted hide-narrow">cheatsheets & experiments</span><form class=seek role=search action=https://makefunstuff.github.io/slop-stuff/ method=get><input id=q type=search name=q placeholder="search guides…" autocomplete=off aria-label="Search guides"><div id=hits class=hits hidden></div></form><button type=button class=icon id=theme title="Toggle theme" aria-label="Toggle theme">◐</button>
+<a class=icon href=https://github.com/makefunstuff/slop-stuff rel=noreferrer>git</a></header><div class="wrap wrap-guide"><aside class=toc aria-label="On this page"><p class=toc-label>on this page</p><nav id=TableOfContents><ul><li><a href=#quickref>The everyday keys, at a glance</a></li><li><a href=#start>Modes & help</a></li><li><a href=#motion>Motions</a></li><li><a href=#editing>Operators & text objects</a></li><li><a href=#search>Search & replace</a></li><li><a href=#buffers>Buffers, windows & tabs</a></li><li><a href=#config>init.lua config</a></li><li><a href=#lsp>LSP, treesitter & completion</a></li><li><a href=#gotchas>Pitfalls</a></li></ul></nav></aside><article class=doc><p class=crumb><a href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a> / Editors</p><h1>Neovim</h1><p class=lede>Edit at the speed of thought.</p><p class="muted sub">Modes, motions, operators, text objects, config, and LSP.</p><p class=tags><span>editor</span><span>motion</span><span>operators</span><span>lsp</span></p><div class=body><p>Neovim is a modal editor: every keypress is a command, not a character. Learn the modes and motions once, and your hands never leave the home row again.</p><h2 id=quickref>The everyday keys, at a glance</h2><p>Nine blocks cover the daily surface — modes, movement, operators, text objects, search, replace, splits, config, and LSP. Skim it once, then dive into the sections below for depth.</p><h3 id=modes>Modes</h3><pre tabindex=0><code>Esc           &#34; back to Normal (always)
+i  a  o       &#34; insert before / after / new line
+v  V  Ctrl-v  &#34; visual: char / line / block
+:             &#34; command-line mode
+</code></pre><h3 id=move>Move</h3><pre tabindex=0><code>h  j  k  l    &#34; left / down / up / right
+w  b  e       &#34; word: next / back / end
+0  $  ^       &#34; line start / end / first char
+gg  G  12G    &#34; top / bottom / line 12
+</code></pre><h3 id=operators>Operators</h3><pre tabindex=0><code>d  c  y       &#34; delete / change / yank
+x  p  P       &#34; char / put after / before
+u  Ctrl-r     &#34; undo / redo
+.             &#34; repeat last change
+</code></pre><h3 id=text-objects>Text objects</h3><pre tabindex=0><code>ciw  ci&#34;      &#34; change word / string
+di(  di{      &#34; delete inside ( / {
+yap  yit      &#34; yank paragraph / tag
+cit           &#34; change tag content
+</code></pre><h3 id=search>Search</h3><pre tabindex=0><code>/pattern      &#34; search forward
+?pattern      &#34; search backward
+n  N          &#34; next / previous match
+*  #          &#34; word under cursor fwd/back
+:noh          &#34; clear highlight
+</code></pre><h3 id=replace>Replace</h3><pre tabindex=0><code>:s/old/new/    &#34; current line, first
+:%s/old/new/g  &#34; whole file
+:%s/old/new/gc &#34; whole file, confirm
+&amp;               &#34; repeat last :s
+</code></pre><h3 id=splits>Splits</h3><pre tabindex=0><code>:sp  :vsp      &#34; split horizontal / vertical
+Ctrl-w h j k l &#34; move focus
+Ctrl-w q  o    &#34; close / only window
+Ctrl-w =       &#34; equalize sizes
+</code></pre><h3 id=initlua>init.lua</h3><pre tabindex=0><code>~/.config/nvim/init.lua   &#34; entry point
+vim.opt.number = true     &#34; options
+vim.keymap.set(&#34;n&#34;, ...)  &#34; keymaps
+require(&#34;lazy&#34;).setup(&#34;plugins&#34;)
+</code></pre><h3 id=lsp>LSP</h3><pre tabindex=0><code>gd  gr         &#34; definition / references
+K              &#34; hover docs
+&lt;leader&gt;rn    &#34; rename symbol
+:LspInstall srv  &#34; install a server
+:LspInfo       &#34; what&#39;s attached
+</code></pre><blockquote><p><strong>KEY:</strong> <strong>The grammar of every command:</strong> <code>count</code> + <code>operator</code> + <code>motion</code>. <code>d3w</code> deletes three words, <code>ci"</code> changes inside the quotes — everything else is a refinement of that one sentence.</p></blockquote><h2 id=start>Modes & help</h2><p>Neovim is modal. You read and move in <code>Normal</code>, type in <code>Insert</code>, select in <code>Visual</code>, and run commands from the <code>:</code> command line.</p><h3 id=1-modes>1. Modes</h3><pre tabindex=0><code>Esc            &#34; back to Normal (always works)
+i  a  o        &#34; insert before / after / new line
+v  V  Ctrl-v   &#34; visual: char / line / block
+:              &#34; command-line mode
+</code></pre><h3 id=2-open--quit>2. Open & quit</h3><pre tabindex=0><code>nvim main.rs   &#34; open a file
+:w             &#34; save (write)
+:q             &#34; quit
+:wq            &#34; save and quit (:x too)
+:q!            &#34; quit, discard changes
+</code></pre><h3 id=3-help>3. Help</h3><pre tabindex=0><code>:help           &#34; open the manual
+:help :w        &#34; help for the :w command
+:help quickref  &#34; one-page quick reference
+:help user-manual
+</code></pre><h3 id=4-shell>4. Shell</h3><pre tabindex=0><code>:!ls -la        &#34; run a command, return
+:terminal       &#34; open a real shell
+:term           &#34; ...in a split
+</code></pre><blockquote><p><strong>KEY:</strong> <strong>Neovim is modal.</strong> In Normal mode every key is a command, and most commands combine a <code>count</code>, an <code>operator</code>, and a <code>motion</code> — <code>d3w</code> means “delete 3 words”. <code>Esc</code> always returns you to Normal mode.</p></blockquote><h2 id=motion>Motions</h2><p>Motions move the cursor. Prefix any of them with a count to repeat: <code>5j</code>, <code>3w</code>, <code>12G</code>.</p><h3 id=cursor>Cursor</h3><ul><li>Left / down / up / right — <kbd>h</kbd><kbd>j</kbd><kbd>k</kbd><kbd>l</kbd></li><li>Next word / back / end — <kbd>w</kbd><kbd>b</kbd><kbd>e</kbd></li><li>WORD (ignore punctuation) — <kbd>W</kbd><kbd>B</kbd><kbd>E</kbd></li><li>Beginning of line (0) / end ($) — <kbd>0</kbd><kbd>$</kbd></li><li>First non-blank character — <kbd>^</kbd></li></ul><h3 id=line--find>Line & find</h3><ul><li>Find char (forward) — <kbd>f</kbd><kbd>char</kbd></li><li>Until char (forward) — <kbd>t</kbd><kbd>char</kbd></li><li>Find / until (backward) — <kbd>F</kbd><kbd>T</kbd></li><li>Repeat last f/t forward — <kbd>;</kbd></li><li>Repeat last f/t backward — <kbd>,</kbd></li></ul><h3 id=file-jumps>File jumps</h3><ul><li>Top of file / bottom — <kbd>gg</kbd><kbd>G</kbd></li><li>Jump to line N — <kbd>N</kbd><kbd>G</kbd></li><li>Match bracket / paren — <kbd>%</kbd></li><li>Previous / next paragraph — <kbd>{</kbd><kbd>}</kbd></li><li>Page down / up — <kbd>Ctrl-f</kbd><kbd>Ctrl-b</kbd></li></ul><blockquote><p><strong>3×:</strong> <strong>Counts multiply anything.</strong> <code>5j</code> moves down five lines, <code>3w</code> advances three words, <code>12G</code> jumps to line 12. <code>f</code> and <code>t</code> land on a character in the current line; repeat them with <code>;</code> (forward) and <code>,</code> (backward).</p></blockquote><h2 id=editing>Operators & text objects</h2><p>An operator is a verb, a text object is a noun. Pair <code>d</code>, <code>c</code>, or <code>y</code> with a motion or a text object: <code>dw</code>, <code>ciw</code>, <code>yap</code>.</p><h3 id=operators-1>Operators</h3><ul><li>Delete — <kbd>d</kbd><kbd>motion</kbd></li><li>Change (delete + insert) — <kbd>c</kbd><kbd>motion</kbd></li><li>Yank (copy) — <kbd>y</kbd><kbd>motion</kbd></li><li>Delete character — <kbd>x</kbd></li><li>Put after / before cursor — <kbd>p</kbd><kbd>P</kbd></li></ul><h3 id=lines--repeat>Lines & repeat</h3><ul><li>Delete / change / yank line — <kbd>dd</kbd><kbd>cc</kbd><kbd>yy</kbd></li><li>Delete / change to end of line — <kbd>D</kbd><kbd>C</kbd></li><li>Undo / redo — <kbd>u</kbd><kbd>Ctrl-r</kbd></li><li>Repeat last change — <kbd>.</kbd></li><li>Delete 3 words — <kbd>3</kbd><kbd>d</kbd><kbd>w</kbd></li></ul><h3 id=registers>Registers</h3><ul><li>Yank into register a — <kbd>"</kbd><kbd>a</kbd><kbd>y</kbd></li><li>Paste from register a — <kbd>"</kbd><kbd>a</kbd><kbd>p</kbd></li><li>System clipboard — <kbd>"</kbd><kbd>+</kbd><kbd>y</kbd></li><li>List all registers — <kbd>:</kbd><kbd>reg</kbd></li><li>Last yank / delete — <kbd>"</kbd><kbd>0</kbd><kbd>p</kbd></li></ul><table><thead><tr><th>Text object</th><th>Selects</th><th>Example</th></tr></thead><tbody><tr><td><code>iw</code> / <code>aw</code></td><td>inner / a word</td><td><code>ciw</code> retype the word</td></tr><tr><td><code>ip</code> / <code>ap</code></td><td>inner / a paragraph</td><td><code>dip</code> delete paragraph</td></tr><tr><td><code>i"</code> / <code>a"</code></td><td>inside / around quotes</td><td><code>ci"</code> replace a string</td></tr><tr><td><code>i)</code> / <code>a)</code></td><td>inside / around parens</td><td><code>di(</code> clear the contents</td></tr><tr><td><code>it</code> / <code>at</code></td><td>inner / around HTML tag</td><td><code>cit</code> change the tag body</td></tr></tbody></table><blockquote><p><strong>.:</strong> <strong>The dot command repeats the last change</strong> — not the last motion. <code>ciw foo</code> then <code>j.</code> rewrites each word as you walk down. Registers named <code>"a</code>–<code>"z</code> persist between edits; <code>"+</code> is your system clipboard.</p></blockquote><h2 id=search>Search & replace</h2><p>Search with <code>/</code>, jump between hits with <code>n</code> / <code>N</code>, then rewrite with <code>:s</code> when you need a change across the file.</p><h3 id=find>Find</h3><ul><li>Search forward / backward — <kbd>/</kbd><kbd>pattern</kbd>/<kbd>?</kbd></li><li>Next / previous match — <kbd>n</kbd><kbd>N</kbd></li><li>Clear highlight — <kbd>:</kbd><kbd>noh</kbd></li><li>Find next occurrence of word — <kbd>*</kbd><kbd>#</kbd></li><li>Partial word (forward/back) — <kbd>g</kbd><kbd>*</kbd>/<kbd>g</kbd><kbd>#</kbd></li></ul><h3 id=pattern-flags>Pattern flags</h3><ul><li>Ignore case — <kbd>&lt;/kbd><kbd>c</kbd></li><li>Match case — <kbd>&lt;/kbd><kbd>C</kbd></li><li>Very magic (regex) — <kbd>&lt;/kbd><kbd>v</kbd></li><li>Very nomagic (literal) — <kbd>&lt;/kbd><kbd>V</kbd></li><li>Word boundary — <kbd>&lt;/kbd><kbd>&#171;/kbd><kbd>&lt;/kbd><kbd>></kbd></li></ul><h3 id=replace-1>Replace</h3><ul><li>Replace in line — <kbd>:</kbd><kbd>s/old/new/</kbd></li><li>Replace all in line — <kbd>:</kbd><kbd>s/old/new/g</kbd></li><li>Replace all in file — <kbd>:</kbd><kbd>%s/old/new/g</kbd></li><li>Confirm each match — <kbd>:</kbd><kbd>%s/old/new/gc</kbd></li><li>Delete matching lines — <kbd>:</kbd><kbd>g/pattern/d</kbd></li></ul><blockquote><p><strong>/:</strong> <strong>Slash inside a pattern?</strong> Use any delimiter — <code>:s#/usr/bin#/usr/local/bin#g</code> — or escape it as <code>\/</code>. The <code>c</code> flag confirms each replacement; <code>n</code> just counts matches.</p></blockquote><h2 id=buffers>Buffers, windows & tabs</h2><p>A <em>buffer</em> holds a file, a <em>window</em> shows a buffer, and a <em>tab</em> groups windows. One buffer can appear in many windows.</p><h3 id=buffers-1>Buffers</h3><ul><li>Edit / open a file — <kbd>:</kbd><kbd>e</kbd><kbd>file</kbd></li><li>Next / previous buffer — <kbd>:</kbd><kbd>bn</kbd>/<kbd>:</kbd><kbd>bp</kbd></li><li>List buffers — <kbd>:</kbd><kbd>ls</kbd></li><li>Delete buffer — <kbd>:</kbd><kbd>bd</kbd></li><li>Delete buffer, discard changes — <kbd>:</kbd><kbd>bd!</kbd></li></ul><h3 id=windows>Windows</h3><ul><li>Split horizontal / vertical — <kbd>:</kbd><kbd>sp</kbd>/<kbd>:</kbd><kbd>vsp</kbd></li><li>Move focus — <kbd>Ctrl-w</kbd><kbd>h j k l</kbd></li><li>Close / only window — <kbd>Ctrl-w</kbd><kbd>q</kbd>/<kbd>o</kbd></li><li>Equalize sizes — <kbd>Ctrl-w</kbd><kbd>=</kbd></li><li>Rotate / swap windows — <kbd>Ctrl-w</kbd><kbd>r</kbd></li></ul><h3 id=tabs--marks>Tabs & marks</h3><ul><li>New tab — <kbd>:</kbd><kbd>tabnew</kbd></li><li>Next / previous tab — <kbd>g</kbd><kbd>t</kbd>/<kbd>g</kbd><kbd>T</kbd></li><li>Set mark a — <kbd>m</kbd><kbd>a</kbd></li><li>Jump to mark a — <kbd>`</kbd><kbd>a</kbd></li><li>Jump to mark&rsquo;s line — <kbd>&rsquo;</kbd><kbd>a</kbd></li></ul><blockquote><p><strong>m:</strong> <strong>Marks are bookmarks.</strong> <code>m</code><em>a</em> drops mark <em>a</em> at the cursor, <code>\</code>a<code>returns to its exact position,</code>&lsquo;a<code>to its line.</code>``<code>jumps back to your previous jump, lowercase marks stay with the buffer, and uppercase</code>mA` work across files.</p></blockquote><h2 id=config>init.lua config</h2><p>Neovim is configured in Lua. Start at <code>~/.config/nvim/init.lua</code>, set options with <code>vim.opt</code>, and bind keys with <code>vim.keymap.set</code>.</p><h3 id=vimopt>vim.opt</h3><p>Options are Lua table fields. Reload with <code>:source %</code>.</p><pre tabindex=0><code>vim.opt.number = true          -- line numbers
+vim.opt.relativenumber = true  -- relative jumps
+vim.opt.shiftwidth = 2         -- indent width
+vim.opt.tabstop = 2
+vim.opt.expandtab = true       -- spaces, not tabs
+vim.opt.smartindent = true
+vim.opt.ignorecase = true      -- search…
+vim.opt.smartcase = true       -- …unless uppercase
+</code></pre><h3 id=vimkeymapset>vim.keymap.set</h3><p>Signature: <code>vim.keymap.set(mode, lhs, rhs, opts)</code>.</p><pre tabindex=0><code>vim.keymap.set(&#34;n&#34;, &#34;&lt;leader&gt;w&#34;, &#34;:w&lt;CR&gt;&#34;, { desc = &#34;Save&#34; })
+vim.keymap.set(&#34;n&#34;, &#34;&lt;leader&gt;q&#34;, &#34;:q&lt;CR&gt;&#34;, { desc = &#34;Quit&#34; })
+vim.keymap.set(&#34;n&#34;, &#34;Y&#34;, &#34;y$&#34;, { desc = &#34;Yank to EOL&#34; })
+vim.keymap.set(&#34;v&#34;, &#34;J&#34;, &#34;:m &#39;&gt;+1&lt;CR&gt;gv=gv&#34;,
+  { desc = &#34;Move line down&#34; })
+</code></pre><h3 id=leader-key>Leader key</h3><p>A leader gives every custom map a namespace. <code>&lt;leader></code> expands to your chosen key.</p><p><kbd>Space</kbd> then <kbd>w</kbd> saves</p><pre tabindex=0><code>vim.g.mapleader = &#34; &#34;
+vim.g.maplocalleader = &#34;\\&#34;
+-- &lt;leader&gt;w means: space, then w
+vim.keymap.set(&#34;n&#34;, &#34;&lt;leader&gt;e&#34;, vim.cmd.Ex,
+  { desc = &#34;File explorer&#34; })
+</code></pre><h3 id=lazynvim>lazy.nvim</h3><p>Plugin manager. Bootstrap once, then declare plugins in <code>~/.config/nvim/lua/plugins/</code>.</p><pre tabindex=0><code>local lazypath = vim.fn.stdpath(&#34;data&#34;)
+  .. &#34;/lazy/lazy.nvim&#34;
+if not (vim.uv or vim.loop).fs_stat(lazypath) then
+  vim.fn.system({ &#34;git&#34;, &#34;clone&#34;,
+    &#34;--filter=blob:none&#34;,
+    &#34;https://github.com/folke/lazy.nvim.git&#34;,
+    &#34;--branch=stable&#34;, lazypath })
+end
+vim.opt.rtp:prepend(lazypath)
+require(&#34;lazy&#34;).setup(&#34;plugins&#34;)
+</code></pre><blockquote><p><strong>lua:</strong> <strong>Where does config live?</strong> <code>~/.config/nvim/init.lua</code> is the entry point; <code>require("plugins")</code> pulls from <code>lua/plugins/</code>. After edits, <code>:source %</code> reloads the current file — or restart Neovim and run <code>:checkhealth</code> to catch mistakes.</p></blockquote><h2 id=lsp>LSP, treesitter & completion</h2><p>Language servers give you go-to-definition, references, rename, and diagnostics; treesitter adds real syntax parsing; nvim-cmp ties it into completion.</p><h3 id=mason--lspconfig>mason + lspconfig</h3><p>Install servers with <code>:LspInstall</code>, then attach them per buffer — or use the built-in <code>vim.lsp.enable</code> on 0.11+.</p><pre tabindex=0><code>require(&#34;mason&#34;).setup()
+require(&#34;mason-lspconfig&#34;).setup({
+  ensure_installed = { &#34;lua_ls&#34;, &#34;rust_analyzer&#34; },
+})
+require(&#34;lspconfig&#34;).lua_ls.setup({})
+require(&#34;lspconfig&#34;).rust_analyzer.setup({})
+</code></pre><h3 id=treesitter>treesitter</h3><p>Built into core since 0.11 — parsers for C, Lua, Vimscript, and Vimdoc ship with Neovim, and treesitter highlighting is the default in 0.12. The <code>nvim-treesitter</code> plugin was archived in 2026; keep it only for extra parsers via <code>:TSInstall</code>.</p><pre tabindex=0><code>-- 0.11+ / 0.12: nothing to configure
+-- parsing + highlighting are built in
+-- extra parsers still need the plugin:
+--   :TSInstall rust
+</code></pre><h3 id=nvim-cmp>nvim-cmp</h3><p>Completion engine fed by LSP, buffer words, and paths.</p><pre tabindex=0><code>local cmp = require(&#34;cmp&#34;)
+cmp.setup({
+  sources = {
+    { name = &#34;nvim_lsp&#34; },
+    { name = &#34;buffer&#34; },
+    { name = &#34;path&#34; },
+  },
+})
+</code></pre><h3 id=go-to>Go to</h3><ul><li>Go to definition — <kbd>g</kbd><kbd>d</kbd></li><li>Go to references — <kbd>g</kbd><kbd>r</kbd></li><li>Go to declaration — <kbd>g</kbd><kbd>D</kbd></li><li>Go to type definition — <kbd>g</kbd><kbd>y</kbd></li><li>Go to implementation — <kbd>g</kbd><kbd>i</kbd></li></ul><h3 id=hover--actions>Hover & actions</h3><ul><li>Hover documentation — <kbd>K</kbd></li><li>Rename symbol — <kbd>leader</kbd><kbd>r</kbd><kbd>n</kbd></li><li>Code action — <kbd>leader</kbd><kbd>c</kbd><kbd>a</kbd></li><li>Signature help — <kbd>Ctrl-k</kbd></li><li>List LSP servers — <kbd>:</kbd><kbd>LspInfo</kbd></li></ul><h3 id=diagnostics>Diagnostics</h3><ul><li>Next / previous diagnostic — <kbd>]</kbd><kbd>d</kbd>/<kbd>[</kbd><kbd>d</kbd></li><li>Open diagnostics list — <kbd>leader</kbd><kbd>d</kbd></li><li>Format buffer — <kbd>leader</kbd><kbd>f</kbd></li><li>Open LSP log — <kbd>:</kbd><kbd>LspLog</kbd></li><li>Restart LSP client — <kbd>:</kbd><kbd>LspRestart</kbd></li></ul><blockquote><p><strong>LSP:</strong> <strong>Zero-config setup:</strong> <code>:LspInstall rust_analyzer</code> installs a server, <code>:LspInfo</code> shows what&rsquo;s attached, and <code>:LspLog</code> reveals errors when a server won&rsquo;t start. On 0.11+ you can skip lspconfig entirely with the built-in <code>vim.lsp.config()</code> + <code>vim.lsp.enable("rust_analyzer")</code>.</p></blockquote><h2 id=gotchas>Pitfalls</h2><p>Small behaviors that bite everyone once — usually right after a destructive command.</p><h3 id=q-vs-qa>:q! vs :qa!</h3><p><code>:q!</code> discards changes and quits the <em>current window</em>. With splits or tabs open, the others stay behind. <code>:qa!</code> quits every window and buffer without saving.</p><pre tabindex=0><code>:q!   &#34; quit this window, discard
+:qa!  &#34; quit everything, discard
+:qa   &#34; quit everything (only if saved)
+</code></pre><h3 id=stuck-in-insert-mode>Stuck in insert mode</h3><p>If typing does nothing, you&rsquo;re probably in Normal mode; if keys appear as text, you&rsquo;re in Insert. Double-tap <code>Esc</code> or use <code>Ctrl-[</code> to get back. <code>:set showmode</code> shows the mode in the status line.</p><pre tabindex=0><code>Esc Esc   &#34; always returns to Normal
+Ctrl-[    &#34; same as Esc
+Ctrl-c    &#34; also exits insert mode
+</code></pre><h3 id=undo-is-a-tree>Undo is a tree</h3><p>Undo isn&rsquo;t a linear stack — it branches. If you undo then edit again, the old path still exists. Time-travel with <code>:earlier</code> / <code>:later</code>.</p><pre tabindex=0><code>:undolist      &#34; every undo state
+:earlier 10m   &#34; back ten minutes
+:later 5s      &#34; forward five seconds
+u  Ctrl-r      &#34; undo / redo
+</code></pre><h3 id=registers--dot>Registers & dot</h3><p><code>.</code> repeats only the last <em>change</em> — motions don&rsquo;t count, and undo doesn&rsquo;t count either. Pasted text lands in <code>"+</code> only if your build has clipboard support; check with <code>:checkhealth</code>.</p><pre tabindex=0><code>&#34;ap      &#34; paste register a
+:reg     &#34; list all registers
+.        &#34; repeat the last change only
+</code></pre><h3 id=s-scope-surprises>:s scope surprises</h3><p><code>:s</code> substitutes on the <em>current line only</em>, and only the first match unless you add <code>g</code>. <code>:%s</code> reaches the whole file, and <code>&</code> repeats the last substitution.</p><pre tabindex=0><code>:s/old/new/     &#34; this line, first hit
+:s/old/new/g    &#34; this line, all
+:%s/old/new/g   &#34; whole file
+&amp;               &#34; repeat last :s
+</code></pre><h3 id=silent-config-errors>Silent config errors</h3><p>A typo in <code>init.lua</code> stops the file mid-way with no loud alarm — half your keymaps just won&rsquo;t exist. Read the messages with <code>:messages</code>, trace an option with <code>:verbose set nu?</code>, and run <code>:checkhealth</code> after big edits.</p><pre tabindex=0><code>:messages        &#34; recent errors + messages
+:verbose set nu? &#34; where &#39;number&#39; was set
+:checkhealth     &#34; LSP / provider report
+</code></pre><blockquote><p><strong>!:</strong> <strong>Lost your way?</strong> <code>:q!</code> discards only the current window&rsquo;s changes. If <code>Ctrl-c</code> won&rsquo;t leave insert mode you may be in <code>-- TERMINAL --</code>; press <code>Ctrl-\ Ctrl-n</code> to escape a terminal back to Normal mode.</p></blockquote></div></article></div><footer class=foot><span>slop-stuff</span>
+<span class=muted>served under <code>makefunstuff.github.io/slop-stuff/&lt;folder>/</code></span>
+<a href=https://makefunstuff.github.io/slop-stuff/links/>links</a>
+<a href=https://github.com/makefunstuff/slop-stuff>repo</a></footer><script src=https://makefunstuff.github.io/slop-stuff/js/wiki.js defer></script></body></html>

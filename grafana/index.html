@@ -1,0 +1,103 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Grafana — slop-stuff</title><meta name=description content="Panels, variables, transforms, alerts, and provisioning as code."><link rel=canonical href=https://makefunstuff.github.io/slop-stuff/grafana/><link rel=stylesheet href=https://makefunstuff.github.io/slop-stuff/css/wiki.css><script>(function(){var t="slop-theme",e=localStorage.getItem(t);e||(e=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"),document.documentElement.setAttribute("data-theme",e)})()</script></head><body><header class=bar><a class=brand href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a>
+<span class="muted hide-narrow">cheatsheets & experiments</span><form class=seek role=search action=https://makefunstuff.github.io/slop-stuff/ method=get><input id=q type=search name=q placeholder="search guides…" autocomplete=off aria-label="Search guides"><div id=hits class=hits hidden></div></form><button type=button class=icon id=theme title="Toggle theme" aria-label="Toggle theme">◐</button>
+<a class=icon href=https://github.com/makefunstuff/slop-stuff rel=noreferrer>git</a></header><div class="wrap wrap-guide"><aside class=toc aria-label="On this page"><p class=toc-label>on this page</p><nav id=TableOfContents><ul><li><a href=#quickref>Cheat sheet</a></li><li><a href=#start>Run & first dashboard</a></li><li><a href=#concepts>Data sources & queries</a></li><li><a href=#panels>Panel types</a></li><li><a href=#variables>Template variables</a></li><li><a href=#transforms>Transforms</a></li><li><a href=#alerts>Alerts & notifications</a></li><li><a href=#provisioning>Provisioning as code</a></li><li><a href=#gotchas>Pitfalls</a></li></ul></nav></aside><article class=doc><p class=crumb><a href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a> / Cloud, DevOps & observability</p><h1>Grafana</h1><p class=lede>Visualize everything.</p><p class="muted sub">Panels, variables, transforms, alerts, and provisioning as code.</p><p class=tags><span>observability</span><span>panels</span><span>alerts</span><span>provisioning</span></p><div class=body><p>Grafana turns metrics, logs, and traces into dashboards you can read at a glance — then alerts on them. Query any data source, shape the result, and ship it.</p><h2 id=quickref>Cheat sheet</h2><p>The commands and values you reach for most. Everything else on this page expands on these.</p><table><thead><tr><th>Task</th><th>Where / how</th><th>Key syntax</th></tr></thead><tbody><tr><td><strong>Run Grafana</strong></td><td>Docker, one container</td><td><code>docker run -d -p 3000:3000 grafana/grafana</code></td></tr><tr><td><strong>Add a data source</strong></td><td>Connections → Data sources</td><td><code>prometheus</code> · <code>loki</code> · <code>postgres</code> · <code>tempo</code></td></tr><tr><td><strong>Add a panel</strong></td><td>Dashboard → Add → Visualization</td><td><code>Explore → Add to dashboard</code></td></tr><tr><td><strong>Template variable</strong></td><td>Dashboard → Settings → Variables</td><td><code>$var</code> · <code>${var:regex}</code> · <code>${var:raw}</code></td></tr><tr><td><strong>Reshape a result</strong></td><td>Panel → Transform tab</td><td><code>Reduce</code>, <code>Filter by name</code>, <code>Join by field</code></td></tr><tr><td><strong>Alert</strong></td><td>Alerting → Alert rules</td><td><code>Reduce + threshold</code>, route by <code>label</code></td></tr><tr><td><strong>Provision as code</strong></td><td>YAML + env vars</td><td><code>datasources:</code> · <code>GF_SECURITY_ADMIN_USER</code></td></tr><tr><td><strong>Time-aware PromQL</strong></td><td>Built-in macros</td><td><code>$__rate_interval</code> · <code>$__interval</code> · <code>$__timeFilter()</code></td></tr></tbody></table><blockquote><p><strong>v12:</strong> <strong>Current: Grafana 12.</strong> As of late 2025 the current major is Grafana 12 (11.6 was the last 11.x). New in 11/12: <strong>Explore Metrics</strong> & <strong>Explore Logs</strong> (query without PromQL/LogQL), Scenes-powered dynamic dashboards, the <strong>Trend</strong> and <strong>Canvas</strong> panels, a rebuilt table, and label-based access control (LBAC) for metrics.</p></blockquote><h2 id=start>Run & first dashboard</h2><p>Five minutes from an empty server to a live panel: run it, sign in, wire a data source, add a panel.</p><h3 id=1-run>1. Run</h3><pre tabindex=0><code>docker run -d -p 3000:3000 \
+  grafana/grafana
+</code></pre><h3 id=2-sign-in>2. Sign in</h3><p>Open <code>http://localhost:3000</code> and log in as <code>admin</code> / <code>admin</code>.</p><pre tabindex=0><code># change the password
+# when prompted
+</code></pre><h3 id=3-add-a-data-source>3. Add a data source</h3><p>Connections → Data sources → Prometheus, Loki, or Postgres.</p><pre tabindex=0><code>http://prometheus:9090
+</code></pre><h3 id=4-new-dashboard--panel>4. New dashboard + panel</h3><p>Dashboards → New → Add visualization → pick a query and panel type.</p><pre tabindex=0><code>Dashboard → Add → Visualization
+</code></pre><blockquote><p><strong>KEY:</strong> <strong>Queries live in panels.</strong> A dashboard is just a grid of panels; each panel runs its own query against a data source. Write the query in <strong>Explore</strong> first to iterate, then save it into a dashboard panel.</p></blockquote><details><summary>Persist data & plugins</summary><h4 id=keep-dashboards-across-restarts>Keep dashboards across restarts</h4><pre tabindex=0><code>docker run -d -p 3000:3000 \
+  -v grafana-data:/var/lib/grafana \
+  grafana/grafana
+</code></pre><h4 id=install-plugins-at-boot>Install plugins at boot</h4><pre tabindex=0><code>GF_INSTALL_PLUGINS=grafana-clock-panel,\
+grafana-piechart-panel
+</code></pre></details><h2 id=concepts>Data sources & queries</h2><p>Every panel queries a data source through its own query language, then plots the result over a time range.</p><h3 id=prometheus>Prometheus</h3><p>Metrics via PromQL. Add <code>rate()</code> to counters and use <code>$__rate_interval</code>.</p><pre tabindex=0><code>rate(http_requests_total[$__rate_interval])
+sum by (job) (rate(http_requests_total[$__rate_interval]))
+</code></pre><h3 id=loki>Loki</h3><p>Logs via LogQL. Filter with a stream selector, then pipe to parsers and aggregations.</p><pre tabindex=0><code>{job=&#34;api&#34;} |= &#34;error&#34;
+sum by (level) (count_over_time({job=&#34;api&#34;}[5m]))
+</code></pre><h3 id=postgresql>PostgreSQL</h3><p>Tables via SQL. <code>$__timeFilter()</code> applies the dashboard time range to a timestamp column.</p><pre tabindex=0><code>SELECT time, value
+FROM metrics
+WHERE $__timeFilter(time)
+ORDER BY 1
+</code></pre><table><thead><tr><th>Shape</th><th>Columns</th><th>Use when</th></tr></thead><tbody><tr><td><code>wide</code></td><td><code>time</code>, series A, series B, …</td><td>One column per series (pivoted).</td></tr><tr><td><code>long</code></td><td><code>time</code>, <code>value</code>, label</td><td>A value column plus a series-name column.</td></tr></tbody></table><blockquote><p><strong>⌁:</strong> <strong>Time & units are panel-level.</strong> The dashboard time range picker applies to every panel. Set units in Panel → Standard options → Unit — common values: <code>bytes</code>, <code>percent (0-100)</code>, <code>percentunit (0.0-1.0)</code>, <code>s</code>, <code>ms</code>, <code>short</code>.</p></blockquote><details><summary>Iterate in Explore</summary><p>Explore runs a query against one data source with the time range and query inspector visible. When a query looks right, use <strong>Add to dashboard</strong> to drop it into a panel. Grafana 11+ also ships <strong>Explore Metrics</strong> and <strong>Explore Logs</strong> for click-driven browsing without writing PromQL/LogQL.</p><pre tabindex=0><code># Explore → pick data source → write query
+# → Add to dashboard → choose panel type
+</code></pre></details><h2 id=panels>Panel types</h2><p>Pick the visualization that matches the data shape, then tune thresholds, units, and the legend.</p><table><thead><tr><th>Panel</th><th>What it shows</th><th>Use for</th></tr></thead><tbody><tr><td><code>Time series</code></td><td>Lines over time</td><td>Metrics, rates, latencies.</td></tr><tr><td><code>Stat</code></td><td>One big number</td><td>Current value, e.g. uptime or errors.</td></tr><tr><td><code>Gauge</code></td><td>Value on an arc</td><td>Utilization against a max.</td></tr><tr><td><code>Bar gauge</code></td><td>Horizontal bars per series</td><td>Ranking several series at once.</td></tr><tr><td><code>Table</code></td><td>Tabular rows/columns</td><td>Logs, top-N lists, raw rows.</td></tr><tr><td><code>Text</code></td><td>Markdown / HTML</td><td>Docs, links, runbooks on a dashboard.</td></tr></tbody></table><h3 id=thresholds>Thresholds</h3><p>Color-code values by ranges. <code>base</code> is the default, <code>green</code>/<code>red</code> override it.</p><pre tabindex=0><code># Thresholds: 0 = green, 80 = base, 95 = red
+# value 70 → green
+</code></pre><h3 id=units>Units</h3><p>Format the raw value without changing the data.</p><pre tabindex=0><code>Panel → Standard options → Unit
+# bytes, percent, s, ms, short
+</code></pre><h3 id=legend>Legend</h3><p>Control series names and visibility.</p><pre tabindex=0><code># Legend format with labels:
+{{job}} - {{instance}}
+# or per-series overrides
+</code></pre><details><summary>More panel types</summary><p><code>logs</code> <code>pie chart</code> <code>histogram</code> <code>state timeline</code> <code>status history</code> <code>geomap</code> <code>candlestick</code> <code>heatmap</code> <code>node graph</code> <code>flame graph</code> <code>trend</code> <code>canvas</code> <code>xy chart</code> <code>dashboard list</code> <code>alert list</code> <code>annotation list</code></p><p>Specialized panels for logs (Loki), distributions (histogram/heatmap), discrete state over time (state timeline/status history), and tracing (node graph, flame graph). New in Grafana 11/12: <strong>Trend</strong> (sparkline-style per-series stats), <strong>Canvas</strong> (free-form layout), <strong>XY chart</strong> (arbitrary x/y), and the <strong>dashboard / alert / annotation list</strong> panels.</p></details><h2 id=variables>Template variables</h2><p>Make one dashboard reusable across hosts, jobs, and environments with <code>$var</code> placeholders.</p><table><thead><tr><th>Type</th><th>Options come from</th><th>Example</th></tr></thead><tbody><tr><td><code>query</code></td><td>A data source query</td><td><code>label_values(up, job)</code></td></tr><tr><td><code>custom</code></td><td>A comma-separated list</td><td><code>prod, staging, dev</code></td></tr><tr><td><code>interval</code></td><td>Auto time spans</td><td><code>1m, 5m, 15m, 1h</code></td></tr><tr><td><code>constant</code></td><td>A fixed hidden value</td><td><code>region=us-east-1</code></td></tr><tr><td><code>datasource</code></td><td>The data sources list</td><td>pick Prometheus or Loki</td></tr><tr><td><code>textbox</code></td><td>Free-text input</td><td>a hostname prefix</td></tr></tbody></table><h3 id=multi-value>Multi-value</h3><p>Enable <strong>Multi-value</strong> and <strong>Include All</strong>. The format changes interpolation: <code>=~</code> regex for multi-select in PromQL.</p><pre tabindex=0><code># Multi-select as regex:
+label=~&#34;$jobs&#34;
+# Single: label=&#34;$job&#34;
+</code></pre><h3 id=chained-dependent>Chained (dependent)</h3><p>Later variables read earlier ones: pick <code>$region</code> first, then <code>$cluster</code> narrows to it.</p><pre tabindex=0><code># $cluster query depends on $region:
+label_values(kube_node_labels{region=&#34;$region&#34;}, cluster)
+</code></pre><blockquote><p><strong>!:</strong> <strong>Escaping.</strong> <code>$var</code> auto-escapes for the context; use <code>${var:raw}</code> to disable escaping and <code>${var:regex}</code> for a safe regex in label matchers. Chained variables refresh top-down when a parent changes.</p></blockquote><details><summary>Built-in variables & ad hoc filters</summary><pre tabindex=0><code>$__from          # range start (epoch ms)
+$__to            # range end (epoch ms)
+$__interval      # auto step, e.g. 15s
+$__rate_interval # safe window for rate()
+</code></pre><p><strong>Ad hoc filters</strong> let viewers add key/value filters on the fly without editing the dashboard.</p></details><h2 id=transforms>Transforms</h2><p>Reshape query results in the panel before they render — no need to change the query itself.</p><ul><li><code>Reduce</code> — Aggregate rows into single values (sum, mean, min, max, last) per field.</li><li><code>Filter by name</code> — Keep or remove fields matching a regex.</li><li><code>Merge</code> — Combine several query results into one table by time.</li><li><code>Join by field</code> — SQL-style join of two tables on a shared field value.</li><li><code>Group by</code> — Bucket rows by field(s), then apply an aggregation.</li><li><code>Sort by</code> — Order rows by a field ascending or descending.</li><li><code>Filter by value</code> — Keep rows where a field passes a condition.</li><li><code>Rename by regex</code> — Rewrite field/series names with capture groups.</li><li><code>Calculate field</code> — Add a computed field from an expression.</li><li><code>Labels to fields</code> — Turn label columns into data fields.</li></ul><blockquote><p><strong>▦:</strong> <strong>Order matters.</strong> Transforms run top-to-bottom and each sees the previous one&rsquo;s output. Put <code>Filter by name</code> before <code>Reduce</code> to slim the table before aggregating.</p></blockquote><details><summary>Organize & convert</summary><h4 id=organize-fields>Organize fields</h4><pre tabindex=0><code># reorder, hide, or rename columns
+# before the panel renders them
+</code></pre><h4 id=convert-field-type>Convert field type</h4><pre tabindex=0><code># string ↔ number ↔ boolean ↔ time
+# fixes &#34;no data&#34; from string numbers
+</code></pre></details><h2 id=alerts>Alerts & notifications</h2><p>Alert rules evaluate a query on a schedule, then route the result to contact points by label.</p><ul><li><strong>Normal</strong> — The condition is not met; the alert is quiet.</li><li><strong>Pending</strong> — Condition met, but not yet for the full evaluation window.</li><li><strong>Alerting</strong> — Condition has held; a notification is firing.</li><li><strong>NoData</strong> — The query returned no data during the window.</li></ul><h3 id=alert-rule--condition>Alert rule + condition</h3><p>Create from a panel (Edit → Alert) or standalone (Alerting → Alert rules).</p><pre tabindex=0><code># Reduce + threshold expression:
+when avg() of query(A, 5m, now)
+IS ABOVE 0.9
+</code></pre><h3 id=contact-points>Contact points</h3><p>Where notifications go: email, Slack, PagerDuty, webhook, Telegram.</p><pre tabindex=0><code>Alerting → Contact points → New
+# pick an integration, fill secrets
+</code></pre><h3 id=notification-policies>Notification policies</h3><p>The routing tree matches alerts to contact points by label.</p><pre tabindex=0><code># default policy → email
+# severity=critical → pagerduty
+</code></pre><h3 id=labels>Labels</h3><p>Key/value pairs attached to an alert; they drive routing and silence matching.</p><pre tabindex=0><code>severity: critical
+team: api
+</code></pre><blockquote><p><strong>↺:</strong> <strong>Routing is label-based.</strong> A notification policy matches on <code>label = value</code>. If an alert fires to the wrong place, check its labels against the routing tree before touching the contact point.</p></blockquote><details><summary>Evaluation timing</summary><p>Rules evaluate on an interval (default <code>1m</code>) over a <code>for</code> window. An alert stays <strong>Pending</strong> until the condition holds for the full <code>for</code>, then it becomes <strong>Alerting</strong>.</p><pre tabindex=0><code># Evaluate every 1m, fire after 5m:
+# Interval: 1m · For: 5m
+</code></pre></details><h2 id=provisioning>Provisioning as code</h2><p>Declare data sources and dashboards as YAML, and override any setting with <code>GF_</code>-prefixed env vars.</p><h3 id=data-sources>Data sources</h3><pre tabindex=0><code>apiVersion: 1
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+</code></pre><h3 id=dashboards>Dashboards</h3><pre tabindex=0><code>apiVersion: 1
+providers:
+  - name: &#39;default&#39;
+    orgId: 1
+    folder: &#39;&#39;
+    type: file
+    options:
+      path: /etc/grafana/provisioning/dashboards
+</code></pre><h3 id=env-vars>Env vars</h3><p>Every config key maps to <code>GF_SECTION_KEY</code> in the container.</p><pre tabindex=0><code>GF_SECURITY_ADMIN_PASSWORD=secret
+GF_SECURITY_ADMIN_USER=admin
+GF_SERVER_HTTP_PORT=3000
+GF_DATABASE_URL=postgres://…
+GF_INSTALL_PLUGINS=grafana-clock-panel
+</code></pre><h3 id=config-file>Config file</h3><p>Full config lives in <code>grafana.ini</code>; provisioned YAML is separate.</p><pre tabindex=0><code>/etc/grafana/grafana.ini
+# [server]
+# http_port = 3000
+# [security]
+# admin_password = …
+</code></pre><blockquote><p><strong>GF_:</strong> <strong>Env wins.</strong> Any <code>grafana.ini</code> value can be overridden by its <code>GF_</code> env var at container start — no rebuild, no mounted config needed for most changes.</p></blockquote><details><summary>Secrets in datasources</summary><pre tabindex=0><code>datasources:
+  - name: Postgres
+    type: postgres
+    url: db:5432
+    jsonData:
+      database: metrics
+    secureJsonData:
+      user: grafana
+      password: secret
+</code></pre></details><h2 id=gotchas>Pitfalls</h2><p>Small behaviors that make a panel show nothing, wrong values, or the wrong series names.</p><h3 id=time-range-picker>Time range picker</h3><p>Every panel is clipped to the dashboard time range. Use <code>$__rate_interval</code> in PromQL instead of a fixed <code>[5m]</code> so rates resize with the picker.</p><pre tabindex=0><code>rate(requests_total[$__rate_interval])
+</code></pre><h3 id=unit-formatting>Unit formatting</h3><p>The unit changes the label, not the data. If values look wrong (e.g. bytes shown as a huge number), set the unit on the panel — not in the query.</p><pre tabindex=0><code>Standard options → Unit → bytes
+</code></pre><h3 id=template-var-escaping>Template var escaping</h3><p><code>$var</code> is auto-escaped; a multi-value PromQL matcher needs the regex form or you&rsquo;ll get a broken query.</p><pre tabindex=0><code>label=~&#34;${jobs:regex}&#34;
+# not: label=&#34;$jobs&#34;
+</code></pre><h3 id=series-naming>Series naming</h3><p>Multiple series with identical names collapse to one line. Disambiguate with a <code>Legend</code> format or a rename transform.</p><pre tabindex=0><code>Legend: {{job}} - {{instance}}
+</code></pre><h3 id=data-source-access-mode>Data source access mode</h3><p><code>access: proxy</code> routes queries through the Grafana server; <code>direct</code> fetches from the browser. In Docker, or when the target isn&rsquo;t reachable from the browser (CORS / private network), <code>direct</code> fails with no data.</p><pre tabindex=0><code>access: proxy   # server-side, default
+access: direct  # browser-side
+</code></pre><h3 id=no-data--null-gaps>No data & null gaps</h3><p>Gaps appear where a series has <em>no samples</em>, not where it&rsquo;s zero. For lines, enable <strong>Connect null values</strong>; to treat missing as zero, fill in the query with <code>OR on() vector(0)</code> (PromQL) or <code>COALESCE(…, 0)</code> (SQL).</p><pre tabindex=0><code># PromQL: fill missing with 0
+requests_total OR on() vector(0)
+# SQL: SELECT COALESCE(value, 0)
+</code></pre><blockquote><p><strong>!:</strong> <strong>Data source auth.</strong> Provisioned data sources with credentials need <code>secureJsonData</code> (e.g. <code>basicAuthPassword</code>, <code>token</code>) — plain <code>jsonData</code> holds only non-secret settings. If a panel shows <em>401 / no data</em>, check the source&rsquo;s auth before the query.</p></blockquote></div></article></div><footer class=foot><span>slop-stuff</span>
+<span class=muted>served under <code>makefunstuff.github.io/slop-stuff/&lt;folder>/</code></span>
+<a href=https://makefunstuff.github.io/slop-stuff/links/>links</a>
+<a href=https://github.com/makefunstuff/slop-stuff>repo</a></footer><script src=https://makefunstuff.github.io/slop-stuff/js/wiki.js defer></script></body></html>

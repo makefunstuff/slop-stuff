@@ -1,0 +1,170 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Zig — slop-stuff</title><meta name=description content="Comptime, memory/allocators, optionals/errors, build.zig, and C interop."><link rel=canonical href=https://makefunstuff.github.io/slop-stuff/zig/><link rel=stylesheet href=https://makefunstuff.github.io/slop-stuff/css/wiki.css><script>(function(){var t="slop-theme",e=localStorage.getItem(t);e||(e=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"),document.documentElement.setAttribute("data-theme",e)})()</script></head><body><header class=bar><a class=brand href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a>
+<span class="muted hide-narrow">cheatsheets & experiments</span><form class=seek role=search action=https://makefunstuff.github.io/slop-stuff/ method=get><input id=q type=search name=q placeholder="search guides…" autocomplete=off aria-label="Search guides"><div id=hits class=hits hidden></div></form><button type=button class=icon id=theme title="Toggle theme" aria-label="Toggle theme">◐</button>
+<a class=icon href=https://github.com/makefunstuff/slop-stuff rel=noreferrer>git</a></header><div class="wrap wrap-guide"><aside class=toc aria-label="On this page"><p class=toc-label>on this page</p><nav id=TableOfContents><ul><li><a href=#quickref>Quick reference</a></li><li><a href=#start>Build & project</a></li><li><a href=#basics>Syntax & types</a></li><li><a href=#memory>Memory & allocators</a></li><li><a href=#errors>Errors & optionals</a></li><li><a href=#comptime>Comptime</a></li><li><a href=#interop>C interop</a></li><li><a href=#std>std library</a></li><li><a href=#gotchas>Pitfalls</a></li></ul></nav></aside><article class=doc><p class=crumb><a href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a> / Languages</p><h1>Zig</h1><p class=lede>A modern C that's easier to read.</p><p class="muted sub">Comptime, memory/allocators, optionals/errors, build.zig, and C interop.</p><p class=tags><span>language</span><span>comptime</span><span>allocator</span><span>interop</span></p><div class=body><p>Zig is a general-purpose systems language with no hidden control flow, no hidden allocation, and a build system that doubles as a C/C++ compiler. This is the surface you touch every day: syntax, memory, errors, comptime, and C interop — current for <strong>Zig 0.14.0</strong>.</p><h2 id=quickref>Quick reference</h2><p>The nine things you reach for most often, in one glance — each is unpacked in the sections below.</p><ul><li><code>zig init</code> — Scaffold a project: build.zig, build.zig.zon, src/main.zig.</li><li><code>zig build / run / test</code> — build compiles, build run compiles + runs, build test runs tests.</li><li><code>const / var</code> — Immutable vs mutable binding — prefer const; Zig enforces it.</li><li><code>comptime</code> — Evaluate code at build time; types are first-class values, no macros.</li><li><code>try / catch / orelse</code> — Propagate errors, handle them, or supply a default value.</li><li><code>defer / errdefer</code> — Scope-exit cleanup (LIFO); errdefer runs only on error return.</li><li><code>Allocator</code> — Passed explicitly everywhere — no hidden allocation. You allocate, you free.</li><li><code>@cImport / @cInclude</code> — Parse C headers and call into C directly — no bindings generator.</li><li><code>!T / ?T</code> — Error unions and optionals — errors and null are values, not exceptions.</li></ul><h2 id=start>Build & project</h2><p>Everything starts from <code>zig init</code> and a <code>build.zig</code> file — one tool runs builds, tests, formatting, and C compilation.</p><h3 id=1-init-a-project>1. Init a project</h3><pre tabindex=0><code>zig init
+# → build.zig
+#   build.zig.zon
+#   src/main.zig
+</code></pre><h3 id=2-build--run>2. Build & run</h3><pre tabindex=0><code>zig build            # compile
+zig build run        # compile + run
+zig build test       # run tests
+zig build -Doptimize=ReleaseFast
+</code></pre><h3 id=3-format>3. Format</h3><pre tabindex=0><code>zig fmt .            # format all
+zig fmt --check .    # verify only
+</code></pre><h3 id=4-as-a-c-compiler>4. As a C compiler</h3><pre tabindex=0><code>zig cc main.c -o main
+zig cc -target x86_64-linux-gnu \
+  hello.c -o hello
+</code></pre><blockquote><p><strong>KEY:</strong> <strong><code>build.zig</code> is the build script.</strong> It&rsquo;s ordinary Zig — the standard template creates an executable from <code>src/main.zig</code> and wires up the install step. const std = @import(&ldquo;std&rdquo;);
+pub fn build(b: *std.Build) void {
+const exe = b.addExecutable(.{
+.name = &ldquo;app&rdquo;,
+.root_source_file = b.path(&ldquo;src/main.zig&rdquo;),
+.target = b.standardTargetOptions(.{}),
+.optimize = b.standardOptimizeOption(.{}),
+});
+b.installArtifact(exe);
+}</p></blockquote><h2 id=basics>Syntax & types</h2><p>Zig&rsquo;s type system is small and explicit: ints, floats, bools, and the containers — arrays, slices, structs, enums, unions, optionals.</p><h3 id=const-vs-var>const vs var</h3><pre tabindex=0><code>const x = 1;   // immutable
+var y = 2;     // mutable
+y += 1;        // ok
+// x += 1;     // error: cannot assign to constant
+</code></pre><h3 id=comptime_int>comptime_int</h3><p>Untyped literals are <code>comptime_int</code> and coerce to the type you name.</p><pre tabindex=0><code>const a = 1;        // comptime_int
+const b: u32 = a;   // u32
+comptime { @compileLog(&#34;build time&#34;); }
+</code></pre><table><thead><tr><th>Type</th><th>Notes</th><th>Example</th></tr></thead><tbody><tr><td><code>u8</code> … <code>u128</code></td><td>unsigned ints</td><td><code>const n: u8 = 255;</code></td></tr><tr><td><code>i8</code> … <code>i128</code></td><td>signed ints</td><td><code>const n: i32 = -42;</code></td></tr><tr><td><code>usize</code> / <code>isize</code></td><td>pointer-sized</td><td><code>const i: usize = arr.len;</code></td></tr><tr><td><code>f32</code> / <code>f64</code></td><td>floats</td><td><code>const x: f64 = 3.14;</code></td></tr><tr><td><code>bool</code></td><td>true / false</td><td><code>const ok = true;</code></td></tr><tr><td><code>[N]T</code></td><td>fixed array</td><td><code>const a = [3]u8{ 1, 2, 3 };</code></td></tr><tr><td><code>[]T</code></td><td>slice (ptr + len)</td><td><code>const s: []const u8 = "hi";</code></td></tr><tr><td><code>?T</code></td><td>optional (T or null)</td><td><code>var x: ?u32 = null;</code></td></tr><tr><td><code>struct</code></td><td>named fields</td><td><code>const P = struct { x: i32, y: i32 };</code></td></tr><tr><td><code>enum</code></td><td>tagged variants</td><td><code>const C = enum { red, green, blue };</code></td></tr><tr><td><code>union</code></td><td>one-of (tagged or not)</td><td><code>const U = union(enum) { i: i32, f: f64 };</code></td></tr></tbody></table><details><summary>Containers in practice</summary><h4 id=struct--enum>struct & enum</h4><pre tabindex=0><code>const Point = struct { x: i32, y: i32 };
+const Color = enum { red, green, blue };
+
+const p = Point{ .x = 1, .y = 2 };
+const c: Color = .red;
+</code></pre><h4 id=union--optional>union & optional</h4><pre tabindex=0><code>const Value = union(enum) {
+    int: i32,
+    float: f64,
+};
+
+var maybe: ?u32 = null;
+maybe = 42;
+if (maybe) |m| { /* m: u32 */ }
+</code></pre></details><h2 id=memory>Memory & allocators</h2><p>Nothing allocates unless you hand it an allocator, and nothing frees for you — <code>defer</code> is the cleanup pattern.</p><blockquote><p><strong>KEY:</strong> <strong>No hidden allocation.</strong> Zig never allocates behind your back. Any function that needs memory takes an <code>Allocator</code> argument you pass in, and you free it yourself (or let <code>defer</code> do it).</p></blockquote><h3 id=debugallocator>DebugAllocator</h3><p>Safety-first: detects leaks and double-frees on <code>deinit</code>. Use during development. Renamed from <code>GeneralPurposeAllocator</code> in 0.14.</p><pre tabindex=0><code>var gpa: std.heap.DebugAllocator(.{}) = .init;
+defer _ = gpa.deinit();
+const alloc = gpa.allocator();
+
+const buf = try alloc.alloc(u8, 64);
+defer alloc.free(buf);
+</code></pre><h3 id=page--arena>page & arena</h3><p><code>page_allocator</code> hands out whole pages and never frees; an arena frees everything at once.</p><pre tabindex=0><code>const page = std.heap.page_allocator;
+
+var arena = std.heap.ArenaAllocator.init(page);
+defer arena.deinit();
+const a = arena.allocator();
+</code></pre><h3 id=defer-for-cleanup>defer for cleanup</h3><p><code>defer</code> runs at scope exit — including error returns — in LIFO order.</p><pre tabindex=0><code>fn open() !void {
+    var f = try std.fs.cwd().openFile(&#34;a.txt&#34;, .{});
+    defer f.close();
+    // f.close() runs when open() returns
+}
+</code></pre><h2 id=errors>Errors & optionals</h2><p>Errors are values, not exceptions: <code>!T</code> unions, <code>try</code>, <code>catch</code>, <code>orelse</code>, and <code>errdefer</code>.</p><table><thead><tr><th>Construct</th><th>Meaning</th><th>Example</th></tr></thead><tbody><tr><td><code>!T</code></td><td>error union: T or an error</td><td><code>fn f() !u32</code></td></tr><tr><td><code>try</code></td><td>propagate error, else unwrap</td><td><code>const n = try f();</code></td></tr><tr><td><code>catch</code></td><td>handle error / give default</td><td><code>const n = f() catch 0;</code></td></tr><tr><td><code>if (x) |v|</code></td><td>unwrap optional when present</td><td><code>if (maybe) |m| { … }</code></td></tr><tr><td><code>orelse</code></td><td>default when null</td><td><code>const n = maybe orelse 0;</code></td></tr><tr><td><code>error{…}</code></td><td>named error set</td><td><code>error{NotFound, OutOfMemory}</code></td></tr><tr><td><code>errdefer</code></td><td>runs only on error return</td><td><code>errdefer alloc.free(buf);</code></td></tr></tbody></table><h3 id=propagate-with-try>Propagate with try</h3><pre tabindex=0><code>fn load() ![]u8 {
+    const buf = try alloc.alloc(u8, 256);
+    return buf;
+}
+</code></pre><h3 id=handle-with-catch--orelse>Handle with catch / orelse</h3><pre tabindex=0><code>const n = parseU32(s) catch 0;
+const m = maybe_value orelse 42;
+// error capture:
+const v = f() catch |err| blk: {
+    log(err);
+    break :blk default;
+};
+</code></pre><details><summary>Unwrapping error unions</summary><pre tabindex=0><code>const std = @import(&#34;std&#34;);
+
+fn find(haystack: []const u8, needle: u8) !usize {
+    for (haystack, 0..) |c, i| {
+        if (c == needle) return i;
+    }
+    return error.NotFound;
+}
+
+pub fn main() void {
+    const idx = find(&#34;zig&#34;, &#39;z&#39;) catch {
+        std.debug.print(&#34;not found\n&#34;, .{});
+        return;
+    };
+    std.debug.print(&#34;found at {d}\n&#34;, .{idx});
+}
+</code></pre></details><blockquote><p><strong>!:</strong> <strong><code>errdefer</code> runs only when the function returns an error.</strong> Use it to clean up on failure while <code>defer</code> always runs.</p></blockquote><h2 id=comptime>Comptime</h2><p>Types are first-class values at compile time — metaprogramming with the same language, no macro system.</p><h3 id=1-compile-time-eval>1. Compile-time eval</h3><pre tabindex=0><code>fn fact(n: u64) u64 {
+    return if (n == 0) 1 else n * fact(n - 1);
+}
+const TABLE = comptime fact(5); // 120
+</code></pre><h3 id=2-types-as-values>2. Types as values</h3><pre tabindex=0><code>fn Vec(comptime T: type) type {
+    return struct { items: []T, len: usize };
+}
+const Bytes = Vec(u8);
+</code></pre><h3 id=3-generics-via-comptime>3. Generics via comptime</h3><pre tabindex=0><code>fn max(comptime T: type, a: T, b: T) T {
+    return if (a &gt; b) a else b;
+}
+const biggest = max(i32, 3, 7); // 7
+</code></pre><h3 id=4-builtins>4. Builtins</h3><pre tabindex=0><code>const std = @import(&#34;std&#34;);  // comptime
+const T = @TypeOf(42);       // comptime_int
+const n: u8 = @intCast(200); // checked
+const size = @sizeOf(u64);   // 8
+</code></pre><table><thead><tr><th>Builtin</th><th>What it does</th></tr></thead><tbody><tr><td><code>@import</code></td><td>compile-time import of a module</td></tr><tr><td><code>@TypeOf</code></td><td>type of an expression</td></tr><tr><td><code>@intCast</code></td><td>checked integer conversion</td></tr><tr><td><code>@intFromEnum</code></td><td>enum → integer</td></tr><tr><td><code>@enumFromInt</code></td><td>integer → enum</td></tr><tr><td><code>@compileLog</code></td><td>print a value at build time</td></tr><tr><td><code>@field</code></td><td>access a struct field by comptime name</td></tr></tbody></table><blockquote><p><strong>⌁:</strong> <strong>Comptime is ordinary Zig.</strong> Loops, <code>if</code>, functions, and <code>switch</code> all work at compile time — there&rsquo;s no separate template language to learn.</p></blockquote><h2 id=interop>C interop</h2><p>Call into C with <code>@cImport</code>, <code>extern</code>, and direct linking — no bindings generator required.</p><h3 id=import-a-header>Import a header</h3><pre tabindex=0><code>const c = @cImport({
+    @cInclude(&#34;stdio.h&#34;);
+});
+
+pub fn main() void {
+    _ = c.printf(&#34;hello: %d\n&#34;, 42);
+}
+</code></pre><h3 id=declare-extern>Declare extern</h3><pre tabindex=0><code>extern &#34;c&#34; fn puts([*:0]const u8) c_int;
+
+pub fn main() void {
+    _ = puts(&#34;via extern&#34;);
+}
+</code></pre><h3 id=link-c-in-buildzig>Link C in build.zig</h3><pre tabindex=0><code>exe.linkLibC();
+exe.linkSystemLibrary(&#34;sqlite3&#34;);
+exe.addIncludePath(.{
+    .cwd_relative = &#34;include&#34;,
+});
+exe.addObjectFile(.{
+    .cwd_relative = &#34;vendor/libfoo.a&#34;,
+});
+</code></pre><h3 id=translate-c>Translate C</h3><pre tabindex=0><code>zig translate-c -lc hello.h &gt; hello.zig
+zig cc -c helper.c -o helper.o
+</code></pre><blockquote><p><strong>✓:</strong> <strong>Tip:</strong> Zig treats C as a first-class citizen. <code>zig cc</code> is a drop-in C/C++ compiler, and <code>@cImport</code> parses headers with Clang so you get types and functions for free.</p></blockquote><h2 id=std>std library</h2><p>A small, coherent standard library for containers, formatting, memory, OS calls, and testing.</p><ul><li><code>std.ArrayList(T)</code> — growable list: init(alloc), append, items, deinit.</li><li><code>std.StringHashMap(V)</code> — string-keyed map: put, get, deinit.</li><li><code>std.fmt</code> — format & parse: allocPrint, parseInt, bufPrint.</li><li><code>std.mem</code> — memory utils: eql, indexOf, tokenize, copyForwards.</li><li><code>std.posix</code> — OS interfaces: argv, getenv, file I/O. (std.os is the legacy alias.)</li><li><code>std.testing</code> — assertions: expect, expectEqual, expectError.</li><li><code>std.debug.print</code> — printf-style debug output to stderr.</li></ul><h3 id=arraylist--hashmap>ArrayList & HashMap</h3><pre tabindex=0><code>var list = std.ArrayList(u8).init(alloc);
+defer list.deinit();
+try list.appendSlice(&#34;hello&#34;);
+try list.append(&#39;!&#39;);
+std.debug.print(&#34;{s}\n&#34;, .{list.items});
+
+var map = std.StringHashMap(u32).init(alloc);
+defer map.deinit();
+try map.put(&#34;zig&#34;, 2024);
+</code></pre><h3 id=fmt-mem--testing>fmt, mem & testing</h3><pre tabindex=0><code>const s = try std.fmt.allocPrint(alloc, &#34;{d}&#34;, .{42});
+defer alloc.free(s);
+
+const same = std.mem.eql(u8, &#34;zig&#34;, &#34;zig&#34;);
+
+test &#34;1 + 1 = 2&#34; {
+    try std.testing.expectEqual(2, 1 + 1);
+}
+</code></pre><table><thead><tr><th>Specifier</th><th>Meaning</th></tr></thead><tbody><tr><td><code>{s}</code></td><td>string (<code>[]const u8</code>)</td></tr><tr><td><code>{d}</code></td><td>decimal integer</td></tr><tr><td><code>{x}</code> / <code>{X}</code></td><td>hex, lower / upper</td></tr><tr><td><code>{b}</code></td><td>binary</td></tr><tr><td><code>{e}</code></td><td>float, scientific</td></tr><tr><td><code>{any}</code></td><td>any value (debug)</td></tr></tbody></table><blockquote><p><strong>0.14:</strong> <strong>0.14 std direction:</strong> the library is moving toward <em>unmanaged</em> containers — <code>std.ArrayListUnmanaged</code> / <code>std.StringHashMapUnmanaged</code>, which take an allocator per call. The managed <code>std.ArrayList</code> and <code>std.StringHashMap</code> shown here still work, and <code>std.heap.GeneralPurposeAllocator</code> is now <code>std.heap.DebugAllocator</code>.</p></blockquote><h2 id=gotchas>Pitfalls</h2><p>The behaviors that surprise C and C++ programmers on day one.</p><h3 id=you-allocate-you-free>You allocate, you free</h3><p>There is no garbage collector and no reference counting. If you allocate, you must free — <code>defer</code> is the cleanup idiom.</p><pre tabindex=0><code>const buf = alloc.alloc(u8, 64) catch return;
+defer alloc.free(buf);
+</code></pre><h3 id=overflow-is-checked>Overflow is checked</h3><p>Arithmetic overflow panics in Debug and ReleaseSafe builds. Convert explicitly with <code>@intCast</code>.</p><pre tabindex=0><code>var n: u8 = 250;
+n += 10;                  // panic: overflow
+const m: u8 = @intCast(300); // panic: 300 &gt; 255
+</code></pre><h3 id=no-hidden-control-flow>No hidden control flow</h3><p>No exceptions, no operator overloading, no implicit conversions. A function call is just a function call — everything is greppable.</p><pre tabindex=0><code>const result = try compute();
+// `try` is just sugar for:
+//   if (err) return err;
+</code></pre><h3 id=no-raii-no-destructors>No RAII, no destructors</h3><p>Resources are freed explicitly. There are no destructors; scope-exit cleanup is done with <code>defer</code> (and <code>errdefer</code> on error paths).</p><pre tabindex=0><code>var arena = std.heap.ArenaAllocator.init(page);
+defer arena.deinit();
+</code></pre><h3 id=unused-locals-dont-compile>Unused locals don&rsquo;t compile</h3><p>Zig rejects unused local variables and function parameters — and shadowing an outer name. Discard deliberately with <code>_ = value;</code>.</p><pre tabindex=0><code>fn f(x: u32) void {
+    _ = x;            // discard, not unused
+}
+
+pub fn main() void {
+    var y: u32 = 0;   // error: unused local
+}
+</code></pre><h3 id=for-loops--exhaustive-switch>for-loops & exhaustive switch</h3><p>There&rsquo;s no C-style <code>for (;;)</code> — iterate collections with <code>for</code> and loops with <code>while</code>. A <code>switch</code> over an enum must cover every case (or add <code>else</code>).</p><pre tabindex=0><code>for (items, 0..) |it, i| { /* it, i */ }
+
+switch (c) {
+    .red =&gt; {},
+    .green =&gt; {},
+    .blue =&gt; {},   // omit one → compile error
+}
+</code></pre><blockquote><p><strong>!:</strong> <strong>comptime is build-time, not runtime.</strong> A <code>comptime</code> type or value does not exist in the final binary. Materialize a runtime value from it before the binary runs.</p></blockquote></div></article></div><footer class=foot><span>slop-stuff</span>
+<span class=muted>served under <code>makefunstuff.github.io/slop-stuff/&lt;folder>/</code></span>
+<a href=https://makefunstuff.github.io/slop-stuff/links/>links</a>
+<a href=https://github.com/makefunstuff/slop-stuff>repo</a></footer><script src=https://makefunstuff.github.io/slop-stuff/js/wiki.js defer></script></body></html>

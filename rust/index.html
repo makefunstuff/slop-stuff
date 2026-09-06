@@ -1,0 +1,226 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Rust — slop-stuff</title><meta name=description content="Ownership, cargo, match, Result, traits, and concurrency."><link rel=canonical href=https://makefunstuff.github.io/slop-stuff/rust/><link rel=stylesheet href=https://makefunstuff.github.io/slop-stuff/css/wiki.css><script>(function(){var t="slop-theme",e=localStorage.getItem(t);e||(e=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"),document.documentElement.setAttribute("data-theme",e)})()</script></head><body><header class=bar><a class=brand href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a>
+<span class="muted hide-narrow">cheatsheets & experiments</span><form class=seek role=search action=https://makefunstuff.github.io/slop-stuff/ method=get><input id=q type=search name=q placeholder="search guides…" autocomplete=off aria-label="Search guides"><div id=hits class=hits hidden></div></form><button type=button class=icon id=theme title="Toggle theme" aria-label="Toggle theme">◐</button>
+<a class=icon href=https://github.com/makefunstuff/slop-stuff rel=noreferrer>git</a></header><div class="wrap wrap-guide"><aside class=toc aria-label="On this page"><p class=toc-label>on this page</p><nav id=TableOfContents><ul><li><a href=#quickref>Quick reference</a></li><li><a href=#start>Cargo & project basics</a></li><li><a href=#ownership>Ownership & borrowing</a></li><li><a href=#types>Core types & collections</a></li><li><a href=#control>Control flow & pattern matching</a></li><li><a href=#errors>Errors & <code>Result</code></a></li><li><a href=#traits>Traits, generics & closures</a></li><li><a href=#concurrency>Concurrency & async</a></li><li><a href=#tooling>cargo tools</a></li><li><a href=#gotchas>Gotchas & footguns</a></li></ul></nav></aside><article class=doc><p class=crumb><a href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a> / Languages</p><h1>Rust</h1><p class=lede>Systems speed, memory safety.</p><p class="muted sub">Ownership, cargo, match, Result, traits, and concurrency.</p><p class=tags><span>language</span><span>ownership</span><span>cargo</span><span>traits</span></p><div class=body><p>Rust gives you C-level performance with memory safety enforced at compile time — no garbage collector, no null, no data races. This is the surface you&rsquo;ll touch every day. Current for the <strong>Rust 2024 Edition</strong>.</p><h2 id=quickref>Quick reference</h2><p>The nine things you reach for most often, in one glance — each is unpacked in the sections below.</p><ul><li><code>cargo new / build / run / test</code> — Scaffold a package, compile, run, and test — the whole daily loop lives in one tool.</li><li><code>ownership</code> — One owner per value; move vs <code>Copy</code>. The value is dropped when its owner leaves scope.</li><li><code>& / &amp;mut</code> — Many shared borrows <em>or</em> one mutable borrow — never both at once.</li><li><code>match</code> — Exhaustive pattern matching over values, ranges, and enums.</li><li><code>Result&lt;T, E> / ?</code> — Return failures as values; <code>?</code> propagates <code>Err</code> up the stack.</li><li><code>Option&lt;T></code> — <code>Some(x)</code> / <code>None</code> — no null; handle with <code>unwrap_or</code> or <code>match</code>.</li><li><code>Vec&lt;T> / HashMap&lt;K, V></code> — The two collections you&rsquo;ll use daily; read with <code>.get()</code>, not indexing.</li><li><code>#[derive(...)]</code> — Auto-implement <code>Debug</code>, <code>Clone</code>, <code>PartialEq</code>, and more.</li><li><code>trait / impl</code> — Interfaces and shared behavior; pair with generics <code>&lt;T: Trait></code>.</li></ul><h2 id=start>Cargo & project basics</h2><p><code>cargo</code> is the build tool, package manager, and test runner in one. Every crate starts with a <code>Cargo.toml</code> manifest and a <code>src/</code> tree.</p><h3 id=1-new-project>1. New project</h3><pre tabindex=0><code>cargo new myapp        # binary
+cargo new mylib --lib  # library
+cargo init             # in current dir
+</code></pre><h3 id=2-build--run>2. Build & run</h3><pre tabindex=0><code>cargo build            # debug
+cargo run              # build + run
+cargo build --release  # optimized
+</code></pre><h3 id=3-check--test>3. Check & test</h3><pre tabindex=0><code>cargo check      # fast, no codegen
+cargo test       # run tests
+cargo test foo   # filter by name
+</code></pre><h3 id=4-add-dependencies>4. Add dependencies</h3><pre tabindex=0><code>cargo add serde \
+  --features derive
+cargo add tokio \
+  --features full
+</code></pre><table><thead><tr><th>Path / flag</th><th>What it is</th></tr></thead><tbody><tr><td><code>Cargo.toml</code></td><td>Manifest: name, version, <code>edition = "2024"</code>, <code>[dependencies]</code>, profiles.</td></tr><tr><td><code>src/main.rs</code></td><td>Binary entry point (<code>fn main()</code>).</td></tr><tr><td><code>src/lib.rs</code></td><td>Library root for reusable crates.</td></tr><tr><td><code>target/</code></td><td>Build artifacts — add to <code>.gitignore</code>.</td></tr><tr><td><code>cargo build --release</code></td><td>Optimized build into <code>target/release/</code>.</td></tr><tr><td><code>rustc main.rs</code></td><td>Compile one file directly; prefer <code>cargo</code> for real projects.</td></tr></tbody></table><blockquote><p><strong>KEY:</strong> <strong>Start with <code>cargo check</code>.</strong> It type-checks without codegen, so it&rsquo;s the fastest feedback loop while you write. Save <code>cargo build</code> for when you need a runnable binary.</p></blockquote><h2 id=ownership>Ownership & borrowing</h2><p>One owner per value. The borrow checker proves at compile time that you never use freed memory or mutate data that&rsquo;s aliased.</p><h3 id=the-three-rules>The three rules</h3><ul><li>Each value has exactly one owner.</li><li>When the owner goes out of scope, the value is dropped.</li><li>Many shared borrows (&) or one mutable borrow (&amp;mut) — never both.</li></ul><h3 id=move-vs-copy>Move vs Copy</h3><pre tabindex=0><code>let s1 = String::from(&#34;hi&#34;);
+let s2 = s1;        // moved
+// println!(&#34;{s1}&#34;); // ✗ value moved
+
+let n1 = 42;
+let n2 = n1;        // Copy: n1 still valid
+</code></pre><h3 id=borrowing>Borrowing</h3><pre tabindex=0><code>fn len(s: &amp;String) -&gt; usize { s.len() }
+fn push(s: &amp;mut String) { s.push(&#39;!&#39;) }
+
+let mut s = String::from(&#34;hi&#34;);
+len(&amp;s);         // shared borrow
+push(&amp;mut s);    // one &amp;mut at a time
+</code></pre><h3 id=slices-t>Slices <code>&[T]</code></h3><pre tabindex=0><code>let a = [1, 2, 3, 4, 5];
+let mid = &amp;a[1..3];   // [2, 3]
+
+let s = String::from(&#34;hello&#34;);
+let w: &amp;str = &amp;s[..]; // a view, no copy
+</code></pre><h3 id=string-vs-str><code>String</code> vs <code>&amp;str</code></h3><p><code>String</code> owns its heap buffer and can grow; <code>&amp;str</code> is a borrowed, fixed-length view. Take <code>&amp;str</code> in arguments so callers can pass either.</p><pre tabindex=0><code>fn shout(s: &amp;str) -&gt; String {
+    format!(&#34;{}!&#34;, s)
+}
+</code></pre><blockquote><p><strong>!:</strong> <strong>The borrow checker</strong> is the compiler, not a runtime GC. It rejects any use of a moved value and any second mutable borrow — so data races and use-after-free are <strong>compile errors</strong>, not bugs you chase in production.</p></blockquote><h2 id=types>Core types & collections</h2><p>Rust is statically typed with inference. Annotate with <code>let x: Type = …</code>; the compiler infers when you don&rsquo;t.</p><p><code>i8</code> <code>i16</code> <code>i32</code> <code>i64</code> <code>i128</code> <code>isize</code> <code>u8</code> <code>u16</code> <code>u32</code> <code>u64</code> <code>u128</code> <code>usize</code> <code>f32</code> <code>f64</code> <code>bool</code> <code>char</code></p><table><thead><tr><th>Type</th><th>Example</th><th>Notes</th></tr></thead><tbody><tr><td><code>i32</code> / <code>u64</code></td><td><code>let n: u64 = 42;</code></td><td>Default integer is <code>i32</code>; <code>usize</code> for lengths/indices.</td></tr><tr><td><code>f32</code> / <code>f64</code></td><td><code>let pi = 3.14f64;</code></td><td>Default float is <code>f64</code>.</td></tr><tr><td><code>bool</code></td><td><code>let ok = true;</code></td><td><code>true</code> / <code>false</code>; no truthy/falsy.</td></tr><tr><td><code>char</code></td><td><code>let c = 'é';</code></td><td>4 bytes, one Unicode scalar value.</td></tr><tr><td>Tuple</td><td><code>let t = (1, "a", 3.0);</code></td><td>Fixed arity; index with <code>t.0</code>, <code>t.1</code>.</td></tr><tr><td>Array</td><td><code>let a: [i32; 3] = [1, 2, 3];</code></td><td>Fixed length, stack-allocated.</td></tr><tr><td><code>Vec&lt;T></code></td><td><code>let v = vec![1, 2, 3];</code></td><td>Growable heap vector; <code>v.push(4)</code>.</td></tr><tr><td><code>HashMap&lt;K, V></code></td><td><code>let m = HashMap::new();</code></td><td><code>m.insert("k", 1)</code>; <code>m.get("k")</code>.</td></tr><tr><td><code>Option&lt;T></code></td><td><code>Some(x)</code> / <code>None</code></td><td>No null; see the Errors section.</td></tr><tr><td><code>Result&lt;T, E></code></td><td><code>Ok(x)</code> / <code>Err(e)</code></td><td>Fallible operations; see the Errors section.</td></tr><tr><td><code>String</code></td><td><code>String::from("hi")</code></td><td>Owned, growable UTF-8 text.</td></tr></tbody></table><h3 id=build-a-collection>Build a collection</h3><pre tabindex=0><code>use std::collections::HashMap;
+
+let mut v = vec![1, 2, 3];
+v.push(4);                // [1, 2, 3, 4]
+
+let mut m = HashMap::new();
+m.insert(&#34;a&#34;, 1);
+let got = m.get(&#34;a&#34;);     // Some(&amp;1)
+</code></pre><h3 id=ownership-in-containers>Ownership in containers</h3><p>Collections own their elements. Reads give you references (<code>&amp;T</code>), so handle <code>Option</code> results and borrow lifetimes.</p><pre tabindex=0><code>let first = v.get(0);   // Option&lt;&amp;i32&gt;
+match first {
+    Some(&amp;n) =&gt; println!(&#34;{n}&#34;),
+    None =&gt; println!(&#34;empty&#34;),
+}
+</code></pre><h2 id=control>Control flow & pattern matching</h2><p>Rust&rsquo;s control constructs are <strong>expressions</strong> — they evaluate to a value, so you can assign their result.</p><h3 id=if--else><code>if</code> / <code>else</code></h3><pre tabindex=0><code>let n = 12;
+let label = if n &gt; 10 {
+    &#34;big&#34;
+} else if n &gt; 5 {
+    &#34;medium&#34;
+} else {
+    &#34;small&#34;
+};   // if is an expression
+</code></pre><h3 id=loop--while><code>loop</code> / <code>while</code></h3><pre tabindex=0><code>let mut i = 0;
+loop {
+    i += 1;
+    if i == 5 { break; }
+}
+
+while i &lt; 10 {
+    i += 1;
+}
+</code></pre><h3 id=for--in><code>for .. in</code></h3><pre tabindex=0><code>for x in 0..5 {
+    println!(&#34;{x}&#34;);     // 0..4
+}
+for x in [10, 20, 30] {
+    println!(&#34;{x}&#34;);
+}
+</code></pre><h3 id=match><code>match</code></h3><pre tabindex=0><code>match n {
+    0 =&gt; &#34;zero&#34;,
+    1 | 2 =&gt; &#34;small&#34;,
+    3..=9 =&gt; &#34;medium&#34;,
+    _ =&gt; &#34;big&#34;,
+}
+</code></pre><h3 id=if-let--while-let><code>if let</code> / <code>while let</code></h3><pre tabindex=0><code>if let Some(v) = maybe {
+    println!(&#34;{v}&#34;);
+}
+
+while let Some(v) = it.next() {
+    println!(&#34;{v}&#34;);
+}
+</code></pre><h3 id=let-else><code>let else</code></h3><p>Bind a pattern and bail out early if it doesn&rsquo;t match — the <code>else</code> block must diverge (<code>return</code>, <code>break</code>, <code>continue</code>).</p><pre tabindex=0><code>let Some(v) = maybe else {
+    return Err(&#34;missing&#34;);
+};
+println!(&#34;{v}&#34;);  // v is in scope here
+</code></pre><h3 id=let-chains><code>let</code> chains</h3><p>Combine multiple <code>let</code> conditions with <code>&&</code> in one <code>if</code> (Rust 2024 Edition).</p><pre tabindex=0><code>if let Some(x) = a
+    &amp;&amp; let Some(y) = b
+    &amp;&amp; x == y
+{
+    println!(&#34;both match&#34;);
+}
+</code></pre><h3 id=iterators>Iterators</h3><pre tabindex=0><code>let nums = vec![1, 2, 3, 4];
+let out: Vec&lt;i32&gt; = nums.iter()
+    .copied()            // &amp;i32 → i32
+    .map(|x| x * 2)
+    .filter(|x| x % 4 == 0)
+    .collect();          // [4, 8]
+</code></pre><h3 id=iterator-methods>Iterator methods</h3><pre tabindex=0><code>.iter()       // borrows (&amp;T)
+.into_iter()  // consumes (T)
+.map(f)  .filter(f)
+.enumerate() .take(n)
+.sum()  .count()  .collect()
+</code></pre><h2 id=errors>Errors & <code>Result</code></h2><p>Fallible functions return <code>Result&lt;T, E></code> or <code>Option&lt;T></code>. Propagate with <code>?</code>; only unwrap when you truly can&rsquo;t proceed.</p><h3 id=resultt-e--><code>Result&lt;T, E></code> + <code>?</code></h3><pre tabindex=0><code>use std::fs;
+
+fn read() -&gt; Result&lt;String, std::io::Error&gt; {
+    let s = fs::read_to_string(&#34;cfg&#34;)?; // ? returns Err early
+    Ok(s)
+}
+</code></pre><h3 id=option-handling><code>Option</code> handling</h3><pre tabindex=0><code>match maybe {
+    Some(v) =&gt; println!(&#34;{v}&#34;),
+    None =&gt; println!(&#34;nothing&#34;),
+}
+let n = maybe.unwrap_or(0);
+let n = maybe.unwrap_or_else(|| fallback());
+</code></pre><h3 id=unwrap--expect><code>unwrap</code> / <code>expect</code></h3><p>Both <code>panic!</code> on <code>Err</code>/<code>None</code>. Fine in tests and one-off scripts; avoid in libraries and long-running code — prefer <code>?</code>, <code>match</code>, or <code>unwrap_or</code>.</p><pre tabindex=0><code>let v = cfg.unwrap();
+let v = cfg.expect(&#34;cfg must load&#34;);
+</code></pre><h3 id=panic><code>panic!</code></h3><pre tabindex=0><code>panic!(&#34;unrecoverable: {reason}&#34;);
+assert_eq!(got, want);
+unreachable!();   // must never run
+</code></pre><p><code>panic!</code> unwinds the current thread; use <code>Result</code> for recoverable errors.</p><h3 id=anyhow-apps><code>anyhow</code> (apps)</h3><p>Opaque error type for application code — one <code>Result</code> with no error enum to design.</p><pre tabindex=0><code>use anyhow::{Context, Result};
+
+fn main() -&gt; Result&lt;()&gt; {
+    let s = fs::read_to_string(&#34;cfg&#34;)
+        .context(&#34;read config&#34;)?;
+    Ok(())
+}
+</code></pre><h3 id=thiserror-libraries><code>thiserror</code> (libraries)</h3><p>Typed error enums via <code>#[derive]</code>, so callers can <code>match</code> on the cause.</p><pre tabindex=0><code>#[derive(thiserror::Error, Debug)]
+enum AppError {
+    #[error(&#34;io failed: {0}&#34;)]
+    Io(#[from] std::io::Error),
+}
+</code></pre><h2 id=traits>Traits, generics & closures</h2><p>Traits are Rust&rsquo;s interfaces. Implement one to opt a type into shared behavior — including operators, formatting, and error handling.</p><h3 id=define--implement>Define & implement</h3><pre tabindex=0><code>trait Greet {
+    fn greet(&amp;self) -&gt; String;
+}
+
+struct Person { name: String }
+
+impl Greet for Person {
+    fn greet(&amp;self) -&gt; String {
+        format!(&#34;hi, {}&#34;, self.name)
+    }
+}
+</code></pre><h3 id=derive-common-traits>Derive common traits</h3><pre tabindex=0><code>#[derive(Debug, Clone, PartialEq)]
+struct Point { x: i32, y: i32 }
+
+let a = Point { x: 0, y: 0 };
+let b = a.clone();
+assert_eq!(a, b);      // PartialEq
+println!(&#34;{a:?}&#34;);     // Debug
+</code></pre><h3 id=generics>Generics <t></h3><pre tabindex=0><code>fn largest&lt;T: PartialOrd&gt;(a: T, b: T) -&gt; T {
+    if a &gt; b { a } else { b }
+}
+
+let x = largest(3, 9);      // i32
+let y = largest(&#34;a&#34;, &#34;z&#34;);  // &amp;str
+</code></pre><h3 id=closures>Closures</h3><pre tabindex=0><code>let add = |x, y| x + y;
+let n = add(2, 3);          // 5
+
+let xs = vec![1, 2, 3];
+let dbl: Vec&lt;i32&gt; = xs.iter()
+    .copied().map(|x| x * 2).collect();
+
+let owned = move || println!(&#34;{n}&#34;); // move captures
+</code></pre><blockquote><p><strong>→:</strong> <strong><code>impl Trait</code> returns:</strong> hand back a closure or iterator without naming its exact type — <code>fn make_adder(n: i32) -> impl Fn(i32) -> i32 { move |x| x + n }</code>.</p></blockquote><h2 id=concurrency>Concurrency & async</h2><p>The <code>Send</code>/<code>Sync</code> traits make data races compile errors. Share state through channels or <code>Arc</code> + <code>Mutex</code>; write async with <code>.await</code>.</p><h3 id=threadspawn><code>thread::spawn</code></h3><pre tabindex=0><code>let handle = std::thread::spawn(|| {
+    println!(&#34;from a thread&#34;);
+});
+handle.join().unwrap();  // wait for it
+</code></pre><h3 id=mpsc-channels>mpsc channels</h3><pre tabindex=0><code>use std::sync::mpsc;
+
+let (tx, rx) = mpsc::channel();
+std::thread::spawn(move || {
+    tx.send(&#34;hi&#34;).unwrap();
+});
+let msg = rx.recv().unwrap();
+</code></pre><h3 id=arcmutext><code>Arc&lt;Mutex&lt;T>></code></h3><pre tabindex=0><code>use std::sync::{Arc, Mutex};
+
+let c = Arc::new(Mutex::new(0));
+let c2 = Arc::clone(&amp;c);
+std::thread::spawn(move || {
+    let mut n = c2.lock().unwrap();
+    *n += 1;
+}).join().unwrap();
+</code></pre><h3 id=async--await><code>async</code> / <code>.await</code></h3><pre tabindex=0><code>async fn fetch() -&gt; String {
+    &#34;data&#34;.to_string()
+}
+
+#[tokio::main]
+async fn main() {
+    let s = fetch().await;
+}
+</code></pre><h3 id=tokiospawn><code>tokio::spawn</code></h3><pre tabindex=0><code>let handle = tokio::spawn(async {
+    work().await
+});
+let out = handle.await.unwrap();
+</code></pre><p>Async tasks run on a runtime (e.g. <code>tokio</code>) and are cooperatively scheduled — great for IO-heavy work.</p><h2 id=tooling>cargo tools</h2><p>Lint, format, test, benchmark, document, and inspect the dependency graph — all through <code>cargo</code> subcommands.</p><ul><li><code>cargo fmt</code> — Format code (rustfmt). Add <code>--check</code> to fail instead of write.</li><li><code>cargo clippy</code> — Lint for idiomatic, safe Rust. <code>-- -D warnings</code> treats warnings as errors.</li><li><code>cargo test</code> — Run unit + integration tests. <code>cargo test &lt;name></code> filters.</li><li><code>cargo bench</code> — Run benchmarks (needs <code>criterion</code> or the nightly bench harness).</li><li><code>cargo doc --open</code> — Build rustdoc HTML and open it in a browser.</li><li><code>cargo tree</code> — Print the dependency graph; <code>-d</code> for duplicates, <code>-i &lt;crate></code> for reverse deps.</li><li><code>cargo add / remove</code> — Edit <code>Cargo.toml</code> dependencies from the CLI.</li><li><code>cargo build --release</code> — Optimized build into <code>target/release/</code>.</li><li><code>cargo update</code> — Refresh <code>Cargo.lock</code> to latest compatible versions.</li><li><code>cargo install &lt;crate></code> — Install a binary crate from crates.io.</li></ul><h3 id=workspaces>Workspaces</h3><p>One root <code>Cargo.toml</code> shares a single <code>target/</code> and <code>Cargo.lock</code> across member crates.</p><pre tabindex=0><code>[workspace]
+members = [&#34;core&#34;, &#34;cli&#34;, &#34;web&#34;]
+</code></pre><h3 id=daily-loop>Daily loop</h3><pre tabindex=0><code>cargo fmt --check &amp;&amp; \
+cargo clippy -- -D warnings &amp;&amp; \
+cargo test
+</code></pre><p>Run this trio before committing; wire the same commands into CI so they stay green.</p><h2 id=gotchas>Gotchas & footguns</h2><p>The borrow checker turns most memory bugs into compile errors — but these six still bite newcomers and veterans alike.</p><h3 id=use-after-move>Use after move</h3><pre tabindex=0><code>let s = String::from(&#34;hi&#34;);
+let t = s;          // s moved into t
+println!(&#34;{s}&#34;);    // ✗ compile error
+</code></pre><p>Borrow with <code>&amp;s</code>, or copy with <code>s.clone()</code>.</p><h3 id=iterators-are-lazy>Iterators are lazy</h3><pre tabindex=0><code>let v = vec![1, 2, 3];
+v.iter().map(|x| x * 2);   // does nothing!
+
+let out: Vec&lt;_&gt; = v.iter()
+    .map(|x| x * 2).collect();
+</code></pre><h3 id=ranges--vs->Ranges: <code>..</code> vs <code>..=</code></h3><pre tabindex=0><code>0..5    // 0, 1, 2, 3, 4  (exclusive)
+0..=5   // 0, 1, 2, 3, 4, 5 (inclusive)
+</code></pre><h3 id=indexing-panics>Indexing panics</h3><pre tabindex=0><code>let v = vec![1, 2, 3];
+v[10]        // ✗ panics!
+v.get(10)    // → None (safe)
+</code></pre><h3 id=unwrap-in-libraries><code>unwrap</code> in libraries</h3><pre tabindex=0><code>// tests/scripts: fine
+let n = maybe.unwrap();
+// libraries: propagate instead
+let n = maybe?;
+</code></pre><h3 id=integer-overflow>Integer overflow</h3><pre tabindex=0><code>let n: u8 = 255;
+n + 1   // panics in debug
+        // wraps in release
+</code></pre><blockquote><p><strong>!:</strong> <strong>When in doubt, read the error.</strong> Rust&rsquo;s diagnostics usually tell you exactly what to fix — a missing <code>&</code>, a moved value, or a trait bound — and suggest a fix. Lean on <code>cargo check</code> for a fast loop.</p></blockquote></div></article></div><footer class=foot><span>slop-stuff</span>
+<span class=muted>served under <code>makefunstuff.github.io/slop-stuff/&lt;folder>/</code></span>
+<a href=https://makefunstuff.github.io/slop-stuff/links/>links</a>
+<a href=https://github.com/makefunstuff/slop-stuff>repo</a></footer><script src=https://makefunstuff.github.io/slop-stuff/js/wiki.js defer></script></body></html>

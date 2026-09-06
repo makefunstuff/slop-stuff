@@ -1,0 +1,210 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Python — slop-stuff</title><meta name=description content="Comprehensions, decorators, dataclasses, and the standard library."><link rel=canonical href=https://makefunstuff.github.io/slop-stuff/python/><link rel=stylesheet href=https://makefunstuff.github.io/slop-stuff/css/wiki.css><script>(function(){var t="slop-theme",e=localStorage.getItem(t);e||(e=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"),document.documentElement.setAttribute("data-theme",e)})()</script></head><body><header class=bar><a class=brand href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a>
+<span class="muted hide-narrow">cheatsheets & experiments</span><form class=seek role=search action=https://makefunstuff.github.io/slop-stuff/ method=get><input id=q type=search name=q placeholder="search guides…" autocomplete=off aria-label="Search guides"><div id=hits class=hits hidden></div></form><button type=button class=icon id=theme title="Toggle theme" aria-label="Toggle theme">◐</button>
+<a class=icon href=https://github.com/makefunstuff/slop-stuff rel=noreferrer>git</a></header><div class="wrap wrap-guide"><aside class=toc aria-label="On this page"><p class=toc-label>on this page</p><nav id=TableOfContents><ul><li><a href=#quickref>Quick reference</a></li><li><a href=#start>Run, venv & pip</a></li><li><a href=#types>Built-in types</a></li><li><a href=#control>Control flow & comprehensions</a></li><li><a href=#functions>Functions & decorators</a></li><li><a href=#classes>Classes & dataclasses</a></li><li><a href=#stdlib>stdlib</a></li><li><a href=#patterns>Everyday patterns</a></li><li><a href=#tooling>Tooling & types</a></li></ul></nav></aside><article class=doc><p class=crumb><a href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a> / Languages</p><h1>Python</h1><p class=lede>Readable, batteries included.</p><p class="muted sub">Comprehensions, decorators, dataclasses, and the standard library.</p><p class=tags><span>language</span><span>comprehension</span><span>stdlib</span><span>venv</span></p><div class=body><p>Python is a readable, general-purpose language whose standard library ships the batteries. This is the daily surface: types, comprehensions, functions, classes, and the tooling that keeps code clean.</p><h2 id=quickref>Quick reference</h2><p>The nine things you&rsquo;ll reach for daily — isolated envs, comprehensions, f-strings, decorators, dataclasses, paths, and resource cleanup.</p><ul><li><code>python -m venv .venv && source .venv/bin/activate</code> — venv — isolate a project&rsquo;s dependencies.</li><li><code>uv init && uv add requests && uv run app.py</code> — uv — fast, modern env + dependency manager.</li><li><code>[n*2 for n in nums if n > 0]</code> — List comprehension — map + filter in one line.</li><li><code>{k: v for k, v in pairs}</code> — Dict comprehension — build a mapping inline.</li><li><code>f"{name}: {price:.2f}"</code> — f-strings — interpolate, format, and debug.</li><li><code>@dataclass class P: x: int</code> — Auto <code>__init__</code> / <code>__repr__</code> / <code>__eq__</code>.</li><li><code>@decorator</code> — Decorators — wrap a function in reusable behavior.</li><li><code>Path("a.txt").read_text()</code> — pathlib — read / write / glob without os.path.</li><li><code>with open("a.txt") as f:</code> — Context manager — auto-closes, even on error.</li></ul><h2 id=start>Run, venv & pip</h2><p>The four commands that get any project off the ground — and the fast path with uv.</p><h3 id=1-run-code>1. Run code</h3><pre tabindex=0><code>python app.py             # run a script
+python -c &#39;print(2**10)&#39;  # one-liner
+python -i app.py          # run, then REPL
+</code></pre><h3 id=2-virtual-environment>2. Virtual environment</h3><pre tabindex=0><code>python -m venv .venv
+source .venv/bin/activate   # macOS / Linux
+.venv\Scripts\activate      # Windows
+deactivate                  # leave it
+</code></pre><h3 id=3-install-packages>3. Install packages</h3><pre tabindex=0><code>pip install requests
+pip install -r requirements.txt
+pip freeze &gt; requirements.txt
+</code></pre><h3 id=4-uv-fast-modern>4. uv (fast, modern)</h3><pre tabindex=0><code>uv init                  # pyproject.toml project
+uv add requests          # add a dependency
+uv sync                  # sync lockfile → .venv
+uv run app.py            # run in project env
+</code></pre><ol><li><strong>Create the venv</strong> — <code>python -m venv .venv</code> — an isolated, project-local Python.</li><li><strong>Activate it</strong> — <code>source .venv/bin/activate</code> — Windows: <code>.venv\Scripts\activate</code>.</li><li><strong>Install dependencies</strong> — <code>pip install -r requirements.txt</code> — or add one package at a time.</li><li><strong>Run your code</strong> — <code>python app.py</code> — repeat after every change.</li></ol><blockquote><p><strong>3.14:</strong> <strong>Version currency:</strong> Python 3.14 (Oct 2025) is the current stable release — its headline addition is template strings (<code>t"…"</code>, PEP 750), while the opt-in free-threaded (no-GIL) build keeps maturing. This guide targets 3.13+; everything here runs on both.</p></blockquote><h2 id=types>Built-in types</h2><p>Every value has a type; knowing which are mutable is half the language.</p><table><thead><tr><th>Type</th><th>Example</th><th>Mutable</th><th>Notes</th></tr></thead><tbody><tr><td><code>int</code></td><td><code>42</code></td><td>no</td><td>arbitrary precision; <code>10 // 3</code> floors</td></tr><tr><td><code>float</code></td><td><code>3.14</code></td><td>no</td><td>IEEE-754 double; <code>1e3</code> == 1000</td></tr><tr><td><code>str</code></td><td><code>"py"</code></td><td>no</td><td>immutable; <code>.split()</code>, <code>.join()</code></td></tr><tr><td><code>bool</code></td><td><code>True</code> / <code>False</code></td><td>no</td><td>a subclass of <code>int</code></td></tr><tr><td><code>list</code></td><td><code>[1, 2]</code></td><td>yes</td><td>ordered, dynamic; <code>.append()</code></td></tr><tr><td><code>tuple</code></td><td><code>(1, 2)</code></td><td>no</td><td>immutable, hashable (usable as dict key)</td></tr><tr><td><code>set</code></td><td><code>{1, 2}</code></td><td>yes</td><td>unique, unordered; <code>a & b</code> intersects</td></tr><tr><td><code>dict</code></td><td><code>{"k": 1}</code></td><td>yes</td><td>key → value, insertion-ordered</td></tr><tr><td><code>NoneType</code></td><td><code>None</code></td><td>—</td><td>the “no value” singleton</td></tr></tbody></table><p><code>immutable: int · float · str · bool · tuple</code> <code>mutable: list · set · dict</code></p><h3 id=slicing--seqstartstopstep>Slicing — seq[start:stop:step]</h3><pre tabindex=0><code>s = &#34;python&#34;
+s[0]      # &#39;p&#39;   first
+s[-1]     # &#39;n&#39;   last
+s[1:4]    # &#39;yth&#39;
+s[::2]    # &#39;pto&#39; every other
+s[::-1]   # &#39;nohtyp&#39; reversed
+</code></pre><h3 id=membership--type-checks>Membership & type checks</h3><pre tabindex=0><code>&#34;py&#34; in &#34;python&#34;         # True
+3 in [1, 2, 3]           # True
+&#34;k&#34; in {&#34;k&#34;: 1}          # True (keys)
+type(x) is int           # exact type
+isinstance(x, (int, float))
+</code></pre><blockquote><p><strong>!:</strong> <strong>Mutability gotcha:</strong> <code>b = a</code> does not copy — both names point to the same object, so <code>a = [1]; b = a; b.append(2)</code> changes <code>a</code> to <code>[1, 2]</code> too. Copy with <code>b = a.copy()</code> or <code>b = a[:]</code>. Only pass a mutable object to a function if you mean for it to be changed.</p></blockquote><h2 id=control>Control flow & comprehensions</h2><p>Loops and conditions, then the concise comprehension forms that replace them.</p><h3 id=if--elif--else>if / elif / else</h3><pre tabindex=0><code>if score &gt;= 90:
+    grade = &#34;A&#34;
+elif score &gt;= 80:
+    grade = &#34;B&#34;
+else:
+    grade = &#34;C&#34;
+
+grade = &#34;A&#34; if score &gt;= 90 else &#34;B&#34;   # ternary
+</code></pre><h3 id=for--while--break--continue>for / while / break / continue</h3><pre tabindex=0><code>for item in items:
+    print(item)
+
+while x &lt; 10:
+    x += 1
+    if x == 5:
+        break       # exit loop
+    continue        # next iteration
+</code></pre><h3 id=comprehensions>Comprehensions</h3><pre tabindex=0><code>[n * 2 for n in range(5)]       # [0, 2, 4, 6, 8]
+[n for n in nums if n &gt; 0]      # filter
+{x: x**2 for x in range(3)}     # {0: 0, 1: 1, 2: 4}
+{x % 3 for x in range(10)}      # {0, 1, 2}
+</code></pre><h3 id=generators--context-managers>Generators & context managers</h3><pre tabindex=0><code>sum(n * n for n in nums)         # lazy, no list
+&#34;,&#34;.join(str(n) for n in nums)
+
+with open(&#34;data.txt&#34;) as f:      # auto-closes
+    text = f.read()
+</code></pre><blockquote><p><strong>KEY:</strong> <strong>Comprehension anatomy:</strong> <code>[expression for item in iterable if condition]</code>. Drop the brackets — <code>(n*2 for n in nums)</code> — to get a lazy generator expression when you only iterate once.</p></blockquote><h2 id=functions>Functions & decorators</h2><p>Define once, reuse everywhere — and decorate, generate, or inline them.</p><h3 id=def--default-arguments>def & default arguments</h3><pre tabindex=0><code>def greet(name, greeting=&#34;hi&#34;):
+    return f&#34;{greeting}, {name}&#34;
+
+greet(&#34;Ada&#34;)              # &#39;hi, Ada&#39;
+greet(&#34;Ada&#34;, &#34;yo&#34;)        # &#39;yo, Ada&#39;
+greet(greeting=&#34;hey&#34;, name=&#34;Bo&#34;)
+</code></pre><h3 id=args--kwargs>*args & **kwargs</h3><pre tabindex=0><code>def fn(*args, **kwargs):
+    print(args)      # tuple of positional
+    print(kwargs)    # dict of keyword
+
+fn(1, 2, x=3)        # (1, 2) {&#39;x&#39;: 3}
+
+def f(a, b, *, c):   # c is keyword-only
+    ...
+</code></pre><h3 id=lambda>lambda</h3><pre tabindex=0><code>sq = lambda x: x * x
+sq(4)                       # 16
+
+sorted(items, key=lambda x: x.price)
+pairs = [(p, q) for p, q in zip(a, b) if p]
+</code></pre><h3 id=decorators>Decorators</h3><pre tabindex=0><code>def timer(fn):
+    def wrapper(*a, **kw):
+        t = time.time()
+        r = fn(*a, **kw)
+        print(f&#34;{fn.__name__}: {time.time() - t:.3f}s&#34;)
+        return r
+    return wrapper
+
+@timer
+def work():
+    ...
+</code></pre><h3 id=generators-yield>Generators (yield)</h3><pre tabindex=0><code>def fib(n):
+    a, b = 0, 1
+    for _ in range(n):
+        yield a        # lazy: one at a time
+        a, b = b, a + b
+
+list(fib(6))           # [0, 1, 1, 2, 3, 5]
+</code></pre><h3 id=walrus-operator->Walrus operator :=</h3><pre tabindex=0><code>if (n := len(items)) &gt; 10:
+    print(f&#34;{n} is a lot&#34;)
+
+while (line := f.readline()):
+    process(line)
+
+if (m := re.search(r&#34;\d+&#34;, s)):
+    print(m.group())
+</code></pre><blockquote><p><strong>!:</strong> <strong>Never use a mutable default:</strong> <code>def f(x, seen=[])</code> shares one list across every call. Write <code>def f(x, seen=None):</code> and inside <code>seen = seen or []</code>.</p></blockquote><blockquote><p><strong>!:</strong> <strong>Late-binding closure gotcha:</strong> a loop variable captured by a <code>lambda</code> or inner function is read at call time, not definition time — <code>[lambda: i for i in range(3)]</code> returns three functions that all give <code>2</code>. Bind it as a default: <code>lambda i=i: i</code>.</p></blockquote><h2 id=classes>Classes & dataclasses</h2><p>Objects are dictionaries with behavior; dataclasses remove the boilerplate.</p><h3 id=class-init-self>class, <strong>init</strong>, self</h3><pre tabindex=0><code>class Point:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def move(self, dx, dy):
+        self.x += dx
+        self.y += dy
+
+p = Point(3, 4)
+p.move(1, -2)     # p.x == 4, p.y == 2
+</code></pre><h3 id=dataclass>@dataclass</h3><pre tabindex=0><code>from dataclasses import dataclass
+
+@dataclass
+class Point:
+    x: int
+    y: int
+
+p = Point(3, 4)       # auto __init__
+p == Point(3, 4)      # auto __eq__ → True
+repr(p)               # &#39;Point(x=3, y=4)&#39;
+</code></pre><h3 id=property>@property</h3><pre tabindex=0><code>class Circle:
+    def __init__(self, r):
+        self._r = r
+
+    @property
+    def area(self):          # call without ()
+        return 3.14159 * self._r ** 2
+
+c = Circle(2)
+c.area                     # 12.566…
+</code></pre><table><thead><tr><th>Dunder method</th><th>Triggered by</th><th>Purpose</th></tr></thead><tbody><tr><td><code>__init__</code></td><td><code>C(...)</code></td><td>constructor — set up state</td></tr><tr><td><code>__repr__</code></td><td><code>repr(obj)</code></td><td>unambiguous, for debugging</td></tr><tr><td><code>__str__</code></td><td><code>str(obj)</code>, <code>print</code></td><td>human-readable</td></tr><tr><td><code>__eq__</code></td><td><code>==</code></td><td>equality between instances</td></tr><tr><td><code>__len__</code></td><td><code>len(obj)</code></td><td>size / length</td></tr><tr><td><code>__getitem__</code></td><td><code>obj[k]</code></td><td>indexing / slicing</td></tr><tr><td><code>__iter__</code></td><td><code>for x in obj</code></td><td>iteration</td></tr><tr><td><code>__enter__</code>/<code>__exit__</code></td><td><code>with</code></td><td>context manager</td></tr></tbody></table><blockquote><p><strong>KEY:</strong> For plain data containers, prefer <code>@dataclass</code> — it writes <code>__init__</code>, <code>__repr__</code>, and <code>__eq__</code> for you. Add <code>frozen=True</code> for an immutable record.</p></blockquote><h2 id=stdlib>stdlib</h2><p>The batteries included: paths, JSON, dates, regex, and the itertools/functools toolkit.</p><ul><li><code>from pathlib import Path</code> — Modern paths; replaces most of os.path.</li><li><code>Path("a/b.txt").read_text()</code> — Read a whole file as a string.</li><li><code>Path("out.txt").write_text(s)</code> — Write a string to a file.</li><li><code>Path("src").glob("*.py")</code> — Iterate files matching a glob.</li><li><code>json.loads(s)</code> — Parse a JSON string into objects.</li><li><code>json.dumps(obj, indent=2)</code> — Serialize an object to a JSON string.</li><li><code>datetime.now().isoformat()</code> — Sortable timestamp string.</li><li><code>datetime.fromisoformat(s)</code> — Parse an ISO timestamp back.</li><li><code>re.search(r"\d+", s)</code> — First match; read it with .group().</li><li><code>re.findall(r"\w+", s)</code> — All matches as a list.</li><li><code>re.sub(r"\s+", " ", s)</code> — Replace matches (collapse whitespace).</li><li><code>Counter("abracadabra")</code> — Count items; .most_common(3) ranks them.</li><li><code>defaultdict(list)</code> — Dict with a default factory — append without setup.</li><li><code>namedtuple("P", "x y")</code> — Lightweight immutable record with named fields.</li><li><code>itertools.chain(a, b)</code> — Iterate a then b.</li><li><code>itertools.groupby(xs, key=fn)</code> — Group consecutive items by key.</li><li><code>itertools.product(a, b)</code> — Cartesian product of iterables.</li><li><code>functools.lru_cache</code> — Memoize a pure function — decorate with @lru_cache.</li><li><code>functools.reduce(fn, xs)</code> — Fold an iterable left-to-right.</li><li><code>os.environ["HOME"]</code> — Read an environment variable.</li></ul><details><summary>More stdlib worth knowing</summary><h4 id=argparse>argparse</h4><pre tabindex=0><code>p = argparse.ArgumentParser()
+p.add_argument(&#34;name&#34;)
+args = p.parse_args()
+</code></pre><h4 id=random>random</h4><pre tabindex=0><code>random.choice(xs)
+random.randint(1, 6)
+</code></pre><h4 id=math--statistics>math / statistics</h4><pre tabindex=0><code>math.sqrt(2)
+statistics.median(xs)
+</code></pre><h4 id=sqlite3--shutil>sqlite3 / shutil</h4><pre tabindex=0><code>sqlite3.connect(&#34;app.db&#34;)
+shutil.copy(src, dst)
+</code></pre></details><h2 id=patterns>Everyday patterns</h2><p>The idioms that appear in every codebase — f-strings, unpacking, sorting, and safe error handling.</p><p><strong>input</strong> (raw bytes) → <strong>parse</strong> (json.loads) → <strong>transform</strong> (comprehension) → <strong>validate</strong> (try/except) → <strong>output</strong> (result)</p><h3 id=f-strings>f-strings</h3><pre tabindex=0><code>name, n = &#34;Ada&#34;, 3
+f&#34;{name} has {n} items&#34;
+f&#34;{n:&gt;4}&#34;            # pad to width 4
+f&#34;{price:.2f}&#34;       # 2 decimal places
+f&#34;{n=}&#34;              # &#39;n=3&#39; (debug)
+</code></pre><h3 id=unpacking>Unpacking</h3><pre tabindex=0><code>a, b = b, a             # swap
+first, *rest = items    # head + tail
+*all, last = items
+merged = {**d1, **d2}   # merge dicts
+nums = [*a, *b]         # concat lists
+</code></pre><h3 id=dictget--defaults>dict.get & defaults</h3><pre tabindex=0><code>d.get(&#34;k&#34;)                # None if missing
+d.get(&#34;k&#34;, 0)             # fallback
+d.setdefault(&#34;k&#34;, []).append(x)
+
+v = d.get(&#34;k&#34;) or 0       # {} and [] are falsy too
+</code></pre><h3 id=enumerate--zip>enumerate & zip</h3><pre tabindex=0><code>for i, item in enumerate(items, start=1):
+    print(i, item)
+
+for name, score in zip(names, scores):
+    print(name, score)
+
+dict(zip(keys, values))   # build a dict
+</code></pre><h3 id=sortedkey>sorted(key=)</h3><pre tabindex=0><code>sorted(items)                 # natural order
+sorted(items, key=str.lower)
+sorted(users, key=lambda u: u.age)
+sorted(users, key=lambda u: u.age, reverse=True)
+
+items.sort(key=fn)            # in-place
+</code></pre><h3 id=try--except--else--finally>try / except / else / finally</h3><pre tabindex=0><code>try:
+    n = int(raw)
+except ValueError as e:
+    print(&#34;bad input:&#34;, e)
+else:
+    print(&#34;parsed&#34;, n)    # no exception raised
+finally:
+    print(&#34;always runs&#34;)  # cleanup
+</code></pre><blockquote><p><strong>!:</strong> <strong>Truthiness gotcha:</strong> <code>""</code>, <code>[]</code>, <code>{}</code>, <code>0</code>, and <code>None</code> are all falsy — write <code>if x:</code>, not <code>if x == True:</code> (which only matches literal <code>True</code>/<code>1</code>, not other truthy values like <code>"yes"</code>).</p></blockquote><h2 id=tooling>Tooling & types</h2><p>Type hints, linters, tests, and the debugger that keep a growing codebase honest.</p><h3 id=type-hints>Type hints</h3><pre tabindex=0><code>def add(a: int, b: int) -&gt; int:
+    return a + b
+
+def first(items: list[str]) -&gt; str | None:
+    return items[0] if items else None
+
+def apply(fn: Callable[[int], int], x: int) -&gt; int:
+    return fn(x)
+</code></pre><h3 id=mypy--ruff>mypy & ruff</h3><pre tabindex=0><code>mypy app.py          # static type check
+ruff check .         # lint
+ruff check --fix .   # auto-fix
+ruff format .        # formatter
+</code></pre><h3 id=pytest>pytest</h3><pre tabindex=0><code># test_math.py
+def test_add():
+    assert add(2, 3) == 5
+
+def test_raises():
+    with pytest.raises(ValueError):
+        parse(&#34;nope&#34;)
+
+pytest -q            # run tests
+</code></pre><h3 id=main-guard><strong>main</strong> guard</h3><pre tabindex=0><code>def main():
+    args = parse_args()
+    run(args)
+
+if __name__ == &#34;__main__&#34;:
+    main()
+</code></pre><h3 id=pdb-debugger>pdb (debugger)</h3><pre tabindex=0><code>breakpoint()           # Python 3.7+; pauses here
+# older: import pdb; pdb.set_trace()
+
+# at the (Pdb) prompt:
+n   # next line      s   # step into
+c   # continue       q   # quit
+</code></pre><h4 id=pdb--move>pdb — move</h4><ul><li>Next line — <kbd>n</kbd></li><li>Step into — <kbd>s</kbd></li><li>Return — <kbd>r</kbd></li></ul><h4 id=pdb--inspect>pdb — inspect</h4><ul><li>Print expr — <kbd>p expr</kbd></li><li>Pretty-print — <kbd>pp expr</kbd></li><li>List source — <kbd>ll</kbd></li></ul><h4 id=pdb--control>pdb — control</h4><ul><li>Continue — <kbd>c</kbd></li><li>Quit — <kbd>q</kbd></li><li>Help — <kbd>h</kbd></li></ul><blockquote><p><strong>!:</strong> <strong>Type hints are not enforced at runtime.</strong> They are documentation that <code>mypy</code> checks statically. Python will happily run <code>add("a", "b")</code> — mypy is what catches it.</p></blockquote></div></article></div><footer class=foot><span>slop-stuff</span>
+<span class=muted>served under <code>makefunstuff.github.io/slop-stuff/&lt;folder>/</code></span>
+<a href=https://makefunstuff.github.io/slop-stuff/links/>links</a>
+<a href=https://github.com/makefunstuff/slop-stuff>repo</a></footer><script src=https://makefunstuff.github.io/slop-stuff/js/wiki.js defer></script></body></html>

@@ -1,0 +1,139 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Transistors & tubes — slop-stuff</title><meta name=description content="BJTs, MOSFETs, JFETs, and vacuum tubes: operation, biasing, and circuits."><link rel=canonical href=https://makefunstuff.github.io/slop-stuff/tubes/><link rel=stylesheet href=https://makefunstuff.github.io/slop-stuff/css/wiki.css><script>(function(){var t="slop-theme",e=localStorage.getItem(t);e||(e=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"),document.documentElement.setAttribute("data-theme",e)})()</script></head><body><header class=bar><a class=brand href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a>
+<span class="muted hide-narrow">cheatsheets & experiments</span><form class=seek role=search action=https://makefunstuff.github.io/slop-stuff/ method=get><input id=q type=search name=q placeholder="search guides…" autocomplete=off aria-label="Search guides"><div id=hits class=hits hidden></div></form><button type=button class=icon id=theme title="Toggle theme" aria-label="Toggle theme">◐</button>
+<a class=icon href=https://github.com/makefunstuff/slop-stuff rel=noreferrer>git</a></header><div class="wrap wrap-guide"><aside class=toc aria-label="On this page"><p class=toc-label>on this page</p><nav id=TableOfContents><ul><li><a href=#quickref>Quick reference</a></li><li><a href=#start>One device, two jobs</a></li><li><a href=#bjt>Bipolar junction transistors</a></li><li><a href=#mosfet>Metal-oxide-semiconductor FETs</a></li><li><a href=#fet>JFET, IGBT, and the rest</a></li><li><a href=#tubes>Vacuum tubes</a></li><li><a href=#circuits>Amplifier circuits</a></li><li><a href=#switching>Switching & power</a></li><li><a href=#gotchas>Pitfalls</a></li></ul></nav></aside><article class=doc><p class=crumb><a href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a> / Electronics</p><h1>Transistors & tubes</h1><p class=lede>Amplification, from silicon to glass.</p><p class="muted sub">BJTs, MOSFETs, JFETs, and vacuum tubes: operation, biasing, and circuits.</p><p class=tags><span>active devices</span><span>BJT</span><span>MOSFET</span><span>triode</span></p><div class=body><p>Transistors and vacuum tubes do one job: a small signal at the control terminal steers a much larger current. Learn the families, how to bias them, and the circuits they power.</p><h2 id=quickref>Quick reference</h2><p>The facts you reach for most — polarity, gain, thresholds, and operating regions — at a glance. Full explanations live in the numbered sections below.</p><h3 id=npn-vs-pnp>NPN vs PNP</h3><p>Same rules, opposite polarity. The emitter arrow shows conventional current direction.</p><pre tabindex=0><code>NPN: base +0.7 V above emitter → ON
+     Ic flows C → E  (current sink)
+PNP: base −0.7 V below emitter → ON
+     Ic flows E → C  (current source)
+</code></pre><h3 id=gain>Gain</h3><p>BJT is current gain (β); FETs and tubes are voltage gain via transconductance.</p><pre tabindex=0><code>Ic = hFE · Ib      β ≈ 100–300
+gm  = ΔId / ΔVgs    # transconductance
+Av  ≈ −gm · Rd      # common source / emitter
+</code></pre><h3 id=bjt-states>BJT states</h3><p>Three regions decide switch vs amplifier.</p><pre tabindex=0><code>cutoff:     Vbe &lt; 0.7 V  → Ic ≈ 0
+active:     Ic = hFE · Ib  → amplify
+saturation: Vce ≈ 0.2 V  → closed switch
+</code></pre><h3 id=mosfet-gate--threshold>MOSFET gate & threshold</h3><p>Voltage-controlled; the gate is a capacitor, not a resistor.</p><pre tabindex=0><code>N-ch ON: Vgs &gt; Vth   # Vth ≈ 1–4 V
+P-ch ON: Vgs &lt; Vth
+gate draws ~0 DC; 10k pull to a defined level
+</code></pre><h3 id=saturation-vs-cutoff>Saturation vs cutoff</h3><p>Switch = slam between the two; amplifier = stay in the middle.</p><pre tabindex=0><code>saturation: fully ON,  Vce ≈ 0.2 V / Vds ≈ 0
+cutoff:     fully OFF, Ic ≈ 0
+linear:     in between → amplifier
+</code></pre><h3 id=triode-vs-pentode>Triode vs pentode</h3><p>Extra grids around the basic triode trade feedback for gain.</p><pre tabindex=0><code>triode:  cathode · grid · anode   μ ≈ 20–100
+tetrode: + screen grid  (less Miller feedback)
+pentode: + suppressor grid (no secondary emission)
+</code></pre><h3 id=common-emitter-amp>Common-emitter amp</h3><p>The go-to voltage gain stage; it inverts the signal.</p><pre tabindex=0><code>Av ≈ −Rc / Re    # BJT, inverting
+Av ≈ −gm · Rd     # FET common source
+bias mid-active region; AC-couple in/out
+</code></pre><h3 id=bias-point>Bias point</h3><p>Resistors set the DC operating point the signal swings around.</p><pre tabindex=0><code>Vb = Vcc · R2 / (R1 + R2)
+Ve = Vb − 0.7 V
+Ic ≈ Ie = Ve / Re
+</code></pre><h2 id=start>One device, two jobs</h2><p>Every active device is a controlled valve: a weak input signal throttles a strong current.</p><p><strong>Input</strong> (small signal) → <strong>Control</strong> (base · gate · grid) → <strong>Output</strong> (large current / voltage)</p><h3 id=1-switch>1. Switch</h3><p>Drive it between cutoff and saturation: <code>Vgs >> Vth</code>, or base current large enough to saturate.</p><h3 id=2-amplify>2. Amplify</h3><p>Bias the device mid-way in its linear region, then swing a small signal around that point.</p><h3 id=3-current-vs-voltage>3. Current vs voltage</h3><p>BJT is current-controlled (base). FET and tube are voltage-controlled (gate / grid).</p><h3 id=4-bias>4. Bias</h3><p>Resistors set the quiescent point — the DC operating point the signal swings around.</p><table><thead><tr><th>Device</th><th>Terminals</th><th>Controlled by</th><th>Type</th><th>Typical use</th></tr></thead><tbody><tr><td><code>BJT</code> (NPN/PNP)</td><td>base · collector · emitter</td><td>base current</td><td>current-controlled</td><td>analog amps, switches</td></tr><tr><td><code>JFET</code></td><td>gate · drain · source</td><td>gate voltage</td><td>voltage-controlled</td><td>low-noise preamps</td></tr><tr><td><code>MOSFET</code></td><td>gate · source · drain</td><td>gate voltage</td><td>voltage-controlled</td><td>switching, power, logic</td></tr><tr><td><code>IGBT</code></td><td>gate · collector · emitter</td><td>gate voltage</td><td>voltage-controlled</td><td>motor drives, inverters</td></tr><tr><td><code>Tube</code> (triode)</td><td>grid · anode · cathode</td><td>grid voltage</td><td>voltage-controlled</td><td>audio, RF, high voltage</td></tr></tbody></table><ul><li><code>BJT on = base +0.7 V</code> — Current-controlled; limit base current.</li><li><code>MOSFET on = Vgs > Vth</code> — Voltage-controlled; charge the gate.</li><li><code>Tube on = grid > cutoff</code> — Grid voltage steers plate current.</li><li><code>switch = cutoff ↔ saturation</code> — Amplifier = biased mid-region.</li></ul><blockquote><p><strong>KEY:</strong> <strong>Switch or amplify?</strong> Driven between fully-off and fully-on, any active device is a switch; biased into the middle of its linear region, it&rsquo;s an amplifier. The only real difference is where you set the operating point.</p></blockquote><h2 id=bjt>Bipolar junction transistors</h2><p>Current-controlled three-terminal device: a small base current sets a much larger collector current.</p><ul><li><strong>Cutoff</strong> — <code>Vbe &lt; 0.7 V</code> — both junctions off, <code>Ic ≈ 0</code>. Open switch.</li><li><strong>Active</strong> — B-E forward, B-C reverse — <code>Ic = hFE · Ib</code>. Amplifier.</li><li><strong>Saturation</strong> — Both junctions forward — <code>Vce ≈ 0.2 V</code>. Closed switch.</li><li><strong>Reverse</strong> — E and C swapped — low β, rarely used.</li></ul><h3 id=current-gain-hfe>Current gain (hFE)</h3><p>Collector current is base current times beta.</p><pre tabindex=0><code>Ic = hFE · Ib        # β = hFE, ~100–300
+Vbe ≈ 0.7 V          # silicon (0.3 V Ge)
+Ie = Ib + Ic = (β + 1) · Ib
+</code></pre><h3 id=npn-vs-pnp-1>NPN vs PNP</h3><p>Same rules, opposite polarity. The emitter arrow shows conventional current direction.</p><pre tabindex=0><code>NPN: turn on with base +0.7 V above emitter
+     current flows C → E
+PNP: turn on with base −0.7 V below emitter
+     current flows E → C
+</code></pre><h3 id=voltage-divider-bias>Voltage-divider bias</h3><p>Two resistors set a stable base voltage; the emitter resistor sets the current.</p><pre tabindex=0><code>Vb = Vcc · R2 / (R1 + R2)
+Ve = Vb − 0.7 V
+Ic ≈ Ie = Ve / Re
+</code></pre><blockquote><p><strong>⚠:</strong> <strong>Never drive a base without a resistor.</strong> The base-emitter junction is a diode: once <code>Vbe</code> passes ~0.7 V it looks like a short. Pick <code>Rb = (Vin − Vbe) / Ib</code> to limit base current.</p></blockquote><details><summary>Common BJT part numbers</summary><h4 id=small-signal>Small-signal</h4><pre tabindex=0><code>2N3904  NPN, 200 mA
+2N3906  PNP, 200 mA
+2N2222  NPN, 800 mA
+BC547   NPN / BC557 PNP
+</code></pre><h4 id=power>Power</h4><pre tabindex=0><code>2N3055  NPN, 15 A
+TIP120  NPN Darlington, 5 A
+BD139   NPN, 1.5 A
+TIP41C  NPN, 6 A
+</code></pre></details><h2 id=mosfet>Metal-oxide-semiconductor FETs</h2><p>Voltage-controlled, high-impedance gate; the workhorse of switching and power.</p><table><thead><tr><th>Channel</th><th>Turn-on condition</th><th>Current</th><th>Used for</th></tr></thead><tbody><tr><td><code>N-channel</code></td><td>Vgs > Vth (gate above source)</td><td>drain → source</td><td>low-side switch, logic</td></tr><tr><td><code>P-channel</code></td><td>Vgs &lt; Vth (gate below source)</td><td>source → drain</td><td>high-side switch</td></tr><tr><td><code>Enhancement</code></td><td>normally off; needs Vgs</td><td>—</td><td>most common</td></tr><tr><td><code>Depletion</code></td><td>normally on; needs Vgs to turn off</td><td>—</td><td>rare, constant-current</td></tr></tbody></table><p><code>N-channel</code> <code>P-channel</code> <code>enhancement</code> <code>depletion</code> <code>logic-level</code></p><h3 id=threshold--on-resistance>Threshold & on-resistance</h3><p>Drive the gate well past threshold to reach a low on-resistance.</p><pre tabindex=0><code>Vgs(th)  ≈ 1–4 V    # logic-level 1–2 V
+Rds(on)  ≈ mΩ–Ω     # lower = less heat
+fully ON: Vgs ≫ Vth, Vds ≈ Id · Rds(on)
+</code></pre><h3 id=gate-drive>Gate drive</h3><p>The gate is a capacitor, not a resistor: it draws current only while charging.</p><pre tabindex=0><code>Qg (gate charge) ≈ few–100 nC
+Ciss = Cgs + Cgd   # input capacitance
+hard drive: 10–12 V, low-impedance driver
+floating gate → add 10k pull-down
+</code></pre><h3 id=logic-level-vs-standard>Logic-level vs standard</h3><p>Logic-level parts turn fully on at 3.3–5 V; standard parts need ~10 V gate drive.</p><pre tabindex=0><code>logic-level: Vgs(th) ~1 V, spec&#39;d at 4.5 V
+standard:    Vgs(th) ~2–4 V, spec&#39;d at 10 V
+check Rds(on) at YOUR gate voltage
+</code></pre><blockquote><p><strong>ESD:</strong> <strong>The gate oxide is thin and fragile.</strong> A floating gate charges to an unpredictable voltage (device half-on and hot), and static discharge can puncture the oxide outright. Tie the gate to a defined level and mind ESD.</p></blockquote><details><summary>Reading a MOSFET datasheet</summary><h4 id=static-limits>Static limits</h4><pre tabindex=0><code>Vds(max)   drain-source voltage
+Id(max)    continuous drain current
+Vgs(max)   gate voltage (±20 V typ)
+</code></pre><h4 id=switching-specs>Switching specs</h4><pre tabindex=0><code>Vgs(th)  threshold
+Rds(on)  on-resistance @ Vgs
+Qg       total gate charge
+Ciss     input capacitance
+</code></pre></details><h2 id=fet>JFET, IGBT, and the rest</h2><p>Close cousins with different strengths — pick by voltage, speed, and noise.</p><table><thead><tr><th>Device</th><th>Gate</th><th>Mode</th><th>Input impedance</th><th>Best for</th></tr></thead><tbody><tr><td><code>JFET</code></td><td>reverse-biased PN junction</td><td>normally on (depletion)</td><td>very high, low noise</td><td>preamps, RF front-ends, current sources</td></tr><tr><td><code>MOSFET</code></td><td>insulated (oxide)</td><td>enhancement (normally off)</td><td>extremely high</td><td>switching, power, logic</td></tr><tr><td><code>IGBT</code></td><td>insulated (MOS gate)</td><td>normally off</td><td>high</td><td>high-voltage, high-current switching</td></tr></tbody></table><h3 id=jfet>JFET</h3><p>Normally on; the gate is a reverse-biased junction, so it draws almost no current and adds little noise.</p><pre tabindex=0><code>N-ch: Id flows drain → source at Vgs = 0
+off:  Vgs &lt; Vgs(off)   # pinch-off, negative
+use:  low-noise preamp, RF, current source
+</code></pre><h3 id=igbt>IGBT</h3><p>A MOS gate driving a bipolar output: easy to drive, yet handles big volts and amps.</p><pre tabindex=0><code>ratings: 600 V / 1200 V, 10s–100s of amps
+turn-on: Vge &gt; Vge(th) (~4–6 V)
+slower than MOSFET, has tail current
+use: VFD, inverter, welder, EV traction
+</code></pre><blockquote><p><strong>⌁:</strong> <strong>Pick by the job.</strong> Low-noise, high-impedance small-signal → <code>JFET</code>. Fast logic-level switching → <code>MOSFET</code>. High voltage + high current at moderate speed → <code>IGBT</code>. Very high voltage or RF power → <code>tube</code>.</p></blockquote><h2 id=tubes>Vacuum tubes</h2><p>Thermionic valves: a heated cathode, a control grid, and hundreds of volts.</p><p><strong>Cathode</strong> (heated, emits electrons) → <strong>Grid</strong> (controls flow) → <strong>Anode</strong> (collects electrons)</p><table><thead><tr><th>Tube</th><th>Elements</th><th>What it adds</th><th>Use</th></tr></thead><tbody><tr><td><code>Diode</code></td><td>cathode, anode</td><td>one-way flow</td><td>rectifier, detector</td></tr><tr><td><code>Triode</code></td><td>+ control grid</td><td>voltage gain (μ)</td><td>audio/RF amps</td></tr><tr><td><code>Tetrode</code></td><td>+ screen grid</td><td>less Miller feedback</td><td>RF power</td></tr><tr><td><code>Pentode</code></td><td>+ suppressor grid</td><td>suppresses secondary emission; high gain, high Rp</td><td>audio/RF power</td></tr></tbody></table><h3 id=grid-bias>Grid bias</h3><p>The grid must sit negative relative to the cathode to set the idle plate current.</p><pre tabindex=0><code>cathode bias: Rk develops Vk = Ik · Rk
+              grid referenced to 0 V → Vgk = −Vk
+fixed bias:   negative supply on the grid
+</code></pre><h3 id=plate-curves--load-line>Plate curves & load line</h3><p>Plate current vs plate voltage for stepped grid voltages; the load line picks the operating point.</p><pre tabindex=0><code>μ  = amplification factor (triode ~20–100)
+gm = transconductance (mA/V)
+Rp = plate resistance (kΩ)
+load line: Vp = B+ − Ip · Ra
+</code></pre><blockquote><p><strong>HV:</strong> <strong>Plate supply is lethal.</strong> <code>B+</code> is typically 200–500 V, and filter capacitors hold that charge long after power-off. Drain the caps before touching anything, and keep one hand in your pocket.</p></blockquote><details><summary>Common tube types</summary><h4 id=preamp--driver>Preamp / driver</h4><pre tabindex=0><code>12AX7  high-μ dual triode
+12AU7  medium-μ dual triode
+6SN7   octal dual triode
+EF86   small-signal pentode
+</code></pre><h4 id=power--rectifier>Power & rectifier</h4><pre tabindex=0><code>EL84    small pentode (15 W)
+6L6     beam power (25 W)
+EL34    power pentode (25 W)
+5AR4    full-wave rectifier
+</code></pre></details><h2 id=circuits>Amplifier circuits</h2><p>Three basic configurations cover almost every amplifier you&rsquo;ll build.</p><table><thead><tr><th>BJT</th><th>FET</th><th>Gain</th><th>Phase</th><th>Use</th></tr></thead><tbody><tr><td><code>Common emitter</code></td><td><code>Common source</code></td><td>high (Av ≈ −Rc/Re)</td><td>inverts</td><td>voltage gain stage</td></tr><tr><td><code>Common collector</code></td><td><code>Common drain</code></td><td>≈ 1</td><td>non-inverting</td><td>buffer / follower</td></tr><tr><td><code>Common base</code></td><td><code>Common gate</code></td><td>high</td><td>non-inverting</td><td>RF, high-frequency</td></tr></tbody></table><h3 id=emitter--source-follower>Emitter / source follower</h3><p>Gain is ~1, but it turns a weak, high-impedance source into a stiff, low-impedance one.</p><pre tabindex=0><code>Av ≈ 1 (no inversion)
+Zin high, Zout low
+CE  → CC  → load   # buffer the output
+</code></pre><h3 id=class--push-pull>Class & push-pull</h3><p>Two devices each handle half the waveform; class controls how much they overlap.</p><pre tabindex=0><code>A  : conducts 360°, clean, ~25–30% efficient
+B  : 180° each, crossover distortion
+AB : slight overlap, no crossover, ~50–60%
+D  : PWM switching, ~90%+
+</code></pre><ol><li><strong>Bias</strong> — Set the quiescent point in the active region so the device never clips the signal.</li><li><strong>Gain stage</strong> — Common emitter / source (or a tube) multiplies the small signal.</li><li><strong>Follower</strong> — An emitter / source follower buffers the output to drive a real load.</li><li><strong>Output</strong> — AC-couple through a capacitor to remove the DC bias.</li></ol><details><summary>Gain formulas, quickly</summary><h4 id=common-emitter--source>Common emitter / source</h4><pre tabindex=0><code>Av ≈ −Rc / Re   (BJT)
+Av ≈ −gm · Rd    (FET)
+</code></pre><h4 id=follower>Follower</h4><pre tabindex=0><code>Av ≈ 1
+Zin = β · Re (BJT)
+</code></pre></details><h2 id=switching>Switching & power</h2><p>Drive the gate, switch the load, and keep the heat under control.</p><table><thead><tr><th>Arrangement</th><th>Switch</th><th>Gate drive</th><th>Notes</th></tr></thead><tbody><tr><td><code>Low-side</code></td><td>N-MOSFET (source to GND)</td><td>gate to GND — easy</td><td>load between V+ and drain</td></tr><tr><td><code>High-side</code></td><td>P-MOSFET, or N-MOSFET</td><td>P: pull gate below V+; N: bootstrap/charge pump</td><td>load between source and GND</td></tr></tbody></table><h3 id=h-bridge>H-bridge</h3><p>Four switches steer current both ways through a motor; PWM sets speed, diagonals set direction.</p><pre tabindex=0><code>forward:  Q1 + Q4 on
+reverse:  Q2 + Q3 on
+brake:    short the motor (low sides on)
+add dead time → no shoot-through
+</code></pre><h3 id=linear-vs-switching>Linear vs switching</h3><p>A linear regulator burns the difference as heat; a switcher chops it for efficiency.</p><pre tabindex=0><code>linear:    P = (Vin − Vout) · I   # ~50% typ
+switching: ~85–95%, needs inductor
+low noise → linear; efficiency → switching
+</code></pre><h3 id=heat>Heat</h3><p>Every dissipated watt raises the junction temperature; keep it under the limit.</p><pre tabindex=0><code>Pconduction = Id² · Rds(on)
+Tj = Ta + P · Rθja
+heat sink → lower Rθ; Tj(max) ≈ 150 °C
+</code></pre><blockquote><p><strong>⌁:</strong> <strong>Inductive loads need a flyback diode.</strong> When the switch opens, a motor or relay coil forces its current to keep flowing, generating a voltage spike that can destroy the transistor. Put a diode across the coil, cathode to V+.</p></blockquote><details><summary>Choosing a switching FET</summary><h4 id=must-hold>Must hold</h4><pre tabindex=0><code>Vds(max) &gt; supply + spikes
+Id(max)  &gt; load current
+Vgs(th)  &lt; your drive voltage
+</code></pre><h4 id=must-be-low>Must be low</h4><pre tabindex=0><code>Rds(on)  → less conduction heat
+Qg       → faster switching, less loss
+Rθja     → cooler junction
+</code></pre></details><h2 id=gotchas>Pitfalls</h2><p>The failure modes that quietly kill transistor and tube circuits.</p><h3 id=forgot-the-base-resistor>Forgot the base resistor?</h3><p>A BJT base-emitter junction is a diode; once it hits ~0.7 V it passes huge current.</p><pre tabindex=0><code>Rb = (Vin − Vbe) / Ib
+Ib = Ic / hFE
+no Rb → dead transistor
+</code></pre><h3 id=floating-mosfet-gate>Floating MOSFET gate</h3><p>A gate left unconnected charges to an unpredictable voltage, so the transistor turns half-on and overheats.</p><pre tabindex=0><code>gate pull-down (N) / pull-up (P): 10k
+ESD can puncture the thin oxide
+solder/discharge to GND when handling
+</code></pre><h3 id=thermal-runaway-bjt>Thermal runaway (BJT)</h3><p>As the junction heats, β and Ic rise, which heats it more — a positive feedback loop.</p><pre tabindex=0><code>cause: Ic ↑ → heat ↑ → β ↑ → Ic ↑ …
+fix: emitter resistor Re (degeneration)
+     heatsink + keep Vce low in saturation
+</code></pre><h3 id=tube-high-voltage>Tube high voltage</h3><p>B+ and the filter capacitors stay charged after power-off and can deliver a lethal shock.</p><pre tabindex=0><code>B+ = 200–500 V+
+discharge caps before probing
+one hand in pocket; never work live
+</code></pre><h3 id=bad-bias>Bad bias</h3><p>Bias too cold → crossover/clipping; too hot → the device runs hot and wastes power.</p><pre tabindex=0><code>too low:  signal clips (cutoff)
+too high: saturation, wasted heat
+check the quiescent current (Ic / Id / Ip)
+</code></pre><h3 id=no-heat-sink>No heat sink</h3><p>Even a few watts can push a TO-220 past its 150 °C junction limit.</p><pre tabindex=0><code>P = V · I  (or Id² · Rds(on))
+Rθja without sink ≈ 60 °C/W
+add sink → Rθja drops to ~10 °C/W
+</code></pre><h3 id=gate-ringing--oscillation>Gate ringing / oscillation</h3><p>Long or un-damped gate traces can ring, spiking Vgs past its limit and making the device switch erratically.</p><pre tabindex=0><code>fix: series gate resistor (10–100 Ω)
+     short, wide traces; local bypass cap
+     keep Vgs within ±20 V
+</code></pre><h3 id=exceeding-the-soa>Exceeding the SOA</h3><p>A device can fail even inside its max V and I ratings if it sees high voltage and high current at the same time.</p><pre tabindex=0><code>secondary breakdown → local hotspot
+linear pass: P = (Vin − Vout) · I
+check the SOA curve; keep Tj &lt; 150 °C
+</code></pre><blockquote><p><strong>!:</strong> <strong>When in doubt, measure.</strong> Bias is set by resistors and voltages — not vibes. Check <code>Vbe</code> (~0.6–0.7 V), <code>Vgs</code> vs <code>Vth</code>, and the idle current before you trust a circuit.</p></blockquote></div></article></div><footer class=foot><span>slop-stuff</span>
+<span class=muted>served under <code>makefunstuff.github.io/slop-stuff/&lt;folder>/</code></span>
+<a href=https://makefunstuff.github.io/slop-stuff/links/>links</a>
+<a href=https://github.com/makefunstuff/slop-stuff>repo</a></footer><script src=https://makefunstuff.github.io/slop-stuff/js/wiki.js defer></script></body></html>

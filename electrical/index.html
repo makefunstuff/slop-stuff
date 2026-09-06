@@ -1,0 +1,174 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Electrical concepts — slop-stuff</title><meta name=description content="Ohm's law, logic levels, pull-ups, voltage dividers, and power for firmware devs."><link rel=canonical href=https://makefunstuff.github.io/slop-stuff/electrical/><link rel=stylesheet href=https://makefunstuff.github.io/slop-stuff/css/wiki.css><script>(function(){var t="slop-theme",e=localStorage.getItem(t);e||(e=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"),document.documentElement.setAttribute("data-theme",e)})()</script></head><body><header class=bar><a class=brand href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a>
+<span class="muted hide-narrow">cheatsheets & experiments</span><form class=seek role=search action=https://makefunstuff.github.io/slop-stuff/ method=get><input id=q type=search name=q placeholder="search guides…" autocomplete=off aria-label="Search guides"><div id=hits class=hits hidden></div></form><button type=button class=icon id=theme title="Toggle theme" aria-label="Toggle theme">◐</button>
+<a class=icon href=https://github.com/makefunstuff/slop-stuff rel=noreferrer>git</a></header><div class="wrap wrap-guide"><aside class=toc aria-label="On this page"><p class=toc-label>on this page</p><nav id=TableOfContents><ul><li><a href=#quickref>Quick reference</a></li><li><a href=#start>Fundamentals</a></li><li><a href=#levels>Logic levels & signals</a></li><li><a href=#pull>Pull-ups & pull-downs</a></li><li><a href=#dividers>Voltage dividers & ADCs</a></li><li><a href=#components>Passive components</a></li><li><a href=#power>Power & protection</a></li><li><a href=#comm>Common buses</a></li><li><a href=#gotchas>Pitfalls</a></li></ul></nav></aside><article class=doc><p class=crumb><a href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a> / Embedded & hardware</p><h1>Electrical concepts</h1><p class=lede>The physics behind the firmware.</p><p class="muted sub">Ohm's law, logic levels, pull-ups, voltage dividers, and power for firmware devs.</p><p class=tags><span>electronics</span><span>Ohm's law</span><span>pull-up</span><span>levels</span></p><div class=body><p>Voltage, current, and resistance are the silicon&rsquo;s native language. These are the circuit facts — Ohm&rsquo;s law, pull-ups, logic levels, buses — you need to read a schematic and wire a board without releasing the magic smoke.</p><h2 id=quickref>Quick reference</h2><p>The formulas and defaults you reach for most often, at a glance. Full explanations live in the numbered sections below.</p><h3 id=ohms-law>Ohm&rsquo;s law</h3><pre tabindex=0><code>V = I × R
+I = V / R
+R = V / I
+</code></pre><h3 id=power>Power</h3><pre tabindex=0><code>P = V × I
+P = I² × R
+P = V² / R
+</code></pre><h3 id=33-v-vs-5-v>3.3 V vs 5 V</h3><p>A 3.3 V output drives a 5 V <em>TTL</em> input; 5 V into a 3.3 V pin over-voltages it — shift it down.</p><pre tabindex=0><code>3.3 V:   VIH 2.0 V · VIL 0.8 V
+5 V TTL: VIH 2.0 V · VIL 0.8 V
+5 V CMOS: VIH 3.5 V · VIL 1.5 V
+</code></pre><h3 id=pull-up>Pull-up</h3><p>10 kΩ is the universal default; use 4.7 kΩ on I²C.</p><pre tabindex=0><code>Buttons:     10k
+GPIO idle:   10k – 100k
+I²C SDA/SCL: 4.7k
+</code></pre><h3 id=voltage-divider>Voltage divider</h3><pre tabindex=0><code>Vout = Vin × R2 / (R1 + R2)
+# 12 V → 3.3 V: R1=2.7k, R2=1k
+</code></pre><h3 id=decoupling>Decoupling</h3><p>Small caps at every IC power pin.</p><pre tabindex=0><code>100 nF → each VCC pin
+10 µF  → regulator bulk
+</code></pre><h3 id=led-resistor>LED resistor</h3><pre tabindex=0><code>R = (Vcc − Vf) / If
+# 5 V, red LED ≈ 150 Ω
+</code></pre><h3 id=buses>Buses</h3><p>UART = 2 wires, I²C = 2 + pull-ups, SPI = 4.</p><pre tabindex=0><code>UART: TX↔RX, 115200 8N1
+I²C:  SDA + SCL (pull-ups)
+SPI:  SCK, MOSI, MISO, CS
+</code></pre><h3 id=adc>ADC</h3><pre tabindex=0><code>count = Vin / Vref × (2^N − 1)
+# 12-bit, 3.3 V → ~0.8 mV/step
+</code></pre><h2 id=start>Fundamentals</h2><p>Three quantities describe every DC circuit: voltage pushes, current flows, resistance resists. Master <code>V = IR</code> and <code>P = IV</code> and you can reason about almost any board.</p><p><strong>Voltage V</strong> (potential · volts (V)) → <strong>Current I</strong> (flow · amperes (A)) → <strong>Resistance R</strong> (opposition · ohms (Ω)) → <strong>V = I · R</strong> (Ohm&rsquo;s law)</p><h3 id=ohms-law-1>Ohm&rsquo;s law</h3><p>Rearrange for whatever you&rsquo;re missing.</p><pre tabindex=0><code>V = I × R      # volts
+I = V / R      # amps
+R = V / I      # ohms
+</code></pre><h3 id=power-1>Power</h3><p>Heat dissipated in a load or resistor.</p><pre tabindex=0><code>P = V × I      # watts
+P = I² × R
+P = V² / R
+</code></pre><h3 id=series-vs-parallel>Series vs parallel</h3><p>Resistors add in series; capacitors add in parallel. The other way round, they divide.</p><pre tabindex=0><code>R_series = R1 + R2 + R3
+R_par    = 1/(1/R1 + 1/R2)
+C_series = 1/(1/C1 + 1/C2)
+C_par    = C1 + C2
+</code></pre><blockquote><p><strong>Σ:</strong> <strong>Kirchhoff&rsquo;s laws.</strong> KCL (current): the sum of currents into any node is zero — what flows in flows out. KVL (voltage): the sum of voltage drops around any closed loop is zero. Together they solve any resistor network.</p></blockquote><details><summary>SI units & prefixes</summary><h4 id=common-prefixes>Common prefixes</h4><pre tabindex=0><code>k  kilo   10³    10,000 Ω = 10 kΩ
+M  mega   10⁶    1,000,000 Ω = 1 MΩ
+m  milli  10⁻³   0.001 A = 1 mA
+µ  micro  10⁻⁶   0.000001 F = 1 µF
+n  nano   10⁻⁹   0.000000001 F = 1 nF
+p  pico   10⁻¹²  0.000000000001 F = 1 pF
+</code></pre><h4 id=resistor-color-code>Resistor color code</h4><pre tabindex=0><code>0 black    5 green
+1 brown    6 blue
+2 red      7 violet
+3 orange   8 grey
+4 yellow   9 white
+
+4-band: [1st][2nd] × 10^[3rd] ± [4th]
+# brown-black-red-gold
+# = 10 × 10² = 1 kΩ ±5%
+</code></pre></details><h2 id=levels>Logic levels & signals</h2><p>A &ldquo;1&rdquo; is a voltage window, not a single value. Mixing 3.3 V and 5 V families without reading the thresholds is the classic first-board bug.</p><table><thead><tr><th>Family</th><th>Supply</th><th>VIL max</th><th>VIH min</th><th>VOH min</th><th>VOL max</th></tr></thead><tbody><tr><td>CMOS 3.3 V</td><td>3.3 V</td><td>0.8 V</td><td>2.0 V</td><td>2.4 V</td><td>0.4 V</td></tr><tr><td>CMOS 5 V</td><td>5 V</td><td>1.5 V</td><td>3.5 V</td><td>4.4 V</td><td>0.1 V</td></tr><tr><td>TTL 5 V</td><td>5 V</td><td>0.8 V</td><td>2.0 V</td><td>2.4 V</td><td>0.4 V</td></tr></tbody></table><h3 id=open-drain--open-collector>Open-drain / open-collector</h3><p>A pin only pulls <em>low</em> and releases to high-impedance — it never drives high. An external pull-up supplies the high level. This is why I²C tolerates mixed voltages on one bus.</p><pre tabindex=0><code>open-drain:
+  LOW  → transistor ON
+  HIGH → released + pull-up
+# the bus never fights itself
+</code></pre><h3 id=level-shifting>Level shifting</h3><p>5 V → 3.3 V: two-resistor divider or a shifter chip. 3.3 V → 5 V: usually fine into TTL, or use a TXS0108 / BSS138 for bidirectional.</p><pre tabindex=0><code>5V ── R1 ──┬── 3.3V
+            R2
+            │
+           GND
+# R1:R2 ≈ 1:2 → 5V becomes 3.3V
+</code></pre><blockquote><p><strong>!:</strong> <strong>The mismatch.</strong> A 3.3 V output drives a 5 V TTL input fine (VOH 2.4 V > VIH 2.0 V). A 5 V output into a 3.3 V input exceeds the rail and can forward-bias the ESD diode — shift it down or use a 5 V-tolerant input.</p></blockquote><h2 id=pull>Pull-ups & pull-downs</h2><p>A CMOS input has near-infinite impedance: left unconnected it floats and reads random values or oscillates. A pull resistor ties it to a defined state.</p><h3 id=pull-up-1>Pull-up</h3><p>Resistor to VCC. Idle reads <code>HIGH</code>; a button or open-drain driver pulls it low.</p><pre tabindex=0><code>VCC ── 10k ──┬── GPIO
+             │
+           button
+             │
+            GND   # pressed = LOW
+</code></pre><h3 id=pull-down>Pull-down</h3><p>Resistor to GND. Idle reads <code>LOW</code>; a switch to VCC pulls it high.</p><pre tabindex=0><code>VCC ── button
+             │
+           GPIO ── 10k ── GND
+             # pressed = HIGH
+</code></pre><h3 id=typical-values>Typical values</h3><p>10 kΩ is the universal default. Lower = stronger (faster edges, more current); higher = weaker (slower edges, less current).</p><pre tabindex=0><code>GPIO idle:  10k – 100k
+I²C SDA/SCL: 1.8k – 10k (3.3 V)
+             4.7k (classic, 5 V)
+Buttons:     10k
+</code></pre><h3 id=ic-pull-ups>I²C pull-ups</h3><p>The bus is open-drain: pull-ups to the rail are required or the lines never rise. Too strong wastes power; too weak rounds the clock edges. Two 4.7 kΩ to 3.3 V is the safe default for most speeds.</p><pre tabindex=0><code>SCL ── 4.7k ── 3.3V
+SDA ── 4.7k ── 3.3V
+# one pair for the whole bus
+</code></pre><h3 id=internal-pull-ups>Internal pull-ups</h3><p>Most MCUs can enable a weak (~20–100 kΩ) internal pull-up or pull-down per pin in firmware — handy for buttons and idle states, too weak for I²C.</p><pre tabindex=0><code>// Arduino
+pinMode(BTN, INPUT_PULLUP);
+// ESP-IDF
+gpio_set_pull_mode(PIN, GPIO_PULLUP_ONLY);
+// STM32 HAL
+GPIO_Init.Pull = GPIO_PULLUP;
+</code></pre><blockquote><p><strong>Ω:</strong> <strong>Rule of thumb:</strong> use the MCU&rsquo;s internal pull for buttons and chip-selects, an external 10 kΩ for anything leaving the board, and real 4.7 kΩ (or per-bus calculated) pull-ups on I²C.</p></blockquote><h2 id=dividers>Voltage dividers & ADCs</h2><p>Two resistors scale a voltage down linearly. It&rsquo;s how you measure a 12 V rail with a 3.3 V ADC — and the basis of a simple low-pass filter.</p><h3 id=divider-formula>Divider formula</h3><p>The output is the ratio of R2 to the total.</p><pre tabindex=0><code>Vout = Vin × R2 / (R1 + R2)
+
+Vin ── R1 ──┬── Vout
+            R2
+            │
+           GND
+</code></pre><h3 id=adc-reading>ADC reading</h3><p>An N-bit ADC maps 0…Vref to 0…2^N−1 counts.</p><pre tabindex=0><code>count = Vin / Vref × (2^N − 1)
+Vin   = count × Vref / (2^N − 1)
+
+# 12-bit, Vref = 3.3 V:
+# 1 count ≈ 0.806 mV
+</code></pre><h3 id=source-impedance>Source impedance</h3><p>The divider&rsquo;s output impedance is R1 ∥ R2. Keep it under the ADC&rsquo;s maximum (often ~10 kΩ for SAR ADCs) or the sample-and-hold cap won&rsquo;t settle.</p><pre tabindex=0><code>Rout = R1 × R2 / (R1 + R2)
+# R1 = R2 = 10k → Rout = 5k ✓
+</code></pre><ol><li><strong>Sensor</strong> — The voltage source to measure — a thermistor, battery, or potentiometer.</li><li><strong>Divider</strong> — Scale it into the ADC&rsquo;s 0…Vref range with R1/R2.</li><li><strong>RC filter</strong> — Add a cap to ground at the ADC pin to strip ripple and noise.</li><li><strong>Sample</strong> — Read several samples, average them, then convert counts to volts in firmware.</li></ol><blockquote><p><strong>RC:</strong> <strong>RC low-pass.</strong> A capacitor from Vout to GND gives a cutoff <code>fc = 1 / (2πRC)</code>. A 10 kΩ + 100 nF pair gives fc ≈ 159 Hz — enough to kill PWM ripple or mains hum off a slow sensor. Place the cap close to the ADC pin.</p></blockquote><h2 id=components>Passive components</h2><p>The handful of two- and three-pin parts that surround every IC. Know what each does to current and voltage and most datasheet schematics become obvious.</p><h3 id=resistor>Resistor</h3><p>Limits current, divides voltage, pulls pins. Rated in ohms and watts (¼ W is the through-hole default).</p><pre tabindex=0><code>R = V / I
+# 5 V, want 20 mA LED:
+R = (5 - 2) / 0.02 = 150 Ω
+</code></pre><h3 id=capacitor>Capacitor</h3><p>Stores charge, smooths voltage, blocks DC and passes AC. Decoupling caps sit next to every power pin.</p><pre tabindex=0><code>C = Q / V      (farads)
+100 nF → each IC VCC pin
+10 µF  → regulator in/out
+</code></pre><h3 id=inductor>Inductor</h3><p>Stores energy in a magnetic field and resists changes in current. Used in buck/boost converters and filters.</p><pre tabindex=0><code>V = L × dI/dt
+# buck/boost energy storage
+# + output smoothing
+</code></pre><h3 id=diode>Diode</h3><p>Current flows one way only (anode → cathode). Forward drop ≈ 0.7 V silicon, ≈ 0.2–0.4 V Schottky.</p><pre tabindex=0><code>Anode ──▶|── Cathode
+  +          −   (band)
+</code></pre><h3 id=led--limiting-resistor>LED + limiting resistor</h3><p>An LED is a diode: it does not limit its own current. Always add a series resistor sized for the forward voltage.</p><pre tabindex=0><code>R = (Vsupply - Vf) / If
+# red LED Vf ≈ 2 V, 20 mA:
+R = (5 - 2) / 0.02 = 150 Ω
+</code></pre><h3 id=bjt-vs-mosfet>BJT vs MOSFET</h3><p>Both switch a load from a small signal. A BJT is current-driven; a MOSFET is voltage-driven and wastes less at high current.</p><pre tabindex=0><code>BJT:    Ic = β × Ib
+MOSFET: Vgs &gt; Vth → on
+# logic-level FET: Vth ≤ 2 V
+</code></pre><blockquote><p><strong>⚡:</strong> <strong>Switching a load:</strong> for a relay or LED on 3.3 V logic, use an N-channel logic-level MOSFET (or an NPN with a base resistor). The transistor carries the load current so the GPIO only sources a few mA.</p></blockquote><details><summary>Reading component markings</summary><h4 id=capacitors>Capacitors</h4><pre tabindex=0><code>104 = 10 × 10⁴ pF = 100 nF
+103 = 10 × 10³ pF = 10 nF
+# ceramic: 3-digit code, in pF
+# electrolytic: value + volts printed
+</code></pre><h4 id=smd-resistors>SMD resistors</h4><pre tabindex=0><code>103 = 10 × 10³ = 10 kΩ
+472 = 47 × 10² = 4.7 kΩ
+# 3 digits: value × 10^[last]
+# 4 digits: value × 10^[last]
+</code></pre></details><h2 id=power>Power & protection</h2><p>Regulate the rail, then protect it. Most &ldquo;mysterious resets&rdquo; and dead boards trace back to power, not code.</p><h3 id=ldo-vs-buck>LDO vs buck</h3><p>An LDO is simple and quiet but burns the drop as heat; a buck switches and stays efficient at large step-downs.</p><pre tabindex=0><code>LDO:  5 V → 3.3 V, 100 mA
+      P_drop = (5 - 3.3) × 0.1 = 0.17 W
+Buck: 12 V → 3.3 V, 1 A
+      P_drop ≈ small (η ~ 90%)
+</code></pre><h3 id=decoupling-1>Decoupling</h3><p>Small caps at each IC power pin supply the fast current spikes the regulator can&rsquo;t. 100 nF per pin, 10 µF bulk near the regulator.</p><pre tabindex=0><code>IC VCC ──┬── 100nF ── GND
+         └── 10µF  ── GND (bulk)
+# keep the 100nF &lt; 2 mm from the pin
+</code></pre><h3 id=reverse-polarity>Reverse polarity</h3><p>Powering a board backwards can destroy ICs instantly. A series Schottky diode (low drop) or a P-FET circuit blocks it.</p><pre tabindex=0><code>VIN ──▶|── load   (drop ~0.3 V)
+# or a P-MOSFET high-side switch
+</code></pre><h3 id=esd-protection>ESD protection</h3><p>TVS diodes clamp transients to a safe level. Put them on connectors — USB, buttons, and any pin exposed to the outside world.</p><pre tabindex=0><code>signal ──┬── TVS ── GND
+         │
+        IC pin   # clamps above Vcc
+</code></pre><h3 id=brownout--inrush>Brownout & inrush</h3><p>Brownout: the rail sags below the MCU&rsquo;s minimum under load and it resets (or corrupts flash). Inrush: bulk caps draw a huge current spike at power-on.</p><pre tabindex=0><code># brownout → bigger caps, better supply
+# inrush   → soft-start, NTC, or
+#            current-limited hot-plug
+</code></pre><blockquote><p><strong>!:</strong> <strong>Budget for spikes.</strong> Wi-Fi/BLE and motor inrush can pull 2–5× the average current for milliseconds. Size the regulator and bulk cap for the peak, and keep the brownout detector (<code>BOD</code>) enabled so the MCU resets cleanly instead of corrupting flash.</p></blockquote><h2 id=comm>Common buses</h2><p>UART for point-to-point, I²C for many devices on two wires, SPI for speed, RS-485 and CAN for noise-immune industrial runs.</p><table><thead><tr><th>Bus</th><th>Wires</th><th>Topology</th><th>Speed</th><th>Notes</th></tr></thead><tbody><tr><td><code>UART</code></td><td>2 (TX, RX) + GND</td><td>point-to-point</td><td>up to ~1–4 Mbit/s</td><td>No clock; both ends need the same baud. TTL 3.3/5 V or RS-232 ±12 V.</td></tr><tr><td><code>I²C</code></td><td>2 (SDA, SCL)</td><td>multi-drop, 7-bit addr</td><td>100 k / 400 k / 1 M</td><td>Open-drain — needs pull-ups. Address set by pins or fixed.</td></tr><tr><td><code>SPI</code></td><td>4 (SCK, MOSI, MISO, CS)</td><td>one controller, per-device CS</td><td>1–50+ MHz</td><td>Full-duplex and clocked. One CS line per peripheral.</td></tr><tr><td><code>RS-485</code></td><td>2 (A, B)</td><td>multi-drop bus</td><td>up to 10 Mbit/s (short)</td><td>Differential; 120 Ω termination at both ends of a long run.</td></tr><tr><td><code>CAN</code></td><td>2 (CANH, CANL)</td><td>multi-master bus</td><td>125 k – 1 Mbit/s</td><td>Differential; 120 Ω at each physical end of the bus.</td></tr></tbody></table><h3 id=uart>UART</h3><p>TX of one device goes to RX of the other — cross the wires. A common default is 115200 8N1. A MAX3232 bridges TTL to RS-232.</p><pre tabindex=0><code>TX  ── RX
+RX  ── TX
+GND ── GND
+</code></pre><h3 id=ic-addressing>I²C addressing</h3><p>Each device has a 7-bit address; the 8th bit is read/write. Scan the bus to discover it. Pull SDA/SCL up once per bus, not per device.</p><pre tabindex=0><code>// Arduino scan
+Wire.beginTransmission(addr);
+if (Wire.endTransmission() == 0)
+  found(addr);   // 0x3C, 0x68, …
+</code></pre><h3 id=spi-chip-select>SPI chip-select</h3><p>Every device gets its own CS (active low). Assert CS, clock data, release CS. Mode (CPOL/CPHA) must match both ends.</p><pre tabindex=0><code>CS   ── GPIO (one per chip)
+SCK  ── SCK
+MOSI ── MOSI
+MISO ── MISO
+</code></pre><details><summary>Termination & addressing</summary><h4 id=differential-termination>Differential termination</h4><p>RS-485 and CAN need a 120 Ω resistor at each physical end of the bus to absorb reflections. Use exactly two terminators — no more, no fewer — on the whole line.</p><h4 id=ic-addresses>I²C addresses</h4><p>7-bit addresses 0x08–0x77 are free for peripherals; 0x00–0x07 and 0x78–0x7F are reserved. Check the datasheet — many chips document the address already shifted into 8-bit form.</p></details><h2 id=gotchas>Pitfalls</h2><p>The bugs that survive code review because they live in hardware. Most are cheap to prevent and expensive to debug.</p><h3 id=floating-inputs>Floating inputs</h3><p>An unconnected CMOS input is neither 0 nor 1 — it picks up noise, oscillates, and burns extra current. Tie every unused input high or low.</p><pre tabindex=0><code>GPIO ── 10k ── GND  # defined LOW
+# never leave reset/enable open
+</code></pre><h3 id=ringing>Ringing</h3><p>Fast edges on long traces reflect and ring, overshooting the rail. Add a series resistor (22–100 Ω) at the driver, or terminate the line.</p><pre tabindex=0><code>driver ── 33Ω ─── trace ─── input
+# slows the edge, kills the ring
+</code></pre><h3 id=ground-loops>Ground loops</h3><p>Two ground paths at different potentials let current flow between them and inject hum into analog readings. Use a single-point (star) ground for analog.</p><pre tabindex=0><code># star ground: all returns meet
+# at ONE point, analog separate
+# from high-current returns
+</code></pre><h3 id=inrush-current>Inrush current</h3><p>Bulk capacitance charges like a short at power-on; connectors spark and fuses pop. Limit with soft-start, an NTC, or slow-blow fusing.</p><pre tabindex=0><code>I_inrush = C × dV/dt
+# 1000 µF, 5 V in 1 ms → 5 A spike
+</code></pre><h3 id=component-ratings>Component ratings</h3><p>Resistor power, capacitor voltage, diode current — derate to 50–80% of the datasheet max. A ¼ W resistor carrying 0.3 W runs hot and drifts.</p><pre tabindex=0><code>P = I²R
+# 100 mA through 10 Ω  = 0.1 W ✓
+# 100 mA through 100 Ω = 1 W   ✗
+</code></pre><h3 id=noise-on-analog>Noise on analog</h3><p>Digital switching couples into ADC traces. Keep analog lines short, away from clocks and switch nodes, add an RC filter, and average samples.</p><pre tabindex=0><code>sensor ── R ──┬── ADC
+              C
+              │
+             GND   # fc = 1/(2πRC)
+</code></pre><h3 id=gpio-current-limits>GPIO current limits</h3><p>An MCU pin sources/sinks only ~10–20 mA (some 3.3 V parts just 4–8 mA). Driving a relay, motor, or LED string directly can damage the pin — buffer with a transistor.</p><pre tabindex=0><code># per-pin: 10–20 mA max
+# per-port: ~100–200 mA total
+# → use a MOSFET/BJT for loads
+</code></pre><h3 id=capacitor-polarity>Capacitor polarity</h3><p>Electrolytic and tantalum caps are polarized. Reverse one and it vents, pops, or shorts. The stripe marks the cathode (−) — point it at the more-negative node.</p><pre tabindex=0><code>+ ──[ 100µF ]── GND
+# stripe = −, goes to the
+# lower-voltage side
+</code></pre><h3 id=cable-voltage-drop>Cable voltage drop</h3><p>Thin or long wires drop <code>V = I × R_wire</code> at the far end. A USB cable carrying 1–2 A can sag a 5 V rail enough to brown out a device — measure at the load.</p><pre tabindex=0><code>V_drop = I × R_wire
+# 28 AWG ≈ 0.2 Ω/m per wire
+# VCC and GND both count
+</code></pre></div></article></div><footer class=foot><span>slop-stuff</span>
+<span class=muted>served under <code>makefunstuff.github.io/slop-stuff/&lt;folder>/</code></span>
+<a href=https://makefunstuff.github.io/slop-stuff/links/>links</a>
+<a href=https://github.com/makefunstuff/slop-stuff>repo</a></footer><script src=https://makefunstuff.github.io/slop-stuff/js/wiki.js defer></script></body></html>

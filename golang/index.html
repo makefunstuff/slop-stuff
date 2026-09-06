@@ -1,0 +1,390 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Go — slop-stuff</title><meta name=description content="Modules, structs, interfaces, goroutines, channels, and errors."><link rel=canonical href=https://makefunstuff.github.io/slop-stuff/golang/><link rel=stylesheet href=https://makefunstuff.github.io/slop-stuff/css/wiki.css><script>(function(){var t="slop-theme",e=localStorage.getItem(t);e||(e=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"),document.documentElement.setAttribute("data-theme",e)})()</script></head><body><header class=bar><a class=brand href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a>
+<span class="muted hide-narrow">cheatsheets & experiments</span><form class=seek role=search action=https://makefunstuff.github.io/slop-stuff/ method=get><input id=q type=search name=q placeholder="search guides…" autocomplete=off aria-label="Search guides"><div id=hits class=hits hidden></div></form><button type=button class=icon id=theme title="Toggle theme" aria-label="Toggle theme">◐</button>
+<a class=icon href=https://github.com/makefunstuff/slop-stuff rel=noreferrer>git</a></header><div class="wrap wrap-guide"><aside class=toc aria-label="On this page"><p class=toc-label>on this page</p><nav id=TableOfContents><ul><li><a href=#quickref>Quick reference</a></li><li><a href=#start>Modules & build</a></li><li><a href=#types>Types & zero values</a></li><li><a href=#control>Control flow</a></li><li><a href=#structs>Structs, methods & interfaces</a></li><li><a href=#collections>Slices, maps & strings</a></li><li><a href=#concurrency>Goroutines & channels</a></li><li><a href=#errors>Errors & context</a></li><li><a href=#stdlib>Standard library</a></li><li><a href=#gotchas>Gotchas</a></li></ul></nav></aside><article class=doc><p class=crumb><a href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a> / Languages</p><h1>Go</h1><p class=lede>Simple, fast, concurrent.</p><p class="muted sub">Modules, structs, interfaces, goroutines, channels, and errors.</p><p class=tags><span>language</span><span>goroutine</span><span>interface</span><span>module</span></p><div class=body><p>Go is a compiled, statically-typed language built for servers and CLIs: goroutines make concurrency cheap, interfaces keep code decoupled, and one static binary ships everything. This is the surface you&rsquo;ll touch every day.</p><h2 id=quickref>Quick reference</h2><p>The ten commands and idioms you reach for every day. Each points at a full section below.</p><ul><li><code>go mod init example/app</code> — Start a module — writes <code>go.mod</code>; <code>go mod tidy</code> prunes deps.</li><li><code>go build</code> — · Compile to a binary, or build + run in one. <code>go build -o bin/app</code> names output.</li><li><code>go test ./...</code> — Run all tests; <code>go test -run TestX</code> filters by name.</li><li><code>go get pkg@v1.2.3</code> — · Add/upgrade a dependency; format every file.</li><li><code>go doWork()</code> — Goroutine — runs concurrently; thousands are fine.</li><li><code>ch := make(chan T)</code> — Channel: <code>ch &lt;- v</code> sends, <code>v := &lt;-ch</code> receives.</li><li><code>select { case v := &lt;-ch: … }</code> — Multiplex channels; <code>default:</code> is non-blocking, <code>&lt;-time.After(d)</code> times out.</li><li><code>defer f.Close()</code> — Run on return, LIFO order. Pair with every open.</li><li><code>type Greeter interface { Greet() string }</code> — Interface — any type with <code>Greet() string</code> satisfies it implicitly.</li><li><code>if err != nil { return err }</code> — Errors are values: wrap with <code>%w</code>, match with <code>errors.Is</code> / <code>errors.As</code>.</li></ul><blockquote><p><strong>→:</strong> <strong>Where to go next:</strong> Modules & build covers the toolchain, Concurrency covers goroutines/channels/select, Structs & interfaces covers methods, and Errors & context covers <code>%w</code>, <code>errors.Is</code>, and <code>errors.As</code>.</p></blockquote><h2 id=start>Modules & build</h2><p><code>go mod</code> manages dependencies; <code>go build</code>, <code>go run</code>, and <code>go test</code> are the daily loop. Modules replaced <code>GOPATH</code> in Go 1.11 and are default since 1.16.</p><h3 id=1-new-module>1. New module</h3><pre tabindex=0><code>go mod init example/hello   # create go.mod
+go mod tidy                 # add missing, drop unused
+go mod download             # fetch deps
+</code></pre><h3 id=2-build--run>2. Build & run</h3><pre tabindex=0><code>go build               # compile → ./hello
+go run .               # build + run package
+go build -o bin/app    # name the output
+</code></pre><h3 id=3-test--vet>3. Test & vet</h3><pre tabindex=0><code>go test               # tests in this package
+go test ./...         # all packages
+go test -run TestX    # filter by name
+go vet ./...          # static analysis
+</code></pre><h3 id=4-format>4. Format</h3><pre tabindex=0><code>gofmt -w main.go      # format one file
+gofmt -w .            # format all .go
+go fmt ./...          # via the toolchain
+</code></pre><table><thead><tr><th>File / env</th><th>What it is</th></tr></thead><tbody><tr><td><code>go.mod</code></td><td>Module path + <code>require</code> directives (dependencies).</td></tr><tr><td><code>go.sum</code></td><td>Checksums of dependency content — commit it.</td></tr><tr><td><code>go get pkg@v1.2.3</code></td><td>Add or upgrade a dependency in <code>go.mod</code>.</td></tr><tr><td><code>GOPATH</code></td><td>Legacy pre-modules workspace (<code>~/go</code>); modules replaced it.</td></tr><tr><td><code>go env GOMODCACHE</code></td><td>Where downloaded module sources are cached.</td></tr><tr><td><code>GOOS</code> / <code>GOARCH</code></td><td>Cross-compile targets, e.g. <code>GOOS=linux GOARCH=amd64 go build</code>.</td></tr></tbody></table><blockquote><p><strong>KEY:</strong> <strong>Run <code>gofmt</code> on every save.</strong> Formatting is non-negotiable in Go — <code>gofmt -w .</code> normalizes tabs, spacing, and import order, so style is never a debate and diffs stay clean.</p></blockquote><h2 id=types>Types & zero values</h2><p>Variables hold a zero value until assigned — no uninitialized memory. Declare with <code>var</code> or the short <code>:=</code> operator.</p><p><code>bool</code> <code>string</code> <code>int</code> <code>int8</code> <code>int16</code> <code>int32</code> <code>int64</code> <code>uint</code> <code>uint8</code> <code>uint64</code> <code>float32</code> <code>float64</code> <code>byte</code> <code>rune</code> <code>complex128</code></p><table><thead><tr><th>Type</th><th>Example</th><th>Notes</th></tr></thead><tbody><tr><td><code>bool</code></td><td><code>var ok = true</code></td><td><code>true</code> / <code>false</code>; no truthy/falsy.</td></tr><tr><td><code>string</code></td><td><code>s := "hi"</code></td><td>Immutable UTF-8 bytes.</td></tr><tr><td><code>int</code></td><td><code>n := 42</code></td><td>Platform-sized (32 or 64-bit).</td></tr><tr><td><code>int32</code> / <code>int64</code></td><td><code>var id int64 = 9</code></td><td>Explicit width; <code>int64</code> for timestamps/IDs.</td></tr><tr><td><code>uint</code> / <code>uint64</code></td><td><code>var u uint = 7</code></td><td>Unsigned; use sparingly.</td></tr><tr><td><code>float64</code></td><td><code>f := 3.14</code></td><td>Default float literal type; prefer it over <code>float32</code>.</td></tr><tr><td><code>byte</code></td><td><code>b := []byte("hi")</code></td><td>Alias for <code>uint8</code> — a raw byte.</td></tr><tr><td><code>rune</code></td><td><code>r := '界'</code></td><td>Alias for <code>int32</code> — one code point.</td></tr></tbody></table><h3 id=zero-values>Zero values</h3><pre tabindex=0><code>var i int        // 0
+var f float64    // 0
+var s string     // &#34;&#34;
+var b bool       // false
+var p *int       // nil
+var sl []int     // nil (but usable)
+</code></pre><h3 id=short-declaration->Short declaration <code>:=</code></h3><pre tabindex=0><code>n := 42          // infers int
+name := &#34;Go&#34;     // infers string
+x, y := 1, 2     // multiple at once
+
+// := only inside functions;
+// at package level use var
+</code></pre><h3 id=var--constants><code>var</code> & constants</h3><pre tabindex=0><code>var count int = 0
+var name = &#34;Go&#34;        // type inferred
+
+const Pi = 3.14159
+const (
+    StatusOK       = 200
+    StatusNotFound = 404
+)
+</code></pre><h3 id=arrays-nt--fixed>Arrays <code>[N]T</code> — fixed</h3><pre tabindex=0><code>arr := [3]int{1, 2, 3}
+arr2 := [...]int{1, 2, 3} // len inferred
+n := arr[0]               // index
+fmt.Println(len(arr))     // 3
+// arrays are values: copying copies data
+</code></pre><h3 id=slices-t--growable>Slices <code>[]T</code> — growable</h3><pre tabindex=0><code>sl := []int{1, 2, 3}
+sl = append(sl, 4)
+sub := sl[1:3]      // [2, 3] — a view
+// slices are the everyday list type;
+// see Collections for make/copy
+</code></pre><h3 id=generics-t-any--go-118>Generics <code>[T any]</code> — Go 1.18+</h3><pre tabindex=0><code>func First[T any](xs []T) T {
+    return xs[0]
+}
+n := First([]int{1, 2, 3})       // int
+s := First([]string{&#34;a&#34;, &#34;b&#34;})   // string
+
+// constraint: ~int admits any
+// underlying-int type (aliases too)
+type Number interface {
+    ~int | ~float64
+}
+func Sum[T Number](xs []T) T {
+    var total T
+    for _, x := range xs { total += x }
+    return total
+}
+</code></pre><h3 id=constraints-any--comparable>Constraints: <code>any</code> & <code>comparable</code></h3><pre tabindex=0><code>// any == interface{} (Go 1.18+)
+// comparable: usable with ==
+func Index[T comparable](xs []T, v T) int {
+    for i, x := range xs {
+        if x == v { return i }
+    }
+    return -1
+}
+
+// ~int matches int and its
+// defined types (type MyInt int)
+// Generic type aliases: Go 1.24+
+</code></pre><h2 id=control>Control flow</h2><p><code>for</code> is the only loop keyword; <code>switch</code> never falls through; <code>defer</code> runs cleanup in LIFO order on return.</p><h3 id=if--else><code>if</code> / <code>else</code></h3><pre tabindex=0><code>if n &gt; 10 {
+    fmt.Println(&#34;big&#34;)
+} else if n &gt; 5 {
+    fmt.Println(&#34;mid&#34;)
+} else {
+    fmt.Println(&#34;small&#34;)
+}
+
+// short statement before the check:
+if err := do(); err != nil {
+    return err
+}
+</code></pre><h3 id=for--all-three-forms><code>for</code> — all three forms</h3><pre tabindex=0><code>// C-style
+for i := 0; i &lt; 5; i++ {
+    fmt.Println(i)
+}
+
+// while-style
+for n &lt; 100 {
+    n *= 2
+}
+
+// infinite
+for {
+    // break or return to exit
+}
+</code></pre><h3 id=switch><code>switch</code></h3><pre tabindex=0><code>switch n {
+case 1:
+    fmt.Println(&#34;one&#34;)
+case 2, 3:
+    fmt.Println(&#34;small&#34;)
+default:
+    fmt.Println(&#34;other&#34;)
+}
+// no break needed — cases don&#39;t
+// fall through. Switch w/o value:
+switch {
+case n &lt; 0:
+    fmt.Println(&#34;neg&#34;)
+}
+</code></pre><h3 id=defer--lifo><code>defer</code> — LIFO</h3><pre tabindex=0><code>f, err := os.Open(&#34;f.txt&#34;)
+if err != nil {
+    return err
+}
+defer f.Close()   // runs on return
+
+defer fmt.Println(&#34;world&#34;)
+defer fmt.Println(&#34;hello&#34;)
+// prints: hello, then world (LIFO)
+</code></pre><h3 id=panic--recover><code>panic</code> / <code>recover</code></h3><pre tabindex=0><code>func mayPanic() {
+    defer func() {
+        if r := recover(); r != nil {
+            fmt.Println(&#34;recovered:&#34;, r)
+        }
+    }()
+    panic(&#34;boom&#34;)   // stops here
+}
+// recover only works inside defer
+</code></pre><blockquote><p><strong>!:</strong> <strong><code>panic</code> is for unrecoverable bugs, not flow control.</strong> Return an <code>error</code> for expected failures and reserve <code>panic</code>/<code>recover</code> for invariant violations — see the Errors & context section.</p></blockquote><h2 id=structs>Structs, methods & interfaces</h2><p>Types with methods satisfy interfaces implicitly — no <code>implements</code> keyword. Pointer receivers let a method mutate its receiver.</p><h3 id=struct-literals>Struct literals</h3><pre tabindex=0><code>type User struct {
+    Name string
+    Age  int
+}
+
+u := User{Name: &#34;Ada&#34;, Age: 36}  // named
+v := User{&#34;Ada&#34;, 36}             // positional
+u.Age = 37                       // field access
+</code></pre><h3 id=methods--receivers>Methods & receivers</h3><pre tabindex=0><code>// value receiver: reads a copy
+func (u User) Greet() string {
+    return &#34;hi &#34; + u.Name
+}
+
+// pointer receiver: can mutate
+func (u *User) SetAge(a int) {
+    u.Age = a
+}
+
+u.SetAge(40)   // Go takes &amp;u for you
+</code></pre><h3 id=embedded-structs>Embedded structs</h3><pre tabindex=0><code>type Employee struct {
+    User              // embedded
+    Title string
+}
+
+e := Employee{User{&#34;Ada&#34;, 36}, &#34;Eng&#34;}
+fmt.Println(e.Name)    // promoted field
+fmt.Println(e.Greet()) // promoted method
+</code></pre><h3 id=interfaces>Interfaces</h3><pre tabindex=0><code>type Greeter interface {
+    Greet() string
+}
+// any type with Greet() string
+// satisfies Greeter — implicit.
+
+var g Greeter = User{&#34;Ada&#34;, 36}
+fmt.Println(g.Greet())
+
+var x any = 42     // any == interface{}
+var y any = &#34;hi&#34;
+</code></pre><h3 id=type-assertion--switch>Type assertion & switch</h3><pre tabindex=0><code>v, ok := x.(string)   // ok = false if wrong
+if ok {
+    fmt.Println(v)
+}
+
+switch t := x.(type) {
+case string:
+    fmt.Println(&#34;string&#34;, t)
+case int:
+    fmt.Println(&#34;int&#34;, t)
+default:
+    fmt.Println(&#34;other&#34;)
+}
+</code></pre><blockquote><p><strong>→:</strong> <strong>The <code>error</code> interface</strong> is just <code>type error interface { Error() string }</code> — any type with an <code>Error()</code> method is an error. See Errors & context for <code>%w</code>, <code>errors.Is</code>, and <code>errors.As</code>.</p></blockquote><h2 id=collections>Slices, maps & strings</h2><p>Slices are views into a backing array; maps are unordered; strings are immutable bytes. Convert between them explicitly.</p><h3 id=make--append--copy><code>make</code> / <code>append</code> / <code>copy</code></h3><pre tabindex=0><code>s := make([]int, 0, 8)   // len 0, cap 8
+s = append(s, 1, 2, 3)
+s = append(s, more...)    // spread a slice
+
+dst := make([]int, len(s))
+n := copy(dst, s)         // n = copied
+</code></pre><h3 id=map-operations>Map operations</h3><pre tabindex=0><code>m := map[string]int{&#34;a&#34;: 1}
+m[&#34;b&#34;] = 2
+
+v, ok := m[&#34;a&#34;]   // ok = false if missing
+if v, ok := m[&#34;c&#34;]; ok {
+    fmt.Println(v)
+}
+delete(m, &#34;b&#34;)
+// unordered: iterate with range
+</code></pre><h3 id=range><code>range</code></h3><pre tabindex=0><code>for i, v := range xs { ... }   // index, value
+for k, v := range m  { ... }   // key, value
+for i := range xs    { ... }   // index only
+for _, v := range xs { ... }   // value only
+// underscore discards a value
+</code></pre><h3 id=string-vs-byte><code>string</code> vs <code>[]byte</code></h3><pre tabindex=0><code>s := &#34;héllo&#34;
+b := []byte(s)      // string → bytes (copy)
+s2 := string(b)     // bytes → string (copy)
+
+// strings are immutable; []byte is
+// mutable. Indexing s[i] gives a byte.
+</code></pre><h3 id=runes--strconv>Runes & <code>strconv</code></h3><pre tabindex=0><code>for _, r := range &#34;héllo&#34; {
+    // r is a rune (int32), not a byte
+}
+
+n, err := strconv.Atoi(&#34;42&#34;)   // → int
+s := strconv.Itoa(42)          // → &#34;42&#34;
+f, err := strconv.ParseFloat(&#34;3.14&#34;, 64)
+s = fmt.Sprintf(&#34;%d items&#34;, n)
+</code></pre><h3 id=range-over-int--go-122><code>range</code> over int — Go 1.22+</h3><pre tabindex=0><code>for i := range 3 {       // 0, 1, 2
+    fmt.Println(i)
+}
+
+// range over a channel runs
+// until the channel is closed:
+for v := range ch {
+    fmt.Println(v)
+}
+</code></pre><h3 id=iterators--range-over-func-123>Iterators — <code>range</code> over func (1.23+)</h3><pre tabindex=0><code>// iter.Seq[int] yields ints one at a time
+func Count(n int) iter.Seq[int] {
+    return func(yield func(int) bool) {
+        for i := range n {
+            if !yield(i) { return }
+        }
+    }
+}
+for v := range Count(3) {
+    fmt.Println(v)      // 0 1 2
+}
+
+slices.Sorted(maps.Keys(m))  // 1.21+
+</code></pre><blockquote><p><strong>KEY:</strong> <strong>Ranging a string yields runes, indexing yields bytes.</strong> For multi-byte text use <code>[]rune(s)</code> to get a slice of code points, or range directly. Use <code>strings.Builder</code> to concatenate in a loop instead of <code>+=</code>.</p></blockquote><h2 id=concurrency>Goroutines & channels</h2><p>Start work with <code>go</code>; pass data and synchronize through channels. Share memory by communicating, not by mutating shared state.</p><h3 id=go-keyword><code>go</code> keyword</h3><pre tabindex=0><code>go doWork()        // run in a goroutine
+
+go func(x int) {   // anonymous
+    fmt.Println(x)
+}(42)
+
+// goroutines are cheap —
+// thousands run comfortably.
+</code></pre><h3 id=channels>Channels</h3><pre tabindex=0><code>ch := make(chan int)         // unbuffered: sync
+ch2 := make(chan int, 10)    // buffered: async
+
+ch &lt;- 42          // send (blocks if full)
+v := &lt;-ch         // receive (blocks if empty)
+close(ch)         // close; later sends panic
+</code></pre><h3 id=select><code>select</code></h3><pre tabindex=0><code>select {
+case v := &lt;-ch1:
+    fmt.Println(v)
+case ch2 &lt;- 42:
+    fmt.Println(&#34;sent&#34;)
+case &lt;-time.After(2 * time.Second):
+    fmt.Println(&#34;timeout&#34;)
+default:
+    // non-blocking
+}
+</code></pre><h3 id=syncwaitgroup><code>sync.WaitGroup</code></h3><pre tabindex=0><code>var wg sync.WaitGroup
+for _, u := range urls {
+    wg.Add(1)
+    go func(u string) {
+        defer wg.Done()
+        fetch(u)
+    }(u)
+}
+wg.Wait()   // block until all finish
+</code></pre><h3 id=syncmutex><code>sync.Mutex</code></h3><pre tabindex=0><code>var mu sync.Mutex
+var counter int
+
+func inc() {
+    mu.Lock()
+    defer mu.Unlock()
+    counter++
+}
+// protect shared state; prefer
+// channels for passing values.
+</code></pre><blockquote><p><strong>⌁:</strong> <strong>Channels as pipes:</strong> an unbuffered <code>make(chan T)</code> synchronizes — a send blocks until another goroutine receives, so it both transfers data and waits. Send from the producer, receive in the consumer, and <code>close(ch)</code> so a <code>for v := range ch</code> loop ends.</p></blockquote><h2 id=errors>Errors & context</h2><p>Errors are values. Wrap them with <code>%w</code> to preserve the chain, match with <code>errors.Is</code>/<code>As</code>, and thread <code>context.Context</code> through IO and network calls.</p><h3 id=the-error-interface>The <code>error</code> interface</h3><pre tabindex=0><code>type error interface {
+    Error() string
+}
+
+err := errors.New(&#34;boom&#34;)
+err2 := fmt.Errorf(&#34;open %s: %w&#34;, path, err)
+// %w wraps err so callers can
+// unwrap it with Is / As
+
+// Go 1.20+: combine many errors
+err3 := errors.Join(e1, e2, e3)
+</code></pre><h3 id=errorsis--as><code>errors.Is</code> / <code>As</code></h3><pre tabindex=0><code>if errors.Is(err, fs.ErrNotExist) {
+    // err, or anything it wraps, matches
+}
+
+var ne *net.OpError
+if errors.As(err, &amp;ne) {
+    fmt.Println(ne.Op)   // typed error
+}
+</code></pre><h3 id=contextcontext><code>context.Context</code></h3><pre tabindex=0><code>ctx := context.Background()
+ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+defer cancel()
+
+req, _ := http.NewRequestWithContext(
+    ctx, &#34;GET&#34;, url, nil)
+// pass ctx first to every IO call
+</code></pre><h3 id=defer-for-cleanup><code>defer</code> for cleanup</h3><pre tabindex=0><code>f, err := os.Open(&#34;f.txt&#34;)
+if err != nil {
+    return err
+}
+defer f.Close()   // runs on return
+
+db, _ := sql.Open(&#34;sqlite&#34;, &#34;app.db&#34;)
+defer db.Close()
+</code></pre><h3 id=panic-vs-error><code>panic</code> vs error</h3><pre tabindex=0><code>// recoverable → return an error
+if err != nil {
+    return err
+}
+
+// programmer bug → panic
+panic(&#34;unreachable&#34;)
+
+func main() {
+    defer func() {
+        if r := recover(); r != nil {
+            log.Fatal(r)
+        }
+    }()
+    run()
+}
+</code></pre><blockquote><p><strong>!:</strong> <strong>Return errors; don&rsquo;t <code>panic</code>.</strong> Missing files, timeouts, and bad input are expected — return an <code>error</code> and wrap it with <code>%w</code> so callers can <code>errors.Is</code>/<code>As</code>. <code>panic</code> unwinds the goroutine and only <code>recover</code> inside a <code>defer</code> stops it.</p></blockquote><h2 id=stdlib>Standard library</h2><p>The standard library covers HTTP servers, JSON, files, streams, time, flags, and formatting — no third-party deps for the common 80%.</p><ul><li><code>net/http</code> — HTTP server & client. <code>http.Get(url)</code>, <code>http.HandleFunc("/", h)</code>, <code>http.ListenAndServe(":8080", nil)</code>.</li><li><code>encoding/json</code> — JSON encode/decode. <code>json.Marshal(v)</code>, <code>json.Unmarshal(b, &amp;v)</code>, struct tags <code>json:"name,omitempty"</code>.</li><li><code>os</code> — Files & process. <code>os.ReadFile</code>, <code>os.WriteFile</code>, <code>os.Open</code>, <code>os.Args</code>, <code>os.Getenv</code>, <code>os.Exit</code>.</li><li><code>io</code> — Streams. <code>io.Copy(dst, src)</code>, <code>io.ReadAll(r)</code>, plus the <code>io.Reader</code> / <code>io.Writer</code> interfaces.</li><li><code>time</code> — Time & durations. <code>time.Now()</code>, <code>time.Sleep</code>, <code>time.After</code>, <code>time.Parse</code>, <code>time.Duration</code>.</li><li><code>flag</code> — CLI flags. <code>flag.String("name", "", "help")</code>, <code>flag.Int</code>, <code>flag.Parse()</code>.</li><li><code>fmt</code> — Printing & errors. <code>fmt.Println</code>, <code>fmt.Printf("%s %d")</code>, <code>fmt.Sprintf</code>, <code>fmt.Errorf</code>.</li><li><code>strings</code> — Text. <code>strings.Split</code>, <code>strings.Join</code>, <code>strings.Contains</code>, <code>strings.HasPrefix</code>, <code>strings.Builder</code>.</li><li><code>log</code> — Logging. <code>log.Println</code>, <code>log.Printf</code>, <code>log.Fatal</code> (exits), <code>log.SetPrefix</code>.</li><li><code>sort</code> — Sorting. <code>sort.Ints(xs)</code>, <code>sort.Strings</code>, <code>sort.Slice(xs, func(i, j int) bool)</code>.</li><li><code>slices</code> — Slice helpers (1.21+). <code>slices.Sort</code>, <code>slices.Clone</code>, <code>slices.Contains</code>, <code>slices.Concat</code>.</li><li><code>maps</code> — Map helpers (1.21+). <code>maps.Keys</code>, <code>maps.Values</code>, <code>maps.Clone</code>, <code>maps.Equal</code>.</li><li><code>iter</code> — Iterators (1.23+). <code>iter.Seq[T]</code>, <code>iter.Seq2[K,V]</code>, <code>iter.Pull</code>.</li></ul><h3 id=http-server>HTTP server</h3><pre tabindex=0><code>package main
+
+import (
+    &#34;fmt&#34;
+    &#34;net/http&#34;
+)
+
+func main() {
+    http.HandleFunc(&#34;/&#34;, func(w http.ResponseWriter, r *http.Request) {
+        fmt.Fprintln(w, &#34;hello&#34;)
+    })
+    http.ListenAndServe(&#34;:8080&#34;, nil)
+}
+</code></pre><h3 id=json--struct-tags>JSON + struct tags</h3><pre tabindex=0><code>type User struct {
+    Name string `json:&#34;name&#34;`
+    Age  int    `json:&#34;age,omitempty&#34;`
+}
+
+b, _ := json.Marshal(User{&#34;Ada&#34;, 36})
+// {&#34;name&#34;:&#34;Ada&#34;,&#34;age&#34;:36}
+
+var u User
+json.Unmarshal(b, &amp;u)
+</code></pre><h2 id=gotchas>Gotchas</h2><p>The traps that survive code review. Go compiles fast and trusts you to check errors — these are the rules it enforces at runtime instead.</p><h3 id=nil-map-write-panics>Nil map write panics</h3><pre tabindex=0><code>var m map[string]int
+m[&#34;a&#34;] = 1   // panic: assignment to
+             // entry in nil map
+m = make(map[string]int)   // fix
+</code></pre><h3 id=defer-evaluates-args-now><code>defer</code> evaluates args now</h3><pre tabindex=0><code>i := 1
+defer fmt.Println(i)  // prints 1
+i = 2
+// to read at return time:
+defer func() { fmt.Println(i) }()
+</code></pre><h3 id=loop-capture-in-goroutines>Loop capture in goroutines</h3><pre tabindex=0><code>// Go 1.22+: each iteration gets a
+// fresh variable, so this is safe:
+for _, u := range urls {
+    go func() { fetch(u) }()
+}
+// explicit param works everywhere:
+go func(u string) { fetch(u) }(u)
+</code></pre><h3 id=slices-share-a-backing-array>Slices share a backing array</h3><pre tabindex=0><code>s := []int{1, 2, 3, 4}
+sub := s[1:3]   // [2 3] — shares s
+sub[0] = 99     // s → [1 99 3 4]
+c := slices.Clone(s)   // independent
+</code></pre><h3 id=-shadows-outer-err><code>:=</code> shadows outer <code>err</code></h3><pre tabindex=0><code>var err error
+if err = doA(); err != nil {
+    return err
+}
+x, err := doB()  // new err, outer hidden
+// reuse outer with = when err exists:
+x, err = doB()
+</code></pre><h3 id=send-on-closed-channel-panics>Send on closed channel panics</h3><pre tabindex=0><code>close(ch)
+ch &lt;- 1         // panic: send on closed
+v, ok := &lt;-ch   // ok == false, v is zero
+// only the sender closes; check ok,
+// or iterate with for v := range ch
+</code></pre><blockquote><p><strong>!:</strong> <strong>Know the rules, or debug the panic.</strong> Nil-map writes, closed-channel sends, and shadowed errors compile fine and blow up at runtime. <code>go vet ./...</code> and tests catch many — but a <code>defer func()</code> that reads a captured variable, and a <code>:=</code> that hides an outer <code>err</code>, need a human eye.</p></blockquote></div></article></div><footer class=foot><span>slop-stuff</span>
+<span class=muted>served under <code>makefunstuff.github.io/slop-stuff/&lt;folder>/</code></span>
+<a href=https://makefunstuff.github.io/slop-stuff/links/>links</a>
+<a href=https://github.com/makefunstuff/slop-stuff>repo</a></footer><script src=https://makefunstuff.github.io/slop-stuff/js/wiki.js defer></script></body></html>

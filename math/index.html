@@ -1,0 +1,188 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Mathematics — slop-stuff</title><meta name=description content="Linear algebra, probability, calculus, discrete, and signal/DSP math for programmers."><link rel=canonical href=https://makefunstuff.github.io/slop-stuff/math/><link rel=stylesheet href=https://makefunstuff.github.io/slop-stuff/css/wiki.css><script>(function(){var t="slop-theme",e=localStorage.getItem(t);e||(e=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"),document.documentElement.setAttribute("data-theme",e)})()</script></head><body><header class=bar><a class=brand href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a>
+<span class="muted hide-narrow">cheatsheets & experiments</span><form class=seek role=search action=https://makefunstuff.github.io/slop-stuff/ method=get><input id=q type=search name=q placeholder="search guides…" autocomplete=off aria-label="Search guides"><div id=hits class=hits hidden></div></form><button type=button class=icon id=theme title="Toggle theme" aria-label="Toggle theme">◐</button>
+<a class=icon href=https://github.com/makefunstuff/slop-stuff rel=noreferrer>git</a></header><div class="wrap wrap-guide"><aside class=toc aria-label="On this page"><p class=toc-label>on this page</p><nav id=TableOfContents><ul><li><a href=#quickref>Quick reference</a></li><li><a href=#start>Notation & constants</a></li><li><a href=#linear>Linear algebra</a></li><li><a href=#prob>Probability & statistics</a></li><li><a href=#calc>Calculus & optimization</a></li><li><a href=#discrete>Discrete math</a></li><li><a href=#dsp>Signal/DSP math</a></li><li><a href=#gotchas>Pitfalls</a></li></ul></nav></aside><article class=doc><p class=crumb><a href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a> / Quantitative</p><h1>Mathematics</h1><p class=lede>The math behind the code.</p><p class="muted sub">Linear algebra, probability, calculus, discrete, and signal/DSP math for programmers.</p><p class=tags><span>math</span><span>linear algebra</span><span>probability</span><span>Fourier</span></p><div class=body><p>Mathematics is the hidden runtime of software: the linear algebra in ML, the probability in analytics, the calculus in optimization, and the DSP behind every signal. Here&rsquo;s the toolkit, in one place.</p><h2 id=quickref>Quick reference</h2><p>The eight formulas you&rsquo;ll reach for most — scan this before anything else.</p><ul><li><code>a · b = |a||b| cos θ</code> — <strong>Dot & cross product.</strong> Dot → scalar (alignment); cross → vector perpendicular to both (3D only).</li><li><code>C[i][j] = Σ A[i][k] · B[k][j]</code> — <strong>Matrix multiplication.</strong> <code>(m×n)·(n×p) = (m×p)</code>; entry <code>(i, j)</code> is row <code>i</code> of A dotted with column <code>j</code> of B.</li><li><code>d/dx x^n = n·x^(n−1)</code> — <strong>Derivative — power rule.</strong> Bring the exponent down and drop it by one; <code>d/dx e^x = e^x</code>, <code>d/dx ln x = 1/x</code>.</li><li><code>d/dx f(g(x)) = f'(g(x)) · g'(x)</code> — <strong>Chain rule.</strong> Derivative of a composition = outside × inside. Backpropagation is exactly this, layered backward.</li><li><code>P(A|B) = P(B|A) · P(A) / P(B)</code> — <strong>Bayes&rsquo; theorem.</strong> Update a belief with evidence; the denominator normalizes over all outcomes.</li><li><code>X(f) = ∫ x(t) e^(−j2πft) dt</code> — <strong>Fourier transform.</strong> Time ↔ frequency; convolution in time becomes multiplication in frequency (FFT: <code>O(N log N)</code>).</li><li><code>θ = θ − α · ∇J(θ)</code> — <strong>Gradient descent.</strong> Step downhill against the gradient; <code>α</code> is the learning rate (step size).</li><li><code>a ≡ b (mod m)</code> — <strong>Modular arithmetic.</strong> Clock arithmetic — <code>(a+b) mod m = (a mod m + b mod m) mod m</code>. Basis of hashing and crypto.</li></ul><h2 id=start>Notation & constants</h2><p>The symbols you&rsquo;ll meet in every area below, the constants that keep appearing, and the rules that keep expressions unambiguous.</p><h3 id=1-greek-letters>1. Greek letters</h3><p><code>α β γ θ λ μ π σ φ ω</code> stand for angles, means, weights, rates, and frequencies.</p><h3 id=2-sum--product>2. Sum & product</h3><p><code>∑ xi</code> adds a sequence; <code>∏ xi</code> multiplies it. The index goes under the symbol.</p><h3 id=3-calculus-ops>3. Calculus ops</h3><p><code>∫</code> integrates, <code>∂</code> is a partial derivative, and <code>∇</code> is the gradient (vector of partials).</p><h3 id=4-sets--logic>4. Sets & logic</h3><p><code>∈</code> &ldquo;in&rdquo;, <code>∀</code> &ldquo;for all&rdquo;, <code>∃</code> &ldquo;exists&rdquo;, <code>⇒</code> &ldquo;implies&rdquo;.</p><table><thead><tr><th>Symbol</th><th>Meaning</th><th>Example</th></tr></thead><tbody><tr><td><code>∑</code></td><td>Summation</td><td><code>∑ xi = x1 + x2 + … + xn</code></td></tr><tr><td><code>∏</code></td><td>Product</td><td><code>∏ xi = x1 · x2 · … · xn</code></td></tr><tr><td><code>∫</code></td><td>Integral</td><td><code>∫ f(x) dx</code></td></tr><tr><td><code>∂</code></td><td>Partial derivative</td><td><code>∂f/∂x</code></td></tr><tr><td><code>∇</code></td><td>Nabla — gradient</td><td><code>∇f = (∂f/∂x, ∂f/∂y)</code></td></tr><tr><td><code>∈</code></td><td>Element of</td><td><code>x ∈ {1, 2, 3}</code></td></tr><tr><td><code>∀</code></td><td>For all</td><td><code>∀x > 0</code></td></tr><tr><td><code>∃</code></td><td>There exists</td><td><code>∃x : f(x) = 0</code></td></tr><tr><td><code>⇒</code></td><td>Implies</td><td><code>a = b ⇒ a + c = b + c</code></td></tr><tr><td><code>|x|</code></td><td>Absolute value / magnitude</td><td><code>|−3| = 3</code></td></tr><tr><td><code>‖x‖</code></td><td>Vector norm (length)</td><td><code>‖x‖ = √(x1² + x2²)</code></td></tr><tr><td><code>≈ ≠</code></td><td>Approximately / not equal</td><td><code>π ≈ 3.14</code>, <code>1 ≠ 2</code></td></tr></tbody></table><h3 id=constants>Constants</h3><pre tabindex=0><code>π ≈ 3.14159    # circle: C = 2πr
+e ≈ 2.71828    # Euler: d/dx e^x = e^x
+φ ≈ 1.61803    # golden ratio (1 + √5)/2
+√2 ≈ 1.41421   # unit-square diagonal
+γ ≈ 0.57721    # Euler–Mascheroni
+</code></pre><h3 id=order-of-operations>Order of operations</h3><pre tabindex=0><code>P — Parentheses     ( )
+E — Exponents       2^3 = 8
+M — Multiply / Divide  (left → right)
+A — Add / Subtract     (left → right)
+
+(2 + 3) × 4² = 5 × 16 = 80
+2 + 3 × 4   = 2 + 12 = 14
+</code></pre><h3 id=log-identities>Log identities</h3><pre tabindex=0><code>log(ab)  = log a + log b
+log(a/b) = log a − log b
+log(a^n) = n · log a
+log_b a  = log a / log b   # change base
+ln e = 1      log 1 = 0
+</code></pre><blockquote><p><strong>∑:</strong> <strong>Read the notation.</strong> Juxtaposition means multiply (<code>2x</code> is <code>2·x</code>, <code>ab</code> is <code>a·b</code>), and powers bind tighter than negation: <code>−x² = −(x²)</code>. When in doubt, add parentheses.</p></blockquote><h2 id=linear>Linear algebra</h2><p>Vectors and matrices are the machinery behind ML weights and 3D graphics. A matrix is a linear transform: it maps vectors to vectors.</p><p><strong>Vector</strong> (n components) → <strong>Matrix A</strong> (m×n numbers) → <strong>Transform</strong> (y = Ax) → <strong>Eigenvector</strong> (Av = λv) → <strong>Result</strong> (mapped vector)</p><h3 id=dot--cross-product>Dot & cross product</h3><pre tabindex=0><code># dot → scalar (alignment)
+a · b = |a||b| cos θ
+      = a1 b1 + a2 b2 + a3 b3
+
+# cross → vector (3D only, ⊥ to both)
+a × b = (a2b3 − a3b2,
+         a3b1 − a1b3,
+         a1b2 − a2b1)
+</code></pre><h3 id=matrix-multiplication>Matrix multiplication</h3><pre tabindex=0><code># (m×n) · (n×p) = (m×p)
+# entry (i,j) = row i · column j
+
+A = [[1, 2],
+     [3, 4]]
+B = [[5], [6]]
+A·B = [[1·5+2·6],
+       [3·5+4·6]] = [[17], [39]]
+</code></pre><h3 id=transpose--inverse--det>Transpose / inverse / det</h3><pre tabindex=0><code>A^T     # rows ↔ cols: (A^T)[i][j] = A[j][i]
+A^-1    # inverse: A·A^-1 = I
+det(A)  # volume scale of the transform
+        # invertible ⟺ det(A) ≠ 0
+</code></pre><table><thead><tr><th>Operation</th><th>Definition</th><th>Use in practice</th></tr></thead><tbody><tr><td><code>A^T</code></td><td>Transpose — flip rows and columns</td><td>Switch basis; dot product <code>a·b = a^T b</code></td></tr><tr><td><code>A^-1</code></td><td>Inverse — undo the transform</td><td>Solve <code>Ax = b</code> → <code>x = A^-1 b</code></td></tr><tr><td><code>det(A)</code></td><td>Determinant — volume scale factor</td><td>Invertibility test; change of variables</td></tr><tr><td><code>λ</code></td><td>Eigenvalue — <code>Av = λv</code></td><td>PCA, vibration modes, stability</td></tr><tr><td><code>rank(A)</code></td><td>Dimension of the column space</td><td>Linear independence, solvability</td></tr></tbody></table><blockquote><p><strong>M:</strong> <strong>ML & 3D:</strong> a neural-net layer&rsquo;s weights are a matrix, and the forward pass is <code>y = Ax + b</code>. In 3D graphics, rotation, scale, and translation are 4×4 matrices multiplied into every vertex.</p></blockquote><p><code>matrix</code> <code>eigenvalue</code> <code>transform</code> <code>tensor</code> <code>quaternion</code> <code>PCA</code></p><h2 id=prob>Probability & statistics</h2><p>Quantifying uncertainty: rules for combining events, the distributions that model real data, and the summaries that describe it.</p><h3 id=probability-rules>Probability rules</h3><pre tabindex=0><code>0 ≤ P(A) ≤ 1
+P(not A)  = 1 − P(A)
+P(A ∪ B)  = P(A) + P(B) − P(A ∩ B)
+P(A ∩ B)  = P(A) · P(B)   # if independent
+</code></pre><h3 id=conditional--bayes>Conditional & Bayes</h3><pre tabindex=0><code>P(A|B) = P(A ∩ B) / P(B)     # conditional
+P(A ∩ B) = P(A|B) · P(B)     # chain rule
+
+# Bayes&#39; theorem
+P(A|B) = P(B|A) · P(A) / P(B)
+</code></pre><h3 id=expectation--variance>Expectation & variance</h3><pre tabindex=0><code>E[X]    = Σ x · p(x)      # mean
+Var(X)  = E[X²] − E[X]²   # variance
+σ       = √Var(X)         # std deviation
+Cov(X,Y) = E[XY] − E[X]E[Y]
+</code></pre><table><thead><tr><th>Distribution</th><th>Notation</th><th>Models</th><th>Mean, Variance</th></tr></thead><tbody><tr><td>Uniform</td><td><code>U(a, b)</code></td><td>Equally likely in <code>[a, b]</code></td><td><code>(a+b)/2</code>, <code>(b−a)²/12</code></td></tr><tr><td>Bernoulli</td><td><code>Ber(p)</code></td><td>Single success/failure</td><td><code>p</code>, <code>p(1−p)</code></td></tr><tr><td>Binomial</td><td><code>Bin(n, p)</code></td><td>Successes in <code>n</code> trials</td><td><code>np</code>, <code>np(1−p)</code></td></tr><tr><td>Poisson</td><td><code>Pois(λ)</code></td><td>Events per interval</td><td><code>λ</code>, <code>λ</code></td></tr><tr><td>Normal</td><td><code>N(μ, σ²)</code></td><td>Sums, measurement noise</td><td><code>μ</code>, <code>σ²</code></td></tr><tr><td>Exponential</td><td><code>Exp(λ)</code></td><td>Wait time to next event</td><td><code>1/λ</code>, <code>1/λ²</code></td></tr></tbody></table><h3 id=bayes-theorem-worked>Bayes&rsquo; theorem, worked</h3><p>A rare disease hits 1% of people; a test is 99% accurate. A positive result is still only a coin flip.</p><pre tabindex=0><code>P(disease)   = 0.01
+P(+|disease) = 0.99
+P(+|healthy) = 0.01
+P(+) = 0.99·0.01 + 0.01·0.99 = 0.0198
+P(disease|+) = 0.99·0.01 / 0.0198 ≈ 0.5
+</code></pre><h3 id=hypothesis-testing>Hypothesis testing</h3><p>Frame the claim as the null hypothesis <code>H0</code>. The p-value is <code>P(data | H0 true)</code>; if it&rsquo;s below <code>α</code>, reject <code>H0</code>.</p><pre tabindex=0><code>H0: no effect
+α  = 0.05    # significance level
+if p-value &lt; α: reject H0
+</code></pre><details><summary>Hypothesis testing in one picture</summary><p>Every decision lands in one of four boxes. The two error types trade off — tightening one loosens the other.</p><ul><li><strong>Reject H0, H0 false</strong> — Correct — true positive, the test&rsquo;s power <code>1 − β</code>.</li><li><strong>Reject H0, H0 true</strong> — Type I error — false positive, rate <code>α</code>.</li><li><strong>Keep H0, H0 false</strong> — Type II error — false negative, rate <code>β</code>.</li><li><strong>Keep H0, H0 true</strong> — Correct — true negative.</li></ul></details><h2 id=calc>Calculus & optimization</h2><p>Derivatives measure change, gradients point uphill, and gradient descent steps downhill to the minimum — the engine of ML training.</p><h3 id=derivative>Derivative</h3><pre tabindex=0><code>f&#39;(x) = lim h→0 (f(x+h) − f(x)) / h
+
+d/dx x^n   = n x^(n−1)
+d/dx e^x   = e^x
+d/dx ln x  = 1/x
+d/dx sin x = cos x
+</code></pre><h3 id=chain-rule--partial>Chain rule & partial</h3><pre tabindex=0><code># chain rule: derivative of a composition
+d/dx f(g(x)) = f&#39;(g(x)) · g&#39;(x)
+
+# partial: treat other vars as constants
+∂/∂x (x² + xy + y²) = 2x + y
+</code></pre><h3 id=integral>Integral</h3><pre tabindex=0><code># definite integral = area under the curve
+∫[a,b] f(x) dx = F(b) − F(a)    # F&#39; = f
+
+∫ x^n dx = x^(n+1)/(n+1) + C
+∫ e^x dx = e^x + C
+∫ 1/x dx = ln|x| + C
+</code></pre><h3 id=gradient--descent>Gradient & descent</h3><pre tabindex=0><code># gradient: vector of partials, points uphill
+∇J = (∂J/∂θ1, ∂J/∂θ2, …)
+
+# gradient descent: step downhill
+θ = θ − α ∇J(θ)
+# α = learning rate (step size)
+</code></pre><h3 id=convexity>Convexity</h3><p>A convex function is a bowl: any chord lies above the graph, and a local minimum is the global minimum. Gradient descent is safe on convex losses.</p><pre tabindex=0><code>f&#39;&#39;(x) ≥ 0  → convex  (bowl)
+f&#39;&#39;(x) ≤ 0  → concave (hill)
+f&#39;&#39;(x) = 0  → inflection point
+</code></pre><ul><li><code>f'(x)</code> — derivative — instantaneous rate of change.</li><li><code>∂f/∂x</code> — partial derivative — change along one axis.</li><li><code>∇J(θ)</code> — gradient — all partials; points uphill.</li><li><code>θ = θ − α∇J</code> — gradient descent — step against the gradient.</li></ul><details><summary>The backprop connection</summary><p>Backpropagation is the chain rule applied across a network: compute the gradient of the loss with respect to every weight by multiplying local derivatives backward from the output.</p><pre tabindex=0><code># forward:  y = f3(w3 · f2(w2 · f1(w1 · x)))
+# backward: dL/dw1 = dL/dy · dy/dh2 · dh2/dh1 · dh1/dw1
+#           (chain rule, layer by layer)
+# update:   w = w − α · dL/dw
+</code></pre></details><blockquote><p><strong>α:</strong> <strong>Learning rate:</strong> too big and you overshoot and diverge; too small and you crawl. <code>0.1</code>, <code>0.01</code>, and <code>0.001</code> are common starting points — schedule it down as training converges.</p></blockquote><h2 id=discrete>Discrete math</h2><p>Counting, divisibility, and graphs — the math of algorithms, cryptography, and data structures.</p><h3 id=permutations--combinations>Permutations & combinations</h3><pre tabindex=0><code># permutations: order matters
+P(n, k) = n! / (n − k)!
+
+# combinations: order doesn&#39;t matter
+C(n, k) = n! / (k!(n − k)!)
+        = (n choose k)
+</code></pre><h3 id=modular-arithmetic>Modular arithmetic</h3><pre tabindex=0><code>a ≡ b (mod m)   # a − b divisible by m
+7 ≡ 1 (mod 3)
+
+(a + b) mod m = (a mod m + b mod m) mod m
+(a · b) mod m = (a mod m · b mod m) mod m
+# clock arithmetic: 14:00 = 2:00
+</code></pre><h3 id=number-theory>Number theory</h3><pre tabindex=0><code>gcd(a, b)            # greatest common divisor
+lcm(a, b) = a·b / gcd(a, b)
+prime: divisible only by 1 and itself
+# Euclid&#39;s algorithm
+gcd(a, b) = gcd(b, a mod b)
+</code></pre><h3 id=graph-theory>Graph theory</h3><pre tabindex=0><code>G = (V, E)       # vertices + edges
+degree(v) = # edges touching v
+Σ degrees = 2·|E|           # handshaking lemma
+tree: connected, no cycles, |E| = |V| − 1
+</code></pre><h3 id=boolean-logic>Boolean logic</h3><pre tabindex=0><code>AND:  A ∧ B   # true only if both
+OR:   A ∨ B   # false only if neither
+NOT:  ¬A      # flip
+XOR:  A ⊕ B   # true if exactly one
+
+De Morgan: ¬(A ∧ B) = ¬A ∨ ¬B
+           ¬(A ∨ B) = ¬A ∧ ¬B
+</code></pre><details><summary>Binomial coefficients & Pascal's triangle</summary><p>Each entry is the sum of the two above it, and row <code>n</code> lists the coefficients of <code>(x + y)^n</code>.</p><pre tabindex=0><code>        1
+      1   1
+    1   2   1
+  1   3   3   1
+1   4   6   4   1
+
+# (x + y)^4 = x⁴ + 4x³y + 6x²y² + 4xy³ + y⁴
+</code></pre></details><h2 id=dsp>Signal/DSP math</h2><p>The bridge between continuous reality and sampled data: complex numbers, the Fourier transform, and the sampling rules that keep a digital signal faithful. (Companion to the SDR page.)</p><p><kbd>1 GHz</kbd> = <kbd>1000 MHz</kbd> = <kbd>10⁶ kHz</kbd> = <kbd>10⁹ Hz</kbd></p><h3 id=complex-numbers>Complex numbers</h3><pre tabindex=0><code>z = a + jb            # rectangular
+  = r e^(jθ)          # polar
+  = r(cos θ + j sin θ)
+r = |z| = √(a² + b²)  # magnitude
+θ = atan2(b, a)       # phase
+conjugate: a − jb
+</code></pre><h3 id=eulers-formula>Euler&rsquo;s formula</h3><pre tabindex=0><code>e^(jθ) = cos θ + j sin θ
+
+e^(jπ) + 1 = 0      # Euler identity
+cos θ = (e^(jθ) + e^(−jθ)) / 2
+sin θ = (e^(jθ) − e^(−jθ)) / (2j)
+</code></pre><h3 id=fourier-transform>Fourier transform</h3><pre tabindex=0><code># continuous → spectrum
+X(f) = ∫ x(t) e^(−j2πft) dt
+
+# discrete (DFT / FFT)
+X[k] = Σ_n x[n] e^(−j2πkn/N)
+# k = frequency bin, N = samples
+</code></pre><ol><li>An ADC turns the continuous signal into discrete samples <code>x[n]</code>.</li><li>Multiply by a Hann window to reduce spectral leakage from the edges.</li><li>Transform time-domain samples into frequency bins <code>X[k]</code>.</li><li>Convolve with a kernel to pass a band and reject the rest.</li><li>Threshold, demodulate, or extract features from the result.</li></ol><h3 id=sampling--nyquist>Sampling & Nyquist</h3><pre tabindex=0><code>fs &gt; 2 · f_max   # Nyquist rate
+# sample too slowly → aliasing
+# (high freqs fold back as low freqs)
+
+Δt = 1/fs         # sample period
+# 44.1 kHz audio captures up to 22.05 kHz
+</code></pre><h3 id=convolution>Convolution</h3><pre tabindex=0><code># blur / echo = convolution with a kernel
+(y * h)[n] = Σ_k x[k] h[n − k]
+
+# convolution ⟺ multiplication in frequency
+FFT(x * h) = X(f) · H(f)   # filtering
+</code></pre><details><summary>Z-transform basics</summary><p>The Z-transform is the discrete-time analogue of the Laplace transform: a polynomial in <code>z^-1</code> that encodes a filter&rsquo;s response and reveals stability through its poles.</p><pre tabindex=0><code>X(z) = Σ x[n] z^(−n)      # z = e^(jω)
+
+# one-sample delay
+x[n−1]  ↔  z^-1 X(z)
+
+# transfer function; stable iff poles inside |z| = 1
+H(z) = Y(z) / X(z) = B(z) / A(z)
+</code></pre></details><blockquote><p><strong>∫:</strong> <strong>Time vs frequency:</strong> a signal is easier to read in one domain than the other — a filter is a convolution in time but a simple multiplication in frequency. The FFT is the shortcut between them, at <code>O(N log N)</code>.</p></blockquote><p><code>FFT</code> <code>convolution</code> <code>Nyquist</code> <code>IQ</code> <code>Z-transform</code> <code>DFT</code></p><h2 id=gotchas>Pitfalls</h2><p>Small mistakes that silently corrupt a calculation or a model.</p><h3 id=order-of-operations-1>Order of operations</h3><p><code>−x²</code> means <code>−(x²)</code>, not <code>(−x)²</code>. Division and multiplication bind equally and evaluate left to right.</p><pre tabindex=0><code>−2² = −4    (not 4)
+(−2)² = 4
+2/3·4 = (2/3)·4 = 8/3 ≈ 2.667
+</code></pre><h3 id=units--dimensions>Units & dimensions</h3><p>Carry units through the whole calculation. A mismatched unit (meters vs feet, seconds vs milliseconds) silently scales the answer wrong.</p><pre tabindex=0><code># 60 km / 1.5 h = 40 km/h
+# 60 m  / 1.5 s = 40 m/s   ← different!
+</code></pre><h3 id=floating-point-error>Floating-point error</h3><p><code>0.1 + 0.2</code> is not exactly <code>0.3</code>. Never compare floats with <code>==</code>; use a tolerance.</p><pre tabindex=0><code>0.1 + 0.2     # 0.30000000000000004
+abs(a − b) &lt; 1e-9   # compare this way
+</code></pre><h3 id=mean-vs-median>Mean vs median</h3><p>The mean is dragged by outliers; the median is not. For skewed data like income or latency, report the median — or both.</p><pre tabindex=0><code># [1, 2, 3, 4, 100]
+mean   = 22    # outlier pulled it up
+median = 3     # robust
+</code></pre><h3 id=integer-overflow>Integer overflow</h3><p>A signed 32-bit int wraps at <code>2,147,483,647</code>. Multiplication or summing can overflow silently and wrap negative.</p><pre tabindex=0><code># int32 max = 2^31 − 1 = 2147483647
+2_000_000_000 + 2_000_000_000  # overflows
+# use int64 / bigint for large counts
+</code></pre><h3 id=correlation--causation>Correlation ≠ causation</h3><p>Two series moving together doesn&rsquo;t mean one causes the other — a third factor or pure coincidence is common.</p><pre tabindex=0><code># ice cream sales ↑ and drownings ↑
+# both driven by summer, not each other
+# control for confounders, run experiments
+</code></pre><h3 id=radians-vs-degrees>Radians vs degrees</h3><p>Trig functions (<code>sin</code>, <code>cos</code>, <code>tan</code>) take <strong>radians</strong> in code, not degrees. Forgetting to convert silently distorts angles, rotations, and FFT phases.</p><pre tabindex=0><code># 2π rad = 360°
+rad = deg × π / 180
+deg = rad × 180 / π
+sin(90)    # 0.894…  ← radians, NOT 1
+sin(π/2)   # 1        ← what you meant
+</code></pre><h3 id=percent-vs-percentage-points>Percent vs percentage points</h3><p>A change from <code>1%</code> to <code>2%</code> is +1 <strong>percentage point</strong> but a +100% <strong>relative</strong> change. Mixing them up mangles rates and A/B results.</p><pre tabindex=0><code>1% → 2%     # +1 pp,  +100% relative
+50% → 55%   # +5 pp,  +10% relative
+# state which one you mean
+</code></pre><blockquote><p><strong>⚠:</strong> <strong>Check your inputs.</strong> Most &ldquo;math bugs&rdquo; aren&rsquo;t the formula — they&rsquo;re a wrong unit, an off-by-one index, a silent overflow, or comparing floats with <code>==</code>. Sanity-check the magnitude of every result.</p></blockquote></div></article></div><footer class=foot><span>slop-stuff</span>
+<span class=muted>served under <code>makefunstuff.github.io/slop-stuff/&lt;folder>/</code></span>
+<a href=https://makefunstuff.github.io/slop-stuff/links/>links</a>
+<a href=https://github.com/makefunstuff/slop-stuff>repo</a></footer><script src=https://makefunstuff.github.io/slop-stuff/js/wiki.js defer></script></body></html>

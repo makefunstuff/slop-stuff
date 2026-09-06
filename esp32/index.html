@@ -1,0 +1,133 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>ESP32 — slop-stuff</title><meta name=description content="GPIO, UART/I2C/SPI, Wi-Fi, storage, power, and OTA on the ESP32."><link rel=canonical href=https://makefunstuff.github.io/slop-stuff/esp32/><link rel=stylesheet href=https://makefunstuff.github.io/slop-stuff/css/wiki.css><script>(function(){var t="slop-theme",e=localStorage.getItem(t);e||(e=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"),document.documentElement.setAttribute("data-theme",e)})()</script></head><body><header class=bar><a class=brand href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a>
+<span class="muted hide-narrow">cheatsheets & experiments</span><form class=seek role=search action=https://makefunstuff.github.io/slop-stuff/ method=get><input id=q type=search name=q placeholder="search guides…" autocomplete=off aria-label="Search guides"><div id=hits class=hits hidden></div></form><button type=button class=icon id=theme title="Toggle theme" aria-label="Toggle theme">◐</button>
+<a class=icon href=https://github.com/makefunstuff/slop-stuff rel=noreferrer>git</a></header><div class="wrap wrap-guide"><aside class=toc aria-label="On this page"><p class=toc-label>on this page</p><nav id=TableOfContents><ul><li><a href=#quickref>Quick reference</a></li><li><a href=#start>Toolchains & first flash</a></li><li><a href=#gpio>GPIO & digital IO</a></li><li><a href=#peripherals>UART · I2C · SPI · ADC · PWM</a></li><li><a href=#wifi>Wi-Fi & networking</a></li><li><a href=#storage>Storage & flash</a></li><li><a href=#power>Sleep & power</a></li><li><a href=#ota>Over-the-air updates</a></li><li><a href=#gotchas>Pitfalls</a></li><li><a href=#related>Keep exploring</a></li></ul></nav></aside><article class=doc><p class=crumb><a href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a> / Embedded & hardware</p><h1>ESP32</h1><p class=lede>Embedded work on the ESP32.</p><p class="muted sub">GPIO, UART/I2C/SPI, Wi-Fi, storage, power, and OTA on the ESP32.</p><p class=tags><span>embedded</span><span>GPIO</span><span>WiFi</span><span>OTA</span></p><div class=body><p>A dual-core Xtensa MCU with Wi-Fi and Bluetooth for a few dollars. This guide covers the Arduino core and ESP-IDF side by side — from first flash to over-the-air updates.</p><h2 id=quickref>Quick reference</h2><p>The commands and calls you&rsquo;ll reach for most — ESP-IDF and Arduino core side by side.</p><h3 id=build--flash--monitor>Build · flash · monitor</h3><ul><li><code>idf.py build</code> — compile the project</li><li><code>idf.py flash monitor</code> — upload + open serial</li><li><code>arduino-cli compile -b esp32:esp32:esp32 blink</code> — build a sketch</li><li><code>arduino-cli upload -p /dev/ttyUSB0 -b esp32:esp32:esp32</code> — flash the sketch</li></ul><h3 id=arduino-core-essentials>Arduino core essentials</h3><ul><li><code>Serial.begin(115200)</code> — open UART0 debug</li><li><code>pinMode(2, OUTPUT)</code> — set a pin direction</li><li><code>digitalWrite(2, HIGH)</code> — drive a pin</li><li><code>WiFi.begin("ssid", "pass")</code> — join a Wi-Fi network</li><li><code>esp_deep_sleep_start()</code> — sleep — never returns</li><li><code>ArduinoOTA.handle()</code> — serve OTA updates</li></ul><blockquote><p><strong>⌁:</strong> <strong>At a glance:</strong> serial log at <code>115200</code> · GPIOs are 3.3 V, not 5 V tolerant · hold <kbd>BOOT</kbd> + tap <kbd>EN</kbd> for download mode · <code>idf.py menuconfig</code> for settings · Arduino core 3.x replaced <code>ledcSetup()</code> with <code>ledcAttach(pin, freq, res)</code>.</p></blockquote><h2 id=start>Toolchains & first flash</h2><p>Three toolchains target the same silicon. Pick one and stick with it: ESP-IDF for bare-metal control, Arduino core for speed, PlatformIO for editor workflows.</p><h3 id=1-install>1. Install</h3><pre tabindex=0><code># ESP-IDF
+brew install espressif/esp-idf/esp-idf
+. $IDF_PATH/export.sh   # per shell
+
+# Arduino CLI
+brew install arduino-cli
+arduino-cli core install esp32:esp32
+</code></pre><h3 id=2-esp-idf>2. ESP-IDF</h3><pre tabindex=0><code>idf.py create-project blink
+cd blink
+idf.py set-target esp32
+idf.py menuconfig
+idf.py build
+idf.py flash monitor
+</code></pre><h3 id=3-arduino-cli>3. Arduino CLI</h3><pre tabindex=0><code>arduino-cli compile --fqbn esp32:esp32:esp32 blink
+arduino-cli upload -p /dev/ttyUSB0 --fqbn esp32:esp32:esp32
+arduino-cli monitor -p /dev/ttyUSB0 -c baudrate=115200
+</code></pre><h3 id=4-platformio>4. PlatformIO</h3><pre tabindex=0><code>; platformio.ini
+[env:esp32dev]
+platform = espressif32
+board = esp32dev
+framework = arduino
+monitor_speed = 115200
+</code></pre><p><code>pio run -t upload</code> to flash, <code>pio device monitor</code> for serial.</p><blockquote><p><strong>KEY:</strong> <strong>Any ESP32 DevKitC / WROOM dev board works.</strong> Flash over USB through the on-board CP2102/CH340 bridge at <code>115200</code> baud. If the board lacks auto-reset, hold <kbd>BOOT</kbd> (GPIO0) and tap <kbd>EN</kbd> to enter download mode.</p></blockquote><h2 id=gpio>GPIO & digital IO</h2><p>The Arduino core maps directly onto ESP-IDF&rsquo;s GPIO driver. Pins are 3.3 V and source ~12 mA each — check per-pin limits before driving LEDs.</p><table><thead><tr><th>Task</th><th>Arduino core</th><th>ESP-IDF</th></tr></thead><tbody><tr><td>Set direction</td><td><code>pinMode(2, OUTPUT)</code></td><td><code>gpio_set_direction(GPIO_NUM_2, GPIO_MODE_OUTPUT)</code></td></tr><tr><td>Write</td><td><code>digitalWrite(2, HIGH)</code></td><td><code>gpio_set_level(GPIO_NUM_2, 1)</code></td></tr><tr><td>Read</td><td><code>digitalRead(2)</code></td><td><code>gpio_get_level(GPIO_NUM_2)</code></td></tr><tr><td>Pull-up</td><td><code>pinMode(2, INPUT_PULLUP)</code></td><td><code>gpio_set_pull_mode(GPIO_NUM_2, GPIO_PULLUP_ONLY)</code></td></tr><tr><td>Toggle</td><td><code>digitalWrite(2, !digitalRead(2))</code></td><td><code>gpio_set_level(GPIO_NUM_2, !gpio_get_level(GPIO_NUM_2))</code></td></tr></tbody></table><h3 id=blink-arduino>Blink (Arduino)</h3><p>On most devkits the on-board LED is <code>GPIO2</code>.</p><pre tabindex=0><code>#define LED 2
+void setup() { pinMode(LED, OUTPUT); }
+void loop() {
+  digitalWrite(LED, HIGH);
+  delay(1000);
+  digitalWrite(LED, LOW);
+  delay(1000);
+}
+</code></pre><h3 id=interrupt--debounce>Interrupt + debounce</h3><p>ISRs must be <code>IRAM_ATTR</code> and stay tiny — set a flag, do the work in <code>loop()</code>.</p><pre tabindex=0><code>#define BTN 4
+volatile bool pressed = false;
+void IRAM_ATTR onPress() { pressed = true; }
+
+void setup() {
+  pinMode(BTN, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(BTN),
+                  onPress, FALLING);
+}
+void loop() {
+  if (pressed) {
+    pressed = false;
+    delay(50);              // debounce
+    if (digitalRead(BTN) == LOW) { /* work */ }
+  }
+}
+</code></pre><blockquote><p><strong>!:</strong> <strong>Arduino core 3.x:</strong> <code>analogWrite()</code> now works (LEDC-backed), but <code>ledcSetup()</code>/<code>ledcAttachPin()</code> are removed — use <code>ledcAttach(pin, freq, res)</code> + <code>ledcWrite(pin, duty)</code>. And <strong>ADC2 pins conflict with Wi-Fi</strong>: prefer ADC1 (<code>GPIO32–39</code>) when the radio is on.</p></blockquote><h2 id=peripherals>UART · I2C · SPI · ADC · PWM</h2><p>The ESP32 exposes three UARTs, two I2C and four SPI buses, plus a 12-bit ADC and LEDC PWM. Default pins below are for the classic ESP32 (WROOM devkit); on Arduino core 3.x <code>Serial1</code> defaults to GPIO26/27 and <code>Serial2</code> to GPIO4/25.</p><table><thead><tr><th>Peripheral</th><th>Default pins</th><th>API</th></tr></thead><tbody><tr><td>UART</td><td>TX0=1 · RX0=3 (debug)</td><td><code>Serial.begin(115200)</code>; <code>Serial2.begin(115200, SERIAL_8N1, RX2, TX2)</code></td></tr><tr><td>I2C</td><td>SDA=21 · SCL=22</td><td><code>Wire.begin(21, 22)</code>; <code>Wire.beginTransmission(0x3C)</code></td></tr><tr><td>SPI (VSPI)</td><td>SCK=18 · MISO=19 · MOSI=23 · SS=5</td><td><code>SPI.begin(18, 19, 23, 5)</code>; <code>SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE0))</code></td></tr><tr><td>ADC</td><td>12-bit → 0–4095</td><td><code>analogRead(34)</code>; <code>analogReadResolution(12)</code></td></tr><tr><td>PWM (LEDC)</td><td>any GPIO</td><td><code>ledcAttach(2, 5000, 8)</code>; <code>ledcWrite(2, 128)</code></td></tr><tr><td>DAC</td><td>25 (DAC1) · 26 (DAC2)</td><td><code>dacWrite(25, 128)</code> → 0–255</td></tr></tbody></table><h3 id=i2c-scanner>I2C scanner</h3><p>Find every device on the bus in one pass.</p><pre tabindex=0><code>#include &lt;Wire.h&gt;
+void setup() {
+  Serial.begin(115200);
+  Wire.begin(21, 22);
+  for (byte a = 1; a &lt; 127; a++) {
+    Wire.beginTransmission(a);
+    if (Wire.endTransmission() == 0)
+      Serial.printf(&#34;Found 0x%02X\n&#34;, a);
+  }
+}
+</code></pre><h3 id=pwm-fade-ledc>PWM fade (LEDC)</h3><p><code>ledcAttach(pin, freq, resolution)</code> then <code>ledcWrite(pin, duty)</code>.</p><pre tabindex=0><code>ledcAttach(2, 5000, 8);  // GPIO2, 5 kHz, 8-bit
+for (int d = 0; d &lt;= 255; d++) {
+  ledcWrite(2, d);
+  delay(10);
+}
+</code></pre><h2 id=wifi>Wi-Fi & networking</h2><p>Connect as a station, host an access point, or both. ESP-IDF exposes the same via <code>esp_wifi</code> + <code>esp_netif</code>.</p><h3 id=station-sta>Station (STA)</h3><p>Block until connected, then print the assigned IP.</p><pre tabindex=0><code>#include &lt;WiFi.h&gt;
+void setup() {
+  Serial.begin(115200);
+  WiFi.begin(&#34;ssid&#34;, &#34;password&#34;);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(&#34;.&#34;);
+  }
+  Serial.println(WiFi.localIP());
+}
+</code></pre><h3 id=access-point-ap>Access point (AP)</h3><p>Great for first-time setup or a captive config page.</p><pre tabindex=0><code>WiFi.softAP(&#34;esp32-setup&#34;, &#34;password&#34;);
+// default gateway: 192.168.4.1
+Serial.println(WiFi.softAPIP());
+</code></pre><h3 id=http-get>HTTP GET</h3><p>Fetch JSON or a config blob from any endpoint.</p><pre tabindex=0><code>#include &lt;HTTPClient.h&gt;
+HTTPClient http;
+http.begin(&#34;http://example.com/api&#34;);
+int code = http.GET();
+if (code == HTTP_CODE_OK) {
+  String body = http.getString();
+  Serial.println(body);
+}
+http.end();
+</code></pre><h3 id=mdns>mDNS</h3><p>Reach the board by name instead of a changing IP.</p><pre tabindex=0><code>#include &lt;ESPmDNS.h&gt;
+MDNS.begin(&#34;esp32&#34;);
+MDNS.addService(&#34;http&#34;, &#34;tcp&#34;, 80);
+// browse to http://esp32.local
+</code></pre><blockquote><p><strong>⌁:</strong> <strong>ESP-IDF:</strong> call <code>esp_netif_init()</code>, <code>esp_event_loop_create_default()</code>, then <code>esp_wifi_init()</code> → <code>esp_wifi_set_mode()</code> → <code>esp_wifi_start()</code>. Arduino wraps this whole sequence behind <code>WiFi.begin()</code>.</p></blockquote><h2 id=storage>Storage & flash</h2><p>Keep small config in wear-leveled NVS, files in SPIFFS/LittleFS, and control the layout with a partition table.</p><h3 id=nvs-preferences>NVS (Preferences)</h3><p>Key-value store backed by wear-leveled flash. <code>false</code> = read/write, <code>true</code> = read-only.</p><pre tabindex=0><code>#include &lt;Preferences.h&gt;
+Preferences prefs;
+prefs.begin(&#34;app&#34;, false);
+prefs.putString(&#34;ssid&#34;, &#34;my-wifi&#34;);
+String s = prefs.getString(&#34;ssid&#34;, &#34;&#34;);
+prefs.end();
+</code></pre><h3 id=spiffs>SPIFFS</h3><p>Simple flat filesystem, now legacy in favor of LittleFS.</p><pre tabindex=0><code>SPIFFS.begin(true);   // format on fail
+File f = SPIFFS.open(&#34;/data.txt&#34;, &#34;r&#34;);
+String s = f.readString();
+f.close();
+</code></pre><h3 id=littlefs>LittleFS</h3><p>Prefer this for new projects — faster and directory-aware.</p><pre tabindex=0><code>LittleFS.begin(true);
+File f = LittleFS.open(&#34;/cfg.json&#34;, &#34;w&#34;);
+f.print(&#34;{\&#34;v\&#34;:1}&#34;);
+f.close();
+</code></pre><h3 id=partitionscsv>partitions.csv</h3><p>Define regions of flash; select it in <code>menuconfig</code> (or <code>board_build.partitions</code> in PlatformIO).</p><pre tabindex=0><code># Name,   Type, SubType, Offset,  Size,   Flags
+nvs,      data, nvs,     0x9000,  0x5000,
+phy_init, data, phy,     0xf000,  0x1000,
+factory,  app,  factory, 0x10000, 1M,
+spiffs,   data, spiffs,  0x110000, 0xF0000,
+</code></pre><h2 id=power>Sleep & power</h2><p>Deep sleep shuts the cores off entirely; light sleep keeps RAM. Both wake from RTC sources. Choose the mode that matches your duty cycle.</p><ul><li><strong>Deep sleep</strong> — ~5–10 µA. Cores off, RAM lost. <code>esp_deep_sleep_start()</code> never returns.</li><li><strong>Light sleep</strong> — ~0.8 mA. RAM preserved; <code>esp_light_sleep_start()</code> resumes where it left off.</li><li><strong>Modem sleep</strong> — Wi-Fi DTIM-cycled, connection kept. Automatic when the radio idles.</li><li><strong>Active</strong> — ~100–240 mA, Wi-Fi TX peaks ~350 mA. Budget ≥500 mA for the supply.</li></ul><h3 id=deep-sleep--wake>Deep sleep + wake</h3><p>Enable sources, then sleep. The wake reason is readable after reboot.</p><pre tabindex=0><code>#define WAKE_PIN GPIO_NUM_33
+esp_sleep_enable_timer_wakeup(30 * 1000000ULL); // 30 s
+esp_sleep_enable_ext0_wakeup(WAKE_PIN, 0);      // LOW
+esp_deep_sleep_start();                          // no return
+</code></pre><h3 id=wake-causes>Wake causes</h3><ul><li><code>ESP_SLEEP_WAKEUP_TIMER</code> — timer elapsed.</li><li><code>ESP_SLEEP_WAKEUP_EXT0</code> — single pin matched level.</li><li><code>ESP_SLEEP_WAKEUP_EXT1</code> — pin mask matched pattern.</li><li><code>ESP_SLEEP_WAKEUP_TOUCHPAD</code> — touch sensor triggered.</li></ul><blockquote><p><strong>!:</strong> <strong>Brownout detector</strong> resets the chip when VIN sags under load (Wi-Fi TX spikes). Use a 5 V / ≥500 mA supply with a solid 3.3 V LDO and a decoupling cap near the module. Read the cause with <code>esp_sleep_get_wakeup_cause()</code>.</p></blockquote><h2 id=ota>Over-the-air updates</h2><p>Flash wirelessly via the Arduino IDE&rsquo;s built-in OTA, or pull a binary over HTTPS. ESP-IDF adds a native <code>esp_ota</code> API with rollback.</p><h3 id=arduinoota>ArduinoOTA</h3><p>Appears as a network port in the IDE after <code>begin()</code>.</p><pre tabindex=0><code>#include &lt;ArduinoOTA.h&gt;
+void setup() {
+  ArduinoOTA.setHostname(&#34;esp32&#34;);
+  ArduinoOTA.setPassword(&#34;secret&#34;);
+  ArduinoOTA.begin();
+}
+void loop() { ArduinoOTA.handle(); }
+</code></pre><h3 id=https-update>HTTPS update</h3><p>Download a firmware binary and stream it into the update partition.</p><pre tabindex=0><code>#include &lt;Update.h&gt;
+HTTPClient http;
+http.begin(&#34;http://host/fw.bin&#34;);
+int len = http.GET();
+Update.begin(len);
+Update.writeStream(http.getStream());
+if (Update.end() &amp;&amp; Update.isFinished())
+  ESP.restart();
+</code></pre><blockquote><p><strong>✓:</strong> <strong>ESP-IDF + rollback:</strong> <code>esp_ota_begin()</code> → <code>esp_ota_write()</code> → <code>esp_ota_end()</code> → <code>esp_ota_set_boot_partition()</code>. Enable <code>CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE</code>, then confirm a good boot with <code>esp_ota_mark_app_valid_cancel_rollback()</code> — or revert with <code>esp_ota_mark_app_invalid_rollback_and_reboot()</code>.</p></blockquote><h2 id=gotchas>Pitfalls</h2><p>Eight things that bite everyone once. Read the serial log at <code>115200</code> before guessing.</p><details><summary>Watchdog resets</summary><p>Two watchdogs guard the ESP32: the interrupt WDT and the task WDT. A long <code>delay()</code> in a task, or an ISR that blocks, trips <code>Task watchdog got triggered</code>. Feed it with <code>esp_task_wdt_reset()</code>, or raise <code>CONFIG_ESP_TASK_WDT_TIMEOUT_S</code>.</p></details><details><summary>Brownout detector</summary><p>A voltage sag under load prints <code>Brownout detector was triggered</code> and reboots the chip. It&rsquo;s almost always the power supply, not the code — beef up the regulator and add a cap, or raise the brownout threshold in menuconfig.</p></details><details><summary>Flash size mismatch</summary><p>A wrong <code>flash_size</code> in menuconfig (or <code>esptool</code>) makes the app crash or fail to boot. Most devkits are 4 MB — set <code>Serial flasher config → Flash size</code> to match the module&rsquo;s datasheet.</p></details><details><summary>Boot loops</summary><p>Watch the serial at <code>115200</code> — it usually prints the panic reason and a backtrace. When in doubt, wipe and reflash:</p><pre tabindex=0><code>esptool.py --port /dev/ttyUSB0 erase_flash
+idf.py flash   # or: arduino-cli upload …
+</code></pre></details><details><summary>3.3 V logic vs 5 V</summary><p>GPIOs are <strong>3.3 V and not 5 V tolerant</strong>. Feeding a 5 V signal in can damage the pin. Use a level shifter or a resistor divider for 5 V sensors and displays.</p></details><details><summary>Boot strapping pins</summary><p>These pins are sampled at reset — the wrong pull changes boot behavior. <code>GPIO0</code> low = download mode; <code>GPIO2</code> must be high; <code>GPIO12</code> selects flash voltage (keep low at boot); <code>GPIO15</code> high keeps the boot log on UART0. Avoid hard-wiring them to conflicting levels.</p></details><details><summary>Arduino core 2.x → 3.x breaking changes</summary><p>The 3.x line (ESP-IDF 5.1+) removed several long-standing APIs: <code>ledcSetup()</code>/<code>ledcAttachPin()</code> (now <code>ledcAttach()</code> + <code>ledcWrite(pin, duty)</code>), <code>hallRead()</code> (hall sensor dropped), and <code>adcAttachPin()</code>. It also changed <code>Serial1</code>/<code>Serial2</code> default pins and added a proper <code>analogWrite()</code>. 2.x examples won&rsquo;t compile unmodified — pin the old core with <code>arduino-cli core install esp32:esp32@2.0.17</code> if you need to stay.</p></details><details><summary>OTA partition table</summary><p>OTA needs two app slots so the running firmware survives while the new image downloads: a partition table with <code>factory</code> + <code>ota_0</code> + <code>ota_1</code> (or the Arduino default <code>app0</code>/<code>app1</code>). With a single <code>factory</code> slot, <code>Update.writeStream()</code> fails with <code>Not enough space</code>. Budget ≥4 MB flash to hold two images.</p></details><h2 id=related>Keep exploring</h2><p>Neighboring cheatsheets for the same workbench.</p><h3 id=esphome>ESPHome</h3><p>Firmware-as-YAML on the same silicon — sensors, Wi-Fi, and Home Assistant discovery.</p><p>ESPHome →</p><h3 id=embedded-dev>Embedded dev</h3><p>Cross-platform embedded fundamentals, toolchains, and hardware workflows.</p><p>Embedded dev →</p><h3 id=electrical>Electrical</h3><p>The physics behind the firmware — voltage, current, and power supplies.</p><p>Electrical →</p></div></article></div><footer class=foot><span>slop-stuff</span>
+<span class=muted>served under <code>makefunstuff.github.io/slop-stuff/&lt;folder>/</code></span>
+<a href=https://makefunstuff.github.io/slop-stuff/links/>links</a>
+<a href=https://github.com/makefunstuff/slop-stuff>repo</a></footer><script src=https://makefunstuff.github.io/slop-stuff/js/wiki.js defer></script></body></html>

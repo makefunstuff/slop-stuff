@@ -1,0 +1,188 @@
+<!doctype html><html lang=en><head><meta name=generator content="Hugo 0.165.0"><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>slop-stuff</title><meta name=description content="Cheatsheets, guides, and experiments — a dense hacker wiki."><link rel=canonical href=https://makefunstuff.github.io/slop-stuff/><link rel=stylesheet href=https://makefunstuff.github.io/slop-stuff/css/wiki.css><script>(function(){var t="slop-theme",e=localStorage.getItem(t);e||(e=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"),document.documentElement.setAttribute("data-theme",e)})()</script></head><body><header class=bar><a class=brand href=https://makefunstuff.github.io/slop-stuff/>slop-stuff</a>
+<span class="muted hide-narrow">cheatsheets & experiments</span><form class=seek role=search action=https://makefunstuff.github.io/slop-stuff/ method=get><input id=q type=search name=q placeholder="search guides…" autocomplete=off aria-label="Search guides"><div id=hits class=hits hidden></div></form><button type=button class=icon id=theme title="Toggle theme" aria-label="Toggle theme">◐</button>
+<a class=icon href=https://github.com/makefunstuff/slop-stuff rel=noreferrer>git</a></header><div class=wrap><main class=hub><p class=lede>Cheatsheets and usage notes, grouped by topic. Paths stay kebab-case
+(<code>/rust/</code>, <code>/esp32/</code>). Bigger games live in other repos and are linked
+below — they are not built here.</p><p class="stats muted">58 guides
+· <a href=https://makefunstuff.github.io/slop-stuff/links/>link library</a>
+· 1 experiment</p><section class=cat id=ai-agents><h2>AI & agents</h2><ul><li><a href=https://makefunstuff.github.io/slop-stuff/herdr-agentic/><code>herdr-agentic</code></a>
+<span class=sep>—</span>
+<span class=t>Agentic patterns with Herdr</span>
+<span class="d muted">Orchestrator-worker, reviewer loops, parallel worktrees, and blocked-state handling for driving agents.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/herdr-cheatsheet/><code>herdr-cheatsheet</code></a>
+<span class=sep>—</span>
+<span class=t>Herdr</span>
+<span class="d muted">Persistent terminal workspaces, panes, agent states, remote sessions, automation, and plugins.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/hermes-agent/><code>hermes-agent</code></a>
+<span class=sep>—</span>
+<span class=t>Hermes Agent</span>
+<span class="d muted">Terminal-first coding agent: CLI, keybindings, slash commands, sessions, providers, and configuration.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/llm-ai/><code>llm-ai</code></a>
+<span class=sep>—</span>
+<span class=t>LLM & AI</span>
+<span class="d muted">Tokens, embeddings, attention, transformers, RAG, prompting, agents, and evals.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/omp/><code>omp</code></a>
+<span class=sep>—</span>
+<span class=t>omp harness</span>
+<span class="d muted">The coding agent with the IDE wired in: 32 tools, subagents, LSP/DAP, hashline edits, and 40+ providers.</span></li></ul></section><section class=cat id=languages><h2>Languages</h2><ul><li><a href=https://makefunstuff.github.io/slop-stuff/c/><code>c</code></a>
+<span class=sep>—</span>
+<span class=t>C</span>
+<span class="d muted">C17 pointers, ownership, strings, structs, UB hotspots, sanitizers, and C23 deltas.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/cpp/><code>cpp</code></a>
+<span class=sep>—</span>
+<span class=t>C++</span>
+<span class="d muted">C++20 RAII, smart pointers, STL picks, concepts, views lifetimes, UB, and sanitizers.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/golang/><code>golang</code></a>
+<span class=sep>—</span>
+<span class=t>Go</span>
+<span class="d muted">Modules, structs, interfaces, goroutines, channels, and errors.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/lua/><code>lua</code></a>
+<span class=sep>—</span>
+<span class=t>Lua</span>
+<span class="d muted">Tables, metatables, patterns, modules, and embedding.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/python/><code>python</code></a>
+<span class=sep>—</span>
+<span class=t>Python</span>
+<span class="d muted">Comprehensions, decorators, dataclasses, and the standard library.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/rust/><code>rust</code></a>
+<span class=sep>—</span>
+<span class=t>Rust</span>
+<span class="d muted">Ownership, cargo, match, Result, traits, and concurrency.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/typescript/><code>typescript</code></a>
+<span class=sep>—</span>
+<span class=t>TypeScript</span>
+<span class="d muted">Types, interfaces, generics, narrowing, and utility types.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/zig/><code>zig</code></a>
+<span class=sep>—</span>
+<span class=t>Zig</span>
+<span class="d muted">Comptime, memory/allocators, optionals/errors, build.zig, and C interop.</span></li></ul></section><section class=cat id=cli-shell><h2>CLI & shell</h2><ul><li><a href=https://makefunstuff.github.io/slop-stuff/bash/><code>bash</code></a>
+<span class=sep>—</span>
+<span class=t>Bash</span>
+<span class="d muted">Variables, quoting, loops, conditionals, functions, and expansion.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/jq/><code>jq</code></a>
+<span class=sep>—</span>
+<span class=t>jq</span>
+<span class="d muted">The command-line JSON processor: filters, operators, recipes, and curl pipelines that actually work.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/linux-cli/><code>linux-cli</code></a>
+<span class=sep>—</span>
+<span class=t>Linux CLI essentials</span>
+<span class="d muted">sed, awk, grep, find, xargs, sort, tar, git, and networking.</span></li></ul></section><section class=cat id=cloud-devops-observability><h2>Cloud, DevOps & observability</h2><ul><li><a href=https://makefunstuff.github.io/slop-stuff/gcloud/><code>gcloud</code></a>
+<span class=sep>—</span>
+<span class=t>gcloud</span>
+<span class="d muted">Compute Engine, Cloud Storage, GKE, IAM, Cloud SQL, and logging.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/grafana/><code>grafana</code></a>
+<span class=sep>—</span>
+<span class=t>Grafana</span>
+<span class="d muted">Panels, variables, transforms, alerts, and provisioning as code.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/devops/><code>devops</code></a>
+<span class=sep>—</span>
+<span class=t>Infrastructure & DevOps</span>
+<span class="d muted">CI/CD, Docker & containers, orchestration, IaC, observability, and deployment strategies.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/kubectl/><code>kubectl</code></a>
+<span class=sep>—</span>
+<span class=t>kubectl</span>
+<span class="d muted">Inspect, run, edit, debug, and switch Kubernetes contexts from the shell.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/promql/><code>promql</code></a>
+<span class=sep>—</span>
+<span class=t>PromQL</span>
+<span class="d muted">Selectors, rates, aggregation, and functions for Prometheus.</span></li></ul></section><section class=cat id=data-databases><h2>Data & databases</h2><ul><li><a href=https://makefunstuff.github.io/slop-stuff/db-optimization/><code>db-optimization</code></a>
+<span class=sep>—</span>
+<span class=t>Database optimization</span>
+<span class="d muted">Indexes, query plans, normalization, Redis caching, and tuning.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/excel/><code>excel</code></a>
+<span class=sep>—</span>
+<span class=t>Excel & spreadsheets</span>
+<span class="d muted">Formulas, functions, pivot tables, lookups, and shortcuts.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/kafka/><code>kafka</code></a>
+<span class=sep>—</span>
+<span class=t>Kafka</span>
+<span class="d muted">Topics, partitions, producers, consumers, offsets, and operations.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/postgres/><code>postgres</code></a>
+<span class=sep>—</span>
+<span class=t>Postgres management</span>
+<span class="d muted">psql, users/permissions, backups, replication, tuning, and monitoring.</span></li></ul></section><section class=cat id=embedded-hardware><h2>Embedded & hardware</h2><ul><li><a href=https://makefunstuff.github.io/slop-stuff/electrical/><code>electrical</code></a>
+<span class=sep>—</span>
+<span class=t>Electrical concepts</span>
+<span class="d muted">Ohm's law, logic levels, pull-ups, voltage dividers, and power for firmware devs.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/embedded/><code>embedded</code></a>
+<span class=sep>—</span>
+<span class=t>Embedded dev</span>
+<span class="d muted">Bare-metal and RTOS: registers, interrupts, timers, FreeRTOS, RP2040/Pico, and debugging.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/esp32/><code>esp32</code></a>
+<span class=sep>—</span>
+<span class=t>ESP32</span>
+<span class="d muted">GPIO, UART/I2C/SPI, Wi-Fi, storage, power, and OTA on the ESP32.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/esphome/><code>esphome</code></a>
+<span class=sep>—</span>
+<span class=t>ESPHome</span>
+<span class="d muted">YAML-defined firmware, sensors, and home automation for ESP devices.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/hamradio/><code>hamradio</code></a>
+<span class=sep>—</span>
+<span class=t>Radio amateur</span>
+<span class="d muted">Bands by ITU region, propagation, antennas, SWR/Γ, feedline, modes, safety, and RF kill-list.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/sdr/><code>sdr</code></a>
+<span class=sep>—</span>
+<span class=t>SDR</span>
+<span class="d muted">Software-defined radio: IQ, sampling, DSP, GNU Radio, and common signals.</span></li></ul></section><section class=cat id=electronics><h2>Electronics</h2><ul><li><a href=https://makefunstuff.github.io/slop-stuff/hardware/><code>hardware</code></a>
+<span class=sep>—</span>
+<span class=t>DIY hardware list</span>
+<span class="d muted">Modules, ICs, microcontrollers, and sensors — typical and unusual — for DIY builds.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/electronics/><code>electronics</code></a>
+<span class=sep>—</span>
+<span class=t>Electronics</span>
+<span class="d muted">Components, circuits, op-amps, power supplies, and practical electronics.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/kicad/><code>kicad</code></a>
+<span class=sep>—</span>
+<span class=t>KiCad</span>
+<span class="d muted">Schematic, layout, footprints, design rules, and fabrication output.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/tubes/><code>tubes</code></a>
+<span class=sep>—</span>
+<span class=t>Transistors & tubes</span>
+<span class="d muted">BJTs, MOSFETs, JFETs, and vacuum tubes: operation, biasing, and circuits.</span></li></ul></section><section class=cat id=drones-fpv><h2>Drones & FPV</h2><ul><li><a href=https://makefunstuff.github.io/slop-stuff/ardupilot/><code>ardupilot</code></a>
+<span class=sep>—</span>
+<span class=t>ArduPilot</span>
+<span class="d muted">Copter 4.6: modes, failsafes, params, EKF, tune order, maiden ladder, and AI-slop kill-list.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/betaflight/><code>betaflight</code></a>
+<span class=sep>—</span>
+<span class=t>Betaflight</span>
+<span class="d muted">Rates, PIDs, filters, modes, and CLI for FPV drones.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/fpv/><code>fpv</code></a>
+<span class=sep>—</span>
+<span class=t>FPV engineer</span>
+<span class="d muted">Frames, motors, ESCs, VTX, radios, batteries, and build workflow.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/pid-tuning/><code>pid-tuning</code></a>
+<span class=sep>—</span>
+<span class=t>PID tuning</span>
+<span class="d muted">P/I/D terms, tuning methods, symptoms, and implementation.</span></li></ul></section><section class=cat id=graphics><h2>Graphics</h2><ul><li><a href=https://makefunstuff.github.io/slop-stuff/comfyui/><code>comfyui</code></a>
+<span class=sep>—</span>
+<span class=t>ComfyUI nodes</span>
+<span class="d muted">Node herding for SlopGen ComfyUI — core graph, samplers, loaders, ControlNet, video packs, kill-list.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/opengl/><code>opengl</code></a>
+<span class=sep>—</span>
+<span class=t>OpenGL</span>
+<span class="d muted">Buffers, VAOs, shaders, textures, framebuffers, and the core profile.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/shaders/><code>shaders</code></a>
+<span class=sep>—</span>
+<span class=t>Shaders</span>
+<span class="d muted">GLSL, the pipeline, uniforms/varyings, lighting, SDFs, and common effects.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/webgpu/><code>webgpu</code></a>
+<span class=sep>—</span>
+<span class=t>WebGPU</span>
+<span class="d muted">Devices, pipelines, buffers, WGSL shaders, and the render/compute pipeline.</span></li></ul></section><section class=cat id=game-dev><h2>Game dev</h2><ul><li><a href=https://makefunstuff.github.io/slop-stuff/gamedev/><code>gamedev</code></a>
+<span class=sep>—</span>
+<span class=t>GameDev patterns</span>
+<span class="d muted">Fixed timestep, ECS vs OO, HFSM/BT, pooling, spatial picks, frame budget, and AI-slop kill-list.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/sdl/><code>sdl</code></a>
+<span class=sep>—</span>
+<span class=t>SDL2/SDL3</span>
+<span class="d muted">Game loop, window, rendering, input, audio, and textures with SDL2/SDL3.</span></li></ul></section><section class=cat id=systems-cs><h2>Systems & CS</h2><ul><li><a href=https://makefunstuff.github.io/slop-stuff/algorithms/><code>algorithms</code></a>
+<span class=sep>—</span>
+<span class=t>Algorithms</span>
+<span class="d muted">Complexity classes, sorting, searching, data structures, and graphs.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/asm/><code>asm</code></a>
+<span class=sep>—</span>
+<span class=t>Assembly</span>
+<span class="d muted">Registers, instructions, addressing, calling conventions, and syscalls.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/dop/><code>dop</code></a>
+<span class=sep>—</span>
+<span class=t>Data-Oriented Design</span>
+<span class="d muted">Cache-friendly SoA vs AoS, data locality, ECS, and layout patterns.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/ebpf/><code>ebpf</code></a>
+<span class=sep>—</span>
+<span class=t>eBPF</span>
+<span class="d muted">Programs, maps, hooks, the verifier, and observability tooling.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/allocators/><code>allocators</code></a>
+<span class=sep>—</span>
+<span class=t>Memory allocators</span>
+<span class="d muted">Bump, free lists, arenas, slab, buddy, and garbage collection.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/osdev/><code>osdev</code></a>
+<span class=sep>—</span>
+<span class=t>OS dev</span>
+<span class="d muted">Booting, protected mode, interrupts, paging, and kernel basics.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/giants/><code>giants</code></a>
+<span class=sep>—</span>
+<span class=t>Systems by the giants</span>
+<span class="d muted">Lessons from nginx, Redis, the Linux kernel, and Carmack on fast systems.</span></li></ul></section><section class=cat id=quantitative><h2>Quantitative</h2><ul><li><a href=https://makefunstuff.github.io/slop-stuff/finance/><code>finance</code></a>
+<span class=sep>—</span>
+<span class=t>Finance — value investing cheatsheet</span>
+<span class="d muted">Statements, FCFF/FCFE, ratio herding, DCF, MoS, EDGAR workflow, and AI-slop kill-list.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/math/><code>math</code></a>
+<span class=sep>—</span>
+<span class=t>Mathematics</span>
+<span class="d muted">Linear algebra, probability, calculus, discrete, and signal/DSP math for programmers.</span></li></ul></section><section class=cat id=security><h2>Security</h2><ul><li><a href=https://makefunstuff.github.io/slop-stuff/pentesting/><code>pentesting</code></a>
+<span class=sep>—</span>
+<span class=t>Pentesting</span>
+<span class="d muted">Recon, scanning, exploitation, privilege escalation, and reporting.</span></li><li><a href=https://makefunstuff.github.io/slop-stuff/security/><code>security</code></a>
+<span class=sep>—</span>
+<span class=t>Security practices</span>
+<span class="d muted">Auth, secrets, supply chain, hardening, web security, and incident response.</span></li></ul></section><section class=cat id=editors><h2>Editors</h2><ul><li><a href=https://makefunstuff.github.io/slop-stuff/neovim/><code>neovim</code></a>
+<span class=sep>—</span>
+<span class=t>Neovim</span>
+<span class="d muted">Modes, motions, operators, text objects, config, and LSP.</span></li></ul></section><section class=cat id=links><h2>Links</h2><ul><li><a href=https://makefunstuff.github.io/slop-stuff/links/><code>links</code></a>
+<span class=sep>—</span>
+<span class=t>Links</span>
+<span class="d muted">A curated, curl-verified directory of useful links across every topic in this repo.</span></li></ul></section><section class=cat id=experiments><h2>Experiments</h2><p class=muted>Playable things that live in other repos. Linked, not hosted here.</p><ul><li><a href=https://makefunstuff.github.io/invader-rogue/ rel=noreferrer><code>invader-rogue</code></a>
+<span class=sep>—</span>
+<span class=t>Invader Rogue</span>
+<span class="d muted">Space Invaders with roguelike upgrades and random challenge modifiers. Lives in its own repo — no build step, assets generated at runtime.</span>
+<a class=muted href=https://github.com/makefunstuff/invader-rogue rel=noreferrer>source</a></li></ul></section></main></div><footer class=foot><span>slop-stuff</span>
+<span class=muted>served under <code>makefunstuff.github.io/slop-stuff/&lt;folder>/</code></span>
+<a href=https://makefunstuff.github.io/slop-stuff/links/>links</a>
+<a href=https://github.com/makefunstuff/slop-stuff>repo</a></footer><script src=https://makefunstuff.github.io/slop-stuff/js/wiki.js defer></script></body></html>
